@@ -467,12 +467,17 @@ export function CreatorProfilePage({ dark }) {
 
             {/* Tags */}
             {creator.tags?.length > 0 && (
-              <div className="relative flex flex-wrap gap-2 mt-5">
-                {creator.tags.map(tag => (
-                  <span key={tag} className={`text-xs px-3 py-1 rounded-full ${dark ? 'bg-white/[0.04] text-charcoal-300 ring-1 ring-white/[0.06]' : 'bg-gray-100 text-gray-600'}`}>
-                    {tag}
-                  </span>
-                ))}
+              <div className={`relative mt-5 border-t pt-4 ${dark ? 'border-white/[0.06]' : 'border-gray-200'}`}>
+                <p className={`mb-2 text-[10px] font-bold uppercase tracking-[0.2em] ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
+                  Production Focus
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {creator.tags.slice(0, 5).map(tag => (
+                    <span key={tag} className={`text-[11px] px-2.5 py-1 rounded-full ${dark ? 'bg-white/[0.025] text-charcoal-400 ring-1 ring-white/[0.045]' : 'bg-gray-50 text-gray-500 ring-1 ring-gray-200'}`}>
+                      #{String(tag).replace(/^#/, '')}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
           </div>
