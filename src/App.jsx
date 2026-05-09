@@ -11,6 +11,7 @@ import { PrivacyModal } from './components/PrivacyModal.jsx';
 import { captureReferralCode } from './components/ReferralSection.jsx';
 import { SupportChatbot } from './components/SupportChatbot.jsx';
 import { CircuitBackground } from './components/CircuitBackground.jsx';
+import { BrandLogo } from './components/BrandLogo.jsx';
 
 import { SERVICES, RATES, PACKAGE_TIERS } from './data/rates.js';
 import { DEFAULT_EXCHANGE_RATES } from './data/regions.js';
@@ -355,7 +356,6 @@ export default function App() {
   }
 
   const bgMain = dark ? '' : 'bg-gray-50';
-  const textMain = dark ? 'text-white' : 'text-gray-900';
   const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.07] shadow-[0_22px_70px_rgba(0,0,0,0.18)]' : 'bg-white border-gray-200'}`;
   const softFocusBackground = dark && location.pathname !== '/';
 
@@ -374,18 +374,7 @@ export default function App() {
 
           {/* Logo */}
           <div className="group flex items-center gap-3 shrink-0 cursor-pointer" onClick={() => navigate('/')}>
-            <span className="relative grid h-10 w-10 place-items-center rounded-xl border border-gold-500/24 bg-gold-500/10 text-lg shadow-[0_0_24px_rgba(212,169,65,0.12)]">
-              <span className="absolute inset-x-2 top-1 h-px bg-gold-400/55" />
-              🎬
-            </span>
-            <span className="hidden sm:flex flex-col leading-none">
-              <span className={`font-display font-bold text-xl tracking-tight ${textMain}`}>
-                Creator<span className="text-gradient-gold">Bridge</span>
-              </span>
-              <span className={`mt-1 text-[9px] font-bold uppercase tracking-[0.22em] ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
-                Verified media talent
-              </span>
-            </span>
+            <BrandLogo dark={dark} />
           </div>
 
           <div className="flex-1" />

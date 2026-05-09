@@ -3,6 +3,7 @@ import { X, Mail, Lock, User, Building2, Users, Eye, EyeOff, Chrome, Phone } fro
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { supabase, supabaseConfigured } from '../../lib/supabase.js';
 import { TurnstileWidget, turnstileConfigured } from '../TurnstileWidget.jsx';
+import { BrandMark } from '../BrandLogo.jsx';
 
 export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = 'client', onOpenTerms, onOpenCreatorRegistration }) {
   const { signIn, signUp, signInWithGoogle } = useAuth();
@@ -147,7 +148,9 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
         <div className="p-6">
           {/* Logo */}
           <div className="text-center mb-6">
-            <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl border border-gold-500/24 bg-gold-500/10 text-2xl shadow-[0_0_24px_rgba(212,169,65,0.12)]">🎬</span>
+            <span className={`mx-auto grid h-14 w-14 place-items-center rounded-2xl border shadow-[0_0_24px_rgba(212,169,65,0.12)] ${dark ? 'border-gold-500/24 bg-charcoal-950/72' : 'border-gold-500/24 bg-white'}`}>
+              <BrandMark className="h-11 w-11" />
+            </span>
             <p className="text-gold-400 mt-4 mb-2" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
               Account Access
             </p>
