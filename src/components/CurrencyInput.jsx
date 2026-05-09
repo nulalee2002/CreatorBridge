@@ -14,7 +14,7 @@ export function CurrencyInput({
   className = '',
 }) {
   const inputCls = dark
-    ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40'
+    ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40'
     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40';
 
   return (
@@ -23,13 +23,13 @@ export function CurrencyInput({
         <div className="flex items-center justify-between">
           <label className={`text-xs font-medium ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
             {label}
-            {unit && <span className={`ml-1 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>/ {unit}</span>}
+            {unit && <span className={`ml-1 ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>/ {unit}</span>}
           </label>
           {range && <RateHealthBadge value={value} range={range} showLabel />}
         </div>
       )}
       <div className="relative flex items-center">
-        <span className={`absolute left-2.5 text-xs font-medium pointer-events-none ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>
+        <span className={`absolute left-2.5 text-xs font-medium pointer-events-none ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
           {currencySymbol}
         </span>
         <input
@@ -42,7 +42,7 @@ export function CurrencyInput({
         />
       </div>
       {range && (
-        <div className={`flex justify-between text-[10px] ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
+        <div className={`flex justify-between text-[10px] ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
           <span>Low: {currencySymbol}{range.low?.toLocaleString()}</span>
           <span>Mid: {currencySymbol}{range.mid?.toLocaleString()}</span>
           <span>High: {currencySymbol}{range.high?.toLocaleString()}</span>

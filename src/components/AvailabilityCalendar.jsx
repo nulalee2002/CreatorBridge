@@ -2,14 +2,20 @@ import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, CalendarDays, Check } from 'lucide-react';
 
 // ── localStorage helpers ──────────────────────────────────────
+export function availabilityKey(creatorId) {
+  return `creator-availability-${creatorId}`;
+}
+
 export function loadAvailability(creatorId) {
   try {
-    return JSON.parse(localStorage.getItem(`creator-availability-${creatorId}`) || '{}');
+    const current = localStorage.getItem(availabilityKey(creatorId));
+    const legacy = localStorage.getItem(`availability-${creatorId}`);
+    return JSON.parse(current || legacy || '{}');
   } catch { return {}; }
 }
 
 export function saveAvailability(creatorId, data) {
-  localStorage.setItem(`creator-availability-${creatorId}`, JSON.stringify(data));
+  localStorage.setItem(availabilityKey(creatorId), JSON.stringify(data));
 }
 
 // ── Date helpers ──────────────────────────────────────────────
@@ -29,9 +35,9 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 const DAYS   = ['Su','Mo','Tu','We','Th','Fr','Sa'];
 
 const STATUS_STYLES = {
-  available:  { bg: 'bg-teal-500/20 text-teal-400 hover:bg-teal-500/30 border-teal-500/30', dot: 'bg-teal-400', label: 'Available' },
+  available:  { bg: 'bg-gold-500/20 text-gold-300 hover:bg-gold-500/30 border-gold-500/30', dot: 'bg-gold-400', label: 'Available' },
   booked:     { bg: 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border-red-500/30',     dot: 'bg-red-400',  label: 'Booked' },
-  tentative:  { bg: 'bg-gold-500/20 text-gold-400 hover:bg-gold-500/30 border-gold-500/30', dot: 'bg-gold-400', label: 'Tentative' },
+  tentative:  { bg: 'bg-white/[0.06] text-charcoal-200 hover:bg-white/[0.09] border-white/[0.12]', dot: 'bg-charcoal-300', label: 'Tentative' },
 };
 
 // ── Mini calendar for clients (read-only) ────────────────────
@@ -55,21 +61,21 @@ export function AvailabilityMini({ creatorId, dark, onSelectDate, selectedDate }
     else setViewMonth(m => m + 1);
   }
 
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
 
   return (
-    <div className={`rounded-2xl border p-4 ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`}>
+    <div className={`rounded-2xl border p-4 shadow-[0_24px_80px_rgba(0,0,0,0.16)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`}>
       <div className="flex items-center justify-between mb-3">
         <p className={`text-xs font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>
           {MONTHS[viewMonth]} {viewYear}
         </p>
         <div className="flex gap-1">
           <button type="button" onClick={prevMonth}
-            className={`p-1 rounded-lg transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
+            className={`p-1 rounded-lg transition-colors ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.08]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
             <ChevronLeft size={14} />
           </button>
           <button type="button" onClick={nextMonth}
-            className={`p-1 rounded-lg transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
+            className={`p-1 rounded-lg transition-colors ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.08]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
             <ChevronRight size={14} />
           </button>
         </div>
@@ -109,12 +115,12 @@ export function AvailabilityMini({ creatorId, dark, onSelectDate, selectedDate }
                 ${isSelected
                   ? 'bg-gold-500 text-charcoal-900 font-bold shadow-lg scale-110'
                   : isAvail && !isPast
-                    ? 'bg-teal-500/20 text-teal-400 hover:bg-teal-500/40 cursor-pointer border border-teal-500/30'
+                    ? 'bg-gold-500/15 text-gold-300 hover:bg-gold-500/28 cursor-pointer border border-gold-500/30'
                     : status === 'booked'
                       ? 'bg-red-500/10 text-red-400/50 cursor-not-allowed line-through'
                       : status === 'tentative'
                         ? 'bg-gold-500/10 text-gold-400/60 cursor-not-allowed'
-                        : dark ? 'text-charcoal-400 hover:bg-charcoal-700' : 'text-gray-500 hover:bg-gray-100'
+                        : dark ? 'text-charcoal-300 hover:bg-white/[0.08]' : 'text-gray-500 hover:bg-gray-100'
                 }
                 ${isToday && !isSelected ? 'ring-1 ring-gold-500/50' : ''}
               `}
@@ -126,7 +132,7 @@ export function AvailabilityMini({ creatorId, dark, onSelectDate, selectedDate }
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-3 mt-3 pt-3 border-t border-charcoal-700/50 flex-wrap">
+      <div className={`flex items-center gap-3 mt-3 pt-3 border-t flex-wrap ${dark ? 'border-white/[0.07]' : 'border-gray-200'}`}>
         {[
           { status: 'available', label: 'Open' },
           { status: 'booked',   label: 'Booked' },
@@ -203,7 +209,7 @@ export function AvailabilityEditor({ creatorId, dark }) {
     setSaved(false);
   }
 
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
 
   const openDaysThisMonth = Array.from({ length: numDays }).filter((_, i) => {
     const key = toKey(new Date(viewYear, viewMonth, i + 1));
@@ -211,7 +217,7 @@ export function AvailabilityEditor({ creatorId, dark }) {
   }).length;
 
   return (
-    <div className={`rounded-2xl border p-5 ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`}>
+    <div className={`rounded-2xl border p-5 shadow-[0_24px_80px_rgba(0,0,0,0.18)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`}>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className={`font-display font-bold text-sm flex items-center gap-2 ${dark ? 'text-white' : 'text-gray-900'}`}>
@@ -223,12 +229,12 @@ export function AvailabilityEditor({ creatorId, dark }) {
         </div>
         <div className="flex gap-2">
           <button type="button" onClick={clearMonth}
-            className={`text-[10px] px-2 py-1 rounded-lg border transition-all ${dark ? 'border-charcoal-600 text-charcoal-400 hover:text-white' : 'border-gray-200 text-gray-500 hover:text-gray-900'}`}>
+            className={`text-[10px] px-2 py-1 rounded-lg border transition-all ${dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/35 hover:text-white' : 'border-gray-200 text-gray-500 hover:text-gray-900'}`}>
             Clear month
           </button>
           <button type="button" onClick={handleSave}
             className={`text-[10px] px-3 py-1 rounded-lg font-bold transition-all flex items-center gap-1 ${
-              saved ? 'bg-teal-500 text-white' : 'bg-gold-500 hover:bg-gold-600 text-charcoal-900'
+              saved ? 'bg-gold-500 text-charcoal-900' : 'bg-gold-500 hover:bg-gold-600 text-charcoal-900'
             }`}>
             {saved ? <><Check size={10} /> Saved</> : 'Save'}
           </button>
@@ -242,7 +248,7 @@ export function AvailabilityEditor({ creatorId, dark }) {
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[10px] font-semibold transition-all ${
               paintStatus === status
                 ? `${styles.bg} border-current`
-                : dark ? 'border-charcoal-700 text-charcoal-500 hover:border-charcoal-600' : 'border-gray-200 text-gray-400 hover:border-gray-300'
+                : dark ? 'border-white/[0.08] text-charcoal-300 hover:border-gold-500/30 hover:text-white' : 'border-gray-200 text-gray-400 hover:border-gray-300'
             }`}>
             <div className={`w-1.5 h-1.5 rounded-full ${styles.dot}`} />
             {styles.label}
@@ -253,14 +259,14 @@ export function AvailabilityEditor({ creatorId, dark }) {
       {/* Month nav */}
       <div className="flex items-center justify-between mb-2">
         <button type="button" onClick={prevMonth}
-          className={`p-1 rounded-lg ${dark ? 'text-charcoal-400 hover:text-white' : 'text-gray-400 hover:text-gray-900'}`}>
+          className={`p-1 rounded-lg ${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-400 hover:text-gray-900'}`}>
           <ChevronLeft size={14} />
         </button>
         <p className={`text-xs font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>
           {MONTHS[viewMonth]} {viewYear}
         </p>
         <button type="button" onClick={nextMonth}
-          className={`p-1 rounded-lg ${dark ? 'text-charcoal-400 hover:text-white' : 'text-gray-400 hover:text-gray-900'}`}>
+          className={`p-1 rounded-lg ${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-400 hover:text-gray-900'}`}>
           <ChevronRight size={14} />
         </button>
       </div>
@@ -294,7 +300,7 @@ export function AvailabilityEditor({ creatorId, dark }) {
                   : styles
                     ? `${styles.bg} cursor-pointer`
                     : dark
-                      ? 'text-charcoal-400 border-charcoal-700 hover:bg-charcoal-700 hover:text-white cursor-pointer'
+                      ? 'text-charcoal-300 border-white/[0.08] hover:bg-white/[0.08] hover:text-white cursor-pointer'
                       : 'text-gray-500 border-gray-100 hover:bg-gray-100 hover:text-gray-900 cursor-pointer'
                 }
                 ${isToday ? 'ring-1 ring-gold-500' : ''}
@@ -311,31 +317,15 @@ export function AvailabilityEditor({ creatorId, dark }) {
       </p>
 
       {/* Google Calendar connect */}
-      <div className={`mt-4 pt-4 border-t ${dark ? 'border-charcoal-700' : 'border-gray-200'}`}>
+      <div className={`mt-4 pt-4 border-t ${dark ? 'border-white/[0.07]' : 'border-gray-200'}`}>
         <button type="button"
           onClick={() => alert('Google Calendar sync will be available once your account is connected to Supabase. This will automatically sync your booked dates.')}
           className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-semibold transition-all ${
-            dark ? 'border-charcoal-600 text-charcoal-300 hover:border-gold-500/50 hover:text-gold-400' : 'border-gray-200 text-gray-600 hover:border-gold-500/50 hover:text-gold-500'
+            dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/50 hover:text-gold-400' : 'border-gray-200 text-gray-600 hover:border-gold-500/50 hover:text-gold-500'
           }`}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <path d="M12 0C5.372 0 0 5.373 0 12s5.372 12 12 12 12-5.373 12-12S18.628 0 12 0z" fill="#4285F4"/>
-            <path d="M12 0C5.372 0 0 5.373 0 12s5.372 12 12 12 12-5.373 12-12S18.628 0 12 0z" fill="url(#google-grad)"/>
-            <rect x="5.5" y="5.5" width="13" height="13" rx="1.5" fill="white"/>
-            <rect x="8" y="3" width="1.5" height="4" rx="0.75" fill="#1a73e8"/>
-            <rect x="14.5" y="3" width="1.5" height="4" rx="0.75" fill="#1a73e8"/>
-            <rect x="5.5" y="9" width="13" height="1" fill="#e0e0e0"/>
-            <text x="12" y="16.5" textAnchor="middle" fontSize="7" fontWeight="bold" fill="#1a73e8">G</text>
-            <defs>
-              <linearGradient id="google-grad" x1="0" y1="0" x2="24" y2="24">
-                <stop offset="0%" stopColor="#4285F4"/>
-                <stop offset="33%" stopColor="#34A853"/>
-                <stop offset="66%" stopColor="#FBBC05"/>
-                <stop offset="100%" stopColor="#EA4335"/>
-              </linearGradient>
-            </defs>
-          </svg>
+          <CalendarDays size={14} className="text-gold-400" />
           Sync with Google Calendar
-          <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${dark ? 'bg-charcoal-700 text-charcoal-500' : 'bg-gray-100 text-gray-400'}`}>
+          <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${dark ? 'bg-white/[0.08] text-charcoal-300' : 'bg-gray-100 text-gray-400'}`}>
             Coming soon
           </span>
         </button>

@@ -41,14 +41,14 @@ export function TierProgress({ creator, dark }) {
   const rating       = creator?.rating || 0;
   const completion   = creator?.completion_rate || 100;
 
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
-  const cardBg  = `rounded-2xl border p-4 ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`;
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
+  const cardBg  = `rounded-2xl border p-4 shadow-[0_24px_80px_rgba(0,0,0,0.16)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`;
 
   function Req({ label, current, required, done }) {
     return (
       <div className="flex items-center justify-between gap-2">
         <span className={`text-xs ${textSub}`}>{label}</span>
-        <span className={`text-xs font-semibold ${done ? 'text-teal-400' : dark ? 'text-white' : 'text-gray-900'}`}>
+        <span className={`text-xs font-semibold ${done ? 'text-gold-400' : dark ? 'text-white' : 'text-gray-900'}`}>
           {current} {required ? `/ ${required}` : ''} {done ? '✓' : ''}
         </span>
       </div>
@@ -116,20 +116,20 @@ export function TierUpBanner({ newTierId, dark, onDismiss }) {
 
   return (
     <div className={`mb-4 p-4 rounded-2xl border flex items-center gap-4 ${
-      dark ? 'border-gold-500/30 bg-gold-500/8' : 'border-gold-300 bg-gold-50'
+      dark ? 'border-gold-500/30 bg-gold-500/10' : 'border-gold-300 bg-gold-50'
     }`}>
       <span className="text-3xl">{tier.icon}</span>
       <div className="flex-1">
         <p className={`font-bold text-sm ${dark ? 'text-gold-400' : 'text-gold-700'}`}>
           Congratulations! You have reached {tier.name} status on CreatorBridge.
         </p>
-        <p className={`text-xs mt-0.5 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
+        <p className={`text-xs mt-0.5 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
           {tier.label} - {tier.name === 'Proven' ? 'Clients can now see your Trusted Creator badge.' : tier.name === 'Elite' ? 'Your profile is now boosted in search results.' : 'You have reached the highest creator tier.'}
         </p>
       </div>
       {onDismiss && (
         <button type="button" onClick={onDismiss}
-          className={`text-xs px-3 py-1.5 rounded-lg border transition-all ${dark ? 'border-charcoal-600 text-charcoal-400 hover:text-white' : 'border-gray-200 text-gray-500 hover:text-gray-900'}`}>
+          className={`text-xs px-3 py-1.5 rounded-lg border transition-all ${dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/35 hover:text-white' : 'border-gray-200 text-gray-500 hover:text-gray-900'}`}>
           Dismiss
         </button>
       )}

@@ -1,5 +1,5 @@
 -- ============================================================
--- CreatorMatch Database Schema
+-- CreatorBridge Database Schema
 -- Run this in your Supabase SQL editor
 -- ============================================================
 
@@ -12,18 +12,80 @@ create table if not exists profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   role text not null default 'client', -- 'creator' | 'client'
   full_name text,
+  referral_code text unique,
+  referred_by_code text,
+  first_booking_fee_waived boolean default false,
+  next_booking_fee_waived boolean default false,
   avatar_url text,
   bio text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS referral_code text;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS referred_by_code text;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS first_booking_fee_waived boolean DEFAULT false;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS next_booking_fee_waived boolean DEFAULT false;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_referral_code ON profiles(referral_code);
+
 -- Auto-create profile on signup
 create or replace function handle_new_user()
-returns trigger language plpgsql security definer as $$
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  requested_role text := coalesce(new.raw_user_meta_data->>'role', 'client');
+  referral_code text := nullif(upper(new.raw_user_meta_data->>'referral_code'), '');
+  referrer profiles%rowtype;
+  reward_kind text;
 begin
-  insert into profiles (id, role, full_name)
-  values (new.id, coalesce(new.raw_user_meta_data->>'role', 'client'), new.raw_user_meta_data->>'full_name');
+  if requested_role not in ('creator', 'client') then
+    requested_role := 'client';
+  end if;
+
+  insert into profiles (id, role, full_name, referral_code, referred_by_code, first_booking_fee_waived)
+  values (
+    new.id,
+    requested_role,
+    new.raw_user_meta_data->>'full_name',
+    upper(substr(replace(new.id::text, '-', ''), 1, 8)),
+    referral_code,
+    referral_code is not null
+  );
+
+  if referral_code is not null then
+    select * into referrer from profiles where profiles.referral_code = referral_code limit 1;
+    if referrer.id is not null and referrer.id <> new.id then
+      reward_kind := case
+        when referrer.role = 'creator' and requested_role = 'creator' then 'fee_reduction'
+        when referrer.role = 'creator' and requested_role = 'client' then 'tier_boost'
+        when referrer.role = 'client' and requested_role = 'client' then 'booking_fee_waived'
+        else 'booking_fee_waived'
+      end;
+
+      insert into referrals (
+        referrer_id,
+        referred_user_id,
+        referral_code,
+        referrer_type,
+        referred_user_type,
+        status,
+        reward_type
+      )
+      values (
+        referrer.id,
+        new.id,
+        referral_code,
+        referrer.role,
+        requested_role,
+        'signed_up',
+        reward_kind
+      );
+    end if;
+  end if;
+
   return new;
 end;
 $$;
@@ -155,6 +217,18 @@ create table if not exists quote_requests (
   created_at timestamptz default now()
 );
 
+ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS project_title text;
+ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS project_type text;
+ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS project_time text;
+ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS venue_address text;
+ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS venue_city text;
+ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS venue_state text;
+ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS venue_type text;
+ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS hours_needed text;
+ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS deliverables text;
+ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS budget_range text;
+ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS location_preference text;
+
 -- ── MESSAGES ─────────────────────────────────────────────────
 create table if not exists messages (
   id uuid primary key default uuid_generate_v4(),
@@ -181,6 +255,15 @@ create table if not exists projects (
   status text default 'open', -- 'open' | 'in_progress' | 'completed' | 'cancelled'
   created_at timestamptz default now()
 );
+
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS accepted_creator_id text;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS accepted_application_id text;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS delivered_at timestamptz;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS approved_at timestamptz;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS delivery_link text;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS delivery_notes text;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS revision_count integer DEFAULT 0;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS applications integer DEFAULT 0;
 
 -- Project applications (creators apply to projects)
 create table if not exists project_applications (
@@ -222,72 +305,220 @@ alter table project_applications enable row level security;
 alter table subscriptions enable row level security;
 
 -- Profiles: users can read all, update only their own
-create policy "Profiles are viewable by everyone" on profiles for select using (true);
-create policy "Users can update own profile" on profiles for update using (auth.uid() = id);
+DROP POLICY IF EXISTS "Profiles are viewable by everyone" ON profiles;
+CREATE POLICY "Profiles are viewable by everyone"
+  ON profiles FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
+CREATE POLICY "Users can update own profile"
+  ON profiles FOR UPDATE
+  TO authenticated
+  USING ((select auth.uid()) = id)
+  WITH CHECK ((select auth.uid()) = id);
 
 -- Listings: public read, creators manage their own
-create policy "Listings are viewable by everyone" on creator_listings for select using (true);
-create policy "Creators can insert own listings" on creator_listings for insert with check (auth.uid() = user_id);
-create policy "Creators can update own listings" on creator_listings for update using (auth.uid() = user_id);
-create policy "Creators can delete own listings" on creator_listings for delete using (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Listings are viewable by everyone" ON creator_listings;
+CREATE POLICY "Listings are viewable by everyone"
+  ON creator_listings FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS "Creators can insert own listings" ON creator_listings;
+CREATE POLICY "Creators can insert own listings"
+  ON creator_listings FOR INSERT
+  TO authenticated
+  WITH CHECK ((select auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Creators can update own listings" ON creator_listings;
+CREATE POLICY "Creators can update own listings"
+  ON creator_listings FOR UPDATE
+  TO authenticated
+  USING ((select auth.uid()) = user_id)
+  WITH CHECK ((select auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Creators can delete own listings" ON creator_listings;
+CREATE POLICY "Creators can delete own listings"
+  ON creator_listings FOR DELETE
+  TO authenticated
+  USING ((select auth.uid()) = user_id);
 
 -- Services, portfolio, packages, availability: follow listing ownership
-create policy "Services viewable by everyone" on creator_services for select using (true);
-create policy "Creators manage own services" on creator_services for all using (
-  exists (select 1 from creator_listings where id = listing_id and user_id = auth.uid())
-);
+DROP POLICY IF EXISTS "Services viewable by everyone" ON creator_services;
+CREATE POLICY "Services viewable by everyone"
+  ON creator_services FOR SELECT
+  TO anon, authenticated
+  USING (true);
 
-create policy "Portfolio viewable by everyone" on portfolio_items for select using (true);
-create policy "Creators manage own portfolio" on portfolio_items for all using (
-  exists (select 1 from creator_listings where id = listing_id and user_id = auth.uid())
-);
+DROP POLICY IF EXISTS "Creators manage own services" ON creator_services;
+CREATE POLICY "Creators manage own services"
+  ON creator_services FOR ALL
+  TO authenticated
+  USING (exists (select 1 from creator_listings where id = listing_id and user_id = (select auth.uid())))
+  WITH CHECK (exists (select 1 from creator_listings where id = listing_id and user_id = (select auth.uid())));
 
-create policy "Packages viewable by everyone" on packages for select using (true);
-create policy "Creators manage own packages" on packages for all using (
-  exists (select 1 from creator_listings where id = listing_id and user_id = auth.uid())
-);
+DROP POLICY IF EXISTS "Portfolio viewable by everyone" ON portfolio_items;
+CREATE POLICY "Portfolio viewable by everyone"
+  ON portfolio_items FOR SELECT
+  TO anon, authenticated
+  USING (true);
 
-create policy "Availability viewable by everyone" on availability for select using (true);
-create policy "Creators manage own availability" on availability for all using (
-  exists (select 1 from creator_listings where id = listing_id and user_id = auth.uid())
-);
+DROP POLICY IF EXISTS "Creators manage own portfolio" ON portfolio_items;
+CREATE POLICY "Creators manage own portfolio"
+  ON portfolio_items FOR ALL
+  TO authenticated
+  USING (exists (select 1 from creator_listings where id = listing_id and user_id = (select auth.uid())))
+  WITH CHECK (exists (select 1 from creator_listings where id = listing_id and user_id = (select auth.uid())));
+
+DROP POLICY IF EXISTS "Packages viewable by everyone" ON packages;
+CREATE POLICY "Packages viewable by everyone"
+  ON packages FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS "Creators manage own packages" ON packages;
+CREATE POLICY "Creators manage own packages"
+  ON packages FOR ALL
+  TO authenticated
+  USING (exists (select 1 from creator_listings where id = listing_id and user_id = (select auth.uid())))
+  WITH CHECK (exists (select 1 from creator_listings where id = listing_id and user_id = (select auth.uid())));
+
+DROP POLICY IF EXISTS "Availability viewable by everyone" ON availability;
+CREATE POLICY "Availability viewable by everyone"
+  ON availability FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS "Creators manage own availability" ON availability;
+CREATE POLICY "Creators manage own availability"
+  ON availability FOR ALL
+  TO authenticated
+  USING (exists (select 1 from creator_listings where id = listing_id and user_id = (select auth.uid())))
+  WITH CHECK (exists (select 1 from creator_listings where id = listing_id and user_id = (select auth.uid())));
 
 -- Reviews: public read, authenticated users can write
-create policy "Reviews viewable by everyone" on reviews for select using (true);
-create policy "Authenticated users can write reviews" on reviews for insert with check (auth.uid() is not null);
+DROP POLICY IF EXISTS "Reviews viewable by everyone" ON reviews;
+CREATE POLICY "Reviews viewable by everyone"
+  ON reviews FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS "Authenticated users can write reviews" ON reviews;
+CREATE POLICY "Authenticated users can write reviews"
+  ON reviews FOR INSERT
+  TO authenticated
+  WITH CHECK ((select auth.uid()) is not null);
 
 -- Favorites: users manage their own
-create policy "Users can view own favorites" on favorites for select using (auth.uid() = user_id);
-create policy "Users can manage own favorites" on favorites for all using (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can view own favorites" ON favorites;
+CREATE POLICY "Users can view own favorites"
+  ON favorites FOR SELECT
+  TO authenticated
+  USING ((select auth.uid()) = user_id);
 
--- Quote requests: clients create, creators view their own
-create policy "Creators can view their quote requests" on quote_requests for select using (
-  exists (select 1 from creator_listings where id = listing_id and user_id = auth.uid())
-  or auth.uid() = client_id
-);
-create policy "Anyone can send quote requests" on quote_requests for insert with check (true);
-create policy "Creators can update quote status" on quote_requests for update using (
-  exists (select 1 from creator_listings where id = listing_id and user_id = auth.uid())
-);
+DROP POLICY IF EXISTS "Users can manage own favorites" ON favorites;
+CREATE POLICY "Users can manage own favorites"
+  ON favorites FOR ALL
+  TO authenticated
+  USING ((select auth.uid()) = user_id)
+  WITH CHECK ((select auth.uid()) = user_id);
+
+-- Quote requests: clients create, creators view and respond to their own
+DROP POLICY IF EXISTS "Creators can view their quote requests" ON quote_requests;
+CREATE POLICY "Creators can view their quote requests"
+  ON quote_requests FOR SELECT
+  TO authenticated
+  USING (
+    ((select auth.uid()) = client_id)
+    OR exists (select 1 from creator_listings where id = listing_id and user_id = (select auth.uid()))
+  );
+
+DROP POLICY IF EXISTS "Anyone can send quote requests" ON quote_requests;
+DROP POLICY IF EXISTS "Authenticated clients can send quote requests" ON quote_requests;
+CREATE POLICY "Authenticated clients can send quote requests"
+  ON quote_requests FOR INSERT
+  TO authenticated
+  WITH CHECK ((select auth.uid()) = client_id);
+
+DROP POLICY IF EXISTS "Creators can update quote status" ON quote_requests;
+CREATE POLICY "Creators can update quote status"
+  ON quote_requests FOR UPDATE
+  TO authenticated
+  USING (exists (select 1 from creator_listings where id = listing_id and user_id = (select auth.uid())))
+  WITH CHECK (exists (select 1 from creator_listings where id = listing_id and user_id = (select auth.uid())));
 
 -- Messages: participants can read/write their own
-create policy "Users can view their messages" on messages for select using (
-  auth.uid() = sender_id or auth.uid() = recipient_id
-);
-create policy "Authenticated users can send messages" on messages for insert with check (auth.uid() = sender_id);
+DROP POLICY IF EXISTS "Users can view their messages" ON messages;
+CREATE POLICY "Users can view their messages"
+  ON messages FOR SELECT
+  TO authenticated
+  USING ((select auth.uid()) = sender_id OR (select auth.uid()) = recipient_id);
 
--- Projects: public read, clients manage their own
-create policy "Projects viewable by everyone" on projects for select using (true);
-create policy "Clients can manage own projects" on projects for all using (auth.uid() = client_id);
+DROP POLICY IF EXISTS "Authenticated users can send messages" ON messages;
+CREATE POLICY "Authenticated users can send messages"
+  ON messages FOR INSERT
+  TO authenticated
+  WITH CHECK ((select auth.uid()) = sender_id);
 
--- Project applications: creators apply, clients see theirs
-create policy "Applications viewable by project owner and applicant" on project_applications for select using (
-  exists (select 1 from projects where id = project_id and client_id = auth.uid())
-  or exists (select 1 from creator_listings where id = listing_id and user_id = auth.uid())
-);
-create policy "Creators can apply to projects" on project_applications for insert with check (
-  exists (select 1 from creator_listings where id = listing_id and user_id = auth.uid())
-);
+-- Projects: public read, clients manage their own, accepted creators can update workflow delivery state
+DROP POLICY IF EXISTS "Projects viewable by everyone" ON projects;
+CREATE POLICY "Projects viewable by everyone"
+  ON projects FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS "Clients can manage own projects" ON projects;
+CREATE POLICY "Clients can manage own projects"
+  ON projects FOR ALL
+  TO authenticated
+  USING ((select auth.uid()) = client_id)
+  WITH CHECK ((select auth.uid()) = client_id);
+
+DROP POLICY IF EXISTS "Accepted creators can update delivery fields" ON projects;
+CREATE POLICY "Accepted creators can update delivery fields"
+  ON projects FOR UPDATE
+  TO authenticated
+  USING (
+    accepted_creator_id IN (
+      SELECT id::text FROM creator_listings WHERE user_id = (select auth.uid())
+    )
+  )
+  WITH CHECK (
+    accepted_creator_id IN (
+      SELECT id::text FROM creator_listings WHERE user_id = (select auth.uid())
+    )
+  );
+
+-- Project applications: creators apply, clients see and accept applications for their projects
+DROP POLICY IF EXISTS "Applications viewable by project owner and applicant" ON project_applications;
+CREATE POLICY "Applications viewable by project owner and applicant"
+  ON project_applications FOR SELECT
+  TO authenticated
+  USING (
+    exists (select 1 from projects where id = project_id and client_id = (select auth.uid()))
+    OR exists (select 1 from creator_listings where id = listing_id and user_id = (select auth.uid()))
+  );
+
+DROP POLICY IF EXISTS "Creators can apply to projects" ON project_applications;
+CREATE POLICY "Creators can apply to projects"
+  ON project_applications FOR INSERT
+  TO authenticated
+  WITH CHECK (exists (select 1 from creator_listings where id = listing_id and user_id = (select auth.uid())));
+
+DROP POLICY IF EXISTS "Project owners can update applications" ON project_applications;
+CREATE POLICY "Project owners can update applications"
+  ON project_applications FOR UPDATE
+  TO authenticated
+  USING (exists (select 1 from projects where id = project_id and client_id = (select auth.uid())))
+  WITH CHECK (exists (select 1 from projects where id = project_id and client_id = (select auth.uid())));
+
+-- Subscriptions: creators can view subscription rows attached to their listing
+DROP POLICY IF EXISTS "Creators can view own subscriptions" ON subscriptions;
+CREATE POLICY "Creators can view own subscriptions"
+  ON subscriptions FOR SELECT
+  TO authenticated
+  USING (exists (select 1 from creator_listings where id = listing_id and user_id = (select auth.uid())));
 
 -- ── STORAGE BUCKETS ──────────────────────────────────────────
 -- Run these separately in Supabase Storage settings:
@@ -376,31 +607,75 @@ ALTER TABLE transactions   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payment_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE disputes       ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Users can view own transactions"
+DROP POLICY IF EXISTS "Users can view own transactions" ON transactions;
+CREATE POLICY "Users can view own transactions"
   ON transactions FOR SELECT
-  USING (client_id = auth.uid());
+  TO authenticated
+  USING (
+    client_id = (select auth.uid())
+    OR creator_id IN (
+      SELECT id::text FROM creator_listings WHERE user_id = (select auth.uid())
+    )
+  );
 
-CREATE POLICY IF NOT EXISTS "Users can insert transactions"
+DROP POLICY IF EXISTS "Users can insert transactions" ON transactions;
+CREATE POLICY "Users can insert transactions"
   ON transactions FOR INSERT
-  WITH CHECK (client_id = auth.uid());
+  TO authenticated
+  WITH CHECK (client_id = (select auth.uid()));
 
-CREATE POLICY IF NOT EXISTS "Participants can view payment events"
+DROP POLICY IF EXISTS "Participants can view payment events" ON payment_events;
+CREATE POLICY "Participants can view payment events"
   ON payment_events FOR SELECT
+  TO authenticated
   USING (
     EXISTS (
       SELECT 1 FROM transactions t
       WHERE t.id = transaction_id
-        AND (t.client_id = auth.uid())
+        AND (
+          t.client_id = (select auth.uid())
+          OR t.creator_id IN (
+            SELECT id::text FROM creator_listings WHERE user_id = (select auth.uid())
+          )
+        )
     )
   );
 
-CREATE POLICY IF NOT EXISTS "Users can view own disputes"
+DROP POLICY IF EXISTS "Users can view own disputes" ON disputes;
+CREATE POLICY "Users can view own disputes"
   ON disputes FOR SELECT
-  USING (raised_by = auth.uid());
+  TO authenticated
+  USING (
+    raised_by = (select auth.uid())
+    OR EXISTS (
+      SELECT 1 FROM transactions t
+      WHERE t.id = transaction_id
+        AND (
+          t.client_id = (select auth.uid())
+          OR t.creator_id IN (
+            SELECT id::text FROM creator_listings WHERE user_id = (select auth.uid())
+          )
+        )
+    )
+  );
 
-CREATE POLICY IF NOT EXISTS "Users can open disputes"
+DROP POLICY IF EXISTS "Users can open disputes" ON disputes;
+CREATE POLICY "Users can open disputes"
   ON disputes FOR INSERT
-  WITH CHECK (raised_by = auth.uid());
+  TO authenticated
+  WITH CHECK (
+    raised_by = (select auth.uid())
+    AND EXISTS (
+      SELECT 1 FROM transactions t
+      WHERE t.id = transaction_id
+        AND (
+          t.client_id = (select auth.uid())
+          OR t.creator_id IN (
+            SELECT id::text FROM creator_listings WHERE user_id = (select auth.uid())
+          )
+        )
+    )
+  );
 
 -- ── INDEXES ──────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_transactions_client   ON transactions(client_id);
@@ -421,9 +696,11 @@ CREATE TABLE IF NOT EXISTS violations (
 
 ALTER TABLE violations ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Users can view own violations"
+DROP POLICY IF EXISTS "Users can view own violations" ON violations;
+CREATE POLICY "Users can view own violations"
   ON violations FOR SELECT
-  USING (user_id = auth.uid());
+  TO authenticated
+  USING (user_id = (select auth.uid()));
 
 CREATE INDEX IF NOT EXISTS idx_violations_user ON violations(user_id);
 
@@ -438,14 +715,17 @@ CREATE TABLE IF NOT EXISTS message_filter_events (
 ALTER TABLE message_filter_events ENABLE ROW LEVEL SECURITY;
 
 -- Only admins (service role) can read filter events
-CREATE POLICY IF NOT EXISTS "Users can insert own filter events"
+DROP POLICY IF EXISTS "Users can insert own filter events" ON message_filter_events;
+CREATE POLICY "Users can insert own filter events"
   ON message_filter_events FOR INSERT
-  WITH CHECK (user_id = auth.uid());
+  TO authenticated
+  WITH CHECK (user_id = (select auth.uid()));
 
 CREATE INDEX IF NOT EXISTS idx_filter_events_user ON message_filter_events(user_id);
 
 -- ── LOYALTY: completed_projects on creator_listings ──────────
 ALTER TABLE creator_listings ADD COLUMN IF NOT EXISTS completed_projects integer DEFAULT 0;
+ALTER TABLE creator_listings ADD COLUMN IF NOT EXISTS next_project_fee_pct numeric(4,2);
 
 -- ── CLIENT PROFILES ──────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS client_profiles (
@@ -458,28 +738,45 @@ CREATE TABLE IF NOT EXISTS client_profiles (
   email_verified          boolean DEFAULT false,
   phone_verified          boolean DEFAULT false,
   payment_method_on_file  boolean DEFAULT false,
+  first_booking_fee_waived boolean DEFAULT false,
+  next_booking_fee_waived boolean DEFAULT false,
   spam_score              integer DEFAULT 0,
   created_at              timestamptz DEFAULT now(),
   updated_at              timestamptz DEFAULT now()
 );
 
+ALTER TABLE client_profiles ADD COLUMN IF NOT EXISTS first_booking_fee_waived boolean DEFAULT false;
+ALTER TABLE client_profiles ADD COLUMN IF NOT EXISTS next_booking_fee_waived boolean DEFAULT false;
+
 ALTER TABLE client_profiles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Users can view own client profile"
+DROP POLICY IF EXISTS "Users can view own client profile" ON client_profiles;
+CREATE POLICY "Users can view own client profile"
   ON client_profiles FOR SELECT
-  USING (user_id = auth.uid());
+  TO authenticated
+  USING (user_id = (select auth.uid()));
 
-CREATE POLICY IF NOT EXISTS "Users can insert own client profile"
+DROP POLICY IF EXISTS "Users can insert own client profile" ON client_profiles;
+CREATE POLICY "Users can insert own client profile"
   ON client_profiles FOR INSERT
-  WITH CHECK (user_id = auth.uid());
+  TO authenticated
+  WITH CHECK (user_id = (select auth.uid()));
 
-CREATE POLICY IF NOT EXISTS "Users can update own client profile"
+DROP POLICY IF EXISTS "Users can update own client profile" ON client_profiles;
+CREATE POLICY "Users can update own client profile"
   ON client_profiles FOR UPDATE
-  USING (user_id = auth.uid());
+  TO authenticated
+  USING (user_id = (select auth.uid()))
+  WITH CHECK (user_id = (select auth.uid()));
 
 -- ── VERIFICATION: columns on creator_listings ────────────────
 ALTER TABLE creator_listings ADD COLUMN IF NOT EXISTS verification_status text DEFAULT 'unverified';
 ALTER TABLE creator_listings ADD COLUMN IF NOT EXISTS verification_steps  jsonb DEFAULT '{}';
+ALTER TABLE creator_listings ADD COLUMN IF NOT EXISTS submitted_at timestamptz DEFAULT now();
+ALTER TABLE creator_listings ADD COLUMN IF NOT EXISTS review_status text DEFAULT 'pending_review';
+ALTER TABLE creator_listings ADD COLUMN IF NOT EXISTS youtube text;
+ALTER TABLE creator_listings ADD COLUMN IF NOT EXISTS vimeo text;
+ALTER TABLE creator_listings ADD COLUMN IF NOT EXISTS linkedin text;
 
 
 -- ── CREATOR TIER SYSTEM ──────────────────────────────────────────
@@ -498,20 +795,28 @@ CREATE TABLE IF NOT EXISTS client_reviews (
   id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id  uuid REFERENCES auth.users(id) NOT NULL,
   creator_id text NOT NULL,
+  reviewer_id uuid REFERENCES auth.users(id),
   project_id text NOT NULL,
   rating     integer CHECK (rating >= 1 AND rating <= 5),
   comment    text,
   created_at timestamptz DEFAULT now()
 );
 
+ALTER TABLE client_reviews ALTER COLUMN creator_id DROP NOT NULL;
+ALTER TABLE client_reviews ADD COLUMN IF NOT EXISTS reviewer_id uuid REFERENCES auth.users(id);
+
 ALTER TABLE client_reviews ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Creators can insert client reviews"
+DROP POLICY IF EXISTS "Creators can insert client reviews" ON client_reviews;
+CREATE POLICY "Creators can insert client reviews"
   ON client_reviews FOR INSERT
-  WITH CHECK (true);
+  TO authenticated
+  WITH CHECK (reviewer_id = (select auth.uid()));
 
-CREATE POLICY IF NOT EXISTS "Anyone can view client reviews"
+DROP POLICY IF EXISTS "Anyone can view client reviews" ON client_reviews;
+CREATE POLICY "Anyone can view client reviews"
   ON client_reviews FOR SELECT
+  TO authenticated
   USING (true);
 
 CREATE INDEX IF NOT EXISTS idx_client_reviews_client ON client_reviews(client_id);
@@ -529,9 +834,28 @@ CREATE TABLE IF NOT EXISTS referrals (
   reward_type text,                          -- 'fee_reduction' | 'booking_fee_waived' | 'tier_boost'
   reward_issued boolean DEFAULT false,
   reward_issued_at timestamptz,
+  completed_project_id text,
+  completed_transaction_id uuid,
   created_at timestamptz DEFAULT now(),
   completed_at timestamptz
 );
+
+ALTER TABLE referrals ADD COLUMN IF NOT EXISTS completed_project_id text;
+ALTER TABLE referrals ADD COLUMN IF NOT EXISTS completed_transaction_id uuid;
+
+ALTER TABLE referrals ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own referrals" ON referrals;
+CREATE POLICY "Users can view own referrals"
+  ON referrals FOR SELECT
+  TO authenticated
+  USING (referrer_id = (select auth.uid()) OR referred_user_id = (select auth.uid()));
+
+DROP POLICY IF EXISTS "Users can create own referrals" ON referrals;
+CREATE POLICY "Users can create own referrals"
+  ON referrals FOR INSERT
+  TO authenticated
+  WITH CHECK (referrer_id = (select auth.uid()));
 
 CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrer_id);
 CREATE INDEX IF NOT EXISTS idx_referrals_code ON referrals(referral_code);
@@ -600,33 +924,56 @@ ALTER TABLE network_post_likes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE network_replies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE state_chat_messages ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can view network posts" ON network_posts;
 CREATE POLICY "Anyone can view network posts"
-  ON network_posts FOR SELECT USING (
+  ON network_posts FOR SELECT
+  TO anon, authenticated
+  USING (
     expires_at > now() AND is_flagged = false
   );
 
+DROP POLICY IF EXISTS "Verified members can post" ON network_posts;
 CREATE POLICY "Verified members can post"
   ON network_posts FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+  TO authenticated
+  WITH CHECK ((select auth.uid()) = user_id);
 
+DROP POLICY IF EXISTS "Anyone can view chat messages" ON state_chat_messages;
 CREATE POLICY "Anyone can view chat messages"
-  ON state_chat_messages FOR SELECT USING (
+  ON state_chat_messages FOR SELECT
+  TO anon, authenticated
+  USING (
     expires_at > now()
   );
 
+DROP POLICY IF EXISTS "Verified members can send messages" ON state_chat_messages;
 CREATE POLICY "Verified members can send messages"
   ON state_chat_messages FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+  TO authenticated
+  WITH CHECK ((select auth.uid()) = user_id);
 
+DROP POLICY IF EXISTS "Anyone can view replies" ON network_replies;
 CREATE POLICY "Anyone can view replies"
-  ON network_replies FOR SELECT USING (
+  ON network_replies FOR SELECT
+  TO anon, authenticated
+  USING (
     expires_at > now()
   );
 
+DROP POLICY IF EXISTS "Verified members can reply" ON network_replies;
 CREATE POLICY "Verified members can reply"
   ON network_replies FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+  TO authenticated
+  WITH CHECK ((select auth.uid()) = user_id);
 
+DROP POLICY IF EXISTS "Anyone can like posts" ON network_post_likes;
 CREATE POLICY "Anyone can like posts"
   ON network_post_likes FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+  TO authenticated
+  WITH CHECK ((select auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Anyone can view post likes" ON network_post_likes;
+CREATE POLICY "Anyone can view post likes"
+  ON network_post_likes FOR SELECT
+  TO anon, authenticated
+  USING (true);

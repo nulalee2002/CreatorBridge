@@ -1,18 +1,11 @@
-import { useReducer, useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { lazy, Suspense, useReducer, useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { formatCurrency } from './utils/pricing.js';
 import { Moon, Sun, Zap, RotateCcw, Search, UserPlus, LogIn, LogOut, User, MessageSquare, Briefcase, LayoutDashboard, Users } from 'lucide-react';
 import { v4 as uuid } from 'uuid';
 import { useAuth } from './contexts/AuthContext.jsx';
 import { AuthModal } from './components/auth/AuthModal.jsx';
-import { CreatorProfilePage } from './pages/CreatorProfilePage.jsx';
-import { CreatorDashboard } from './pages/CreatorDashboard.jsx';
-import { MessagesPage } from './pages/MessagesPage.jsx';
-import { ProjectBoard } from './pages/ProjectBoard.jsx';
 import { ErrorBoundary } from './components/ErrorBoundary.jsx';
-import { CheckoutPage } from './pages/CheckoutPage.jsx';
-import { MatchResultsPage } from './pages/MatchResultsPage.jsx';
-import { NetworkingPage } from './pages/NetworkingPage.jsx';
 import { TermsModal } from './components/TermsModal.jsx';
 import { PrivacyModal } from './components/PrivacyModal.jsx';
 import { captureReferralCode } from './components/ReferralSection.jsx';
@@ -22,21 +15,45 @@ import { CircuitBackground } from './components/CircuitBackground.jsx';
 import { SERVICES, RATES, PACKAGE_TIERS } from './data/rates.js';
 import { DEFAULT_EXCHANGE_RATES } from './data/regions.js';
 import { getRegionRates, buildQuote, getRate } from './utils/pricing.js';
-import { generateQuotePDF } from './utils/pdf.js';
 
-import { StateCitySelector }   from './components/StateCitySelector.jsx';
-import { ServiceSelector }     from './components/ServiceSelector.jsx';
-import { LineItemBuilder }     from './components/LineItemBuilder.jsx';
-import { QuoteOutput }         from './components/QuoteOutput.jsx';
-import { RateComparisonChart } from './components/RateComparisonChart.jsx';
-import { HealthWidget }        from './components/HealthWidget.jsx';
-import { PackageComparison }   from './components/PackageComparison.jsx';
-import { SeasonalDemand }      from './components/SeasonalDemand.jsx';
-import { PresetManager }       from './components/PresetManager.jsx';
-import { CurrencySettings }    from './components/CurrencySettings.jsx';
 import { CreatorDirectory }    from './components/CreatorDirectory.jsx';
-import { ProfileSettings }     from './components/ProfileSettings.jsx';
-import { QuickQuoteMode }      from './components/QuickQuoteMode.jsx';
+
+const StateCitySelector = lazy(() => import('./components/StateCitySelector.jsx').then(m => ({ default: m.StateCitySelector })));
+const ServiceSelector = lazy(() => import('./components/ServiceSelector.jsx').then(m => ({ default: m.ServiceSelector })));
+const LineItemBuilder = lazy(() => import('./components/LineItemBuilder.jsx').then(m => ({ default: m.LineItemBuilder })));
+const QuoteOutput = lazy(() => import('./components/QuoteOutput.jsx').then(m => ({ default: m.QuoteOutput })));
+const RateComparisonChart = lazy(() => import('./components/RateComparisonChart.jsx').then(m => ({ default: m.RateComparisonChart })));
+const HealthWidget = lazy(() => import('./components/HealthWidget.jsx').then(m => ({ default: m.HealthWidget })));
+const PackageComparison = lazy(() => import('./components/PackageComparison.jsx').then(m => ({ default: m.PackageComparison })));
+const SeasonalDemand = lazy(() => import('./components/SeasonalDemand.jsx').then(m => ({ default: m.SeasonalDemand })));
+const PresetManager = lazy(() => import('./components/PresetManager.jsx').then(m => ({ default: m.PresetManager })));
+const CurrencySettings = lazy(() => import('./components/CurrencySettings.jsx').then(m => ({ default: m.CurrencySettings })));
+const ProfileSettings = lazy(() => import('./components/ProfileSettings.jsx').then(m => ({ default: m.ProfileSettings })));
+const CreatorProfilePage = lazy(() => import('./pages/CreatorProfilePage.jsx').then(m => ({ default: m.CreatorProfilePage })));
+const CreatorDashboard = lazy(() => import('./pages/CreatorDashboard.jsx').then(m => ({ default: m.CreatorDashboard })));
+const MessagesPage = lazy(() => import('./pages/MessagesPage.jsx').then(m => ({ default: m.MessagesPage })));
+const ProjectBoard = lazy(() => import('./pages/ProjectBoard.jsx').then(m => ({ default: m.ProjectBoard })));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage.jsx').then(m => ({ default: m.CheckoutPage })));
+const MatchResultsPage = lazy(() => import('./pages/MatchResultsPage.jsx').then(m => ({ default: m.MatchResultsPage })));
+const NetworkingPage = lazy(() => import('./pages/NetworkingPage.jsx').then(m => ({ default: m.NetworkingPage })));
+const ClientProfilePage = lazy(() => import('./pages/ClientProfilePage.jsx').then(m => ({ default: m.ClientProfilePage })));
+const QuickQuoteMode = lazy(() => import('./components/QuickQuoteMode.jsx').then(m => ({ default: m.QuickQuoteMode })));
+
+function RouteLoading({ dark }) {
+  return (
+    <main className="min-h-[55vh] grid place-items-center px-6">
+      <div className={`rounded-2xl border px-5 py-4 text-sm font-semibold ${
+        dark ? 'bg-charcoal-900/72 border-gold-500/18 text-charcoal-200' : 'bg-white border-gray-200 text-gray-700'
+      }`}>
+        Loading CreatorBridge...
+      </div>
+    </main>
+  );
+}
+
+function LazyRoute({ dark, children }) {
+  return <Suspense fallback={<RouteLoading dark={dark} />}>{children}</Suspense>;
+}
 
 // ── Initial State ────────────────────────────────────────────
 const DEFAULT_STATE = {
@@ -262,6 +279,7 @@ export default function App() {
   const activeTab = location.pathname.startsWith('/register')   ? 'register'
     : location.pathname.startsWith('/calculator') ? 'calculator'
     : location.pathname.startsWith('/dashboard')  ? 'dashboard'
+    : location.pathname.startsWith('/client')     ? 'client'
     : location.pathname.startsWith('/messages')   ? 'messages'
     : location.pathname.startsWith('/projects')   ? 'projects'
     : location.pathname.startsWith('/network')    ? 'network'
@@ -303,6 +321,7 @@ export default function App() {
   useEffect(() => {
     function handleOpenAuth(e) {
       setAuthTab(e.detail?.tab || 'signup');
+      if (e.detail?.role) setAuthRole(e.detail.role);
       setShowAuth(true);
     }
     window.addEventListener('open-auth', handleOpenAuth);
@@ -314,6 +333,7 @@ export default function App() {
   const quote = useMemo(() => buildQuote(state), [state]);
 
   const handleExportPDF = useCallback(async () => {
+    const { generateQuotePDF } = await import('./utils/pdf.js');
     await generateQuotePDF(quote, state, profile);
   }, [quote, state, profile]);
 
@@ -326,12 +346,16 @@ export default function App() {
   }, []);
 
   if (quickMode) {
-    return <QuickQuoteMode dark={dark} onFullMode={() => setQuickMode(false)} />;
+    return (
+      <Suspense fallback={<RouteLoading dark={dark} />}>
+        <QuickQuoteMode dark={dark} onFullMode={() => setQuickMode(false)} />
+      </Suspense>
+    );
   }
 
   const bgMain = dark ? '' : 'bg-gray-50';
   const textMain = dark ? 'text-white' : 'text-gray-900';
-  const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`;
+  const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.07] shadow-[0_22px_70px_rgba(0,0,0,0.18)]' : 'bg-white border-gray-200'}`;
 
   return (
     <>
@@ -339,21 +363,32 @@ export default function App() {
       <CircuitBackground />
 
       {/* ── Top Nav ── */}
-      <header className={`sticky top-0 z-20 ${dark ? 'bg-charcoal-900/95 border-charcoal-700' : 'bg-white/95 border-gray-200'} border-b backdrop-blur-sm`}>
-        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center gap-3">
+      <header
+        className={`sticky top-0 z-20 border-b backdrop-blur-xl ${dark ? 'bg-charcoal-950/88 border-gold-500/14' : 'bg-white/92 border-gray-200'}`}
+        style={{ boxShadow: dark ? '0 18px 60px rgba(0,0,0,0.24)' : '0 12px 40px rgba(0,0,0,0.08)' }}
+      >
+        <div className="mx-auto w-full max-w-[1520px] px-5 sm:px-8 lg:px-12 h-16 flex items-center gap-4">
 
           {/* Logo */}
-          <div className="flex items-center gap-2 shrink-0 cursor-pointer" onClick={() => navigate('/')}>
-            <span className="text-xl">🎬</span>
-            <span className={`font-display font-bold text-base hidden sm:block ${textMain}`}>
-              Creator<span className="text-gradient-gold">Bridge</span>
+          <div className="group flex items-center gap-3 shrink-0 cursor-pointer" onClick={() => navigate('/')}>
+            <span className="relative grid h-10 w-10 place-items-center rounded-xl border border-gold-500/24 bg-gold-500/10 text-lg shadow-[0_0_24px_rgba(212,169,65,0.12)]">
+              <span className="absolute inset-x-2 top-1 h-px bg-gold-400/55" />
+              🎬
+            </span>
+            <span className="hidden sm:flex flex-col leading-none">
+              <span className={`font-display font-bold text-xl tracking-tight ${textMain}`}>
+                Creator<span className="text-gradient-gold">Bridge</span>
+              </span>
+              <span className={`mt-1 text-[9px] font-bold uppercase tracking-[0.22em] ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
+                Verified media talent
+              </span>
             </span>
           </div>
 
           <div className="flex-1" />
 
           {/* Main tab switcher */}
-          <div className={`flex rounded-xl border overflow-hidden ${dark ? 'border-charcoal-600' : 'border-gray-200'}`}>
+          <div className={`hidden md:flex rounded-2xl border overflow-hidden p-1 ${dark ? 'bg-white/[0.025] border-gold-500/14' : 'bg-gray-50 border-gray-200'}`}>
             {[
               { path: '/',           id: 'directory',  icon: Search,   label: 'Find Creators' },
               { path: '/projects',   id: 'projects',   icon: Briefcase, label: 'Projects' },
@@ -361,13 +396,13 @@ export default function App() {
               { path: '/calculator', id: 'calculator', icon: Zap,      label: 'Rate Calculator' },
             ].map(({ path, id, icon: Icon, label }) => (
               <button key={id} type="button" onClick={() => navigate(path)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold transition-colors rounded-xl ${
                   activeTab === id
-                    ? 'bg-gold-500 text-charcoal-900'
-                    : dark ? 'text-charcoal-200 hover:text-white' : 'text-gray-500 hover:text-gray-900'
+                    ? 'bg-gold-500 text-charcoal-900 shadow-[0_8px_24px_rgba(212,169,65,0.16)]'
+                    : dark ? 'text-charcoal-200 hover:text-white hover:bg-white/[0.04]' : 'text-gray-500 hover:text-gray-900 hover:bg-white'
                 }`}
               >
-                <Icon size={12} /> <span className="hidden sm:inline">{label}</span>
+                <Icon size={13} /> <span>{label}</span>
               </button>
             ))}
           </div>
@@ -377,29 +412,29 @@ export default function App() {
             <button
               type="button"
               onClick={() => setShowJoinDropdown(d => !d)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-colors rounded-xl border ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold transition-colors rounded-xl border ${
                 activeTab === 'register' || showJoinDropdown
                   ? 'bg-gold-500 text-charcoal-900 border-gold-500'
-                  : dark ? 'border-charcoal-600 text-charcoal-300 hover:text-white hover:border-charcoal-500' : 'border-gray-200 text-gray-600 hover:text-gray-900'
+                  : dark ? 'border-gold-500/14 text-charcoal-300 hover:text-white hover:border-gold-500/32 hover:bg-white/[0.035]' : 'border-gray-200 text-gray-600 hover:text-gray-900'
               }`}
             >
-              <UserPlus size={12} /> <span className="hidden sm:inline">Join</span>
+              <UserPlus size={13} /> <span className="hidden sm:inline">Join</span>
             </button>
             {showJoinDropdown && (
               <div className={`absolute right-0 top-full mt-2 w-56 rounded-xl border shadow-xl z-50 overflow-hidden ${
-                dark ? 'bg-charcoal-900 border-charcoal-700' : 'bg-white border-gray-200'
+                dark ? 'bg-charcoal-950/75 border-white/[0.07]' : 'bg-white border-gray-200'
               }`}>
                 <button
                   type="button"
                   onClick={() => { navigate('/register'); setShowJoinDropdown(false); }}
                   className={`w-full flex flex-col items-start gap-0.5 px-4 py-3 transition-colors text-left ${
-                    dark ? 'hover:bg-charcoal-800' : 'hover:bg-gray-50'
+                    dark ? 'hover:bg-charcoal-900/72' : 'hover:bg-gray-50'
                   }`}
                 >
                   <span className={`text-xs font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>I am a Creator</span>
                   <span className={`text-[11px] ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>List your services and get hired</span>
                 </button>
-                <div className={`border-t ${dark ? 'border-charcoal-700' : 'border-gray-100'}`} />
+                <div className={`border-t ${dark ? 'border-white/[0.07]' : 'border-gray-100'}`} />
                 <button
                   type="button"
                   onClick={() => {
@@ -409,7 +444,7 @@ export default function App() {
                     setShowJoinDropdown(false);
                   }}
                   className={`w-full flex flex-col items-start gap-0.5 px-4 py-3 transition-colors text-left ${
-                    dark ? 'hover:bg-charcoal-800' : 'hover:bg-gray-50'
+                    dark ? 'hover:bg-charcoal-900/72' : 'hover:bg-gray-50'
                   }`}
                 >
                   <span className={`text-xs font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>I am a Client</span>
@@ -421,10 +456,10 @@ export default function App() {
 
           {/* Calculator tools (only when on calculator tab) */}
           {activeTab === 'calculator' && (
-            <>
+            <Suspense fallback={null}>
               <button type="button" onClick={() => setQuickMode(true)}
                 className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
-                  dark ? 'border-charcoal-600 text-charcoal-300 hover:text-white hover:border-charcoal-500' : 'border-gray-200 text-gray-500 hover:text-gray-900'
+                  dark ? 'border-white/[0.09] text-charcoal-300 hover:text-white hover:border-charcoal-500' : 'border-gray-200 text-gray-500 hover:text-gray-900'
                 }`}
               >
                 <Zap size={12} className="text-gold-400" /> Quick Quote
@@ -439,12 +474,12 @@ export default function App() {
                 dark={dark}
               />
               <button type="button" onClick={() => dispatch({ type: 'RESET' })}
-                className={`p-2 rounded-xl transition-colors ${dark ? 'text-charcoal-500 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}
+                className={`p-2 rounded-xl transition-colors ${dark ? 'text-charcoal-500 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}
                 title="Reset calculator"
               >
                 <RotateCcw size={14} />
               </button>
-            </>
+            </Suspense>
           )}
 
           {/* Auth buttons */}
@@ -454,7 +489,7 @@ export default function App() {
                 className={`p-2 rounded-xl transition-colors ${
                   activeTab === 'messages'
                     ? 'bg-gold-500/20 text-gold-400'
-                    : dark ? 'text-charcoal-400 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
+                    : dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
                 }`} title="Messages">
                 <MessageSquare size={14} />
               </button>
@@ -462,31 +497,39 @@ export default function App() {
                 className={`p-2 rounded-xl transition-colors ${
                   activeTab === 'dashboard'
                     ? 'bg-gold-500/20 text-gold-400'
-                    : dark ? 'text-charcoal-400 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
+                    : dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
                 }`} title="Dashboard">
                 <LayoutDashboard size={14} />
+              </button>
+              <button type="button" onClick={() => navigate('/client')}
+                className={`p-2 rounded-xl transition-colors ${
+                  activeTab === 'client'
+                    ? 'bg-gold-500/20 text-gold-400'
+                    : dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
+                }`} title="Client profile">
+                <User size={14} />
               </button>
               <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${dark ? 'bg-gold-500/20 text-gold-400' : 'bg-gold-100 text-gold-600'}`}>
                 {(authProfile?.full_name || user.email || 'U')[0].toUpperCase()}
               </div>
               <button type="button" onClick={signOut}
-                className={`p-2 rounded-xl transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}
+                className={`p-2 rounded-xl transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}
                 title="Sign out">
                 <LogOut size={14} />
               </button>
             </div>
           ) : (
             <button type="button" onClick={() => openAuth('login')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
-                dark ? 'border-charcoal-600 text-charcoal-300 hover:text-white hover:border-charcoal-500' : 'border-gray-200 text-gray-600 hover:text-gray-900'
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-bold transition-all ${
+                dark ? 'border-gold-500/14 text-charcoal-300 hover:text-white hover:border-gold-500/32 hover:bg-white/[0.035]' : 'border-gray-200 text-gray-600 hover:text-gray-900'
               }`}>
-              <LogIn size={12} /> Sign In
+              <LogIn size={13} /> Sign In
             </button>
           )}
 
           {/* Dark mode */}
           <button type="button" onClick={() => setDark(d => !d)}
-            className={`p-2 rounded-xl transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}
+            className={`p-2.5 rounded-xl transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}
           >
             {dark ? <Sun size={16} /> : <Moon size={16} />}
           </button>
@@ -497,29 +540,47 @@ export default function App() {
       <Routes>
         <Route path="/" element={<CreatorDirectory dark={dark} mode="search" onSwitchToRegister={() => navigate('/register')} />} />
         <Route path="/register" element={<CreatorDirectory dark={dark} mode="register" onSwitchToSearch={() => navigate('/')} />} />
-        <Route path="/creator/:id" element={<CreatorProfilePage dark={dark} />} />
-        <Route path="/dashboard" element={<CreatorDashboard dark={dark} />} />
-        <Route path="/messages" element={<MessagesPage dark={dark} />} />
-        <Route path="/projects" element={<ErrorBoundary dark={dark} fallbackMessage="Could not load the Project Board"><ProjectBoard dark={dark} /></ErrorBoundary>} />
-        <Route path="/checkout/:projectId" element={<CheckoutPage dark={dark} />} />
-        <Route path="/matches/:projectId" element={<MatchResultsPage dark={dark} />} />
-        <Route path="/network" element={<NetworkingPage dark={dark} user={user} />} />
+        <Route path="/creator/:id" element={<LazyRoute dark={dark}><CreatorProfilePage dark={dark} /></LazyRoute>} />
+        <Route path="/dashboard" element={<LazyRoute dark={dark}><CreatorDashboard dark={dark} /></LazyRoute>} />
+        <Route path="/client" element={<LazyRoute dark={dark}><ClientProfilePage dark={dark} /></LazyRoute>} />
+        <Route path="/messages" element={<LazyRoute dark={dark}><MessagesPage dark={dark} /></LazyRoute>} />
+        <Route path="/projects" element={<ErrorBoundary dark={dark} fallbackMessage="Could not load the Project Board"><LazyRoute dark={dark}><ProjectBoard dark={dark} /></LazyRoute></ErrorBoundary>} />
+        <Route path="/checkout/:projectId" element={<LazyRoute dark={dark}><CheckoutPage dark={dark} /></LazyRoute>} />
+        <Route path="/matches/:projectId" element={<LazyRoute dark={dark}><MatchResultsPage dark={dark} /></LazyRoute>} />
+        <Route path="/network" element={<LazyRoute dark={dark}><NetworkingPage dark={dark} user={user} /></LazyRoute>} />
         <Route path="/calculator" element={null} />
       </Routes>
 
       {/* ── Calculator (rendered outside Routes to preserve state) ── */}
-      <main className={`max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 ${activeTab !== 'calculator' ? 'hidden' : ''}`}>
+      {activeTab === 'calculator' && (
+      <Suspense fallback={<RouteLoading dark={dark} />}>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-10 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6">
 
         {/* ── Calculator purpose label ── */}
         <div className="col-span-full">
-          <div className={`rounded-xl border px-4 py-3 flex items-center gap-3 ${dark ? 'bg-gold-500/5 border-gold-500/20' : 'bg-gold-50 border-gold-200'}`}>
-            <Zap size={15} className="text-gold-400 shrink-0" />
-            <p className={`text-sm font-semibold ${dark ? 'text-gold-300' : 'text-gold-700'}`}>
+          <div className={`relative overflow-hidden rounded-[28px] border p-6 md:p-8 ${
+            dark ? 'bg-charcoal-900/72 border-white/[0.08] shadow-[0_28px_90px_rgba(0,0,0,0.28)]' : 'bg-white border-gray-200'
+          }`}>
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/60 to-transparent" />
+            <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
               Creator Pricing Tool
-              <span className={`ml-2 font-normal text-xs ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
-                Use this to build and calculate your service rates. This tool is for creators, not for client-facing quotes.
-              </span>
             </p>
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
+              <div>
+                <h1 className={`font-display font-bold text-4xl md:text-5xl leading-tight ${dark ? 'text-white' : 'text-gray-900'}`}>
+                  Build rates with professional confidence.
+                </h1>
+                <p className={`mt-4 text-sm md:text-base leading-7 max-w-2xl ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
+                  Use this creator-side tool to calculate service pricing, quote structure, costs, margin, and package fit before sending work to a client.
+                </p>
+              </div>
+              <div className={`rounded-2xl border p-4 ${dark ? 'bg-gold-500/10 border-gold-500/20' : 'bg-gold-50 border-gold-200'}`}>
+                <Zap size={18} className="text-gold-400 mb-3" />
+                <p className={`text-xs leading-5 ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>
+                  This calculator is for creator pricing strategy, not the public client booking flow.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -546,10 +607,10 @@ export default function App() {
                 <p className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
                   Experience Level
                 </p>
-                <div className={`flex rounded-xl border overflow-hidden ${dark ? 'border-charcoal-600' : 'border-gray-200'}`}>
+                <div className={`flex rounded-xl border overflow-hidden ${dark ? 'border-white/[0.09]' : 'border-gray-200'}`}>
                   {[
-                    { id: 'entry',  label: '0-2 yrs' },
-                    { id: 'mid',    label: '3-6 yrs' },
+                    { id: 'entry',  label: '2-3 yrs' },
+                    { id: 'mid',    label: '4-6 yrs' },
                     { id: 'senior', label: '7+ yrs'  },
                   ].map(({ id, label }) => (
                     <button key={id} type="button"
@@ -597,7 +658,7 @@ export default function App() {
                     placeholder="Client or Project Name"
                     className={`w-full px-3 py-2 text-sm rounded-lg border outline-none transition-all ${
                       dark
-                        ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+                        ? 'bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
                         : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
                     }`}
                   />
@@ -611,7 +672,7 @@ export default function App() {
                     placeholder="e.g. Q-2026-001"
                     className={`w-full px-3 py-2 text-sm rounded-lg border outline-none transition-all ${
                       dark
-                        ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+                        ? 'bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
                         : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
                     }`}
                   />
@@ -620,7 +681,7 @@ export default function App() {
 
               <LineItemBuilder state={state} dispatch={dispatch} dark={dark} />
 
-              <div className={`mt-4 border-t pt-4 ${dark ? 'border-charcoal-700' : 'border-gray-200'}`}>
+              <div className={`mt-4 border-t pt-4 ${dark ? 'border-white/[0.07]' : 'border-gray-200'}`}>
                 <p className={`text-xs font-medium mb-1 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>Notes / Terms</p>
                 <textarea
                   value={state.notes}
@@ -629,14 +690,14 @@ export default function App() {
                   rows={3}
                   className={`w-full px-3 py-2 text-sm rounded-lg border outline-none transition-all resize-none ${
                     dark
-                      ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+                      ? 'bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
                   }`}
                 />
               </div>
 
               {/* Cost inputs */}
-              <div className={`mt-4 border-t pt-4 ${dark ? 'border-charcoal-700' : 'border-gray-200'}`}>
+              <div className={`mt-4 border-t pt-4 ${dark ? 'border-white/[0.07]' : 'border-gray-200'}`}>
                 <div className="flex items-center justify-between mb-2">
                   <p className={`text-xs font-medium ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>Your Actual Costs (for margin calc)</p>
                   <button type="button"
@@ -651,13 +712,13 @@ export default function App() {
                     <div key={cost.id} className="flex gap-2">
                       <input type="text" value={cost.label} placeholder="Cost label"
                         onChange={e => dispatch({ type: 'SET_FIELD', field: 'costInputs', value: state.costInputs.map(c => c.id === cost.id ? { ...c, label: e.target.value } : c) })}
-                        className={`flex-1 px-3 py-1.5 text-sm rounded-lg border outline-none transition-all ${dark ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'}`}
+                        className={`flex-1 px-3 py-1.5 text-sm rounded-lg border outline-none transition-all ${dark ? 'bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'}`}
                       />
                       <div className="relative flex items-center w-28">
                         <span className={`absolute left-2 text-xs pointer-events-none ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>$</span>
                         <input type="number" min={0} value={cost.value || ''}
                           onChange={e => dispatch({ type: 'SET_FIELD', field: 'costInputs', value: state.costInputs.map(c => c.id === cost.id ? { ...c, value: parseFloat(e.target.value) || 0 } : c) })}
-                          className={`w-full pl-5 pr-2 py-1.5 text-sm rounded-lg border outline-none transition-all ${dark ? 'bg-charcoal-900 border-charcoal-600 text-white focus:border-gold-500' : 'bg-white border-gray-300 text-gray-900 focus:border-gold-500'}`}
+                          className={`w-full pl-5 pr-2 py-1.5 text-sm rounded-lg border outline-none transition-all ${dark ? 'bg-charcoal-950/75 border-white/[0.09] text-white focus:border-gold-500' : 'bg-white border-gray-300 text-gray-900 focus:border-gold-500'}`}
                         />
                       </div>
                       <button type="button"
@@ -713,7 +774,7 @@ export default function App() {
                   {quote.profitMargin !== null && (
                     <div className="text-right">
                       <p className={`text-[10px] ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>Margin</p>
-                      <p className={`text-xl font-bold ${quote.profitMargin >= 50 ? 'text-green-400' : quote.profitMargin >= 25 ? 'text-yellow-400' : 'text-red-400'}`}>
+                      <p className={`text-xl font-bold ${quote.profitMargin >= 50 ? 'text-gold-400' : quote.profitMargin >= 25 ? 'text-gold-400' : 'text-red-400'}`}>
                         {quote.profitMargin}%
                       </p>
                     </div>
@@ -762,6 +823,8 @@ export default function App() {
           </div>
         </div>
       </main>
+      </Suspense>
+      )}
 
       {/* ── Footer ── */}
       {activeTab !== 'calculator' && location.pathname.startsWith('/creator') ? null : (

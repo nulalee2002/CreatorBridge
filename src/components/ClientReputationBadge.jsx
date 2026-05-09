@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Star, X } from 'lucide-react';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 // ── Scoring helpers ─────────────────────────────────────────────
 
@@ -14,17 +15,17 @@ export function getReputationScore(metrics = {}) {
 
   // New clients with no history get a neutral "New Client" label
   if (totalProjects === 0) {
-    return { label: 'New Client', color: 'gray', textColor: 'text-gray-400', bgColor: 'bg-gray-400/15 ring-gray-400/20' };
+    return { label: 'New Client', color: 'neutral', textColor: 'text-charcoal-300', bgColor: 'bg-white/[0.08] ring-white/[0.12]' };
   }
 
   if (completionRate >= 90 && avgRating >= 4.5) {
-    return { label: 'Excellent', color: 'green', textColor: 'text-green-400', bgColor: 'bg-green-500/15 ring-green-500/20' };
+    return { label: 'Excellent', color: 'gold', textColor: 'text-gold-400', bgColor: 'bg-gold-500/15 ring-gold-500/25' };
   }
   if (completionRate >= 75 && avgRating >= 4.0) {
-    return { label: 'Good', color: 'teal', textColor: 'text-teal-400', bgColor: 'bg-teal-500/15 ring-teal-500/20' };
+    return { label: 'Good', color: 'gold', textColor: 'text-gold-300', bgColor: 'bg-gold-500/10 ring-gold-500/20' };
   }
   if (completionRate >= 60 && avgRating >= 3.0) {
-    return { label: 'Fair', color: 'yellow', textColor: 'text-yellow-400', bgColor: 'bg-yellow-500/15 ring-yellow-500/20' };
+    return { label: 'Fair', color: 'gold', textColor: 'text-gold-300', bgColor: 'bg-gold-500/10 ring-gold-500/20' };
   }
   return { label: 'Caution', color: 'red', textColor: 'text-red-400', bgColor: 'bg-red-500/15 ring-red-500/20' };
 }
@@ -82,8 +83,8 @@ export function ClientReputationBadge({ metrics, dark, size = 'sm' }) {
  */
 export function ClientReputationCard({ clientName, metrics, dark }) {
   const rep = getReputationScore(metrics || {});
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
-  const cardCls = `rounded-xl border p-3 ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-gray-50 border-gray-200'}`;
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
+  const cardCls = `rounded-xl border p-3 ${dark ? 'bg-charcoal-950/55 border-white/[0.08]' : 'bg-gray-50 border-gray-200'}`;
 
   return (
     <div className={cardCls}>
@@ -126,15 +127,16 @@ export function ClientReputationCard({ clientName, metrics, dark }) {
  * Props: clientId, clientName, projectId, dark, onClose, onSubmitted
  */
 export function RateClientModal({ clientId, clientName, projectId, dark, onClose, onSubmitted }) {
+  const { user } = useAuth();
   const [rating, setRating]   = useState(0);
   const [hovered, setHovered] = useState(0);
   const [comment, setComment] = useState('');
   const [saving, setSaving]   = useState(false);
   const [done, setDone]       = useState(false);
 
-  const textSub  = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
   const inputCls = `w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${
-    dark ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+    dark ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
          : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
   }`;
 
@@ -153,6 +155,7 @@ export function RateClientModal({ clientId, clientName, projectId, dark, onClose
     if (supabaseConfigured) {
       await supabase.from('client_reviews').insert({
         client_id:  clientId,
+        reviewer_id: user?.id,
         project_id: projectId,
         rating,
         comment: comment.trim() || null,
@@ -169,10 +172,11 @@ export function RateClientModal({ clientId, clientName, projectId, dark, onClose
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative w-full max-w-sm rounded-2xl border shadow-2xl p-6 ${dark ? 'bg-charcoal-900 border-charcoal-700' : 'bg-white border-gray-200'}`}>
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-md" onClick={onClose} />
+      <div className={`relative w-full max-w-sm rounded-2xl border overflow-hidden p-6 ${dark ? 'bg-charcoal-950/96 border-white/[0.09] shadow-[0_28px_90px_rgba(0,0,0,0.46)]' : 'bg-white border-gray-200 shadow-2xl'}`}>
+        <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-400/70 to-transparent" />
         <button type="button" onClick={onClose}
-          className={`absolute top-4 right-4 p-1.5 rounded-lg ${dark ? 'text-charcoal-400 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
+          className={`absolute top-4 right-4 p-1.5 rounded-lg ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.08]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
           <X size={16} />
         </button>
 

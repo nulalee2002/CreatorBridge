@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
-import { SERVICES } from '../data/rates.js';
+import { SERVICES, normalizeServiceId } from '../data/rates.js';
 import { PackageBuilder } from '../components/PackageBuilder.jsx';
 import { AvailabilityEditor } from '../components/AvailabilityCalendar.jsx';
 import { GoogleCalendarConnect } from '../components/GoogleCalendarConnect.jsx';
@@ -31,7 +31,7 @@ function loadMyListing(userId) {
 function loadQuoteRequests(creatorId) {
   try {
     const all = JSON.parse(localStorage.getItem('quote-requests') || '[]');
-    return all.filter(q => q.creatorId === creatorId);
+    return all.filter(q => q.creatorId === creatorId || q.listing_id === creatorId).map(normalizeQuoteRequest);
   } catch { return []; }
 }
 function loadFavCount(creatorId) {
@@ -41,16 +41,34 @@ function loadFavCount(creatorId) {
   } catch { return 0; }
 }
 
+function normalizeQuoteRequest(quote) {
+  return {
+    ...quote,
+    id: quote.id,
+    creatorId: quote.creatorId || quote.listing_id,
+    clientName: quote.clientName || quote.client_name || 'Client',
+    clientEmail: quote.clientEmail || quote.client_email || '',
+    serviceId: normalizeServiceId(quote.serviceId || quote.service_id || quote.serviceType),
+    projectTitle: quote.projectTitle || quote.project_title || 'Quote request',
+    description: quote.description || '',
+    budget: quote.budget,
+    budgetRange: quote.budgetRange || quote.budget_range,
+    preferredDate: quote.preferredDate || quote.projectDate || quote.timeline,
+    createdAt: quote.createdAt || quote.created_at,
+    read: quote.read ?? false,
+  };
+}
+
 // ── Creator fee tiers ────────────────────────────────────────────
 const CREATOR_TIERS = [
   {
     id: 'launch', label: 'Launch', icon: '🚀',
-    color: 'text-charcoal-400', borderColor: 'border-charcoal-600', bgColor: 'bg-charcoal-800',
+    color: 'text-charcoal-300', borderColor: 'border-white/[0.09]', bgColor: 'bg-charcoal-900/72',
     feePercent: 10, requirement: 0, description: 'New creators. 10% platform fee.',
   },
   {
     id: 'proven', label: 'Proven', icon: '⭐',
-    color: 'text-teal-400', borderColor: 'border-teal-500/50', bgColor: 'bg-teal-500/10',
+    color: 'text-gold-400', borderColor: 'border-gold-500/50', bgColor: 'bg-gold-500/10',
     feePercent: 8, requirement: 10, description: '10+ completed projects. Fee drops to 8%.',
   },
   {
@@ -60,7 +78,7 @@ const CREATOR_TIERS = [
   },
   {
     id: 'signature', label: 'Signature', icon: '👑',
-    color: 'text-violet-400', borderColor: 'border-violet-500/50', bgColor: 'bg-violet-500/10',
+    color: 'text-gold-300', borderColor: 'border-gold-500/45', bgColor: 'bg-gold-500/10',
     feePercent: 5, requirement: 50, description: '50+ completed projects. Top tier, 5% fee.',
   },
 ];
@@ -76,65 +94,67 @@ function getCreatorTier(completedProjects) {
 // ── Stat Card ───────────────────────────────────────────────────
 function StatCard({ icon: Icon, label, value, sub, color = 'text-gold-400', dark }) {
   return (
-    <div className={`rounded-2xl border p-4 ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`}>
+    <div className={`rounded-lg border p-4 ${dark ? 'bg-charcoal-950/80 border-gold-500/20' : 'bg-white border-gray-200'}`}>
       <div className="flex items-center justify-between mb-2">
         <Icon size={18} className={color} />
-        <span className={`text-[10px] font-medium uppercase tracking-wider ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>{label}</span>
+        <span className={`text-[10px] font-bold uppercase tracking-[0.18em] ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>{label}</span>
       </div>
       <p className={`font-display text-3xl font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{value}</p>
-      {sub && <p className={`text-xs mt-0.5 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>{sub}</p>}
+      {sub && <p className={`text-xs mt-0.5 ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>{sub}</p>}
     </div>
   );
 }
 
 // ── Quote request row ───────────────────────────────────────────
 function QuoteRow({ quote, dark, onMarkRead }) {
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
-  const svc = SERVICES[quote.serviceId];
-  const date = quote.preferredDate
-    ? new Date(quote.preferredDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
+  const normalized = normalizeQuoteRequest(quote);
+  const svc = SERVICES[normalized.serviceId];
+  const date = normalized.preferredDate
+    ? new Date(normalized.preferredDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
+  const budgetLabel = normalized.budgetRange || (normalized.budget ? `$${Number(normalized.budget).toLocaleString()}` : '');
 
   return (
     <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${
-      !quote.read
+      !normalized.read
         ? dark ? 'border-gold-500/40 bg-gold-500/5' : 'border-gold-400/40 bg-gold-50'
-        : dark ? 'border-charcoal-700 bg-charcoal-900/30' : 'border-gray-200 bg-gray-50'
+        : dark ? 'border-white/[0.07] bg-charcoal-900/30' : 'border-gray-200 bg-gray-50'
     }`}>
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0 ${dark ? 'bg-charcoal-700' : 'bg-gray-200'}`}>
+      <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0 ${dark ? 'bg-white/[0.08]' : 'bg-gray-200'}`}>
         {svc?.icon || '📝'}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <p className={`text-sm font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>{quote.clientName}</p>
-          {!quote.read && <span className="w-1.5 h-1.5 rounded-full bg-gold-400 shrink-0" />}
+          <p className={`text-sm font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>{normalized.clientName}</p>
+          {!normalized.read && <span className="w-1.5 h-1.5 rounded-full bg-gold-400 shrink-0" />}
           <span className={`text-xs ${textSub}`}>{svc?.name}</span>
         </div>
-        <p className={`text-xs mt-0.5 line-clamp-2 ${textSub}`}>{quote.description}</p>
+        <p className={`text-xs mt-0.5 line-clamp-2 ${textSub}`}>{normalized.description}</p>
         <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-          {quote.budget && (
-            <span className={`text-[11px] font-semibold text-teal-400`}>Budget: ${Number(quote.budget).toLocaleString()}</span>
+          {budgetLabel && (
+            <span className="text-[11px] font-semibold text-gold-400">Budget: {budgetLabel}</span>
           )}
           {date && (
             <span className={`text-[11px] flex items-center gap-1 ${textSub}`}>
               <Calendar size={9} /> {date}
             </span>
           )}
-          <span className={`text-[11px] ${textSub}`}>{quote.clientEmail}</span>
+          <span className={`text-[11px] ${textSub}`}>{normalized.clientEmail}</span>
         </div>
       </div>
       <div className="flex flex-col items-end gap-2 shrink-0">
         <span className={`text-[10px] ${dark ? 'text-charcoal-600' : 'text-gray-400'}`}>
-          {quote.createdAt ? new Date(quote.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
+          {normalized.createdAt ? new Date(normalized.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
         </span>
-        {!quote.read && (
-          <button type="button" onClick={() => onMarkRead(quote.id)}
+        {!normalized.read && (
+          <button type="button" onClick={() => onMarkRead(normalized.id)}
             className="text-[10px] text-gold-400 hover:text-gold-300 transition-colors font-medium">
             Mark read
           </button>
         )}
-        <a href={`mailto:${quote.clientEmail}`}
-          className="text-[10px] text-teal-400 hover:text-teal-300 transition-colors font-medium">
+        <a href={`mailto:${normalized.clientEmail}`}
+          className="text-[10px] text-gold-400 hover:text-gold-300 transition-colors font-medium">
           Reply
         </a>
       </div>
@@ -155,8 +175,8 @@ export function CreatorDashboard({ dark }) {
   const [violations, setViolations] = useState([]);
   const [tierUpBanner, setTierUpBanner] = useState(null);
 
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
-  const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`;
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
+  const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`;
 
   // Handle Stripe return from onboarding
   useEffect(() => {
@@ -185,7 +205,11 @@ export function CreatorDashboard({ dark }) {
           .select('*')
           .eq('listing_id', data.id)
           .order('created_at', { ascending: false });
-        setQuotes(qData || []);
+        setQuotes((qData || []).map(normalizeQuoteRequest));
+      } else {
+        const found = loadMyListing(user.id);
+        setCreator(found);
+        if (found) setQuotes(loadQuoteRequests(found.id));
       }
     } else {
       const found = loadMyListing(user.id);
@@ -248,6 +272,10 @@ export function CreatorDashboard({ dark }) {
           className="px-5 py-2.5 rounded-xl bg-gold-500 text-charcoal-900 font-bold text-sm flex items-center gap-2">
           <Plus size={14} /> Create Your Listing
         </button>
+        <button type="button" onClick={() => navigate('/client')}
+          className={`px-5 py-2.5 rounded-xl border font-bold text-sm flex items-center gap-2 ${dark ? 'border-gold-500/25 text-charcoal-200 hover:text-white hover:border-gold-500/45' : 'border-gray-200 text-gray-700 hover:text-gray-900'}`}>
+          Open Client Profile
+        </button>
       </div>
     );
   }
@@ -267,19 +295,29 @@ export function CreatorDashboard({ dark }) {
 
   return (
     <div className={`min-h-screen ${dark ? 'bg-transparent' : 'bg-gray-50'}`}>
-      <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="mx-auto w-full max-w-[1520px] px-5 sm:px-8 lg:px-12 py-6">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl ${dark ? 'bg-charcoal-800' : 'bg-white border border-gray-200'}`}>
+        <div className={`relative overflow-hidden rounded-lg border p-6 sm:p-7 mb-5 ${dark ? 'bg-charcoal-950/80 border-gold-500/20' : 'bg-white border-gray-200'}`}
+          style={{ boxShadow: dark ? '0 28px 90px rgba(0,0,0,0.22)' : '0 22px 70px rgba(0,0,0,0.08)' }}>
+          <div
+            className="absolute inset-x-0 top-0 h-1"
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(212,169,65,0.85), transparent)' }}
+          />
+          <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-gold-500/10 blur-3xl" />
+          <div className="relative flex items-center justify-between gap-5 flex-wrap">
+          <div className="flex items-center gap-4">
+            <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center text-3xl ${dark ? 'bg-white/[0.035] border-gold-500/20' : 'bg-white border-gray-200'}`}>
               {creator.avatar || '🎬'}
             </div>
             <div>
-              <h1 className={`font-display font-bold text-xl ${dark ? 'text-white' : 'text-gray-900'}`}>
-                Creator Dashboard
+              <p className="text-gold-400 mb-1" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
+                Creator operations
+              </p>
+              <h1 className={`font-display font-bold text-3xl tracking-tight ${dark ? 'text-white' : 'text-gray-950'}`}>
+                {creator.businessName || creator.name}
               </h1>
-              <p className={`text-sm ${textSub}`}>{creator.businessName || creator.name}</p>
+              <p className={`text-sm mt-1 ${textSub}`}>Manage your profile, quote requests, bookings, and creator growth.</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -290,7 +328,7 @@ export function CreatorDashboard({ dark }) {
             )}
             <button type="button" onClick={() => navigate(`/creator/${creator.id}`)}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-all ${
-                dark ? 'border-charcoal-600 text-charcoal-300 hover:text-white' : 'border-gray-200 text-gray-600 hover:text-gray-900'
+                dark ? 'border-gold-500/20 text-charcoal-300 hover:border-gold-500/40 hover:text-white hover:bg-white/[0.035]' : 'border-gray-200 text-gray-600 hover:text-gray-900'
               }`}>
               <ExternalLink size={12} /> View Profile
             </button>
@@ -299,16 +337,17 @@ export function CreatorDashboard({ dark }) {
               <Edit3 size={12} /> Edit Listing
             </button>
           </div>
+          </div>
         </div>
 
         {/* Tab bar */}
-        <div className={`flex gap-1 p-1 rounded-xl border mb-6 w-fit ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-gray-100 border-gray-200'}`}>
+        <div className={`flex gap-1.5 p-1.5 rounded-2xl border mb-6 w-full overflow-x-auto no-scrollbar ${dark ? 'bg-charcoal-950/72 border-gold-500/14' : 'bg-gray-100 border-gray-200'}`}>
           {tabs.map(({ id, label, icon: Icon }) => (
             <button key={id} type="button" onClick={() => setActiveTab(id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                 activeTab === id
-                  ? 'bg-gold-500 text-charcoal-900'
-                  : dark ? 'text-charcoal-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'
+                  ? 'bg-gold-500 text-charcoal-900 shadow-[0_8px_24px_rgba(212,169,65,0.14)]'
+                  : dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.035]' : 'text-gray-500 hover:text-gray-900'
               }`}>
               <Icon size={12} /> {label}
             </button>
@@ -336,26 +375,26 @@ export function CreatorDashboard({ dark }) {
         {activeTab === 'overview' && (
           <div className="space-y-5">
             {/* Profile identity message */}
-            <div className={`rounded-xl border px-4 py-3 text-sm ${dark ? 'border-charcoal-700 bg-charcoal-800/60 text-charcoal-300' : 'border-gray-200 bg-gray-50 text-gray-600'}`}>
+            <div className={`rounded-lg border px-4 py-3 text-sm ${dark ? 'border-gold-500/20 bg-gold-500/10 text-charcoal-200' : 'border-gray-200 bg-gray-50 text-gray-600'}`}>
               Your CreatorBridge profile is your professional identity on the platform. Keep it focused and up to date.
             </div>
 
             {/* 90-day profile lock notice */}
             {(creator.submitted_at ||
               ['verified', 'pro_verified', 'pending'].includes(creator.verification_status)) && (
-              <div className="rounded-xl border border-amber-500/40 bg-amber-500/8 p-5">
+              <div className="rounded-xl border border-gold-500/40 bg-gold-500/10 p-5">
                 <div className="flex items-start gap-3 mb-4">
                   <span className="text-lg shrink-0">🔒</span>
                   <div>
-                    <p className="text-sm font-bold text-amber-400 mb-1">Profile Locked for 90 Days</p>
-                    <p className="text-xs text-charcoal-400 leading-relaxed">
+                    <p className="text-sm font-bold text-gold-400 mb-1">Profile Locked for 90 Days</p>
+                    <p className="text-xs text-charcoal-300 leading-relaxed">
                       Your profile information is locked for 90 days from your submission date. This protects the integrity of creator profiles on CreatorBridge. If you need to make a correction, email support at drl33@creatorbridge.studio with the subject line "Profile Correction Request".
                     </p>
                   </div>
                 </div>
                 {/* Read-only profile summary */}
-                <div className={`rounded-xl border p-4 ${dark ? 'bg-charcoal-900/60 border-charcoal-700' : 'bg-white border-gray-200'}`}>
-                  <p className={`text-[10px] font-bold uppercase tracking-wider mb-3 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>Submitted Profile Summary</p>
+                <div className={`rounded-lg border p-4 ${dark ? 'bg-charcoal-950/70 border-white/[0.07]' : 'bg-white border-gray-200'}`}>
+                  <p className={`text-[10px] font-bold uppercase tracking-wider mb-3 ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>Submitted Profile Summary</p>
                   <div className="space-y-0">
                     {[
                       { label: 'Business Name', value: creator.businessName || creator.business_name || creator.name || '—' },
@@ -378,7 +417,7 @@ export function CreatorDashboard({ dark }) {
                       { label: 'Portfolio Items', value: `${creator.portfolio?.length || 0} item${(creator.portfolio?.length || 0) !== 1 ? 's' : ''}` },
                     ].map(({ label, value }) => (
                       <div key={label} className="flex items-start justify-between gap-4 py-2 border-b border-charcoal-800 last:border-0">
-                        <span className="text-xs text-charcoal-500 shrink-0 w-32">{label}</span>
+                        <span className="text-xs text-charcoal-300 shrink-0 w-32">{label}</span>
                         <span className="text-xs text-charcoal-300 text-right break-all">{value}</span>
                       </div>
                     ))}
@@ -396,36 +435,33 @@ export function CreatorDashboard({ dark }) {
                 ? Math.min((completedCount / nextTier.requirement) * 100, 100)
                 : 100;
               return (
-                <div className={`rounded-xl border p-5 ${currentTier.bgColor} ${currentTier.borderColor}`}>
+                <div className={`rounded-lg border p-5 ${dark ? 'bg-charcoal-950/80 border-gold-500/20' : 'bg-white border-gray-200'}`}>
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">{currentTier.icon}</span>
                       <div>
-                        <p className={`text-sm font-bold ${currentTier.color}`}>{currentTier.label} Creator</p>
-                        <p className="text-xs text-charcoal-400">{currentTier.description}</p>
+                        <p className="text-sm font-bold text-gold-400">{currentTier.label} Creator</p>
+                        <p className="text-xs text-charcoal-300">{currentTier.description}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className={`text-lg font-bold ${currentTier.color}`}>{currentTier.feePercent}%</p>
-                      <p className="text-xs text-charcoal-500">platform fee</p>
+                      <p className="text-lg font-bold text-gold-400">{currentTier.feePercent}%</p>
+                      <p className="text-xs text-charcoal-300">platform fee</p>
                     </div>
                   </div>
                   {nextTier && (
                     <div>
-                      <div className="flex justify-between text-xs text-charcoal-500 mb-1">
+                      <div className="flex justify-between text-xs text-charcoal-300 mb-1">
                         <span>{completedCount} projects completed</span>
                         <span>{nextTier.requirement - completedCount} more to reach {nextTier.label}</span>
                       </div>
-                      <div className="w-full h-1.5 rounded-full bg-charcoal-700">
-                        <div
-                          className={`h-1.5 rounded-full transition-all ${currentTier.color.replace('text-', 'bg-')}`}
-                          style={{ width: `${progressToNext}%` }}
-                        />
+                      <div className="w-full h-1.5 rounded-full bg-white/[0.08]">
+                        <div className="h-1.5 rounded-full bg-gold-500 transition-all" style={{ width: `${progressToNext}%` }} />
                       </div>
                     </div>
                   )}
                   {!nextTier && (
-                    <p className="text-xs text-charcoal-400">You have reached the highest creator tier.</p>
+                    <p className="text-xs text-charcoal-300">You have reached the highest creator tier.</p>
                   )}
                 </div>
               );
@@ -433,10 +469,10 @@ export function CreatorDashboard({ dark }) {
 
             {/* Stats grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard icon={Eye}          label="Profile Views"   value={viewCount || '-'}  sub="All time"              color="text-teal-400"   dark={dark} />
+              <StatCard icon={Eye}          label="Profile Views"   value={viewCount || '-'}  sub="All time"              color="text-gold-400"   dark={dark} />
               <StatCard icon={MessageSquare} label="Quote Requests"  value={quotes.length}      sub={`${unreadCount} unread`} color="text-gold-400"   dark={dark} />
-              <StatCard icon={Heart}         label="Saved by Clients" value={favCount || '-'}  sub="In shortlists"          color="text-red-400"    dark={dark} />
-              <StatCard icon={Star}          label="Avg Rating"      value={avgRating || '-'}   sub={`${creator.review_count || 0} reviews`} color="text-purple-400" dark={dark} />
+              <StatCard icon={Heart}         label="Saved by Clients" value={favCount || '-'}  sub="In shortlists"          color="text-gold-400"    dark={dark} />
+              <StatCard icon={Star}          label="Avg Rating"      value={avgRating || '-'}   sub={`${creator.review_count || 0} reviews`} color="text-gold-400" dark={dark} />
             </div>
 
             {/* Tier progress */}
@@ -449,7 +485,7 @@ export function CreatorDashboard({ dark }) {
             <ProfileCompletion creator={creator} dark={dark} navigate={navigate} />
 
             {/* Recent quote requests */}
-            <div className={`${cardCls} p-5`}>
+            <div className={`rounded-lg border p-5 ${dark ? 'bg-charcoal-950/80 border-gold-500/20' : 'bg-white border-gray-200'}`}>
               <div className="flex items-center justify-between mb-4">
                 <h2 className={`font-display font-bold text-base ${dark ? 'text-white' : 'text-gray-900'}`}>
                   Recent Quote Requests
@@ -477,7 +513,7 @@ export function CreatorDashboard({ dark }) {
             </div>
 
             {/* Quick actions */}
-            <div className={`${cardCls} p-5`}>
+            <div className={`rounded-lg border p-5 ${dark ? 'bg-charcoal-950/80 border-gold-500/20' : 'bg-white border-gray-200'}`}>
               <h2 className={`font-display font-bold text-base mb-4 ${dark ? 'text-white' : 'text-gray-900'}`}>Quick Actions</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
@@ -489,7 +525,7 @@ export function CreatorDashboard({ dark }) {
                   <button key={label} type="button"
                     onClick={() => tab ? setActiveTab(tab) : isProfile ? navigate(`/creator/${creator.id}`) : navigate(path)}
                     className={`flex items-start gap-3 p-4 rounded-xl border text-left transition-all ${
-                      dark ? 'border-charcoal-700 hover:border-charcoal-500 bg-charcoal-900/30' : 'border-gray-200 hover:border-gray-300 bg-gray-50'
+                      dark ? 'border-white/[0.07] hover:border-gold-500/28 bg-white/[0.025]' : 'border-gray-200 hover:border-gray-300 bg-gray-50'
                     }`}>
                     <Icon size={16} className="text-gold-400 shrink-0 mt-0.5" />
                     <div>
@@ -506,12 +542,12 @@ export function CreatorDashboard({ dark }) {
 
         {/* ── Quotes Tab ── */}
         {activeTab === 'quotes' && (
-          <div className={`${cardCls} p-5`}>
+          <div className={`rounded-lg border p-5 ${dark ? 'bg-charcoal-950/80 border-gold-500/20' : 'bg-white border-gray-200'}`}>
             <div className="flex items-center justify-between mb-4">
               <h2 className={`font-display font-bold text-base ${dark ? 'text-white' : 'text-gray-900'}`}>
                 All Quote Requests
               </h2>
-              <span className={`text-xs px-2 py-1 rounded-full ${dark ? 'bg-charcoal-700 text-charcoal-400' : 'bg-gray-100 text-gray-500'}`}>
+              <span className={`text-xs px-2 py-1 rounded-full ${dark ? 'bg-white/[0.08] text-charcoal-300' : 'bg-gray-100 text-gray-500'}`}>
                 {quotes.length} total
               </span>
             </div>
@@ -596,8 +632,8 @@ function ProfileCompletion({ creator, dark, navigate }) {
   ];
   const score = checks.filter(c => c.done).length;
   const pct   = Math.round((score / checks.length) * 100);
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
-  const cardCls = `rounded-2xl border p-5 ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`;
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
+  const cardCls = `rounded-lg border p-5 ${dark ? 'bg-charcoal-950/80 border-gold-500/20' : 'bg-white border-gray-200'}`;
 
   return (
     <div className={cardCls}>
@@ -605,14 +641,14 @@ function ProfileCompletion({ creator, dark, navigate }) {
         <h2 className={`font-display font-bold text-base ${dark ? 'text-white' : 'text-gray-900'}`}>
           Profile Strength
         </h2>
-        <span className={`text-sm font-bold ${pct >= 80 ? 'text-teal-400' : pct >= 50 ? 'text-gold-400' : 'text-red-400'}`}>
+        <span className="text-sm font-bold text-gold-400">
           {pct}%
         </span>
       </div>
       {/* Progress bar */}
-      <div className={`h-2 rounded-full mb-4 ${dark ? 'bg-charcoal-700' : 'bg-gray-200'}`}>
+      <div className={`h-2 rounded-full mb-4 ${dark ? 'bg-white/[0.08]' : 'bg-gray-200'}`}>
         <div
-          className={`h-2 rounded-full transition-all duration-500 ${pct >= 80 ? 'bg-teal-400' : pct >= 50 ? 'bg-gold-500' : 'bg-red-400'}`}
+          className="h-2 rounded-full bg-gold-500 transition-all duration-500"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -620,7 +656,7 @@ function ProfileCompletion({ creator, dark, navigate }) {
         {checks.map(({ label, done }) => (
           <div key={label} className={`flex items-center gap-2 text-xs ${done ? (dark ? 'text-charcoal-300' : 'text-gray-600') : textSub}`}>
             {done
-              ? <Check size={12} className="text-teal-400 shrink-0" />
+              ? <Check size={12} className="text-gold-400 shrink-0" />
               : <AlertCircle size={12} className="text-charcoal-600 shrink-0" />
             }
             <span className={done ? '' : 'opacity-60'}>{label}</span>
@@ -642,10 +678,10 @@ function VideoIntroTab({ creator, dark, onUpdate }) {
   const [url, setUrl]       = useState(creator.video_intro_url || '');
   const [saved, setSaved]   = useState(false);
   const [error, setError]   = useState('');
-  const textSub  = dark ? 'text-charcoal-400' : 'text-gray-500';
-  const cardCls  = `rounded-2xl border p-5 ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`;
+  const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
+  const cardCls  = `rounded-2xl border p-5 ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`;
   const inputCls = `w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${
-    dark ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+    dark ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
          : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
   }`;
 
@@ -720,7 +756,7 @@ function VideoIntroTab({ creator, dark, onUpdate }) {
           />
           {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
           {isValidEmbed && !error && (
-            <p className={`text-xs mt-1 text-teal-400`}>✓ Valid video URL detected</p>
+            <p className="text-xs mt-1 text-gold-400">✓ Valid video URL detected</p>
           )}
         </div>
 
@@ -742,14 +778,14 @@ function VideoIntroTab({ creator, dark, onUpdate }) {
 
         <button type="button" onClick={handleSave}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
-            saved ? 'bg-teal-500 text-white' : 'bg-gold-500 hover:bg-gold-600 text-charcoal-900'
+            saved ? 'bg-gold-500 text-charcoal-900' : 'bg-gold-500 hover:bg-gold-600 text-charcoal-900'
           }`}>
           <Save size={14} /> {saved ? 'Saved!' : 'Save Video Intro'}
         </button>
       </div>
 
-      <div className={`${cardCls} ${dark ? 'bg-charcoal-800/50' : 'bg-gray-50'}`}>
-        <p className={`text-[10px] font-bold uppercase tracking-wider mb-3 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>Tips for a great intro</p>
+      <div className={`${cardCls} ${dark ? 'bg-charcoal-900/50' : 'bg-gray-50'}`}>
+        <p className={`text-[10px] font-bold uppercase tracking-wider mb-3 ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>Tips for a great intro</p>
         <ul className={`space-y-1.5 text-xs ${textSub}`}>
           {[
             'Keep it under 90 seconds - clients watch short intros more often',

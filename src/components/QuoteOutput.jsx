@@ -7,12 +7,12 @@ import { SERVICES, RATES } from '../data/rates.js';
 // ── Helpers ───────────────────────────────────────────────────
 const CATEGORY_META = {
   service:   { icon: '🎬', label: 'Service',   color: 'text-white' },
-  equipment: { icon: '🔧', label: 'Equipment', color: 'text-teal-400' },
-  travel:    { icon: '🚗', label: 'Travel',    color: 'text-blue-400' },
-  crew:      { icon: '👥', label: 'Crew',      color: 'text-purple-400' },
-  location:  { icon: '📍', label: 'Location',  color: 'text-orange-400' },
-  licensing: { icon: '📋', label: 'Licensing', color: 'text-yellow-400' },
-  rush:      { icon: '⚡', label: 'Rush Fee',  color: 'text-red-400' },
+  equipment: { icon: '🔧', label: 'Equipment', color: 'text-gold-400' },
+  travel:    { icon: '🚗', label: 'Travel',    color: 'text-gold-400' },
+  crew:      { icon: '👥', label: 'Crew',      color: 'text-gold-400' },
+  location:  { icon: '📍', label: 'Location',  color: 'text-gold-400' },
+  licensing: { icon: '📋', label: 'Licensing', color: 'text-gold-400' },
+  rush:      { icon: '⚡', label: 'Rush Fee',  color: 'text-gold-400' },
 };
 
 const RATE_JUSTIFICATIONS = {
@@ -34,10 +34,10 @@ function RangePill({ value, range, dark }) {
   const pct = span > 0 ? Math.max(4, Math.min(96, ((value - low) / span) * 100)) : 50;
 
   let status, color;
-  if (value < low * 0.85)       { status = 'Below market'; color = 'text-red-400 bg-red-400/10'; }
-  else if (value < low)         { status = 'Slightly low';  color = 'text-yellow-400 bg-yellow-400/10'; }
-  else if (value > high * 1.1)  { status = 'Premium';       color = 'text-blue-400 bg-blue-400/10'; }
-  else                          { status = 'Market rate';   color = 'text-teal-400 bg-teal-400/10'; }
+  if (value < low * 0.85)       { status = 'Below market'; color = 'text-gold-400 bg-gold-500/10'; }
+  else if (value < low)         { status = 'Slightly low';  color = 'text-gold-400 bg-gold-500/10'; }
+  else if (value > high * 1.1)  { status = 'Premium';       color = 'text-gold-400 bg-gold-500/10'; }
+  else                          { status = 'Market rate';   color = 'text-gold-400 bg-gold-500/10'; }
 
   return (
     <div className="mt-2 space-y-1">
@@ -48,12 +48,12 @@ function RangePill({ value, range, dark }) {
         </span>
         <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${color}`}>{status}</span>
       </div>
-      <div className={`relative h-1 rounded-full ${dark ? 'bg-charcoal-700' : 'bg-gray-200'} overflow-hidden`}>
+      <div className={`relative h-1 rounded-full ${dark ? 'bg-white/[0.04]' : 'bg-gray-200'} overflow-hidden`}>
         <div className="absolute top-0 bottom-0 bg-charcoal-600 rounded-full"
           style={{ left: 0, width: '100%' }} />
         <div className="absolute top-0 bottom-0 bg-gold-500/40 rounded-full"
           style={{ left: `${(low - low) / span * 100}%`, width: `${(high - low) / span * 100 || 100}%` }} />
-        <div className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-teal-400 ring-2 ring-charcoal-900 transition-all"
+        <div className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-gold-500 ring-2 ring-charcoal-900 transition-all"
           style={{ left: `${pct}%`, transform: 'translate(-50%, -50%)' }} />
       </div>
     </div>
@@ -67,7 +67,7 @@ function LineItemRow({ line, serviceId, regionKey, experienceLevel, regionName, 
   // Try to get market range for this line item
   const rateRange = line.rateKey && serviceId ? getRate(serviceId, line.rateKey, regionKey) : null;
 
-  const expLabel = { entry: 'Entry-level (0–2 yrs)', mid: 'Mid-level (3–6 yrs)', senior: 'Senior/Expert (7+ yrs)' }[experienceLevel] || 'Mid-level';
+  const expLabel = { entry: 'Qualified (2-3 yrs)', mid: 'Established (4-6 yrs)', senior: 'Senior/Expert (7+ yrs)' }[experienceLevel] || 'Established';
 
   const justification = (() => {
     const fn = RATE_JUSTIFICATIONS[line.category];
@@ -78,8 +78,8 @@ function LineItemRow({ line, serviceId, regionKey, experienceLevel, regionName, 
   return (
     <div className={`rounded-xl border transition-all ${
       expanded
-        ? dark ? 'border-gold-500/30 bg-charcoal-900/80' : 'border-gold-400/30 bg-gold-50/30'
-        : dark ? 'border-charcoal-700/60 bg-charcoal-900/20' : 'border-gray-100 bg-white'
+        ? dark ? 'border-gold-500/30 bg-charcoal-950/80' : 'border-gold-400/30 bg-gold-50/30'
+        : dark ? 'border-white/[0.07] bg-charcoal-950/20' : 'border-gray-100 bg-white'
     }`}>
       {/* Main row */}
       <div className="flex items-start gap-3 px-3 py-2.5">
@@ -104,7 +104,7 @@ function LineItemRow({ line, serviceId, regionKey, experienceLevel, regionName, 
           {(rateRange || justification) && (
             <button type="button" onClick={() => setExpanded(e => !e)}
               className={`p-1 rounded-md transition-colors ${
-                dark ? 'text-charcoal-500 hover:text-gold-400 hover:bg-charcoal-700' : 'text-gray-400 hover:text-gold-500 hover:bg-gray-100'
+                dark ? 'text-charcoal-500 hover:text-gold-400 hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gold-500 hover:bg-gray-100'
               }`}
               title="Show pricing detail"
             >
@@ -116,7 +116,7 @@ function LineItemRow({ line, serviceId, regionKey, experienceLevel, regionName, 
 
       {/* Expanded detail */}
       {expanded && (
-        <div className={`px-3 pb-3 border-t ${dark ? 'border-charcoal-700/60' : 'border-gray-100'} pt-2.5 space-y-2`}>
+        <div className={`px-3 pb-3 border-t ${dark ? 'border-white/[0.07]' : 'border-gray-100'} pt-2.5 space-y-2`}>
           {/* Justification text */}
           {justification && (
             <div className={`flex gap-2 text-xs leading-relaxed ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
@@ -156,9 +156,9 @@ function QuoteSimple({ quote, state, dark }) {
     .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
   return (
-    <div className={`rounded-2xl overflow-hidden border ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200 shadow-sm'}`}>
+    <div className={`rounded-2xl overflow-hidden border ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200 shadow-sm'}`}>
       {/* Header */}
-      <div className="bg-gradient-to-r from-charcoal-900 to-charcoal-800 px-6 py-5 border-b border-charcoal-700">
+      <div className="bg-gradient-to-r from-charcoal-900 to-charcoal-800 px-6 py-5 border-b border-white/[0.07]">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-gold-400 text-xs font-bold uppercase tracking-widest mb-1">Production Estimate</p>
@@ -187,7 +187,7 @@ function QuoteSimple({ quote, state, dark }) {
             <div key={item.label} className={`rounded-xl px-3 py-3 text-center border ${
               item.highlight
                 ? 'bg-gold-500/15 border-gold-500/30'
-                : dark ? 'bg-charcoal-900/80 border-charcoal-700' : 'bg-gray-50 border-gray-200'
+                : dark ? 'bg-charcoal-950/80 border-white/[0.07]' : 'bg-gray-50 border-gray-200'
             }`}>
               <p className={`text-[10px] uppercase tracking-wider font-medium mb-1 ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>{item.label}</p>
               <p className={`text-sm font-bold ${item.highlight ? 'text-gold-400' : dark ? 'text-white' : 'text-gray-900'}`}>{item.value}</p>
@@ -197,7 +197,7 @@ function QuoteSimple({ quote, state, dark }) {
 
         {/* What's included */}
         {quote.lines.filter(l => ['service','equipment'].includes(l.category)).length > 0 && (
-          <div className={`rounded-xl px-4 py-3 ${dark ? 'bg-charcoal-900/60' : 'bg-gray-50'}`}>
+          <div className={`rounded-xl px-4 py-3 ${dark ? 'bg-charcoal-950/60' : 'bg-gray-50'}`}>
             <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>What's Included</p>
             <div className="space-y-1">
               {quote.lines.filter(l => ['service','equipment'].includes(l.category)).slice(0, 8).map(line => (
@@ -212,12 +212,12 @@ function QuoteSimple({ quote, state, dark }) {
 
         {/* Delivery + revisions */}
         <div className="flex gap-3 text-sm">
-          <div className={`flex-1 rounded-xl px-3 py-2.5 border ${dark ? 'bg-charcoal-900/60 border-charcoal-700' : 'bg-gray-50 border-gray-200'}`}>
+          <div className={`flex-1 rounded-xl px-3 py-2.5 border ${dark ? 'bg-charcoal-950/60 border-white/[0.07]' : 'bg-gray-50 border-gray-200'}`}>
             <p className={`text-[10px] uppercase tracking-wider mb-1 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>Est. Delivery</p>
             <p className={`text-sm font-medium ${dark ? 'text-white' : 'text-gray-900'}`}>{deliveryDate}</p>
           </div>
           {quote.revisionsNote && (
-            <div className={`flex-1 rounded-xl px-3 py-2.5 border ${dark ? 'bg-charcoal-900/60 border-charcoal-700' : 'bg-gray-50 border-gray-200'}`}>
+            <div className={`flex-1 rounded-xl px-3 py-2.5 border ${dark ? 'bg-charcoal-950/60 border-white/[0.07]' : 'bg-gray-50 border-gray-200'}`}>
               <p className={`text-[10px] uppercase tracking-wider mb-1 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>Revisions</p>
               <p className={`text-xs ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>{quote.revisionsNote}</p>
             </div>
@@ -226,7 +226,7 @@ function QuoteSimple({ quote, state, dark }) {
 
         {/* Notes */}
         {state.notes && (
-          <div className={`rounded-xl px-4 py-3 border-l-2 border-gold-500/50 ${dark ? 'bg-charcoal-900/40' : 'bg-gold-50/50'}`}>
+          <div className={`rounded-xl px-4 py-3 border-l-2 border-gold-500/50 ${dark ? 'bg-charcoal-950/40' : 'bg-gold-50/50'}`}>
             <p className={`text-xs uppercase tracking-wider mb-1 font-medium ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>Notes & Terms</p>
             <p className={`text-sm leading-relaxed whitespace-pre-wrap ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>{state.notes}</p>
           </div>
@@ -244,10 +244,10 @@ function QuoteItemized({ quote, state, dark, creatorMode }) {
   const regionName = region ? `${region.flag} ${region.name}` : '';
 
   const expLabel = {
-    entry:  'Entry-level (0–2 yrs)',
-    mid:    'Mid-level (3–6 yrs)',
+    entry:  'Qualified (2-3 yrs)',
+    mid:    'Established (4-6 yrs)',
     senior: 'Senior/Expert (7+ yrs)',
-  }[state.experienceLevel] || 'Mid-level';
+  }[state.experienceLevel] || 'Established';
 
   // Enrich lines with extra metadata for tooltips
   const enrichedLines = quote.lines.map(line => {
@@ -264,17 +264,17 @@ function QuoteItemized({ quote, state, dark, creatorMode }) {
   };
 
   const SectionHead = ({ icon, title, count }) => (
-    <div className={`flex items-center gap-2 py-2 border-b ${dark ? 'border-charcoal-700' : 'border-gray-100'} mb-2`}>
+    <div className={`flex items-center gap-2 py-2 border-b ${dark ? 'border-white/[0.07]' : 'border-gray-100'} mb-2`}>
       <span className="text-sm">{icon}</span>
       <span className={`text-xs font-bold uppercase tracking-wider ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>{title}</span>
-      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${dark ? 'bg-charcoal-700 text-charcoal-400' : 'bg-gray-100 text-gray-400'}`}>{count}</span>
+      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${dark ? 'bg-white/[0.04] text-charcoal-400' : 'bg-gray-100 text-gray-400'}`}>{count}</span>
     </div>
   );
 
   return (
-    <div className={`rounded-2xl border ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200 shadow-sm'}`}>
+    <div className={`rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200 shadow-sm'}`}>
       {/* Header strip */}
-      <div className={`px-5 py-3 border-b ${dark ? 'border-charcoal-700 bg-charcoal-900/40' : 'border-gray-200 bg-gray-50'}`}>
+      <div className={`px-5 py-3 border-b ${dark ? 'border-white/[0.07] bg-charcoal-950/40' : 'border-gray-200 bg-gray-50'}`}>
         <div className="flex items-center justify-between">
           <div>
             <h3 className={`font-display font-bold text-base ${dark ? 'text-white' : 'text-gray-900'}`}>Itemized Breakdown</h3>
@@ -332,7 +332,7 @@ function QuoteItemized({ quote, state, dark, creatorMode }) {
         )}
 
         {/* Totals */}
-        <div className={`rounded-xl border ${dark ? 'bg-charcoal-900/60 border-charcoal-700' : 'bg-gray-50 border-gray-200'} overflow-hidden`}>
+        <div className={`rounded-xl border ${dark ? 'bg-charcoal-950/60 border-white/[0.07]' : 'bg-gray-50 border-gray-200'} overflow-hidden`}>
           <div className="divide-y divide-charcoal-700/50 px-4">
             <div className="flex justify-between py-2.5 text-sm">
               <span className={dark ? 'text-charcoal-300' : 'text-gray-600'}>Subtotal</span>
@@ -356,14 +356,14 @@ function QuoteItemized({ quote, state, dark, creatorMode }) {
 
         {/* Profit margin – creator only */}
         {creatorMode && quote.profitMargin !== null && (
-          <div className={`rounded-xl border px-4 py-3 ${dark ? 'bg-teal-500/10 border-teal-500/30' : 'bg-teal-50 border-teal-200'}`}>
-            <p className="text-xs font-bold uppercase tracking-wider text-teal-400 mb-2">Profit Analysis</p>
+          <div className={`rounded-xl border px-4 py-3 ${dark ? 'bg-gold-500/10 border-gold-500/25' : 'bg-gold-50 border-gold-200'}`}>
+            <p className="text-xs font-bold uppercase tracking-wider text-gold-400 mb-2">Profit Analysis</p>
             <div className="grid grid-cols-3 gap-2 text-center mb-2">
               {[
-                { label: 'Revenue', value: fmt(quote.grandTotal), color: 'text-teal-400' },
-                { label: 'Costs',   value: fmt(quote.totalCost),  color: 'text-orange-400' },
+                { label: 'Revenue', value: fmt(quote.grandTotal), color: 'text-gold-400' },
+                { label: 'Costs',   value: fmt(quote.totalCost),  color: 'text-gold-400' },
                 { label: 'Margin',  value: `${quote.profitMargin}%`,
-                  color: quote.profitMargin >= 50 ? 'text-green-400' : quote.profitMargin >= 25 ? 'text-yellow-400' : 'text-red-400' },
+                  color: 'text-gold-400' },
               ].map(item => (
                 <div key={item.label}>
                   <p className={`text-[10px] ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>{item.label}</p>
@@ -371,10 +371,10 @@ function QuoteItemized({ quote, state, dark, creatorMode }) {
                 </div>
               ))}
             </div>
-            <div className={`h-1.5 rounded-full overflow-hidden ${dark ? 'bg-charcoal-700' : 'bg-gray-200'}`}>
+            <div className={`h-1.5 rounded-full overflow-hidden ${dark ? 'bg-white/[0.04]' : 'bg-gray-200'}`}>
               <div
                 className={`h-full rounded-full transition-all ${
-                  quote.profitMargin >= 50 ? 'bg-green-400' : quote.profitMargin >= 25 ? 'bg-yellow-400' : 'bg-red-400'
+                  'bg-gold-500'
                 }`}
                 style={{ width: `${Math.max(2, Math.min(100, quote.profitMargin))}%` }}
               />
@@ -395,7 +395,7 @@ function QuoteItemized({ quote, state, dark, creatorMode }) {
 
         {/* Notes */}
         {state.notes && (
-          <div className={`rounded-xl px-4 py-3 border-l-2 border-gold-500/40 ${dark ? 'bg-charcoal-900/40' : 'bg-gold-50/30'}`}>
+          <div className={`rounded-xl px-4 py-3 border-l-2 border-gold-500/40 ${dark ? 'bg-charcoal-950/40' : 'bg-gold-50/30'}`}>
             <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>Notes & Terms</p>
             <p className={`text-xs leading-relaxed whitespace-pre-wrap ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>{state.notes}</p>
           </div>
@@ -428,7 +428,7 @@ export function QuoteOutput({ quote, state, onExportPDF, dark = true, creatorMod
 
   if (!quote || quote.grandTotal === 0) {
     return (
-      <div className={`flex flex-col items-center justify-center py-20 gap-3 rounded-2xl border ${dark ? 'border-charcoal-700 text-charcoal-500' : 'border-gray-200 text-gray-400'}`}>
+      <div className={`flex flex-col items-center justify-center py-20 gap-3 rounded-2xl border ${dark ? 'border-white/[0.07] text-charcoal-500' : 'border-gray-200 text-gray-400'}`}>
         <span className="text-4xl">💰</span>
         <p className="text-sm text-center px-6">Enable line items in the builder to see your quote</p>
       </div>
@@ -439,7 +439,7 @@ export function QuoteOutput({ quote, state, onExportPDF, dark = true, creatorMod
     <div className="space-y-3">
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-2">
-        <div className={`flex rounded-xl border overflow-hidden ${dark ? 'border-charcoal-600' : 'border-gray-200'}`}>
+        <div className={`flex rounded-xl border overflow-hidden ${dark ? 'border-white/[0.09]' : 'border-gray-200'}`}>
           {[
             { id: 'simple',   icon: Eye,  label: 'Client View' },
             { id: 'itemized', icon: List, label: 'Itemized' },
@@ -458,10 +458,10 @@ export function QuoteOutput({ quote, state, onExportPDF, dark = true, creatorMod
         <div className="flex gap-2">
           <button type="button" onClick={copyToClipboard}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium transition-all ${
-              dark ? 'border-charcoal-600 text-charcoal-300 hover:text-white' : 'border-gray-200 text-gray-500 hover:text-gray-900'
+              dark ? 'border-white/[0.09] text-charcoal-300 hover:text-white' : 'border-gray-200 text-gray-500 hover:text-gray-900'
             }`}
           >
-            {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+            {copied ? <Check size={12} className="text-gold-400" /> : <Copy size={12} />}
             {copied ? 'Copied!' : 'Copy'}
           </button>
           <button type="button" onClick={onExportPDF}

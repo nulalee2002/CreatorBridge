@@ -116,10 +116,10 @@
     @apply text-gray-500 text-xs font-medium uppercase tracking-wider;
   }
 
-  .rate-bar-green  { @apply bg-teal-400; }
-  .rate-bar-yellow { @apply bg-yellow-400; }
+  .rate-bar-green  { @apply bg-gold-400; }
+  .rate-bar-yellow { @apply bg-gold-500; }
   .rate-bar-red    { @apply bg-red-400; }
-  .rate-bar-blue   { @apply bg-blue-400; }
+  .rate-bar-blue   { @apply bg-gold-300; }
 
   .tooltip {
     @apply absolute z-50 bg-charcoal-900 text-white text-xs rounded-lg px-3 py-2 shadow-xl w-56 pointer-events-none;
@@ -141,8 +141,8 @@
     box-shadow: 0 0 20px rgba(212, 169, 65, 0.2);
   }
 
-  .glow-teal {
-    box-shadow: 0 0 20px rgba(46, 196, 182, 0.15);
+  .glow-gold-soft {
+    box-shadow: 0 0 20px rgba(212, 169, 65, 0.16);
   }
 
   .leather-section {

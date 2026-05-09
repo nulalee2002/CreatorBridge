@@ -17,12 +17,11 @@ const SECTIONS = [
 ];
 
 function Section({ id, title, dark, children }) {
-  const textMain = dark ? 'text-white' : 'text-gray-900';
   const textBody = dark ? 'text-charcoal-300' : 'text-gray-600';
 
   return (
     <section id={id} className="scroll-mt-20 mb-10">
-      <h2 className={`font-display font-bold text-xl mb-4 pb-2 border-b ${dark ? 'text-white border-charcoal-700' : 'text-gray-900 border-gray-200'}`}>
+      <h2 className={`font-display font-bold text-xl mb-4 pb-2 border-b ${dark ? 'text-white border-white/[0.07]' : 'text-gray-900 border-gray-200'}`}>
         {title}
       </h2>
       <div className={`space-y-3 text-sm leading-relaxed ${textBody}`}>
@@ -42,12 +41,12 @@ export function TermsPage({ dark }) {
     }
   }, [location.hash]);
 
-  const cardCls  = `rounded-2xl border ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`;
-  const textSub  = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const cardCls  = `rounded-2xl border shadow-[0_24px_80px_rgba(0,0,0,0.16)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`;
+  const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
   const linkCls  = 'text-gold-400 hover:text-gold-300 underline';
 
   return (
-    <div className={`min-h-screen ${dark ? 'bg-charcoal-950' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen ${dark ? 'bg-charcoal-950 bg-[radial-gradient(circle_at_50%_0%,rgba(212,169,65,0.08),transparent_34%)]' : 'bg-gray-50'}`}>
       <div className="max-w-4xl mx-auto px-4 py-10">
 
         {/* Header */}
@@ -161,7 +160,7 @@ export function TermsPage({ dark }) {
               <p>
                 CreatorBridge charges the following platform fees:
               </p>
-              <div className={`rounded-xl border p-4 my-3 ${dark ? 'border-charcoal-600 bg-charcoal-900/40' : 'border-gray-200 bg-gray-50'}`}>
+              <div className={`rounded-xl border p-4 my-3 ${dark ? 'border-white/[0.08] bg-charcoal-950/55' : 'border-gray-200 bg-gray-50'}`}>
                 <div className="space-y-2 text-xs font-mono">
                   <div className="flex justify-between"><span>Client booking fee</span><span className="font-bold">5% of project total</span></div>
                   <div className="flex justify-between"><span>Creator platform fee (Standard tier)</span><span className="font-bold">10% of earnings</span></div>
@@ -332,7 +331,7 @@ export function TermsPage({ dark }) {
               </p>
             </Section>
 
-            <div className={`mt-8 pt-6 border-t text-xs ${dark ? 'border-charcoal-700 text-charcoal-500' : 'border-gray-200 text-gray-400'}`}>
+            <div className={`mt-8 pt-6 border-t text-xs ${dark ? 'border-white/[0.07] text-charcoal-300' : 'border-gray-200 text-gray-400'}`}>
               <p>CreatorBridge Inc. Questions? Contact <a href="mailto:drl33@creatorbridge.studio" className={linkCls}>drl33@creatorbridge.studio</a></p>
             </div>
 

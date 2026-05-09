@@ -1,26 +1,18 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Zap, X } from 'lucide-react';
+import { normalizeServiceId, SERVICE_TYPE_OPTIONS } from '../data/rates.js';
 
 // ── Static option sets (shared with RequestQuoteModal) ────────
 
-const SERVICE_TYPES = [
-  'Video Production',
-  'Photography',
-  'Drone/Aerial',
-  'Social Media Content',
-  'Post-Production',
-  'Live Event Coverage',
-  'Corporate Events',
-  'Podcast Production',
-];
+const SERVICE_TYPES = SERVICE_TYPE_OPTIONS;
 
 const PROJECT_SUBTYPES = {
-  'Video Production':       ['Corporate', 'Wedding', 'Documentary', 'Music Video', 'Brand Commercial', 'Social Media Content', 'Podcast', 'Birthday/Celebration', 'Anniversary', 'Graduation', 'Concert', 'Sports', 'Real Estate Tour', 'Other'],
+  'Video Production':       ['Corporate', 'Wedding', 'Documentary', 'Music Video', 'Brand Commercial', 'Brand & Short-Form Content', 'Podcast', 'Birthday/Celebration', 'Anniversary', 'Graduation', 'Concert', 'Sports', 'Real Estate Tour', 'Other'],
   'Photography':            ['Real Estate', 'Headshots', 'Wedding', 'Commercial', 'Event', 'Product', 'Brand', 'Birthday/Celebration', 'Anniversary', 'Graduation', 'Concert', 'Sports', 'Family Portrait', 'Maternity', 'Other'],
-  'Drone/Aerial':           ['Real Estate Aerial', 'Event Aerial', 'Mapping', 'Film/Video Support', 'Construction Progress', 'Other'],
-  'Social Media Content':   ['Reels/TikTok', 'YouTube', 'Brand Campaign', 'UGC', 'Behind the Scenes', 'Other'],
-  'Post-Production':        ['Video Editing', 'Color Grading', 'Audio Mixing', 'Motion Graphics', 'Podcast Editing', 'Other'],
+  'Drone / Aerial':         ['Real Estate Aerial', 'Event Aerial', 'Mapping', 'Film/Video Support', 'Construction Progress', 'Other'],
+  'Brand & Short-Form Content': ['Reels/TikTok', 'YouTube', 'Brand Campaign', 'UGC', 'Behind the Scenes', 'Other'],
+  'Editing & Post':         ['Video Editing', 'Color Grading', 'Audio Mixing', 'Motion Graphics', 'Podcast Editing', 'Other'],
   'Live Event Coverage':    ['Concert/Music', 'Sports', 'Corporate Event', 'Conference', 'Festival', 'Birthday/Celebration', 'Wedding Reception', 'Other'],
   'Corporate Events':       ['Conference Coverage', 'Product Launch', 'Award Ceremony', 'Trade Show', 'Company Retreat', 'Executive Portraits at Events', 'Investor Presentation', 'Town Hall / All-Hands', 'Other'],
   'Podcast Production':     ['Audio Only', 'Video Podcast', 'Remote Recording', 'In-Studio Recording', 'Show Launch Package', 'Monthly Retainer', 'Other'],
@@ -100,14 +92,14 @@ export function IntentGate({ dark, onClose, prefillService, mode = 'modal' }) {
     setErrors(e => ({ ...e, [k]: '' }));
   };
 
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
   const labelCls = `text-xs font-medium block mb-1.5 ${textSub}`;
 
   const inputCls = (field) => `w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${
     errors[field]
       ? 'border-red-500 bg-red-500/5'
       : dark
-        ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+        ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
         : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
   }`;
 
@@ -115,7 +107,7 @@ export function IntentGate({ dark, onClose, prefillService, mode = 'modal' }) {
     errors[field]
       ? 'border-red-500 bg-red-500/5'
       : dark
-        ? 'bg-charcoal-900 border-charcoal-600 text-white focus:border-gold-500'
+        ? 'bg-charcoal-950/70 border-white/[0.09] text-white focus:border-gold-500'
         : 'bg-gray-50 border-gray-300 text-gray-900 focus:border-gold-500'
   }`;
 
@@ -124,7 +116,7 @@ export function IntentGate({ dark, onClose, prefillService, mode = 'modal' }) {
       ? 'border-gold-500 bg-gold-500/10 text-gold-400'
       : hasError
         ? 'border-red-500/50 ' + textSub
-        : dark ? 'border-charcoal-700 text-charcoal-400 hover:border-charcoal-500' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+        : dark ? 'border-white/[0.08] text-charcoal-300 hover:border-gold-500/35 hover:text-white' : 'border-gray-200 text-gray-500 hover:border-gray-300'
   }`;
 
   const errorMsg = (field) => errors[field] ? (
@@ -159,10 +151,12 @@ export function IntentGate({ dark, onClose, prefillService, mode = 'modal' }) {
     if (Object.keys(errs).length) { setErrors(errs); return; }
 
     setLoading(true);
+    const serviceId = normalizeServiceId(form.serviceType);
 
     const project = {
       id:                 Date.now().toString() + Math.random(),
       title:              form.projectTitle.trim(),
+      serviceId,
       serviceType:        form.serviceType,
       projectType:        form.projectType === 'Other' ? (form.otherProjectType.trim() || 'Other') : form.projectType,
       projectDate:        form.projectDate,
@@ -335,7 +329,7 @@ export function IntentGate({ dark, onClose, prefillService, mode = 'modal' }) {
         <div>
           <label className={labelCls}>
             Describe your project and share a reference link *
-            <span className={`ml-2 font-normal ${descLen >= 100 ? 'text-teal-400' : textSub}`}>
+            <span className={`ml-2 font-normal ${descLen >= 100 ? 'text-gold-400' : textSub}`}>
               ({descLen}/100 min)
             </span>
           </label>
@@ -378,7 +372,7 @@ export function IntentGate({ dark, onClose, prefillService, mode = 'modal' }) {
       <div className="flex gap-2 mt-6">
         {onClose && mode === 'modal' && (
           <button type="button" onClick={onClose}
-            className={`px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all ${dark ? 'border-charcoal-600 text-charcoal-300 hover:text-white' : 'border-gray-200 text-gray-600 hover:text-gray-900'}`}>
+            className={`px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all ${dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/35 hover:text-white' : 'border-gray-200 text-gray-600 hover:text-gray-900'}`}>
             Cancel
           </button>
         )}
@@ -394,11 +388,12 @@ export function IntentGate({ dark, onClose, prefillService, mode = 'modal' }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative w-full max-w-xl rounded-2xl border shadow-2xl max-h-[90vh] overflow-y-auto ${dark ? 'bg-charcoal-900 border-charcoal-700' : 'bg-white border-gray-200'}`}>
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-md" onClick={onClose} />
+      <div className={`relative w-full max-w-xl rounded-2xl border max-h-[90vh] overflow-y-auto ${dark ? 'bg-charcoal-950/96 border-white/[0.09] shadow-[0_28px_90px_rgba(0,0,0,0.46)]' : 'bg-white border-gray-200 shadow-2xl'}`}>
+        <div className="h-px bg-gradient-to-r from-transparent via-gold-400/70 to-transparent" />
         {onClose && (
           <button type="button" onClick={onClose}
-            className={`absolute top-4 right-4 p-1.5 rounded-lg z-10 ${dark ? 'text-charcoal-400 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
+            className={`absolute top-4 right-4 p-1.5 rounded-lg z-10 ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.08]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
             <X size={16} />
           </button>
         )}

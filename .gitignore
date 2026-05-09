@@ -1,5 +1,9 @@
 node_modules
 dist
+.DS_Store
+.claude/
+supabase/.temp/
 .env
-.env.txt
+.env.*
+!.env.example
 .env.txt

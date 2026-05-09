@@ -70,7 +70,7 @@ function SectionHeader({ title, open, onToggle, dark }) {
     <button
       type="button"
       onClick={onToggle}
-      className={`w-full flex items-center justify-between py-2.5 border-b ${dark ? 'border-charcoal-700 text-white' : 'border-gray-200 text-gray-900'} font-semibold text-sm`}
+      className={`w-full flex items-center justify-between py-2.5 border-b ${dark ? 'border-white/[0.07] text-white' : 'border-gray-200 text-gray-900'} font-semibold text-sm`}
     >
       {title}
       {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -99,13 +99,13 @@ export function LineItemBuilder({ state, dispatch, dark = true }) {
   const sym = '$';
 
   const inputCls = dark
-    ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40'
+    ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40'
     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500';
   const labelCls = `text-xs font-medium ${dark ? 'text-charcoal-300' : 'text-gray-500'}`;
 
   if (!serviceId) {
     return (
-      <div className={`flex flex-col items-center justify-center py-16 gap-3 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
+      <div className={`flex flex-col items-center justify-center py-16 gap-3 ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
         <span className="text-4xl">👆</span>
         <p className="text-sm">Select a service type to start building your quote</p>
       </div>
@@ -136,7 +136,7 @@ export function LineItemBuilder({ state, dispatch, dark = true }) {
               <div key={rateKey} className={`rounded-xl border p-3 transition-all ${
                 active
                   ? dark ? 'border-gold-500/40 bg-charcoal-900/60' : 'border-gold-500/40 bg-gold-50/30'
-                  : dark ? 'border-charcoal-700 bg-charcoal-800/30 opacity-60' : 'border-gray-200 bg-gray-50/50 opacity-60'
+                  : dark ? 'border-white/[0.08] bg-white/[0.03] opacity-70' : 'border-gray-200 bg-gray-50/50 opacity-60'
               }`}>
                 <div className="flex items-center gap-2 mb-2">
                   <input
@@ -205,7 +205,7 @@ export function LineItemBuilder({ state, dispatch, dark = true }) {
                         </div>
                       </div>
                       {showHoursSelect && (
-                        <div className={`text-xs px-3 py-1.5 rounded-lg ${dark ? 'bg-charcoal-900/60 text-charcoal-400' : 'bg-gray-100 text-gray-500'}`}>
+                        <div className={`text-xs px-3 py-1.5 rounded-lg ${dark ? 'bg-charcoal-900/60 text-charcoal-300' : 'bg-gray-100 text-gray-500'}`}>
                           {qty} hrs × {sym}{currentVal.toLocaleString()}/hr = <span className={`font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{sym}{lineTotal.toLocaleString()}</span>
                         </div>
                       )}
@@ -231,14 +231,14 @@ export function LineItemBuilder({ state, dispatch, dark = true }) {
             type="button"
             onClick={() => dispatch({ type: 'ADD_CUSTOM_LINE' })}
             className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed text-sm transition-colors ${
-              dark ? 'border-charcoal-600 text-charcoal-400 hover:border-gold-500/50 hover:text-gold-400' : 'border-gray-300 text-gray-400 hover:border-gold-500/50 hover:text-gold-500'
+              dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/50 hover:text-gold-400' : 'border-gray-300 text-gray-400 hover:border-gold-500/50 hover:text-gold-500'
             }`}
           >
             <Plus size={14} /> Add Custom Line Item
           </button>
 
           {lineItems.filter(l => l.isCustom).map((item, idx) => (
-            <div key={item.id} className={`rounded-xl border p-3 ${dark ? 'border-charcoal-700 bg-charcoal-900/60' : 'border-gray-200 bg-white'}`}>
+            <div key={item.id} className={`rounded-xl border p-3 ${dark ? 'border-white/[0.08] bg-charcoal-950/55' : 'border-gray-200 bg-white'}`}>
               <div className="flex gap-2 mb-2">
                 <input
                   type="text"
@@ -279,19 +279,19 @@ export function LineItemBuilder({ state, dispatch, dark = true }) {
             return (
               <div key={eq.id} className={`rounded-xl border px-3 py-2.5 transition-all ${
                 active
-                  ? dark ? 'border-teal-500/40 bg-charcoal-900/60' : 'border-teal-500/40 bg-teal-50/30'
-                  : dark ? 'border-charcoal-700 opacity-60' : 'border-gray-200 opacity-60'
+                  ? dark ? 'border-gold-500/40 bg-charcoal-950/55' : 'border-gold-500/40 bg-gold-50/30'
+                  : dark ? 'border-white/[0.08] opacity-70' : 'border-gray-200 opacity-60'
               }`}>
                 <div className="flex items-center gap-2">
                   <input type="checkbox" checked={active}
                     onChange={e => dispatch({ type: 'SET_EQUIPMENT', id: eq.id, field: 'active', value: e.target.checked, defaultPrice: eq.defaultPrice })}
-                    className="accent-teal-400 w-4 h-4 cursor-pointer" />
+                    className="accent-gold-500 w-4 h-4 cursor-pointer" />
                   <span className="text-sm">{eq.icon}</span>
                   <span className={`flex-1 text-sm ${dark ? 'text-white' : 'text-gray-900'}`}>{eq.label}</span>
                   {active && (
                     <div className="flex items-center gap-2">
                       <div className="relative flex items-center">
-                        <span className={`absolute left-2 text-xs pointer-events-none ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>{sym}</span>
+                        <span className={`absolute left-2 text-xs pointer-events-none ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>{sym}</span>
                         <input type="number" min={0} value={price}
                           onChange={e => dispatch({ type: 'SET_EQUIPMENT', id: eq.id, field: 'price', value: parseFloat(e.target.value) || 0 })}
                           className={`w-24 pl-5 pr-2 py-1.5 text-sm rounded-lg border outline-none transition-all ${inputCls}`} />
@@ -299,7 +299,7 @@ export function LineItemBuilder({ state, dispatch, dark = true }) {
                       <input type="number" min={1} value={days}
                         onChange={e => dispatch({ type: 'SET_EQUIPMENT', id: eq.id, field: 'days', value: parseInt(e.target.value) || 1 })}
                         className={`w-14 px-2 py-1.5 text-sm rounded-lg border outline-none transition-all text-center ${inputCls}`} />
-                      <span className={`text-xs shrink-0 ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>days</span>
+                      <span className={`text-xs shrink-0 ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>days</span>
                     </div>
                   )}
                 </div>
@@ -320,7 +320,7 @@ export function LineItemBuilder({ state, dispatch, dark = true }) {
                 className={`flex-1 py-2 text-sm rounded-xl border font-medium transition-all ${
                   travelType === t
                     ? 'border-gold-500 bg-gold-500/10 text-gold-400'
-                    : dark ? 'border-charcoal-600 text-charcoal-400 hover:border-charcoal-500' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                    : dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/35 hover:text-white' : 'border-gray-200 text-gray-500 hover:border-gray-300'
                 }`}
               >
                 {t === 'mileage' ? '🚗 Mileage' : t === 'flat' ? '💵 Flat Fee' : '✕ None'}
@@ -387,14 +387,14 @@ export function LineItemBuilder({ state, dispatch, dark = true }) {
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-left text-sm transition-all ${
                 turnaround === opt.id
                   ? 'border-gold-500 bg-gold-500/10 text-gold-400'
-                  : dark ? 'border-charcoal-700 text-charcoal-300 hover:border-charcoal-600' : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                  : dark ? 'border-white/[0.08] text-charcoal-300 hover:border-gold-500/35 hover:text-white' : 'border-gray-200 text-gray-600 hover:border-gray-300'
               }`}
             >
               <div>
                 <span className="font-medium">{opt.label}</span>
-                <span className={`ml-2 text-xs ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>{opt.days}</span>
+                <span className={`ml-2 text-xs ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>{opt.days}</span>
               </div>
-              <span className={`text-xs font-semibold ${turnaround === opt.id ? 'text-gold-400' : dark ? 'text-charcoal-400' : 'text-gray-400'}`}>
+              <span className={`text-xs font-semibold ${turnaround === opt.id ? 'text-gold-400' : dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
                 {opt.description}
               </span>
             </button>
@@ -407,7 +407,7 @@ export function LineItemBuilder({ state, dispatch, dark = true }) {
                   onChange={e => dispatch({ type: 'SET_FIELD', field: 'customTurnaroundPct', value: parseFloat(e.target.value) || 0 })}
                   placeholder="0"
                   className={`w-full pl-3 pr-8 py-2 text-sm rounded-lg border outline-none transition-all ${inputCls}`} />
-                <span className={`absolute right-3 text-xs pointer-events-none ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>%</span>
+                <span className={`absolute right-3 text-xs pointer-events-none ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>%</span>
               </div>
             </div>
           )}
@@ -423,15 +423,15 @@ export function LineItemBuilder({ state, dispatch, dark = true }) {
               onClick={() => dispatch({ type: 'SET_FIELD', field: 'licensingId', value: opt.id })}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-left text-sm transition-all ${
                 licensingId === opt.id
-                  ? 'border-teal-500/60 bg-teal-500/10 text-teal-400'
-                  : dark ? 'border-charcoal-700 text-charcoal-300 hover:border-charcoal-600' : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                  ? 'border-gold-500/60 bg-gold-500/10 text-gold-400'
+                  : dark ? 'border-white/[0.08] text-charcoal-300 hover:border-gold-500/35 hover:text-white' : 'border-gray-200 text-gray-600 hover:border-gray-300'
               }`}
             >
               <div>
                 <span className="font-medium">{opt.label}</span>
-                <span className={`ml-2 text-xs ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>{opt.description}</span>
+                <span className={`ml-2 text-xs ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>{opt.description}</span>
               </div>
-              <span className={`text-xs font-bold ${licensingId === opt.id ? 'text-teal-400' : dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
+              <span className={`text-xs font-bold ${licensingId === opt.id ? 'text-gold-400' : dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
                 ×{opt.multiplier.toFixed(2)}
               </span>
             </button>
@@ -447,7 +447,7 @@ export function LineItemBuilder({ state, dispatch, dark = true }) {
             <span className={`text-sm ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>Apply sales tax / VAT</span>
             <button type="button"
               onClick={() => dispatch({ type: 'SET_FIELD', field: 'taxEnabled', value: !taxEnabled })}
-              className={`relative w-10 h-5 rounded-full transition-colors ${taxEnabled ? 'bg-gold-500' : dark ? 'bg-charcoal-600' : 'bg-gray-300'}`}
+              className={`relative w-10 h-5 rounded-full transition-colors ${taxEnabled ? 'bg-gold-500' : dark ? 'bg-white/[0.09]' : 'bg-gray-300'}`}
             >
               <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${taxEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
             </button>
@@ -460,7 +460,7 @@ export function LineItemBuilder({ state, dispatch, dark = true }) {
                   onChange={e => dispatch({ type: 'SET_FIELD', field: 'taxRate', value: parseFloat(e.target.value) || 0 })}
                   placeholder="8.5"
                   className={`w-full pl-3 pr-8 py-2 text-sm rounded-lg border outline-none transition-all ${inputCls}`} />
-                <span className={`absolute right-3 text-xs pointer-events-none ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>%</span>
+                <span className={`absolute right-3 text-xs pointer-events-none ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>%</span>
               </div>
             </div>
           )}

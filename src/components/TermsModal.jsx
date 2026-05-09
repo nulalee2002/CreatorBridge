@@ -20,7 +20,7 @@ function Section({ id, title, dark, children }) {
   const textBody = dark ? 'text-charcoal-300' : 'text-gray-600';
   return (
     <section id={`terms-${id}`} className="scroll-mt-4 mb-8">
-      <h2 className={`font-display font-bold text-lg mb-3 pb-2 border-b ${dark ? 'text-white border-charcoal-700' : 'text-gray-900 border-gray-200'}`}>
+      <h2 className={`font-display font-bold text-lg mb-3 pb-2 border-b ${dark ? 'text-white border-white/[0.07]' : 'text-gray-900 border-gray-200'}`}>
         {title}
       </h2>
       <div className={`space-y-3 text-sm leading-relaxed ${textBody}`}>
@@ -33,7 +33,7 @@ function Section({ id, title, dark, children }) {
 export function TermsModal({ dark, onClose }) {
   const scrollRef = useRef(null);
   const linkCls = 'text-gold-400 hover:text-gold-300 underline';
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
 
   // Close on Escape key
   useEffect(() => {
@@ -44,28 +44,29 @@ export function TermsModal({ dark, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-md" onClick={onClose} />
       <div className={`relative w-full max-w-3xl max-h-[90vh] flex flex-col rounded-2xl border shadow-2xl ${
-        dark ? 'bg-charcoal-900 border-charcoal-700' : 'bg-white border-gray-200'
+        dark ? 'bg-charcoal-950/96 border-white/[0.09] shadow-[0_28px_90px_rgba(0,0,0,0.46)]' : 'bg-white border-gray-200'
       }`}>
+        <div className="h-px bg-gradient-to-r from-transparent via-gold-400/70 to-transparent shrink-0" />
         {/* Header */}
-        <div className={`flex items-center justify-between px-6 py-4 border-b ${dark ? 'border-charcoal-700' : 'border-gray-200'} shrink-0`}>
+        <div className={`flex items-center justify-between px-6 py-4 border-b ${dark ? 'border-white/[0.07] bg-charcoal-950/80' : 'border-gray-200 bg-gray-50'} shrink-0`}>
           <div>
             <p className={`text-[10px] font-bold uppercase tracking-widest ${textSub}`}>Legal</p>
             <h2 className={`font-display font-bold text-xl ${dark ? 'text-white' : 'text-gray-900'}`}>Terms of Service</h2>
           </div>
           <button type="button" onClick={onClose}
-            className={`p-2 rounded-xl transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
+            className={`p-2 rounded-xl transition-colors ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.08]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
             <X size={18} />
           </button>
         </div>
 
         {/* Scrollable content */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-5 space-y-1">
+        <div ref={scrollRef} className={`flex-1 overflow-y-auto px-6 py-5 space-y-1 ${dark ? 'bg-[radial-gradient(circle_at_25%_0%,rgba(212,169,65,0.06),transparent_34%)]' : ''}`}>
           <p className={`text-xs mb-6 ${textSub}`}>Effective April 9, 2026. Last updated April 9, 2026.</p>
 
           {/* Table of contents */}
-          <div className={`rounded-xl border p-4 mb-6 ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-gray-50 border-gray-200'}`}>
+          <div className={`rounded-xl border p-4 mb-6 ${dark ? 'bg-white/[0.04] border-white/[0.08]' : 'bg-gray-50 border-gray-200'}`}>
             <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Contents</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
               {SECTIONS.map(s => (
@@ -167,7 +168,7 @@ export function TermsModal({ dark, onClose }) {
             <p>
               CreatorBridge charges the following platform fees:
             </p>
-            <div className={`rounded-xl border p-4 my-3 ${dark ? 'border-charcoal-600 bg-charcoal-900/40' : 'border-gray-200 bg-gray-50'}`}>
+            <div className={`rounded-xl border p-4 my-3 ${dark ? 'border-white/[0.08] bg-charcoal-950/55' : 'border-gray-200 bg-gray-50'}`}>
               <div className="space-y-2 text-xs font-mono">
                 <div className="flex justify-between"><span>Client booking fee</span><span className="font-bold">5% of project total</span></div>
                 <div className="flex justify-between"><span>Creator platform fee (Standard tier)</span><span className="font-bold">10% of earnings</span></div>
@@ -295,17 +296,17 @@ export function TermsModal({ dark, onClose }) {
             </p>
           </Section>
 
-          <div className={`pt-4 border-t text-xs ${dark ? 'border-charcoal-700 text-charcoal-500' : 'border-gray-200 text-gray-400'}`}>
+          <div className={`pt-4 border-t text-xs ${dark ? 'border-white/[0.07] text-charcoal-300' : 'border-gray-200 text-gray-400'}`}>
             {/* TODO: Update to support@creatorbridge.studio once domain email is active */}
             <p>CreatorBridge Inc. Questions? Contact <a href="mailto:drl33@creatorbridge.studio" className={linkCls}>drl33@creatorbridge.studio</a></p>
           </div>
         </div>
 
         {/* Footer */}
-        <div className={`flex items-center justify-end gap-3 px-6 py-4 border-t ${dark ? 'border-charcoal-700' : 'border-gray-200'} shrink-0`}>
+        <div className={`flex items-center justify-end gap-3 px-6 py-4 border-t ${dark ? 'border-white/[0.07] bg-charcoal-950/80' : 'border-gray-200'} shrink-0`}>
           <button type="button" onClick={onClose}
             className={`px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${
-              dark ? 'border-charcoal-600 text-charcoal-300 hover:text-white' : 'border-gray-200 text-gray-600 hover:text-gray-900'
+              dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/35 hover:text-white' : 'border-gray-200 text-gray-600 hover:text-gray-900'
             }`}>
             Close
           </button>

@@ -33,36 +33,36 @@ export function ViolationBanner({ violations = [], dark }) {
 
   if (highestStrike === 2) {
     return (
-      <div className="mb-4 p-4 rounded-2xl border border-amber-500/40 bg-amber-500/10 flex items-start gap-3">
-        <AlertTriangle size={18} className="text-amber-400 mt-0.5 shrink-0" />
+      <div className="mb-4 p-4 rounded-2xl border border-gold-500/40 bg-gold-500/10 flex items-start gap-3">
+        <AlertTriangle size={18} className="text-gold-400 mt-0.5 shrink-0" />
         <div>
-          <p className="font-bold text-sm text-amber-400">Account Under Review</p>
-          <p className="text-xs text-amber-300 mt-1 leading-snug">
+          <p className="font-bold text-sm text-gold-400">Account Under Review</p>
+          <p className="text-xs text-gold-300 mt-1 leading-snug">
             Your account has received a second violation. For 30 days, your profile will be deprioritized
             in search results and you will have reduced access to posting new projects.
             Continued violations may result in suspension.
           </p>
-          <p className="text-[10px] text-amber-400/70 mt-2">Strike 2 of 3 active</p>
+          <p className="text-[10px] text-gold-400/70 mt-2">Strike 2 of 3 active</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="mb-4 p-4 rounded-2xl border border-yellow-500/30 bg-yellow-500/8 flex items-start gap-3">
-      <AlertTriangle size={18} className="text-yellow-400 mt-0.5 shrink-0" />
+    <div className="mb-4 p-4 rounded-2xl border border-gold-500/30 bg-gold-500/10 flex items-start gap-3">
+      <AlertTriangle size={18} className="text-gold-400 mt-0.5 shrink-0" />
       <div>
-        <p className="font-bold text-sm text-yellow-400">Platform Warning</p>
-        <p className="text-xs text-yellow-300 mt-1 leading-snug">
+        <p className="font-bold text-sm text-gold-400">Platform Warning</p>
+        <p className="text-xs text-gold-300 mt-1 leading-snug">
           Your account has received a warning for a policy violation.
           Repeated violations may result in suspension.
           Please review our{' '}
-          <a href="/terms" className="underline hover:text-yellow-200">platform policies</a>.
+          <a href="/terms" className="underline hover:text-gold-200">platform policies</a>.
         </p>
         {active[0]?.description && (
-          <p className="text-[10px] text-yellow-400/70 mt-1">Reason: {active[0].description}</p>
+          <p className="text-[10px] text-gold-400/70 mt-1">Reason: {active[0].description}</p>
         )}
-        <p className="text-[10px] text-yellow-400/60 mt-1">Strike 1 of 3</p>
+        <p className="text-[10px] text-gold-400/60 mt-1">Strike 1 of 3</p>
       </div>
     </div>
   );
@@ -94,7 +94,7 @@ export async function loadViolations(userId, supabase, supabaseConfigured) {
  */
 export function UnderReviewBadge() {
   return (
-    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 text-[10px] font-bold">
+    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-gold-500/15 text-gold-400 text-[10px] font-bold ring-1 ring-gold-500/25">
       <AlertTriangle size={9} /> Under Review
     </span>
   );

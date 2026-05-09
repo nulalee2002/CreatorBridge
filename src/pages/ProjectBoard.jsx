@@ -7,20 +7,29 @@ import {
   Upload, AlertCircle, Timer,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
-import { SERVICES } from '../data/rates.js';
+import { SERVICES, MARKETPLACE_CATEGORIES, getMarketplaceServiceIds, normalizeServiceId } from '../data/rates.js';
 import { PROJECT_STATUSES, statusBadgeClass } from '../config/fees.js';
 import { ProjectTimeline } from '../components/ProjectTimeline.jsx';
 import { DisputeModal } from '../components/DisputeModal.jsx';
 import { CancellationModal } from '../components/CancellationModal.jsx';
 import { ClientReputationBadge, loadClientReputation, RateClientModal } from '../components/ClientReputationBadge.jsx';
 import { ReferralSection } from '../components/ReferralSection.jsx';
+import { supabase, supabaseConfigured } from '../lib/supabase.js';
+import {
+  fromSupabaseProject,
+  loadLocalProjects,
+  mergeProjects,
+  saveLocalProjects,
+  toSupabaseProject,
+  upsertLocalProject,
+} from '../utils/projectStorage.js';
 
 // ── localStorage helpers ────────────────────────────────────────
 function loadProjects() {
-  try { return JSON.parse(localStorage.getItem('cm-projects') || '[]'); } catch { return []; }
+  return loadLocalProjects();
 }
 function saveProjects(projects) {
-  localStorage.setItem('cm-projects', JSON.stringify(projects));
+  saveLocalProjects(projects);
 }
 function loadApplications() {
   try { return JSON.parse(localStorage.getItem('cm-applications') || '[]'); } catch { return []; }
@@ -84,28 +93,53 @@ function updateProject(id, patch) {
   return updated;
 }
 
+function updateApplicationStatus(applicationId, status) {
+  const all = loadApplications();
+  const updated = all.map(app => app.id === applicationId ? { ...app, status } : app);
+  saveApplications(updated);
+  return updated;
+}
+
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
+}
+
 // ── Delivery Submit Modal ────────────────────────────────────────
 function DeliverySubmitModal({ project, dark, onClose, onDelivered }) {
   const [link, setLink]           = useState('');
   const [notes, setNotes]         = useState('');
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError]         = useState('');
-  const textSub  = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
   const inputCls = `w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${
-    dark ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+    dark ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
          : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
   }`;
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!link.trim()) { setError('Please add a delivery link.'); return; }
     if (!confirmed)   { setError('Please confirm that you have kept your own copy of the delivered files.'); return; }
     const deliveredAt = new Date().toISOString();
-    const updated = updateProject(project.id, {
+    const patch = {
       status:      'delivered',
       deliveredAt,
       deliveryLink: link.trim(),
       deliveryNotes: notes.trim(),
-    });
+    };
+    const updated = updateProject(project.id, patch);
+    if (supabaseConfigured && isUuid(project.id)) {
+      try {
+        await supabase
+          .from('projects')
+          .update({
+            status: 'delivered',
+            delivered_at: deliveredAt,
+            delivery_link: link.trim(),
+            delivery_notes: notes.trim(),
+          })
+          .eq('id', project.id);
+      } catch {}
+    }
     onDelivered?.(updated.find(p => p.id === project.id));
     onClose();
   }
@@ -113,9 +147,9 @@ function DeliverySubmitModal({ project, dark, onClose, onDelivered }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative w-full max-w-md rounded-2xl border shadow-2xl ${dark ? 'bg-charcoal-900 border-charcoal-700' : 'bg-white border-gray-200'}`}>
+      <div className={`relative w-full max-w-md rounded-2xl border shadow-2xl ${dark ? 'bg-charcoal-950/70 border-white/[0.07]' : 'bg-white border-gray-200'}`}>
         <button type="button" onClick={onClose}
-          className={`absolute top-4 right-4 p-1.5 rounded-lg ${dark ? 'text-charcoal-400 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
+          className={`absolute top-4 right-4 p-1.5 rounded-lg ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.06]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
           <X size={16} />
         </button>
         <div className="p-6 space-y-4">
@@ -129,7 +163,7 @@ function DeliverySubmitModal({ project, dark, onClose, onDelivered }) {
           </div>
           <div>
             <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Or upload a small file directly (PDFs, images, audio only. Max 200MB)</p>
-            <label className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border cursor-pointer transition-all ${dark ? 'border-charcoal-600 text-charcoal-400 hover:border-charcoal-500' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
+            <label className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border cursor-pointer transition-all ${dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/35' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
               <Upload size={13} />
               <span className="text-sm">Choose file...</span>
               <input type="file" accept=".pdf,.jpg,.jpeg,.png,.gif,.mp3,.wav,.aac" className="hidden" />
@@ -148,7 +182,7 @@ function DeliverySubmitModal({ project, dark, onClose, onDelivered }) {
               I confirm that I have kept my own copy of all delivered files and will retain them for a minimum of 6 months in case the client requests re-delivery.
             </span>
           </label>
-          <div className={`rounded-xl border p-3 text-[10px] leading-relaxed ${dark ? 'border-charcoal-700 bg-charcoal-800 text-charcoal-400' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
+          <div className={`rounded-xl border p-3 text-[10px] leading-relaxed ${dark ? 'border-white/[0.07] bg-charcoal-900/72 text-charcoal-300' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
             {STORAGE_NOTICE}
           </div>
           {error && <p className="text-xs text-red-400 bg-red-400/10 rounded-lg px-3 py-2">{error}</p>}
@@ -166,24 +200,37 @@ function DeliverySubmitModal({ project, dark, onClose, onDelivered }) {
 function RevisionRequestModal({ project, dark, onClose, onRevisionSubmitted }) {
   const [details, setDetails] = useState('');
   const [error, setError]     = useState('');
-  const textSub  = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
   const inputCls = `w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${
-    dark ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+    dark ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
          : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
   }`;
 
   const revisionCount = project.revision_count || 0;
   const isPaidRevision = revisionCount >= 2;
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (details.trim().length < 50) { setError('Please describe what needs to change (at least 50 characters).'); return; }
     if (!isPaidRevision) {
       const newCount = revisionCount + 1;
-      const updated = updateProject(project.id, {
+      const patch = {
         status:         'in_progress',
         revision_count: newCount,
         deliveredAt:    null,
-      });
+      };
+      const updated = updateProject(project.id, patch);
+      if (supabaseConfigured && isUuid(project.id)) {
+        try {
+          await supabase
+            .from('projects')
+            .update({
+              status: 'in_progress',
+              revision_count: newCount,
+              delivered_at: null,
+            })
+            .eq('id', project.id);
+        } catch {}
+      }
       onRevisionSubmitted?.(updated.find(p => p.id === project.id));
       onClose();
     }
@@ -192,22 +239,22 @@ function RevisionRequestModal({ project, dark, onClose, onRevisionSubmitted }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative w-full max-w-md rounded-2xl border shadow-2xl ${dark ? 'bg-charcoal-900 border-charcoal-700' : 'bg-white border-gray-200'}`}>
+      <div className={`relative w-full max-w-md rounded-2xl border shadow-2xl ${dark ? 'bg-charcoal-950/70 border-white/[0.07]' : 'bg-white border-gray-200'}`}>
         <button type="button" onClick={onClose}
-          className={`absolute top-4 right-4 p-1.5 rounded-lg ${dark ? 'text-charcoal-400 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
+          className={`absolute top-4 right-4 p-1.5 rounded-lg ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.06]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
           <X size={16} />
         </button>
         <div className="p-6 space-y-4">
           <h3 className={`font-display font-bold text-lg ${dark ? 'text-white' : 'text-gray-900'}`}>Request a Revision</h3>
           {isPaidRevision ? (
-            <div className={`rounded-xl border p-4 ${dark ? 'border-amber-500/40 bg-amber-500/10' : 'border-amber-200 bg-amber-50'}`}>
-              <p className={`text-sm font-semibold ${dark ? 'text-amber-400' : 'text-amber-700'}`}>Free revisions used ({revisionCount} of 2)</p>
-              <p className={`text-xs mt-1 ${dark ? 'text-amber-300/80' : 'text-amber-600'}`}>
+            <div className={`rounded-xl border p-4 ${dark ? 'border-gold-500/30 bg-gold-500/10' : 'border-gold-200 bg-gold-50'}`}>
+              <p className={`text-sm font-semibold ${dark ? 'text-gold-400' : 'text-gold-700'}`}>Free revisions used ({revisionCount} of 2)</p>
+              <p className={`text-xs mt-1 ${dark ? 'text-gold-300/80' : 'text-gold-600'}`}>
                 You have used your 2 included free revisions. A third revision requires an additional payment. The creator will provide a quote for the additional revision work.
               </p>
             </div>
           ) : (
-            <div className={`rounded-xl border p-3 text-xs ${dark ? 'border-charcoal-700 bg-charcoal-800 text-charcoal-400' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
+            <div className={`rounded-xl border p-3 text-xs ${dark ? 'border-white/[0.07] bg-charcoal-900/72 text-charcoal-300' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
               Revision {revisionCount + 1} of 2 free revisions
             </div>
           )}
@@ -225,7 +272,7 @@ function RevisionRequestModal({ project, dark, onClose, onRevisionSubmitted }) {
             </button>
           ) : (
             <button type="button" onClick={handleSubmit}
-              className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold transition-all flex items-center justify-center gap-2">
+              className="w-full py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold transition-all flex items-center justify-center gap-2">
               <RotateCcw size={14} /> Submit Revision Request
             </button>
           )}
@@ -238,7 +285,7 @@ function RevisionRequestModal({ project, dark, onClose, onRevisionSubmitted }) {
 // ── Re-Delivery Request (Archived) ───────────────────────────────
 function ArchivedProjectNotice({ project, dark, onStatusChange }) {
   const [requested, setRequested] = useState(false);
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
 
   function requestRedelivery() {
     // $30 charge would go through Stripe - for now record the request
@@ -249,13 +296,13 @@ function ArchivedProjectNotice({ project, dark, onStatusChange }) {
   }
 
   return (
-    <div className={`rounded-xl border p-4 ${dark ? 'border-charcoal-700 bg-charcoal-800' : 'border-gray-200 bg-gray-50'}`}>
+    <div className={`rounded-xl border p-4 ${dark ? 'border-white/[0.07] bg-charcoal-900/72' : 'border-gray-200 bg-gray-50'}`}>
       <p className={`text-sm font-semibold mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>Files Removed</p>
       <p className={`text-xs mb-3 ${textSub}`}>
         The files for this project were removed from CreatorBridge storage after 7 days as per our storage policy. You can request re-delivery from the creator for a $30 retrieval fee.
       </p>
       {requested ? (
-        <p className="text-xs text-teal-400 font-medium">Re-delivery requested. The creator has been notified.</p>
+        <p className="text-xs text-gold-400 font-medium">Re-delivery requested. The creator has been notified.</p>
       ) : (
         <button type="button" onClick={requestRedelivery}
           className="px-4 py-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-xs font-bold transition-all">
@@ -272,15 +319,36 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
     title: '', description: '', serviceId: '', budgetMin: '', budgetMax: '',
     deadline: '', location: '', remote: true, skills: '',
   });
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-  const textSub  = dark ? 'text-charcoal-400' : 'text-gray-500';
-  const inputCls = `w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${
-    dark ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
-         : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
+  const [errors, setErrors] = useState({});
+  const set = (k, v) => {
+    setForm(f => ({ ...f, [k]: v }));
+    setErrors(e => ({ ...e, [k]: '' }));
+  };
+  const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
+  const inputCls = (field) => `w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${
+    errors[field]
+      ? 'border-red-500 bg-red-500/5'
+      : dark ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
+             : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
   }`;
 
-  function handlePost() {
-    if (!form.title.trim() || !form.description.trim()) return;
+  function validate() {
+    const next = {};
+    const minBudget = parseFloat(form.budgetMin);
+    const maxBudget = parseFloat(form.budgetMax);
+    if (!form.title.trim()) next.title = 'Add a clear project title.';
+    if (!form.serviceId) next.serviceId = 'Choose the production service you need.';
+    if (form.description.trim().length < 80) next.description = 'Add at least 80 characters so creators understand the scope.';
+    if (form.budgetMin && minBudget < 0) next.budgetMin = 'Budget cannot be negative.';
+    if (form.budgetMax && maxBudget < 0) next.budgetMax = 'Budget cannot be negative.';
+    if (form.budgetMin && form.budgetMax && minBudget > maxBudget) next.budgetMax = 'Max budget should be higher than min budget.';
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  }
+
+  async function handlePost() {
+    if (!validate()) return;
+    setErrors({});
     const project = {
       id:          Date.now().toString() + Math.random(),
       title:       form.title.trim(),
@@ -298,63 +366,97 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
       applications: 0,
       createdAt:   new Date().toISOString(),
     };
-    const all = loadProjects();
-    saveProjects([project, ...all]);
-    onPost(project);
+    let saved = project;
+    if (supabaseConfigured && user) {
+      try {
+        const { data, error } = await supabase
+          .from('projects')
+          .insert(toSupabaseProject(project, user.id))
+          .select()
+          .single();
+        if (error) throw error;
+        saved = { ...project, ...fromSupabaseProject(data), clientName: project.clientName };
+      } catch {
+        saved = project;
+      }
+    }
+    upsertLocalProject(saved);
+    onPost(saved);
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative w-full max-w-lg rounded-2xl border shadow-2xl max-h-[90vh] overflow-y-auto ${dark ? 'bg-charcoal-900 border-charcoal-700' : 'bg-white border-gray-200'}`}>
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
+      <div className={`relative w-full max-w-2xl rounded-2xl border shadow-2xl max-h-[90vh] overflow-y-auto ${dark ? 'bg-charcoal-950/92 border-gold-500/20' : 'bg-white border-gray-200'}`}>
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-400/70 to-transparent" />
         <button type="button" onClick={onClose}
-          className={`absolute top-4 right-4 p-1.5 rounded-lg ${dark ? 'text-charcoal-400 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
+          className={`absolute top-4 right-4 p-1.5 rounded-lg z-10 ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.06]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
           <X size={16} />
         </button>
         <div className="p-6">
-          <h3 className={`font-display font-bold text-lg mb-5 ${dark ? 'text-white' : 'text-gray-900'}`}>Post a Project</h3>
+          <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
+            Client production brief
+          </p>
+          <h3 className={`font-display font-bold text-2xl mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>Post a project</h3>
+          <p className={`text-sm leading-6 mb-6 ${textSub}`}>
+            Give creators enough context to judge fit, timeline, and budget before they apply. Strong briefs get better matches.
+          </p>
 
           <div className="space-y-4">
             <div>
               <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Project Title *</p>
               <input type="text" value={form.title} onChange={e => set('title', e.target.value)}
                 placeholder="e.g. Brand photography for new product launch"
-                className={inputCls} />
+                className={inputCls('title')} />
+              {errors.title && <p className="mt-1 text-xs text-red-400">{errors.title}</p>}
             </div>
 
             <div>
               <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Description *</p>
               <textarea rows={4} value={form.description} onChange={e => set('description', e.target.value)}
-                placeholder="Describe the project in detail - what you need, timeline expectations, any creative direction..."
-                className={`${inputCls} resize-none`} />
+                placeholder="Describe what needs to be created, the style or usage, must-have shots, deliverables, and anything the creator needs to know."
+                className={`${inputCls('description')} resize-none`} />
+              <div className="mt-1 flex items-center justify-between gap-3">
+                {errors.description ? <p className="text-xs text-red-400">{errors.description}</p> : <span />}
+                <p className={`text-[10px] ${form.description.length >= 80 ? 'text-gold-400' : textSub}`}>{form.description.length} / 80</p>
+              </div>
             </div>
 
             <div>
-              <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Service Type</p>
-              <div className="flex flex-wrap gap-2">
+              <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Service Type *</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {Object.entries(SERVICES).map(([id, svc]) => (
                   <button key={id} type="button" onClick={() => set('serviceId', form.serviceId === id ? '' : id)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-medium transition-all ${
+                    className={`flex items-start gap-3 px-3 py-3 rounded-xl border text-left transition-all ${
                       form.serviceId === id
                         ? 'border-gold-500 bg-gold-500/10 text-gold-400'
-                        : dark ? 'border-charcoal-700 text-charcoal-400 hover:border-charcoal-500' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                        : errors.serviceId
+                          ? 'border-red-500/45 ' + (dark ? 'text-charcoal-300' : 'text-gray-500')
+                          : dark ? 'border-white/[0.07] text-charcoal-300 hover:border-gold-500/35 hover:bg-white/[0.035]' : 'border-gray-200 text-gray-500 hover:border-gray-300'
                     }`}>
-                    {svc.icon} {svc.name}
+                    <span className="text-xl leading-none">{svc.icon}</span>
+                    <span>
+                      <span className="block text-xs font-bold">{svc.name}</span>
+                      <span className={`mt-1 block text-[10px] leading-4 ${form.serviceId === id ? 'text-gold-300' : textSub}`}>{svc.description}</span>
+                    </span>
                   </button>
                 ))}
               </div>
+              {errors.serviceId && <p className="mt-1 text-xs text-red-400">{errors.serviceId}</p>}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Min Budget ($)</p>
                 <input type="number" min={0} value={form.budgetMin} onChange={e => set('budgetMin', e.target.value)}
-                  placeholder="500" className={inputCls} />
+                  placeholder="500" className={inputCls('budgetMin')} />
+                {errors.budgetMin && <p className="mt-1 text-xs text-red-400">{errors.budgetMin}</p>}
               </div>
               <div>
                 <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Max Budget ($)</p>
                 <input type="number" min={0} value={form.budgetMax} onChange={e => set('budgetMax', e.target.value)}
-                  placeholder="2000" className={inputCls} />
+                  placeholder="2000" className={inputCls('budgetMax')} />
+                {errors.budgetMax && <p className="mt-1 text-xs text-red-400">{errors.budgetMax}</p>}
               </div>
             </div>
 
@@ -362,18 +464,18 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
               <div>
                 <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Deadline</p>
                 <input type="date" value={form.deadline} onChange={e => set('deadline', e.target.value)}
-                  className={inputCls} />
+                  className={inputCls('deadline')} />
               </div>
               <div>
                 <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Location</p>
                 <input type="text" value={form.location} onChange={e => set('location', e.target.value)}
-                  placeholder="New York, NY" className={inputCls} />
+                  placeholder="New York, NY" className={inputCls('location')} />
               </div>
             </div>
 
             <div className="flex items-center gap-2">
               <button type="button" onClick={() => set('remote', !form.remote)}
-                className={`w-10 h-5 rounded-full transition-all relative ${form.remote ? 'bg-teal-500' : dark ? 'bg-charcoal-600' : 'bg-gray-300'}`}>
+                className={`w-10 h-5 rounded-full transition-all relative ${form.remote ? 'bg-gold-500' : dark ? 'bg-charcoal-600' : 'bg-gray-300'}`}>
                 <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${form.remote ? 'left-5' : 'left-0.5'}`} />
               </button>
               <span className={`text-sm ${dark ? 'text-charcoal-300' : 'text-gray-700'}`}>Remote work accepted</span>
@@ -383,17 +485,17 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
               <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Required Skills (comma-separated)</p>
               <input type="text" value={form.skills} onChange={e => set('skills', e.target.value)}
                 placeholder="e.g. Adobe Lightroom, drone photography, product shots"
-                className={inputCls} />
+                className={inputCls('skills')} />
             </div>
           </div>
 
           <div className="flex gap-2 mt-5">
             <button type="button" onClick={onClose}
-              className={`flex-1 py-2.5 rounded-xl border text-sm font-semibold ${dark ? 'border-charcoal-600 text-charcoal-300 hover:text-white' : 'border-gray-200 text-gray-600 hover:text-gray-900'}`}>
+              className={`flex-1 py-2.5 rounded-xl border text-sm font-semibold ${dark ? 'border-white/[0.09] text-charcoal-300 hover:text-white' : 'border-gray-200 text-gray-600 hover:text-gray-900'}`}>
               Cancel
             </button>
             <button type="button" onClick={handlePost}
-              disabled={!form.title.trim() || !form.description.trim()}
+              disabled={!form.title.trim() || !form.description.trim() || !form.serviceId}
               className="flex-1 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 text-charcoal-900 text-sm font-bold transition-all flex items-center justify-center gap-2">
               <Briefcase size={14} /> Post Project
             </button>
@@ -412,13 +514,13 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
     creatorListing?.businessName || creatorListing?.name || ''
   );
   const [submitted, setSubmitted] = useState(false);
-  const textSub  = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
   const inputCls = `w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${
-    dark ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+    dark ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
          : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
   }`;
 
-  function handleApply() {
+  async function handleApply() {
     if (!proposal.trim()) return;
     const app = {
       id:          Date.now().toString() + Math.random(),
@@ -431,11 +533,38 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
       status:      'pending',
       createdAt:   new Date().toISOString(),
     };
+
+    if (supabaseConfigured && creatorListing?.id && isUuid(project.id) && isUuid(creatorListing.id)) {
+      try {
+        const { data } = await supabase
+          .from('project_applications')
+          .insert({
+            project_id: project.id,
+            listing_id: creatorListing.id,
+            message: proposal.trim(),
+            proposed_rate: parseFloat(rate) || null,
+            status: 'pending',
+          })
+          .select()
+          .single();
+        if (data?.id) app.id = data.id;
+      } catch {}
+    }
+
     const all = loadApplications();
     saveApplications([...all, app]);
     // Increment application count
     const projs = loadProjects();
-    saveProjects(projs.map(p => p.id === project.id ? { ...p, applications: (p.applications || 0) + 1 } : p));
+    const nextProjects = projs.map(p => p.id === project.id ? { ...p, applications: (p.applications || 0) + 1 } : p);
+    saveProjects(nextProjects);
+    if (supabaseConfigured && isUuid(project.id)) {
+      try {
+        await supabase
+          .from('projects')
+          .update({ applications: (project.applications || 0) + 1 })
+          .eq('id', project.id);
+      } catch {}
+    }
     setSubmitted(true);
     setTimeout(() => { onApply(app); }, 1500);
   }
@@ -443,16 +572,16 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative w-full max-w-md rounded-2xl border shadow-2xl ${dark ? 'bg-charcoal-900 border-charcoal-700' : 'bg-white border-gray-200'}`}>
+      <div className={`relative w-full max-w-md rounded-2xl border shadow-2xl ${dark ? 'bg-charcoal-950/70 border-white/[0.07]' : 'bg-white border-gray-200'}`}>
         <button type="button" onClick={onClose}
-          className={`absolute top-4 right-4 p-1.5 rounded-lg ${dark ? 'text-charcoal-400 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
+          className={`absolute top-4 right-4 p-1.5 rounded-lg ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.06]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
           <X size={16} />
         </button>
         <div className="p-6">
           {submitted ? (
             <div className="text-center py-6">
-              <div className="w-14 h-14 rounded-full bg-teal-500/15 flex items-center justify-center mx-auto mb-4">
-                <Check size={28} className="text-teal-400" />
+              <div className="w-14 h-14 rounded-full bg-gold-500/15 flex items-center justify-center mx-auto mb-4">
+                <Check size={28} className="text-gold-400" />
               </div>
               <h3 className={`font-display font-bold text-lg mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>Proposal Submitted!</h3>
               <p className={`text-sm ${textSub}`}>Your proposal for "{project.title}" has been saved. The client will review and reach out if interested.</p>
@@ -486,7 +615,7 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
 
               <div className="flex gap-2 mt-5">
                 <button type="button" onClick={onClose}
-                  className={`flex-1 py-2.5 rounded-xl border text-sm font-semibold ${dark ? 'border-charcoal-600 text-charcoal-300 hover:text-white' : 'border-gray-200 text-gray-600 hover:text-gray-900'}`}>
+                  className={`flex-1 py-2.5 rounded-xl border text-sm font-semibold ${dark ? 'border-white/[0.09] text-charcoal-300 hover:text-white' : 'border-gray-200 text-gray-600 hover:text-gray-900'}`}>
                   Cancel
                 </button>
                 <button type="button" onClick={handleApply} disabled={!proposal.trim()}
@@ -510,7 +639,7 @@ function ProjectActionButtons({ project, isClient, applied, dark, onApply, onSta
     const all = JSON.parse(localStorage.getItem('cm-projects') || '[]');
     const updated = all.map(p => p.id === project.id ? { ...p, status: newStatus, ...patch } : p);
     localStorage.setItem('cm-projects', JSON.stringify(updated));
-    onStatusChange?.(project.id, newStatus);
+    onStatusChange?.(project.id, newStatus, patch);
   }
 
   // Client buttons
@@ -538,21 +667,25 @@ function ProjectActionButtons({ project, isClient, applied, dark, onApply, onSta
       return (
         <div className="space-y-2">
           {remainHours !== null && remainHours > 0 && (
-            <div className={`flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-lg ${dark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600'}`}>
+            <div className={`flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-lg ${dark ? 'bg-gold-500/10 text-gold-400' : 'bg-gold-50 text-gold-600'}`}>
               <Timer size={10} /> Auto-approves in {remainHours}h if no action taken
             </div>
           )}
           <div className="flex gap-2">
             <button type="button"
-              onClick={e => { e.stopPropagation(); changeStatus('completed', { completedAt: new Date().toISOString() }); }}
-              className="flex-1 py-2 rounded-xl bg-teal-500 hover:bg-teal-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-1">
-              <ThumbsUp size={11} /> Approve &amp; Release Payment
+              onClick={e => {
+                e.stopPropagation();
+                changeStatus('approved', { approvedAt: new Date().toISOString() });
+                navigate(`/checkout/${project.id}?payment=final`);
+              }}
+              className="flex-1 py-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-1">
+              <ThumbsUp size={11} /> Approve &amp; Pay Final Balance
             </button>
           </div>
           <div className="flex gap-2">
             <button type="button"
               onClick={e => { e.stopPropagation(); onOpenRevision?.(); }}
-              className="flex-1 py-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-bold transition-all flex items-center justify-center gap-1">
+              className="flex-1 py-2 rounded-xl bg-gold-500/12 border border-gold-500/25 text-gold-400 text-xs font-bold transition-all flex items-center justify-center gap-1">
               <RotateCcw size={11} /> Request Revision
             </button>
             <button type="button"
@@ -568,7 +701,7 @@ function ProjectActionButtons({ project, isClient, applied, dark, onApply, onSta
       return (
         <button type="button"
           onClick={e => { e.stopPropagation(); navigate(`/checkout/${project.id}?payment=final`); }}
-          className="w-full py-2 rounded-xl bg-teal-500 hover:bg-teal-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5">
+          className="w-full py-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5">
           <CreditCard size={11} /> Pay Remaining Balance
         </button>
       );
@@ -584,7 +717,7 @@ function ProjectActionButtons({ project, isClient, applied, dark, onApply, onSta
         disabled={applied}
         className={`w-full py-2 rounded-xl text-xs font-bold transition-all ${
           applied
-            ? 'bg-teal-500/15 text-teal-400 cursor-default'
+            ? 'bg-gold-500/15 text-gold-400 cursor-default'
             : 'bg-gold-500 hover:bg-gold-600 text-charcoal-900'
         }`}>
         {applied ? <span className="flex items-center justify-center gap-1"><Check size={11} /> Applied</span> : 'Apply Now'}
@@ -595,7 +728,7 @@ function ProjectActionButtons({ project, isClient, applied, dark, onApply, onSta
     return (
       <button type="button"
         onClick={e => { e.stopPropagation(); onOpenDelivery?.(); }}
-        className="w-full py-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5">
+        className="w-full py-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5">
         <Upload size={11} /> Submit Delivery
       </button>
     );
@@ -616,8 +749,9 @@ function InlineClientRep({ clientId, dark }) {
 // ── Project Card ─────────────────────────────────────────────────
 function ProjectCard({ project, dark, onApply, myApplications, isClient, onView, onStatusChange }) {
   const navigate = useNavigate();
-  const svc      = SERVICES[project.serviceId];
-  const textSub  = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const serviceId = normalizeServiceId(project.serviceId || project.service_id || project.serviceType);
+  const svc      = SERVICES[serviceId];
+  const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
   const applied  = myApplications.some(a => a.projectId === project.id);
 
   const budgetStr = project.budgetMin && project.budgetMax
@@ -629,16 +763,16 @@ function ProjectCard({ project, dark, onApply, myApplications, isClient, onView,
   const statusInfo = PROJECT_STATUSES[project.status] || PROJECT_STATUSES.open;
 
   return (
-    <div className={`rounded-2xl border p-5 transition-all cursor-pointer ${
-      dark ? 'bg-charcoal-800 border-charcoal-700 hover:border-charcoal-500' : 'bg-white border-gray-200 hover:border-gray-300'
+    <div className={`group rounded-2xl border p-5 transition-all cursor-pointer ${
+      dark ? 'bg-charcoal-900/72 border-white/[0.07] hover:border-gold-500/35 hover:bg-charcoal-900/90 shadow-[0_22px_70px_rgba(0,0,0,0.18)]' : 'bg-white border-gray-200 hover:border-gray-300'
     }`} onClick={() => onView(project)}>
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 ${dark ? 'bg-charcoal-700' : 'bg-gray-100'}`}>
+          <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 transition-all ${dark ? 'bg-white/[0.04] ring-1 ring-white/[0.07] group-hover:ring-gold-500/20' : 'bg-gray-100'}`}>
             {svc?.icon || '📋'}
           </div>
           <div>
-            <h3 className={`font-semibold text-sm ${dark ? 'text-white' : 'text-gray-900'}`}>{project.title}</h3>
+            <h3 className={`font-display font-bold text-base leading-snug ${dark ? 'text-white' : 'text-gray-900'}`}>{project.title}</h3>
             <div className={`flex items-center gap-1.5 text-[11px] ${textSub}`}>
               by {project.clientName}
               {project.clientId && <InlineClientRep clientId={project.clientId} dark={dark} />}
@@ -651,12 +785,12 @@ function ProjectCard({ project, dark, onApply, myApplications, isClient, onView,
         </span>
       </div>
 
-      <p className={`text-xs leading-relaxed mb-4 line-clamp-3 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
+      <p className={`text-sm leading-6 mb-5 line-clamp-3 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
         {project.description}
       </p>
 
       <div className="flex flex-wrap gap-2 mb-4">
-        <span className={`flex items-center gap-1 text-xs font-semibold text-teal-400`}>
+        <span className="flex items-center gap-1 text-xs font-bold text-gold-400">
           <DollarSign size={11} /> {budgetStr}
         </span>
         {project.deadline && (
@@ -670,7 +804,7 @@ function ProjectCard({ project, dark, onApply, myApplications, isClient, onView,
           </span>
         )}
         {project.remote && (
-          <span className={`text-xs px-2 py-0.5 rounded-full ${dark ? 'bg-charcoal-700 text-charcoal-400' : 'bg-gray-100 text-gray-500'}`}>
+          <span className={`text-xs px-2 py-0.5 rounded-full ${dark ? 'bg-white/[0.04] text-charcoal-300 ring-1 ring-white/[0.06]' : 'bg-gray-100 text-gray-500'}`}>
             Remote OK
           </span>
         )}
@@ -682,7 +816,7 @@ function ProjectCard({ project, dark, onApply, myApplications, isClient, onView,
       {project.skills?.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-4">
           {project.skills.map(skill => (
-            <span key={skill} className={`text-[10px] px-2 py-0.5 rounded-full ${dark ? 'bg-charcoal-700 text-charcoal-400' : 'bg-gray-100 text-gray-500'}`}>
+            <span key={skill} className={`text-[10px] px-2 py-0.5 rounded-full ${dark ? 'bg-white/[0.04] text-charcoal-300 ring-1 ring-white/[0.06]' : 'bg-gray-100 text-gray-500'}`}>
               {skill}
             </span>
           ))}
@@ -705,8 +839,9 @@ function ProjectCard({ project, dark, onApply, myApplications, isClient, onView,
 // ── Project Detail Modal ─────────────────────────────────────────
 function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, applications, isClient, onStatusChange }) {
   const navigate    = useNavigate();
-  const svc         = SERVICES[project.serviceId];
-  const textSub     = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const serviceId   = normalizeServiceId(project.serviceId || project.service_id || project.serviceType);
+  const svc         = SERVICES[serviceId];
+  const textSub     = dark ? 'text-charcoal-300' : 'text-gray-500';
   const applied     = myApplications.some(a => a.projectId === project.id);
   const projectApps = applications.filter(a => a.projectId === project.id);
   const [showDispute, setShowDispute]       = useState(false);
@@ -722,18 +857,48 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
     : project.budgetMin ? `From $${Number(project.budgetMin).toLocaleString()}`
     : 'Budget TBD';
 
+  async function acceptApplication(app) {
+    const now = new Date().toISOString();
+    const patch = {
+      acceptedCreatorId: app.creatorId,
+      acceptedApplicationId: app.id,
+      acceptedAt: now,
+    };
+    updateApplicationStatus(app.id, 'accepted');
+    const updatedProjects = updateProject(localProject.id, { status: 'accepted', ...patch });
+    const updatedProject = updatedProjects.find(p => p.id === localProject.id);
+    setLocalProject(updatedProject || { ...localProject, status: 'accepted', ...patch });
+    onStatusChange?.(localProject.id, 'accepted', patch);
+
+    if (supabaseConfigured && isUuid(localProject.id)) {
+      try {
+        await supabase
+          .from('projects')
+          .update({
+            status: 'accepted',
+            accepted_creator_id: app.creatorId,
+            accepted_application_id: app.id,
+          })
+          .eq('id', localProject.id);
+        if (isUuid(app.id)) {
+          await supabase.from('project_applications').update({ status: 'accepted' }).eq('id', app.id);
+        }
+      } catch {}
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative w-full max-w-xl rounded-2xl border shadow-2xl max-h-[90vh] overflow-y-auto ${dark ? 'bg-charcoal-900 border-charcoal-700' : 'bg-white border-gray-200'}`}>
+      <div className={`relative w-full max-w-xl rounded-2xl border shadow-2xl max-h-[90vh] overflow-y-auto ${dark ? 'bg-charcoal-950/70 border-white/[0.07]' : 'bg-white border-gray-200'}`}>
         <button type="button" onClick={onClose}
-          className={`absolute top-4 right-4 p-1.5 rounded-lg z-10 ${dark ? 'text-charcoal-400 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
+          className={`absolute top-4 right-4 p-1.5 rounded-lg z-10 ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.06]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
           <X size={16} />
         </button>
         <div className="p-6">
           {/* Header */}
           <div className="flex items-start gap-3 mb-4">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0 ${dark ? 'bg-charcoal-700' : 'bg-gray-100'}`}>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0 ${dark ? 'bg-white/[0.08]' : 'bg-gray-100'}`}>
               {svc?.icon || '📋'}
             </div>
             <div className="flex-1">
@@ -743,9 +908,9 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
           </div>
 
           {/* Details grid */}
-          <div className={`grid grid-cols-2 gap-3 p-4 rounded-xl mb-4 ${dark ? 'bg-charcoal-800' : 'bg-gray-50'}`}>
+          <div className={`grid grid-cols-2 gap-3 p-4 rounded-xl mb-4 ${dark ? 'bg-charcoal-900/72' : 'bg-gray-50'}`}>
             {[
-              { icon: DollarSign, label: 'Budget', value: budgetStr, color: 'text-teal-400' },
+              { icon: DollarSign, label: 'Budget', value: budgetStr, color: 'text-gold-400' },
               { icon: Users,      label: 'Applications', value: `${project.applications || 0} proposals`, color: textSub },
               ...(project.deadline ? [{ icon: Calendar, label: 'Deadline', value: new Date(project.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), color: textSub }] : []),
               ...(locationStr(project.location) ? [{ icon: MapPin, label: 'Location', value: locationStr(project.location) + (project.remote ? ' (Remote OK)' : ''), color: textSub }] : []),
@@ -760,7 +925,7 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
           {/* Timeline */}
           <div className="mb-4">
             <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Project Status</p>
-            <div className={`p-3 rounded-xl border overflow-x-auto ${dark ? 'border-charcoal-700 bg-charcoal-800' : 'border-gray-200 bg-gray-50'}`}>
+            <div className={`p-3 rounded-xl border overflow-x-auto ${dark ? 'border-white/[0.07] bg-charcoal-900/72' : 'border-gray-200 bg-gray-50'}`}>
               <ProjectTimeline status={project.status} dark={dark} />
             </div>
           </div>
@@ -777,7 +942,7 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
               <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Required Skills</p>
               <div className="flex flex-wrap gap-1.5">
                 {project.skills.map(skill => (
-                  <span key={skill} className={`text-xs px-2.5 py-1 rounded-full ${dark ? 'bg-charcoal-700 text-charcoal-300' : 'bg-gray-100 text-gray-700'}`}>
+                  <span key={skill} className={`text-xs px-2.5 py-1 rounded-full ${dark ? 'bg-white/[0.08] text-charcoal-300' : 'bg-gray-100 text-gray-700'}`}>
                     {skill}
                   </span>
                 ))}
@@ -791,13 +956,26 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
               <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Proposals Received ({projectApps.length})</p>
               <div className="space-y-2">
                 {projectApps.map(app => (
-                  <div key={app.id} className={`p-3 rounded-xl border ${dark ? 'border-charcoal-700 bg-charcoal-800' : 'border-gray-200 bg-gray-50'}`}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-base">{app.creatorAvatar}</span>
-                      <p className={`text-sm font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>{app.creatorName}</p>
-                      {app.rate && <span className="text-xs font-bold text-teal-400">${Number(app.rate).toLocaleString()}</span>}
+                  <div key={app.id} className={`p-3 rounded-xl border ${dark ? 'border-white/[0.07] bg-charcoal-900/72' : 'border-gray-200 bg-gray-50'}`}>
+                    <div className="flex items-center justify-between gap-3 mb-1">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-base">{app.creatorAvatar}</span>
+                        <p className={`text-sm font-semibold truncate ${dark ? 'text-white' : 'text-gray-900'}`}>{app.creatorName}</p>
+                        {app.rate && <span className="text-xs font-bold text-gold-400">${Number(app.rate).toLocaleString()}</span>}
+                      </div>
+                      {localProject.status === 'open' && app.status !== 'accepted' && (
+                        <button type="button" onClick={() => acceptApplication(app)}
+                          className="shrink-0 rounded-lg bg-gold-500 px-2.5 py-1 text-[10px] font-bold text-charcoal-900 hover:bg-gold-600">
+                          Accept
+                        </button>
+                      )}
+                      {app.status === 'accepted' && (
+                        <span className="shrink-0 rounded-lg bg-gold-500/15 px-2.5 py-1 text-[10px] font-bold text-gold-400 ring-1 ring-gold-500/20">
+                          Accepted
+                        </span>
+                      )}
                     </div>
-                    <p className={`text-xs ${dark ? 'text-charcoal-400' : 'text-gray-500'} line-clamp-2`}>{app.proposal}</p>
+                    <p className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-500'} line-clamp-2`}>{app.proposal}</p>
                   </div>
                 ))}
               </div>
@@ -813,7 +991,7 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
 
           {/* Delivery link display */}
           {localProject.deliveryLink && localProject.status !== 'in_progress' && !isArchived(localProject) && (
-            <div className={`mb-4 p-4 rounded-xl border ${dark ? 'border-charcoal-700 bg-charcoal-800' : 'border-gray-200 bg-gray-50'}`}>
+            <div className={`mb-4 p-4 rounded-xl border ${dark ? 'border-white/[0.07] bg-charcoal-900/72' : 'border-gray-200 bg-gray-50'}`}>
               <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Delivery</p>
               <a href={localProject.deliveryLink} target="_blank" rel="noreferrer"
                 className="text-sm text-gold-400 hover:text-gold-300 underline break-all">
@@ -833,9 +1011,9 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
               applied={applied}
               dark={dark}
               onApply={() => { onClose(); onApply(project); }}
-              onStatusChange={(id, st) => {
-                setLocalProject(p => ({ ...p, status: st }));
-                onStatusChange?.(id, st);
+              onStatusChange={(id, st, patch = {}) => {
+                setLocalProject(p => ({ ...p, status: st, ...patch }));
+                onStatusChange?.(id, st, patch);
               }}
               navigate={navigate}
               onOpenDelivery={() => setShowDelivery(true)}
@@ -870,7 +1048,7 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
               onClose={() => setShowDelivery(false)}
               onDelivered={(updatedProject) => {
                 setLocalProject(updatedProject);
-                onStatusChange?.(project.id, 'delivered');
+                onStatusChange?.(project.id, 'delivered', updatedProject);
               }}
             />
           )}
@@ -881,7 +1059,7 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
               onClose={() => setShowRevision(false)}
               onRevisionSubmitted={(updatedProject) => {
                 setLocalProject(updatedProject);
-                onStatusChange?.(project.id, 'in_progress');
+                onStatusChange?.(project.id, 'in_progress', updatedProject);
                 setShowRevision(false);
               }}
             />
@@ -934,37 +1112,53 @@ export function ProjectBoard({ dark }) {
   const [applyTarget, setApplyTarget]   = useState(null);
   const [viewTarget, setViewTarget]     = useState(null);
 
-  function handleStatusChange(projectId, newStatus) {
-    setProjects(prev => prev.map(p => p.id === projectId ? { ...p, status: newStatus } : p));
-    setViewTarget(prev => prev?.id === projectId ? { ...prev, status: newStatus } : prev);
+  function handleStatusChange(projectId, newStatus, patch = {}) {
+    const cleanPatch = { ...(patch || {}) };
+    delete cleanPatch.id;
+    setProjects(prev => prev.map(p => p.id === projectId ? { ...p, status: newStatus, ...cleanPatch } : p));
+    setViewTarget(prev => prev?.id === projectId ? { ...prev, status: newStatus, ...cleanPatch } : prev);
   }
   const [search, setSearch]             = useState('');
   const [filterService, setFilterService] = useState('');
   const [filterBudget, setFilterBudget] = useState('any');
   const [tab, setTab]                   = useState('browse'); // 'browse' | 'my_projects' | 'my_applications'
 
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
 
   useEffect(() => {
-    // Auto-approval: projects delivered 72+ hours ago auto-complete
+    let cancelled = false;
+    // Auto-approval: projects delivered 72+ hours ago become approved and ready for final payment.
     const raw = loadProjects();
     const now = Date.now();
     const autoApproved = raw.map(p => {
       if (p.status === 'delivered' && p.deliveredAt) {
         const elapsed = now - new Date(p.deliveredAt).getTime();
         if (elapsed >= 72 * 3600000) {
-          return { ...p, status: 'completed', completedAt: p.completedAt || new Date().toISOString(), autoApproved: true };
+          return { ...p, status: 'approved', approvedAt: p.approvedAt || new Date().toISOString(), autoApproved: true };
         }
       }
       return p;
     });
     const anyChanged = autoApproved.some((p, i) => p.status !== raw[i].status);
     if (anyChanged) saveProjects(autoApproved);
-    setProjects(anyChanged ? autoApproved : raw);
+    const local = anyChanged ? autoApproved : raw;
+    setProjects(local);
     setApplications(loadApplications());
     if (user) {
       setCreatorListing(loadMyListing(user.id));
     }
+
+    async function loadRemoteProjects() {
+      if (!supabaseConfigured || !user) return;
+      const { data } = await supabase
+        .from('projects')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (cancelled || !data) return;
+      setProjects(current => mergeProjects(current, data.map(fromSupabaseProject)));
+    }
+    loadRemoteProjects();
+    return () => { cancelled = true; };
   }, [user]);
 
   // Seed some demo projects if empty
@@ -989,9 +1183,9 @@ export function ProjectBoard({ dark }) {
           createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
         },
         {
-          id: 'demo-3', title: 'Social Media Content Package - Real Estate',
-          description: 'Boutique real estate agency needs monthly social media content: 12 Instagram posts, 4 Reels, and 8 Stories per month. Luxury properties, aspirational lifestyle aesthetic. Must have experience in real estate marketing.',
-          serviceId: 'socialmedia', budgetMin: 1200, budgetMax: 2500, deadline: null,
+          id: 'demo-3', title: 'Brand Content Package - Real Estate',
+          description: 'Boutique real estate agency needs a monthly brand content package: 12 Instagram posts, 4 Reels, and 8 Stories per month. Luxury properties, aspirational lifestyle aesthetic. Must have experience in real estate marketing.',
+          serviceId: 'social', budgetMin: 1200, budgetMax: 2500, deadline: null,
           location: 'Los Angeles, CA', remote: true, skills: ['Instagram', 'Canva', 'real estate', 'copywriting'],
           clientId: 'client-3', clientName: 'LuxRealty Group', status: 'open', applications: 12,
           createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
@@ -999,7 +1193,7 @@ export function ProjectBoard({ dark }) {
         {
           id: 'demo-4', title: 'Podcast Production & Editing (Weekly)',
           description: 'Established weekly business podcast (200+ episodes) seeking reliable audio editor. Tasks: noise reduction, leveling, intro/outro insertion, chapter markers. ~45 min raw audio per week. Long-term contract preferred.',
-          serviceId: 'video', budgetMin: 150, budgetMax: 300, deadline: null,
+          serviceId: 'podcast', budgetMin: 150, budgetMax: 300, deadline: null,
           location: '', remote: true, skills: ['Adobe Audition', 'podcast editing', 'Descript'],
           clientId: 'client-4', clientName: 'The Business Pod', status: 'open', applications: 5,
           createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
@@ -1032,7 +1226,10 @@ export function ProjectBoard({ dark }) {
   const browsed = projects.filter(p => {
     if (tab !== 'browse') return true;
     if (search && !p.title.toLowerCase().includes(search.toLowerCase()) && !p.description.toLowerCase().includes(search.toLowerCase())) return false;
-    if (filterService && p.serviceId !== filterService) return false;
+    if (filterService) {
+      const serviceId = normalizeServiceId(p.serviceId || p.service_id || p.serviceType);
+      if (!getMarketplaceServiceIds(filterService).includes(serviceId)) return false;
+    }
     if (filterBudget !== 'any') {
       const range = BUDGET_RANGES.find(r => r.id === filterBudget);
       const mid = ((p.budgetMin || 0) + (p.budgetMax || p.budgetMin || 0)) / 2 || p.budgetMax || p.budgetMin || 0;
@@ -1055,32 +1252,40 @@ export function ProjectBoard({ dark }) {
 
   return (
     <div className={`min-h-screen ${dark ? 'bg-transparent' : 'bg-gray-50'}`}>
-      <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+        <div className={`relative overflow-hidden rounded-[28px] border p-6 md:p-8 mb-6 ${
+          dark ? 'bg-charcoal-900/70 border-white/[0.08] shadow-[0_28px_90px_rgba(0,0,0,0.28)]' : 'bg-white border-gray-200'
+        }`}>
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/60 to-transparent" />
+          <div className="flex items-center justify-between gap-5 flex-wrap">
           <div>
-            <h1 className={`font-display font-bold text-2xl ${dark ? 'text-white' : 'text-gray-900'}`}>
+            <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+              Curated production work
+            </p>
+            <h1 className={`font-display font-bold text-4xl md:text-5xl ${dark ? 'text-white' : 'text-gray-900'}`}>
               Project Board
             </h1>
-            <p className={`text-sm mt-0.5 ${textSub}`}>
+            <p className={`text-sm md:text-base leading-7 mt-3 max-w-2xl ${textSub}`}>
               {isCreator ? 'Browse projects and submit proposals' : 'Post a project and find the right creator'}
             </p>
           </div>
           {user && (
             <button type="button" onClick={() => setShowPost(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold transition-all">
+              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold transition-all">
               <Plus size={14} /> Post a Project
             </button>
           )}
+          </div>
         </div>
 
         {/* Tabs */}
-        <div className={`flex gap-1 p-1 rounded-xl border mb-5 w-fit ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-gray-100 border-gray-200'}`}>
+        <div className={`flex gap-1 p-1 rounded-2xl border mb-5 w-fit max-w-full overflow-x-auto ${dark ? 'bg-charcoal-950/60 border-white/[0.07]' : 'bg-gray-100 border-gray-200'}`}>
           {tabs.map(({ id, label }) => (
             <button key={id} type="button" onClick={() => setTab(id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
-                tab === id ? 'bg-gold-500 text-charcoal-900' : dark ? 'text-charcoal-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                tab === id ? 'bg-gold-500 text-charcoal-900' : dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-500 hover:text-gray-900'
               }`}>
               {label}
             </button>
@@ -1089,29 +1294,29 @@ export function ProjectBoard({ dark }) {
 
         {/* Filters (browse only) */}
         {tab === 'browse' && (
-          <div className="flex flex-wrap gap-3 mb-5">
+          <div className={`flex flex-wrap gap-3 mb-6 rounded-2xl border p-3 ${dark ? 'bg-charcoal-950/45 border-white/[0.06]' : 'bg-white border-gray-200'}`}>
             <div className="relative flex-1 min-w-48">
               <Search size={13} className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${textSub}`} />
               <input type="text" value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Search projects..."
                 className={`w-full pl-9 pr-3 py-2 text-sm rounded-xl border outline-none transition-all ${
-                  dark ? 'bg-charcoal-800 border-charcoal-700 text-white placeholder-charcoal-500 focus:border-gold-500'
+                  dark ? 'bg-charcoal-950/70 border-white/[0.08] text-white placeholder-charcoal-500 focus:border-gold-500'
                        : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:border-gold-500'
                 }`} />
             </div>
             <select value={filterService} onChange={e => setFilterService(e.target.value)}
               className={`px-3 py-2 text-sm rounded-xl border outline-none transition-all ${
-                dark ? 'bg-charcoal-800 border-charcoal-700 text-white focus:border-gold-500'
+                dark ? 'bg-charcoal-950/70 border-white/[0.08] text-white focus:border-gold-500'
                      : 'bg-white border-gray-200 text-gray-900 focus:border-gold-500'
               }`}>
               <option value="">All services</option>
-              {Object.entries(SERVICES).map(([id, svc]) => (
-                <option key={id} value={id}>{svc.icon} {svc.name}</option>
+              {MARKETPLACE_CATEGORIES.filter(category => category.id !== 'all').map(category => (
+                <option key={category.id} value={category.id}>{category.icon} {category.name}</option>
               ))}
             </select>
             <select value={filterBudget} onChange={e => setFilterBudget(e.target.value)}
               className={`px-3 py-2 text-sm rounded-xl border outline-none transition-all ${
-                dark ? 'bg-charcoal-800 border-charcoal-700 text-white focus:border-gold-500'
+                dark ? 'bg-charcoal-950/70 border-white/[0.08] text-white focus:border-gold-500'
                      : 'bg-white border-gray-200 text-gray-900 focus:border-gold-500'
               }`}>
               {BUDGET_RANGES.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
@@ -1121,15 +1326,17 @@ export function ProjectBoard({ dark }) {
 
         {/* Project grid */}
         {displayProjects.length === 0 ? (
-          <div className={`text-center py-16 ${textSub}`}>
-            <Briefcase size={40} className="mx-auto mb-3 opacity-20" />
-            <p className="text-sm font-medium">
+          <div className={`rounded-2xl border px-5 py-14 text-center ${dark ? 'border-white/[0.08] bg-charcoal-900/64' : 'border-gray-200 bg-white shadow-sm'} ${textSub}`}>
+            <div className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl ${dark ? 'bg-gold-500/10 text-gold-300 ring-1 ring-gold-500/20' : 'bg-gold-50 text-gold-600'}`}>
+              <Briefcase size={20} />
+            </div>
+            <p className={`text-base font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>
               {tab === 'my_projects' ? "You haven't posted any projects yet"
                : tab === 'my_applications' ? "You haven't applied to any projects yet"
                : "No projects match your filters"}
             </p>
-            <p className="text-xs mt-1 opacity-70">
-              {tab === 'browse' ? 'Try adjusting your filters' : ''}
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 opacity-80">
+              {tab === 'browse' ? 'Try widening the service, location, or budget filters.' : 'When projects move through CreatorBridge, this page becomes your operating view.'}
             </p>
             {tab === 'my_projects' && user && (
               <button type="button" onClick={() => setShowPost(true)}

@@ -59,6 +59,15 @@ function markMessagesRead(threadId, userId) {
   } catch {}
 }
 
+function isApprovedCreator(creator) {
+  return !!(
+    creator?.verified ||
+    creator?.verification_status === 'verified' ||
+    creator?.verification_status === 'pro_verified' ||
+    creator?.id?.startsWith?.('seed-')
+  );
+}
+
 function formatTime(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -74,16 +83,16 @@ function formatTime(iso) {
 function ThreadItem({ thread, active, dark, onClick }) {
   const last   = thread.lastMessage;
   const unread = thread.messages.filter(m => m.recipientId === thread.myId && !m.read).length;
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
 
   return (
     <button type="button" onClick={onClick}
       className={`w-full flex items-center gap-3 p-3 text-left transition-all rounded-xl ${
         active
           ? dark ? 'bg-gold-500/10 border border-gold-500/30' : 'bg-gold-50 border border-gold-200'
-          : dark ? 'hover:bg-charcoal-700/50 border border-transparent' : 'hover:bg-gray-50 border border-transparent'
+          : dark ? 'hover:bg-white/[0.04] border border-transparent' : 'hover:bg-gray-50 border border-transparent'
       }`}>
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 ${dark ? 'bg-charcoal-700' : 'bg-gray-200'}`}>
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 ${dark ? 'bg-white/[0.04] ring-1 ring-white/[0.07]' : 'bg-gray-200'}`}>
         {thread.otherAvatar || '👤'}
       </div>
       <div className="flex-1 min-w-0">
@@ -113,10 +122,10 @@ function Bubble({ msg, isMine, dark }) {
       <div className={`max-w-[72%] px-3 py-2 rounded-2xl text-sm ${
         isMine
           ? 'bg-gold-500 text-charcoal-900 rounded-br-md'
-          : dark ? 'bg-charcoal-700 text-white rounded-bl-md' : 'bg-gray-100 text-gray-900 rounded-bl-md'
+          : dark ? 'bg-white/[0.055] text-white rounded-bl-md ring-1 ring-white/[0.07]' : 'bg-gray-100 text-gray-900 rounded-bl-md'
       }`}>
         <p className="leading-relaxed break-words">{msg.text}</p>
-        <p className={`text-[10px] mt-0.5 text-right ${isMine ? 'text-charcoal-700/70' : dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
+        <p className={`text-[10px] mt-0.5 text-right ${isMine ? 'text-charcoal-700/70' : dark ? 'text-charcoal-400' : 'text-gray-400'}`}>
           {formatTime(msg.createdAt)}
           {isMine && <span className="ml-1">{msg.read ? <CheckCheck size={9} className="inline" /> : <Check size={9} className="inline" />}</span>}
         </p>
@@ -133,9 +142,9 @@ function NewConversationModal({ dark, onClose, onStart, myUser, myProfile }) {
   const [searching, setSearching]         = useState(false);
   const [results, setResults]             = useState([]);
 
-  const textSub  = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
   const inputCls = `w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${
-    dark ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+    dark ? 'bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
          : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
   }`;
 
@@ -145,6 +154,7 @@ function NewConversationModal({ dark, onClose, onStart, myUser, myProfile }) {
       const all = JSON.parse(localStorage.getItem('creator-directory') || '[]');
       const q = query.toLowerCase();
       setResults(all.filter(c =>
+        isApprovedCreator(c) &&
         c.id !== myUser?.id &&
         (c.businessName?.toLowerCase().includes(q) || c.name?.toLowerCase().includes(q))
       ).slice(0, 5));
@@ -170,8 +180,11 @@ function NewConversationModal({ dark, onClose, onStart, myUser, myProfile }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative w-full max-w-md rounded-2xl border shadow-2xl p-6 ${dark ? 'bg-charcoal-900 border-charcoal-700' : 'bg-white border-gray-200'}`}>
-        <h3 className={`font-display font-bold text-base mb-4 ${dark ? 'text-white' : 'text-gray-900'}`}>
+      <div className={`relative w-full max-w-md rounded-2xl border shadow-2xl p-6 ${dark ? 'bg-charcoal-900 border-white/[0.08]' : 'bg-white border-gray-200'}`}>
+        <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+          Secure Message
+        </p>
+        <h3 className={`font-display font-bold text-lg mb-4 ${dark ? 'text-white' : 'text-gray-900'}`}>
           New Conversation
         </h3>
 
@@ -186,7 +199,7 @@ function NewConversationModal({ dark, onClose, onStart, myUser, myProfile }) {
             className={inputCls}
           />
           {results.length > 0 && (
-            <div className={`absolute z-10 top-full mt-1 w-full rounded-xl border shadow-lg overflow-hidden ${dark ? 'bg-charcoal-800 border-charcoal-600' : 'bg-white border-gray-200'}`}>
+            <div className={`absolute z-10 top-full mt-1 w-full rounded-xl border shadow-lg overflow-hidden ${dark ? 'bg-charcoal-900 border-white/[0.09]' : 'bg-white border-gray-200'}`}>
               {results.map(c => (
                 <button key={c.id} type="button" onClick={() => selectCreator(c)}
                   className={`w-full flex items-center gap-2 p-3 text-left hover:bg-gold-500/10 transition-colors`}>
@@ -212,7 +225,7 @@ function NewConversationModal({ dark, onClose, onStart, myUser, myProfile }) {
 
         <div className="flex gap-2">
           <button type="button" onClick={onClose}
-            className={`flex-1 py-2 rounded-xl border text-sm font-semibold transition-all ${dark ? 'border-charcoal-600 text-charcoal-300 hover:text-white' : 'border-gray-200 text-gray-600 hover:text-gray-900'}`}>
+            className={`flex-1 py-2 rounded-xl border text-sm font-semibold transition-all ${dark ? 'border-white/[0.09] text-charcoal-200 hover:text-white hover:border-gold-500/35' : 'border-gray-200 text-gray-600 hover:text-gray-900'}`}>
             Cancel
           </button>
           <button type="button" onClick={handleStart}
@@ -242,8 +255,8 @@ export function MessagesPage({ dark }) {
   const [filterWarning, setFilterWarning] = useState(false);
   const bottomRef = useRef(null);
 
-  const textSub  = dark ? 'text-charcoal-400' : 'text-gray-500';
-  const cardCls  = `rounded-2xl border ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`;
+  const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
+  const cardCls  = `rounded-[28px] border ${dark ? 'bg-charcoal-900/72 border-white/[0.08] shadow-[0_28px_90px_rgba(0,0,0,0.28)]' : 'bg-white border-gray-200'}`;
 
   const myName   = authProfile?.full_name || user?.email?.split('@')[0] || 'Me';
   const myAvatar = authProfile?.avatar_url || null;
@@ -346,7 +359,7 @@ export function MessagesPage({ dark }) {
 
   if (!user) {
     return (
-      <div className={`min-h-screen flex flex-col items-center justify-center gap-4 ${dark ? 'bg-charcoal-950 text-white' : 'bg-gray-50 text-gray-900'}`}>
+      <div className={`min-h-screen flex flex-col items-center justify-center gap-4 ${dark ? 'bg-transparent text-white' : 'bg-gray-50 text-gray-900'}`}>
         <MessageSquare size={40} className="text-gold-400" />
         <h2 className="font-display text-xl font-bold">Sign in to view messages</h2>
         <button type="button" onClick={() => navigate('/')}
@@ -360,16 +373,28 @@ export function MessagesPage({ dark }) {
   );
 
   return (
-    <div className={`min-h-screen ${dark ? 'bg-charcoal-950' : 'bg-gray-50'}`}>
-      <div className="max-w-5xl mx-auto px-4 py-6">
-        <div className={`${cardCls} overflow-hidden`} style={{ height: 'calc(100vh - 140px)', minHeight: 480 }}>
+    <div className={`min-h-screen ${dark ? 'bg-transparent' : 'bg-gray-50'}`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+        <div className="mb-6">
+          <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+            Protected Communication
+          </p>
+          <h1 className={`font-display text-4xl md:text-5xl font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>
+            Messages
+          </h1>
+          <p className={`mt-3 text-sm md:text-base leading-7 max-w-2xl ${textSub}`}>
+            Keep client and creator conversations inside CreatorBridge so project details, booking context, and payment protection stay connected.
+          </p>
+        </div>
+        <div className={`${cardCls} overflow-hidden relative`} style={{ height: 'calc(100vh - 230px)', minHeight: 560 }}>
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/55 to-transparent" />
           <div className="flex h-full">
 
             {/* ── Thread list ── */}
-            <div className={`flex flex-col w-full sm:w-72 lg:w-80 shrink-0 border-r ${dark ? 'border-charcoal-700' : 'border-gray-200'} ${mobileView === 'thread' ? 'hidden sm:flex' : 'flex'}`}>
+            <div className={`flex flex-col w-full sm:w-72 lg:w-80 shrink-0 border-r ${dark ? 'border-white/[0.07]' : 'border-gray-200'} ${mobileView === 'thread' ? 'hidden sm:flex' : 'flex'}`}>
 
               {/* Header */}
-              <div className={`p-4 border-b ${dark ? 'border-charcoal-700' : 'border-gray-200'}`}>
+              <div className={`p-4 border-b ${dark ? 'border-white/[0.07] bg-charcoal-950/35' : 'border-gray-200'}`}>
                 <div className="flex items-center justify-between mb-3">
                   <h2 className={`font-display font-bold text-base ${dark ? 'text-white' : 'text-gray-900'}`}>Messages</h2>
                   <button type="button" onClick={() => setShowNew(true)}
@@ -382,7 +407,7 @@ export function MessagesPage({ dark }) {
                   <input type="text" value={search} onChange={e => setSearch(e.target.value)}
                     placeholder="Search conversations..."
                     className={`w-full pl-8 pr-3 py-2 text-xs rounded-xl border outline-none transition-all ${
-                      dark ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+                      dark ? 'bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
                            : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
                     }`} />
                 </div>
@@ -391,12 +416,15 @@ export function MessagesPage({ dark }) {
               {/* Thread list */}
               <div className="flex-1 overflow-y-auto p-2 space-y-1">
                 {filteredThreads.length === 0 ? (
-                  <div className={`text-center py-12 ${textSub}`}>
-                    <MessageSquare size={28} className="mx-auto mb-2 opacity-30" />
-                    <p className="text-xs">No conversations yet</p>
+                  <div className={`m-3 rounded-2xl border px-4 py-10 text-center ${dark ? 'border-white/[0.07] bg-charcoal-950/42' : 'border-gray-200 bg-gray-50'} ${textSub}`}>
+                    <div className={`mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl ${dark ? 'bg-gold-500/10 text-gold-300 ring-1 ring-gold-500/20' : 'bg-white text-gold-600 ring-1 ring-gray-200'}`}>
+                      <MessageSquare size={18} />
+                    </div>
+                    <p className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>No conversations yet</p>
+                    <p className="mx-auto mt-1 max-w-[13rem] text-xs leading-5">Start a thread from a creator profile, project, or quote request.</p>
                     <button type="button" onClick={() => setShowNew(true)}
-                      className="mt-3 text-xs text-gold-400 hover:text-gold-300 transition-colors">
-                      Start one
+                      className="mt-4 rounded-xl bg-gold-500 px-4 py-2 text-xs font-bold text-charcoal-900 hover:bg-gold-600 transition-colors">
+                      New Message
                     </button>
                   </div>
                 ) : (
@@ -428,12 +456,12 @@ export function MessagesPage({ dark }) {
               ) : (
                 <>
                   {/* Thread header */}
-                  <div className={`flex items-center gap-3 px-4 py-3 border-b ${dark ? 'border-charcoal-700' : 'border-gray-200'}`}>
+                  <div className={`flex items-center gap-3 px-4 py-3 border-b ${dark ? 'border-white/[0.07] bg-charcoal-950/30' : 'border-gray-200'}`}>
                     <button type="button" onClick={() => setMobileView('list')}
                       className={`sm:hidden p-1.5 rounded-lg ${dark ? 'text-charcoal-400 hover:text-white' : 'text-gray-400 hover:text-gray-900'}`}>
                       <ArrowLeft size={16} />
                     </button>
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm ${dark ? 'bg-charcoal-700' : 'bg-gray-200'}`}>
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm ${dark ? 'bg-white/[0.04] ring-1 ring-white/[0.07]' : 'bg-gray-200'}`}>
                       {activeThread.otherAvatar || '👤'}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -454,11 +482,11 @@ export function MessagesPage({ dark }) {
                   </div>
 
                   {/* Input */}
-                  <div className={`p-3 border-t ${dark ? 'border-charcoal-700' : 'border-gray-200'}`}>
+                  <div className={`p-3 border-t ${dark ? 'border-white/[0.07] bg-charcoal-950/30' : 'border-gray-200'}`}>
                     {filterWarning && (
-                      <div className="flex items-start gap-2 mb-2 px-3 py-2 rounded-xl bg-amber-500/15 border border-amber-500/30">
-                        <AlertTriangle size={13} className="text-amber-400 mt-0.5 shrink-0" />
-                        <p className="text-xs text-amber-300 leading-snug">
+                      <div className="flex items-start gap-2 mb-2 px-3 py-2 rounded-xl bg-gold-500/12 border border-gold-500/25">
+                        <AlertTriangle size={13} className="text-gold-400 mt-0.5 shrink-0" />
+                        <p className="text-xs text-gold-300 leading-snug">
                           For your protection, contact information cannot be shared in messages. All bookings and payments are handled securely through CreatorBridge.
                         </p>
                       </div>
@@ -471,7 +499,7 @@ export function MessagesPage({ dark }) {
                         onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendMessage())}
                         placeholder="Type a message..."
                         className={`flex-1 px-4 py-2.5 text-sm rounded-xl border outline-none transition-all ${
-                          dark ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+                          dark ? 'bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
                                : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
                         }`}
                       />

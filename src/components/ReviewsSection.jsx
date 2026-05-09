@@ -26,7 +26,7 @@ export function ReviewsSection({ creator, dark }) {
   const [loading, setLoading]     = useState(false);
   const [form, setForm]           = useState({ rating: 5, comment: '', reviewerName: '' });
 
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
 
   useEffect(() => {
     loadReviews();
@@ -79,7 +79,7 @@ export function ReviewsSection({ creator, dark }) {
 
   const inputCls = `w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${
     dark
-      ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+      ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
       : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
   }`;
 
@@ -88,7 +88,7 @@ export function ReviewsSection({ creator, dark }) {
     : null;
 
   return (
-    <div className={`rounded-2xl border ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'} p-5`}>
+    <div className={`rounded-2xl border shadow-[0_24px_80px_rgba(0,0,0,0.16)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'} p-5`}>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className={`font-display font-bold text-base ${dark ? 'text-white' : 'text-gray-900'}`}>
@@ -114,7 +114,7 @@ export function ReviewsSection({ creator, dark }) {
 
       {/* Review form */}
       {showForm && (
-        <form onSubmit={submitReview} className={`mb-4 p-4 rounded-xl border ${dark ? 'border-charcoal-700 bg-charcoal-900/40' : 'border-gray-200 bg-gray-50'} space-y-3`}>
+        <form onSubmit={submitReview} className={`mb-4 p-4 rounded-xl border ${dark ? 'border-white/[0.08] bg-charcoal-950/55' : 'border-gray-200 bg-gray-50'} space-y-3`}>
           <div>
             <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Your Rating</p>
             <StarPicker value={form.rating} onChange={v => setForm(f => ({ ...f, rating: v }))} />
@@ -133,7 +133,7 @@ export function ReviewsSection({ creator, dark }) {
               {loading ? 'Submitting...' : 'Submit Review'}
             </button>
             <button type="button" onClick={() => setShowForm(false)}
-              className={`px-4 py-2 rounded-xl border text-xs font-semibold transition-all ${dark ? 'border-charcoal-600 text-charcoal-400 hover:text-white' : 'border-gray-200 text-gray-500 hover:text-gray-900'}`}>
+              className={`px-4 py-2 rounded-xl border text-xs font-semibold transition-all ${dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/35 hover:text-white' : 'border-gray-200 text-gray-500 hover:text-gray-900'}`}>
               Cancel
             </button>
           </div>
@@ -146,17 +146,17 @@ export function ReviewsSection({ creator, dark }) {
       ) : (
         <div className="space-y-4">
           {reviews.map(r => (
-            <div key={r.id} className={`pb-4 border-b last:border-0 ${dark ? 'border-charcoal-700' : 'border-gray-100'}`}>
+            <div key={r.id} className={`pb-4 border-b last:border-0 ${dark ? 'border-white/[0.07]' : 'border-gray-100'}`}>
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${dark ? 'bg-charcoal-700 text-charcoal-300' : 'bg-gray-100 text-gray-600'}`}>
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${dark ? 'bg-white/[0.08] text-charcoal-300' : 'bg-gray-100 text-gray-600'}`}>
                     {(r.reviewer_name || 'A')[0].toUpperCase()}
                   </div>
                   <span className={`text-xs font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>
                     {r.reviewer_name || 'Anonymous'}
                   </span>
                   {r.verified_purchase && (
-                    <span className="text-[9px] text-teal-400 bg-teal-500/10 px-1.5 py-0.5 rounded-full">Verified</span>
+                    <span className="text-[9px] text-gold-400 bg-gold-500/10 px-1.5 py-0.5 rounded-full">Verified</span>
                   )}
                 </div>
                 <div className="flex">

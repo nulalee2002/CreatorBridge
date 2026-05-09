@@ -27,7 +27,7 @@ export function Tooltip({ content, children, position = 'top' }) {
         </button>
       )}
       {visible && (
-        <span className={`absolute ${posClass} z-50 bg-charcoal-900 border border-charcoal-600 text-white text-xs rounded-lg px-3 py-2 shadow-xl w-56 pointer-events-none animate-fade-in`}>
+        <span className={`absolute ${posClass} z-50 bg-charcoal-950 border border-white/[0.09] text-white text-xs rounded-lg px-3 py-2 shadow-xl w-56 pointer-events-none animate-fade-in`}>
           {content}
           <span className="absolute inset-0 rounded-lg ring-1 ring-white/5" />
         </span>

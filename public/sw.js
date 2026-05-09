@@ -1,11 +1,10 @@
-const CACHE_NAME = 'creatorbridge-v1';
+const CACHE_NAME = 'creatorbridge-v2026-05-08';
 
 const APP_SHELL = [
   '/',
   '/index.html',
 ];
 
-// Install: cache the app shell
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
@@ -13,7 +12,6 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate: remove old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -27,7 +25,12 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first, fall back to cache
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -37,13 +40,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For navigation requests serve index.html (SPA routing)
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: 'reload' })
         .then((res) => {
           const copy = res.clone();
-          caches.open(CACHE_NAME).then((c) => c.put(request, copy));
+          caches.open(CACHE_NAME).then((c) => c.put('/index.html', copy));
           return res;
         })
         .catch(() => caches.match('/index.html'))
@@ -51,7 +53,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For assets: network-first, cache fallback
   event.respondWith(
     fetch(request)
       .then((res) => {

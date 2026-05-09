@@ -4,26 +4,20 @@ import { X, Send } from 'lucide-react';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { TurnstileWidget, turnstileConfigured } from './TurnstileWidget.jsx';
+import { normalizeServiceId, SERVICE_TYPE_OPTIONS } from '../data/rates.js';
+import { fromSupabaseProject, toSupabaseProject, upsertLocalProject } from '../utils/projectStorage.js';
+import { parseBudgetRange } from '../utils/matchingAlgorithm.js';
 
 // ── Static option sets ───────────────────────────────────────
 
-const SERVICE_TYPES = [
-  'Video Production',
-  'Photography',
-  'Drone/Aerial',
-  'Social Media Content',
-  'Post-Production',
-  'Live Event Coverage',
-  'Corporate Events',
-  'Podcast Production',
-];
+const SERVICE_TYPES = SERVICE_TYPE_OPTIONS;
 
 const PROJECT_SUBTYPES = {
-  'Video Production':       ['Corporate', 'Wedding', 'Documentary', 'Music Video', 'Brand Commercial', 'Social Media Content', 'Podcast', 'Birthday/Celebration', 'Anniversary', 'Graduation', 'Concert', 'Sports', 'Real Estate Tour', 'Other'],
+  'Video Production':       ['Corporate', 'Wedding', 'Documentary', 'Music Video', 'Brand Commercial', 'Brand & Short-Form Content', 'Podcast', 'Birthday/Celebration', 'Anniversary', 'Graduation', 'Concert', 'Sports', 'Real Estate Tour', 'Other'],
   'Photography':            ['Real Estate', 'Headshots', 'Wedding', 'Commercial', 'Event', 'Product', 'Brand', 'Birthday/Celebration', 'Anniversary', 'Graduation', 'Concert', 'Sports', 'Family Portrait', 'Maternity', 'Other'],
-  'Drone/Aerial':           ['Real Estate Aerial', 'Event Aerial', 'Mapping', 'Film/Video Support', 'Construction Progress', 'Other'],
-  'Social Media Content':   ['Reels/TikTok', 'YouTube', 'Brand Campaign', 'UGC', 'Behind the Scenes', 'Other'],
-  'Post-Production':        ['Video Editing', 'Color Grading', 'Audio Mixing', 'Motion Graphics', 'Podcast Editing', 'Other'],
+  'Drone / Aerial':         ['Real Estate Aerial', 'Event Aerial', 'Mapping', 'Film/Video Support', 'Construction Progress', 'Other'],
+  'Brand & Short-Form Content': ['Reels/TikTok', 'YouTube', 'Brand Campaign', 'UGC', 'Behind the Scenes', 'Other'],
+  'Editing & Post':         ['Video Editing', 'Color Grading', 'Audio Mixing', 'Motion Graphics', 'Podcast Editing', 'Other'],
   'Live Event Coverage':    ['Concert/Music', 'Sports', 'Corporate Event', 'Conference', 'Festival', 'Birthday/Celebration', 'Wedding Reception', 'Other'],
   'Corporate Events':       ['Conference Coverage', 'Product Launch', 'Award Ceremony', 'Trade Show', 'Company Retreat', 'Executive Portraits at Events', 'Investor Presentation', 'Town Hall / All-Hands', 'Other'],
   'Podcast Production':     ['Audio Only', 'Video Podcast', 'Remote Recording', 'In-Studio Recording', 'Show Launch Package', 'Monthly Retainer', 'Other'],
@@ -66,11 +60,22 @@ const VENUE_TYPES = ['Indoor', 'Outdoor', 'Studio', 'Remote/Virtual'];
 
 const today = new Date().toISOString().split('T')[0];
 
+function saveLocalQuoteRequest(quote) {
+  try {
+    const all = JSON.parse(localStorage.getItem('quote-requests') || '[]');
+    const exists = all.some(item => item.id === quote.id);
+    const next = exists
+      ? all.map(item => item.id === quote.id ? { ...item, ...quote } : item)
+      : [quote, ...all];
+    localStorage.setItem('quote-requests', JSON.stringify(next));
+  } catch {}
+}
+
 // ── Client reputation ────────────────────────────────────────
 const CLIENT_REPUTATION_LEVELS = [
-  { min: 90, max: 100, label: 'Excellent Client', color: 'text-teal-400',  bg: 'bg-teal-500/15',  border: 'border-teal-500/40'  },
-  { min: 75, max: 89,  label: 'Good Client',      color: 'text-green-400', bg: 'bg-green-500/15', border: 'border-green-500/40' },
-  { min: 60, max: 74,  label: 'New Client',        color: 'text-amber-400', bg: 'bg-amber-500/15', border: 'border-amber-500/40' },
+  { min: 90, max: 100, label: 'Excellent Client', color: 'text-gold-400',  bg: 'bg-gold-500/15',  border: 'border-gold-500/30'  },
+  { min: 75, max: 89,  label: 'Good Client',      color: 'text-gold-400', bg: 'bg-gold-500/15', border: 'border-gold-500/30' },
+  { min: 60, max: 74,  label: 'New Client',        color: 'text-gold-400', bg: 'bg-gold-500/15', border: 'border-gold-500/30' },
   { min: 0,  max: 59,  label: 'Review History',    color: 'text-red-400',   bg: 'bg-red-500/15',   border: 'border-red-500/40'   },
 ];
 
@@ -147,7 +152,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
     errors[field]
       ? 'border-red-500 bg-red-500/5'
       : dark
-        ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+        ? 'bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
         : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
   }`;
 
@@ -155,11 +160,11 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
     errors[field]
       ? 'border-red-500 bg-red-500/5'
       : dark
-        ? 'bg-charcoal-900 border-charcoal-600 text-white focus:border-gold-500'
+        ? 'bg-charcoal-950/75 border-white/[0.09] text-white focus:border-gold-500'
         : 'bg-gray-50 border-gray-300 text-gray-900 focus:border-gold-500'
   }`;
 
-  const labelCls = `text-xs font-medium block mb-1.5 ${dark ? 'text-charcoal-400' : 'text-gray-600'}`;
+  const labelCls = `text-[11px] font-semibold uppercase tracking-[0.14em] block mb-2 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`;
   const errorMsg = (field) => errors[field] ? (
     <p className="text-xs text-red-400 mt-1">{errors[field]}</p>
   ) : null;
@@ -168,6 +173,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
 
   function validate() {
     const e = {};
+    const isRemoteProject = form.venueType === 'Remote/Virtual';
     if (!form.projectTitle.trim())       e.projectTitle       = 'Give your project a clear title so creators understand what this is.';
     if (!form.serviceType)               e.serviceType        = 'Select the type of production service you need.';
     if (!form.projectType)               e.projectType        = 'Select the specific type of project within your chosen service.';
@@ -175,10 +181,10 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
     if (!form.projectDate)               e.projectDate        = 'Creators need to know when to show up or when this is due.';
     else if (form.projectDate <= today)  e.projectDate        = 'Project date must be in the future.';
     if (!form.projectTime)               e.projectTime        = 'Time of day affects lighting, crew scheduling, and availability.';
-    if (!form.venueAddress.trim())       e.venueAddress       = 'Creators need to know exactly where to show up.';
-    if (!form.venueCity.trim())          e.venueCity          = 'Please enter the city.';
-    if (!form.venueState.trim())         e.venueState         = 'Please enter the state.';
     if (!form.venueType)                 e.venueType          = 'Select Indoor, Outdoor, Studio, or Remote/Virtual.';
+    if (!isRemoteProject && !form.venueAddress.trim()) e.venueAddress = 'Creators need to know exactly where to show up.';
+    if (!isRemoteProject && !form.venueCity.trim())    e.venueCity    = 'Please enter the city.';
+    if (!isRemoteProject && !form.venueState.trim())   e.venueState   = 'Please enter the state.';
     if (!form.hoursNeeded)               e.hoursNeeded        = 'How long do you need the creator on site or working on your project?';
     if (!form.deliverables)              e.deliverables       = 'This helps creators estimate the editing time and scope.';
     if (descLen < 100)                   e.description        = 'Please provide at least 100 characters so creators understand your vision.';
@@ -205,10 +211,15 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
     }
 
     setLoading(true);
+    const serviceId = normalizeServiceId(form.serviceType);
+    const budget = parseBudgetRange(form.budgetRange);
+    const isRemoteProject = form.venueType === 'Remote/Virtual' || form.locationPreference === 'Remote OK';
+    const createdAt = new Date().toISOString();
 
     const project = {
       id:                 Date.now().toString() + Math.random(),
       title:              form.projectTitle.trim(),
+      serviceId,
       serviceType:        form.serviceType,
       projectType:        form.projectType === 'Other' ? (form.otherProjectType.trim() || 'Other') : form.projectType,
       projectDate:        form.projectDate,
@@ -217,41 +228,92 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
         address:          form.venueAddress.trim(),
         city:             form.venueCity.trim(),
         state:            form.venueState.trim(),
+        country:          'US',
         venueType:        form.venueType,
       },
+      remote:             isRemoteProject,
       hoursNeeded:        form.hoursNeeded,
       deliverables:       form.deliverables,
       description:        form.description.trim(),
       budgetRange:        form.budgetRange,
+      budgetMin:          budget.budgetMin,
+      budgetMax:          budget.budgetMax,
       locationPreference: form.locationPreference,
       creatorId:          creator?.id || null,
       creatorName:        creator ? (creator.businessName || creator.name) : null,
       clientId:           user?.id || 'guest-' + Date.now(),
-      clientName:         profile?.full_name || 'Client',
+      clientName:         profile?.full_name || user?.email?.split('@')[0] || 'Client',
       status:             'open',
-      createdAt:          new Date().toISOString(),
+      createdAt,
     };
 
-    // Save to localStorage
-    try {
-      const all = JSON.parse(localStorage.getItem('cm-projects') || '[]');
-      localStorage.setItem('cm-projects', JSON.stringify([project, ...all]));
-    } catch {}
+    let savedProject = project;
+    let savedQuote = {
+      id: `quote-${project.id}`,
+      creatorId: creator?.id || null,
+      listing_id: creator?.id || null,
+      clientId: project.clientId,
+      client_id: user?.id || null,
+      clientName: project.clientName,
+      client_name: project.clientName,
+      clientEmail: user?.email || '',
+      client_email: user?.email || '',
+      projectTitle: project.title,
+      project_title: project.title,
+      serviceId,
+      service_id: serviceId,
+      description: project.description,
+      timeline: form.projectDate,
+      projectDate: form.projectDate,
+      projectType: project.projectType,
+      project_type: project.projectType,
+      projectTime: form.projectTime,
+      project_time: form.projectTime,
+      venueAddress: form.venueAddress.trim(),
+      venue_address: form.venueAddress.trim(),
+      venueCity: form.venueCity.trim(),
+      venue_city: form.venueCity.trim(),
+      venueState: form.venueState.trim(),
+      venue_state: form.venueState.trim(),
+      venueType: form.venueType,
+      venue_type: form.venueType,
+      hoursNeeded: form.hoursNeeded,
+      hours_needed: form.hoursNeeded,
+      deliverables: form.deliverables,
+      budgetRange: form.budgetRange,
+      budget_range: form.budgetRange,
+      budget: budget.budgetMax === 999999 ? budget.budgetMin : budget.budgetMax,
+      locationPreference: form.locationPreference,
+      location_preference: form.locationPreference,
+      status: 'pending',
+      read: false,
+      createdAt,
+      created_at: createdAt,
+    };
 
     // Save to Supabase if configured
     if (supabaseConfigured && user) {
       try {
-        await supabase.from('quote_requests').insert({
+        const { data: projectRow } = await supabase
+          .from('projects')
+          .insert(toSupabaseProject(project, user.id))
+          .select()
+          .single();
+        if (projectRow) {
+          savedProject = { ...project, ...fromSupabaseProject(projectRow), clientName: project.clientName };
+        }
+
+        const { data: quoteRow, error: quoteError } = await supabase.from('quote_requests').insert({
           listing_id:          creator?.id || null,
           client_id:           user.id,
-          client_name:         profile?.full_name || '',
+          client_name:         project.clientName,
           client_email:        user.email || '',
-          service_id:          form.serviceType,
+          service_id:          serviceId || form.serviceType,
           description:         form.description.trim(),
           timeline:            form.projectDate,
-          budget:              null,
+          budget:              savedQuote.budget,
           project_title:       form.projectTitle.trim(),
-          project_type:        form.projectType,
+          project_type:        project.projectType,
           project_time:        form.projectTime,
           venue_address:       form.venueAddress.trim(),
           venue_city:          form.venueCity.trim(),
@@ -261,9 +323,19 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
           deliverables:        form.deliverables,
           budget_range:        form.budgetRange,
           location_preference: form.locationPreference,
-        });
-      } catch {}
+        }).select().single();
+        if (quoteError) throw quoteError;
+        if (quoteRow) savedQuote = { ...savedQuote, ...quoteRow, id: quoteRow.id };
+      } catch (err) {
+        console.warn('Quote request Supabase save failed. Local fallback preserved.', err);
+      }
     }
+
+    // Save locally after Supabase so matching uses the final project id when available.
+    try {
+      upsertLocalProject(savedProject);
+      saveLocalQuoteRequest(savedQuote);
+    } catch {}
 
     setSubmitted(true);
     setLoading(false);
@@ -271,7 +343,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
     // Redirect to Smart Match results after short delay
     setTimeout(() => {
       onClose?.();
-      navigate(`/matches/${project.id}`);
+      navigate(`/matches/${savedProject.id}`);
     }, 1500);
   }
 
@@ -279,12 +351,12 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-        <div className={`relative w-full max-w-sm rounded-2xl border shadow-2xl p-8 text-center ${dark ? 'bg-charcoal-900 border-charcoal-700' : 'bg-white border-gray-200'}`}>
-          <div className="text-4xl mb-4 animate-pulse">🔍</div>
+        <div className={`relative w-full max-w-sm rounded-2xl border shadow-2xl p-8 text-center ${dark ? 'bg-charcoal-950/90 border-white/[0.08]' : 'bg-white border-gray-200'}`}>
+          <div className="text-4xl mb-4 animate-pulse text-gold-400">🔍</div>
           <h3 className={`font-display font-bold text-lg mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>
             Finding your best matches...
           </h3>
-          <p className={`text-sm ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
+          <p className={`text-sm ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
             Analyzing your project brief and matching with available creators.
           </p>
         </div>
@@ -295,16 +367,17 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative w-full max-w-xl rounded-2xl border shadow-2xl flex flex-col max-h-[90vh] ${dark ? 'bg-charcoal-900 border-charcoal-700' : 'bg-white border-gray-200'}`}>
+      <div className={`relative w-full max-w-2xl rounded-[28px] border shadow-2xl flex flex-col max-h-[90vh] overflow-hidden ${dark ? 'bg-charcoal-950/92 border-white/[0.08]' : 'bg-white border-gray-200'}`}>
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/60 to-transparent" />
         {/* Header */}
-        <div className={`flex items-center justify-between px-6 py-4 border-b shrink-0 ${dark ? 'border-charcoal-700' : 'border-gray-200'}`}>
+        <div className={`flex items-center justify-between px-6 py-5 border-b shrink-0 ${dark ? 'border-white/[0.07]' : 'border-gray-200'}`}>
           <div>
             {creator && (
-              <p className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
+              <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
                 Requesting from {creator.businessName || creator.name}
               </p>
             )}
-            <h3 className={`font-display font-bold text-lg ${dark ? 'text-white' : 'text-gray-900'}`}>
+            <h3 className={`font-display font-bold text-2xl ${dark ? 'text-white' : 'text-gray-900'}`}>
               Request a Quote
             </h3>
             {!showOnboarding && (
@@ -315,7 +388,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
             )}
           </div>
           <button type="button" onClick={onClose}
-            className={`p-1.5 rounded-lg transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
+            className={`p-1.5 rounded-lg transition-colors ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
             <X size={16} />
           </button>
         </div>
@@ -326,7 +399,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
           {/* ── Onboarding screen ── */}
           {showOnboarding && (
             <div className="space-y-5">
-              <div className={`rounded-xl border px-4 py-3 text-xs leading-relaxed ${dark ? 'border-charcoal-700 bg-charcoal-800/60 text-charcoal-300' : 'border-gray-200 bg-gray-50 text-gray-600'}`}>
+              <div className={`rounded-xl border px-4 py-3 text-xs leading-relaxed ${dark ? 'border-white/[0.07] bg-charcoal-900/50 text-charcoal-300' : 'border-gray-200 bg-gray-50 text-gray-600'}`}>
                 Welcome to CreatorBridge. You are joining a professional marketplace where every creator is verified and vetted. To maintain quality for both sides, we ask a few quick questions before you start browsing. This takes about 2 minutes.
               </div>
 
@@ -338,7 +411,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
                   onChange={e => setOnboardingAnswers(a => ({ ...a, projectType: e.target.value }))}
                   className={selectCls('')}>
                   <option value="">Select...</option>
-                  {['Video Production','Photography','Drone and Aerial','Social Media Content','Post-Production','Live Events','Corporate Events','Podcast Production','Not sure yet'].map(o => (
+                  {['Video Production','Photography','Drone and Aerial','Brand & Short-Form Content','Editing & Post','Live Event Coverage','Corporate Events','Podcast Production','Not sure yet'].map(o => (
                     <option key={o} value={o}>{o}</option>
                   ))}
                 </select>
@@ -352,7 +425,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
                   onChange={e => setOnboardingAnswers(a => ({ ...a, contentType: e.target.value }))}
                   className={selectCls('')}>
                   <option value="">Select...</option>
-                  {['Commercial and Advertising','Wedding and Events','Real Estate','Social Media Content','Brand Films','Podcast','Live Events','Personal Projects','Other'].map(o => (
+                  {['Commercial and Advertising','Wedding and Events','Real Estate','Brand & Short-Form Content','Brand Films','Podcast','Live Event Coverage','Personal Projects','Other'].map(o => (
                     <option key={o} value={o}>{o}</option>
                   ))}
                 </select>
@@ -415,8 +488,8 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
                       form.serviceType === svc
                         ? 'border-gold-500 bg-gold-500/10 text-gold-400'
                         : errors.serviceType
-                          ? 'border-red-500/50 ' + (dark ? 'text-charcoal-400' : 'text-gray-500')
-                          : dark ? 'border-charcoal-700 text-charcoal-400 hover:border-charcoal-500' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                          ? 'border-red-500/50 ' + (dark ? 'text-charcoal-300' : 'text-gray-500')
+                          : dark ? 'border-white/[0.07] text-charcoal-300 hover:border-gold-500/35' : 'border-gray-200 text-gray-500 hover:border-gray-300'
                     }`}>
                     {svc}
                   </button>
@@ -514,8 +587,8 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
                         form.venueType === vt
                           ? 'border-gold-500 bg-gold-500/10 text-gold-400'
                           : errors.venueType
-                            ? 'border-red-500/50 ' + (dark ? 'text-charcoal-400' : 'text-gray-500')
-                            : dark ? 'border-charcoal-700 text-charcoal-400 hover:border-charcoal-500' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                            ? 'border-red-500/50 ' + (dark ? 'text-charcoal-300' : 'text-gray-500')
+                            : dark ? 'border-white/[0.07] text-charcoal-300 hover:border-gold-500/35' : 'border-gray-200 text-gray-500 hover:border-gray-300'
                       }`}>
                       {vt}
                     </button>
@@ -549,7 +622,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
             <div>
               <label className={labelCls}>
                 Describe your project and share a reference link *
-                <span className={`ml-2 font-normal ${descLen >= 100 ? 'text-teal-400' : dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
+                <span className={`ml-2 font-normal ${descLen >= 100 ? 'text-gold-400' : dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
                   ({descLen}/100 min)
                 </span>
               </label>
@@ -573,8 +646,8 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
                       form.budgetRange === b
                         ? 'border-gold-500 bg-gold-500/10 text-gold-400'
                         : errors.budgetRange
-                          ? 'border-red-500/50 ' + (dark ? 'text-charcoal-400' : 'text-gray-500')
-                          : dark ? 'border-charcoal-700 text-charcoal-400 hover:border-charcoal-500' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                          ? 'border-red-500/50 ' + (dark ? 'text-charcoal-300' : 'text-gray-500')
+                          : dark ? 'border-white/[0.07] text-charcoal-300 hover:border-gold-500/35' : 'border-gray-200 text-gray-500 hover:border-gray-300'
                     }`}>
                     {b}
                   </button>
@@ -593,8 +666,8 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
                       form.locationPreference === lp
                         ? 'border-gold-500 bg-gold-500/10 text-gold-400'
                         : errors.locationPreference
-                          ? 'border-red-500/50 ' + (dark ? 'text-charcoal-400' : 'text-gray-500')
-                          : dark ? 'border-charcoal-700 text-charcoal-400 hover:border-charcoal-500' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                          ? 'border-red-500/50 ' + (dark ? 'text-charcoal-300' : 'text-gray-500')
+                          : dark ? 'border-white/[0.07] text-charcoal-300 hover:border-gold-500/35' : 'border-gray-200 text-gray-500 hover:border-gray-300'
                     }`}>
                     {lp}
                   </button>
@@ -619,7 +692,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
         </div>
 
         {/* Footer */}
-        <div className={`px-6 py-4 border-t shrink-0 ${dark ? 'border-charcoal-700' : 'border-gray-200'}`}>
+        <div className={`px-6 py-4 border-t shrink-0 ${dark ? 'border-white/[0.07]' : 'border-gray-200'}`}>
           {showOnboarding ? (
             <>
               <button

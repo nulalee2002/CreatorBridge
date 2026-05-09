@@ -19,8 +19,8 @@ export function StripeOnboarding({ creator, dark, onStatusChange }) {
     detailsSubmitted: !!creator?.stripe_onboarded,
   });
 
-  const cardCls = `rounded-2xl border p-5 ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`;
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const cardCls = `rounded-2xl border p-5 shadow-[0_24px_80px_rgba(0,0,0,0.18)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`;
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
 
   // On mount, if creator has a stripe_account_id but not yet marked onboarded, re-check
   useEffect(() => {
@@ -110,8 +110,8 @@ export function StripeOnboarding({ creator, dark, onStatusChange }) {
     return (
       <div className={`${cardCls} flex items-center justify-between gap-4`}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-teal-500/15 flex items-center justify-center">
-            <CheckCircle size={18} className="text-teal-400" />
+          <div className="w-10 h-10 rounded-xl bg-gold-500/15 ring-1 ring-gold-500/25 flex items-center justify-center">
+            <CheckCircle size={18} className="text-gold-400" />
           </div>
           <div>
             <p className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>Payments Active</p>
@@ -120,7 +120,7 @@ export function StripeOnboarding({ creator, dark, onStatusChange }) {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {status.payoutsEnabled && (
-            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-teal-500/15 text-teal-400">
+            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-gold-500/15 text-gold-400 ring-1 ring-gold-500/25">
               Payouts enabled
             </span>
           )}
@@ -129,7 +129,7 @@ export function StripeOnboarding({ creator, dark, onStatusChange }) {
             target="_blank"
             rel="noreferrer"
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
-              dark ? 'border-charcoal-600 text-charcoal-300 hover:text-white' : 'border-gray-200 text-gray-600 hover:text-gray-900'
+              dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/35 hover:text-white' : 'border-gray-200 text-gray-600 hover:text-gray-900'
             }`}
           >
             <ExternalLink size={11} /> Stripe Dashboard
@@ -144,8 +144,8 @@ export function StripeOnboarding({ creator, dark, onStatusChange }) {
     return (
       <div className={`${cardCls}`}>
         <div className="flex items-start gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
-            <AlertCircle size={18} className="text-amber-400" />
+          <div className="w-10 h-10 rounded-xl bg-gold-500/15 ring-1 ring-gold-500/25 flex items-center justify-center shrink-0">
+            <AlertCircle size={18} className="text-gold-400" />
           </div>
           <div>
             <p className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>Complete Stripe Setup</p>
@@ -170,7 +170,7 @@ export function StripeOnboarding({ creator, dark, onStatusChange }) {
             onClick={() => checkStatus(creator.stripe_account_id)}
             disabled={checking}
             className={`px-4 py-2.5 rounded-xl border text-xs font-semibold transition-all ${
-              dark ? 'border-charcoal-600 text-charcoal-300 hover:text-white' : 'border-gray-200 text-gray-600 hover:text-gray-900'
+              dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/35 hover:text-white' : 'border-gray-200 text-gray-600 hover:text-gray-900'
             }`}
           >
             Refresh Status
@@ -199,7 +199,7 @@ export function StripeOnboarding({ creator, dark, onStatusChange }) {
       </div>
 
       {/* Fee preview */}
-      <div className={`rounded-xl p-3 mb-4 ${dark ? 'bg-charcoal-900/60 border border-charcoal-700' : 'bg-gray-50 border border-gray-200'}`}>
+      <div className={`rounded-xl p-3 mb-4 ${dark ? 'bg-charcoal-950/60 border border-white/[0.07]' : 'bg-gray-50 border border-gray-200'}`}>
         <div className="grid grid-cols-3 gap-2 text-center">
           {[
             { label: 'Client pays', value: '+ 5%', note: 'booking fee' },
@@ -216,9 +216,9 @@ export function StripeOnboarding({ creator, dark, onStatusChange }) {
       </div>
 
       {(!supabaseConfigured || !stripeConfigured) && (
-        <div className={`flex items-start gap-2 p-3 rounded-xl mb-4 ${dark ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-amber-50 border border-amber-200'}`}>
-          <AlertCircle size={14} className="text-amber-400 shrink-0 mt-0.5" />
-          <p className="text-xs text-amber-400">
+        <div className={`flex items-start gap-2 p-3 rounded-xl mb-4 ${dark ? 'bg-gold-500/10 border border-gold-500/30' : 'bg-gold-50 border border-gold-200'}`}>
+          <AlertCircle size={14} className="text-gold-400 shrink-0 mt-0.5" />
+          <p className={`${dark ? 'text-gold-300' : 'text-gold-800'} text-xs`}>
             {!stripeConfigured
               ? 'Add VITE_STRIPE_PUBLISHABLE_KEY to your .env file to enable payments.'
               : 'Connect Supabase to enable payment processing.'}

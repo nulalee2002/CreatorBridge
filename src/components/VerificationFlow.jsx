@@ -18,26 +18,26 @@ export function VerificationBadge({ status }) {
   }
 
   return (
-    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 text-[10px] font-bold">
+    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-gold-500/10 text-gold-300 text-[10px] font-bold ring-1 ring-gold-500/20">
       <BadgeCheck size={10} /> Verified
     </span>
   );
 }
 
 function StepRow({ number, title, description, status, children, dark }) {
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
 
   const icon =
     status === 'done' ? (
-      <div className="w-7 h-7 rounded-full bg-teal-500/20 flex items-center justify-center shrink-0">
-        <Check size={13} className="text-teal-400" />
+      <div className="w-7 h-7 rounded-full bg-gold-500/20 ring-1 ring-gold-500/25 flex items-center justify-center shrink-0">
+        <Check size={13} className="text-gold-400" />
       </div>
     ) : status === 'partial' ? (
-      <div className="w-7 h-7 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
-        <span className="text-[10px] font-bold text-amber-400">{number}</span>
+      <div className="w-7 h-7 rounded-full bg-gold-500/10 ring-1 ring-gold-500/20 flex items-center justify-center shrink-0">
+        <span className="text-[10px] font-bold text-gold-300">{number}</span>
       </div>
     ) : (
-      <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${dark ? 'bg-charcoal-700' : 'bg-gray-100'}`}>
+      <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${dark ? 'bg-white/[0.08]' : 'bg-gray-100'}`}>
         <span className={`text-[10px] font-bold ${textSub}`}>{number}</span>
       </div>
     );
@@ -45,10 +45,10 @@ function StepRow({ number, title, description, status, children, dark }) {
   return (
     <div className={`rounded-xl border p-4 ${
       status === 'done'
-        ? 'border-teal-500/20 bg-teal-500/5'
+        ? 'border-gold-500/25 bg-gold-500/[0.06]'
         : status === 'partial'
-        ? 'border-amber-500/20 bg-amber-500/5'
-        : dark ? 'border-charcoal-700 bg-charcoal-900/40' : 'border-gray-200 bg-gray-50'
+        ? 'border-gold-500/20 bg-gold-500/[0.04]'
+        : dark ? 'border-white/[0.07] bg-charcoal-950/45' : 'border-gray-200 bg-gray-50'
     }`}>
       <div className="flex items-start gap-3">
         {icon}
@@ -78,9 +78,9 @@ export function VerificationFlow({ creator, dark, onUpdate }) {
   const [credentialNote, setCredentialNote] = useState('');
   const [credSaved, setCredSaved] = useState(false);
 
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
   const inputCls = `w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all ${
-    dark ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+    dark ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
          : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
   }`;
 
@@ -155,7 +155,7 @@ export function VerificationFlow({ creator, dark, onUpdate }) {
   const statusLabel = { unverified: 'Unverified', verified: 'Verified', pro_verified: 'Pro Verified' }[currentStatus];
 
   return (
-    <div className={`rounded-2xl border p-5 ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`}>
+    <div className={`rounded-2xl border p-5 shadow-[0_24px_80px_rgba(0,0,0,0.18)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`}>
       <div className="flex items-center justify-between mb-4">
         <div>
           <p className={`text-[10px] font-bold uppercase tracking-wider ${textSub}`}>Verification</p>
@@ -198,10 +198,10 @@ export function VerificationFlow({ creator, dark, onUpdate }) {
           <div className="flex items-center gap-2">
             {[0,1,2].map(i => (
               <div key={i} className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                portfolioWithLinks.length > i ? 'bg-teal-500/20' : dark ? 'bg-charcoal-700' : 'bg-gray-200'
+                portfolioWithLinks.length > i ? 'bg-gold-500/20 ring-1 ring-gold-500/25' : dark ? 'bg-white/[0.08]' : 'bg-gray-200'
               }`}>
                 {portfolioWithLinks.length > i
-                  ? <Check size={10} className="text-teal-400" />
+                  ? <Check size={10} className="text-gold-400" />
                   : <span className={`text-[9px] ${textSub}`}>{i+1}</span>
                 }
               </div>
@@ -256,7 +256,7 @@ export function VerificationFlow({ creator, dark, onUpdate }) {
           dark={dark}
         >
           {credentialsDone || credSaved ? (
-            <p className="text-xs text-teal-400 flex items-center gap-1"><Check size={11} /> Credentials submitted for admin review</p>
+            <p className="text-xs text-gold-300 flex items-center gap-1"><Check size={11} /> Credentials submitted for admin review</p>
           ) : (
             <div className="space-y-2">
               <textarea

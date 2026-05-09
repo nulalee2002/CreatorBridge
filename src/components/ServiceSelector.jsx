@@ -14,7 +14,7 @@ export function ServiceSelector({ value, onChange, dark = true }) {
               active
                 ? 'border-gold-500 bg-gold-500/10 text-gold-400'
                 : dark
-                  ? 'border-charcoal-600 bg-charcoal-800/60 text-charcoal-300 hover:border-charcoal-500 hover:bg-charcoal-700'
+                  ? 'border-white/[0.08] bg-charcoal-900/60 text-charcoal-300 hover:border-gold-500/35 hover:bg-white/[0.06]'
                   : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
             }`}
           >

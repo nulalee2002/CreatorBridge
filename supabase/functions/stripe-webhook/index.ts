@@ -9,6 +9,118 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
 
 const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? '';
 
+function calculateCreatorTier(completedProjects: number, rating = 0, completionRate = 100) {
+  if (completedProjects >= 50 && rating >= 4.7 && completionRate >= 95) return 'signature';
+  if (completedProjects >= 20 && rating >= 4.5 && completionRate >= 90) return 'elite';
+  if (completedProjects >= 5 && rating >= 4.0 && completionRate >= 80) return 'proven';
+  return 'launch';
+}
+
+async function issueReferralRewards(supabaseAdmin: ReturnType<typeof createClient>, txn: Record<string, any>) {
+  const now = new Date().toISOString();
+  const { data: referral } = await supabaseAdmin
+    .from('referrals')
+    .select('*')
+    .eq('referred_user_id', txn.client_id)
+    .eq('reward_issued', false)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (!referral) return;
+
+  if (referral.reward_type === 'tier_boost') {
+    const { data: listing } = await supabaseAdmin
+      .from('creator_listings')
+      .select('id, completed_projects, rating, completion_rate')
+      .eq('user_id', referral.referrer_id)
+      .maybeSingle();
+
+    if (listing?.id) {
+      const completed = Number(listing.completed_projects || 0) + 1;
+      await supabaseAdmin
+        .from('creator_listings')
+        .update({
+          completed_projects: completed,
+          tier: calculateCreatorTier(completed, Number(listing.rating || 0), Number(listing.completion_rate || 100)),
+        })
+        .eq('id', listing.id);
+    }
+  }
+
+  if (referral.reward_type === 'booking_fee_waived') {
+    await supabaseAdmin
+      .from('profiles')
+      .update({ next_booking_fee_waived: true })
+      .eq('id', referral.referrer_id);
+    await supabaseAdmin
+      .from('client_profiles')
+      .update({ next_booking_fee_waived: true })
+      .eq('user_id', referral.referrer_id);
+  }
+
+  if (referral.reward_type === 'fee_reduction') {
+    await supabaseAdmin
+      .from('creator_listings')
+      .update({ next_project_fee_pct: 7 })
+      .eq('user_id', referral.referrer_id);
+  }
+
+  await supabaseAdmin
+    .from('referrals')
+    .update({
+      status: 'completed',
+      reward_issued: true,
+      reward_issued_at: now,
+      completed_at: now,
+      completed_project_id: txn.project_id,
+      completed_transaction_id: txn.id,
+    })
+    .eq('id', referral.id);
+}
+
+async function markProjectCompleted(supabaseAdmin: ReturnType<typeof createClient>, txn: Record<string, any>) {
+  const now = new Date().toISOString();
+  const { data: listing } = await supabaseAdmin
+    .from('creator_listings')
+    .select('id, completed_projects, rating, completion_rate, next_project_fee_pct')
+    .eq('id', txn.creator_id)
+    .maybeSingle();
+
+  if (listing?.id) {
+    const completed = Number(listing.completed_projects || 0) + 1;
+    await supabaseAdmin
+      .from('creator_listings')
+      .update({
+        completed_projects: completed,
+        tier: calculateCreatorTier(completed, Number(listing.rating || 0), Number(listing.completion_rate || 100)),
+        ...(listing.next_project_fee_pct != null ? { next_project_fee_pct: null } : {}),
+      })
+      .eq('id', listing.id);
+  }
+
+  await supabaseAdmin
+    .from('projects')
+    .update({ status: 'final_paid', approved_at: now })
+    .eq('id', txn.project_id);
+
+  await issueReferralRewards(supabaseAdmin, txn);
+}
+
+async function consumeClientFeeWaiver(supabaseAdmin: ReturnType<typeof createClient>, txn: Record<string, any>) {
+  if (Number(txn.client_fee_pct ?? 5) !== 0 || !txn.client_id) return;
+
+  await supabaseAdmin
+    .from('profiles')
+    .update({ first_booking_fee_waived: false, next_booking_fee_waived: false })
+    .eq('id', txn.client_id);
+
+  await supabaseAdmin
+    .from('client_profiles')
+    .update({ first_booking_fee_waived: false, next_booking_fee_waived: false })
+    .eq('user_id', txn.client_id);
+}
+
 Deno.serve(async (req) => {
   const signature = req.headers.get('stripe-signature');
   if (!signature) {
@@ -58,10 +170,9 @@ Deno.serve(async (req) => {
             .eq('final_payment_intent', pi.id);
         }
 
-        // Log event
         const { data: txn } = await supabaseAdmin
           .from('transactions')
-          .select('id')
+          .select('*')
           .eq(paymentType === 'retainer' ? 'retainer_payment_intent' : 'final_payment_intent', pi.id)
           .single();
 
@@ -71,6 +182,14 @@ Deno.serve(async (req) => {
             event_type:     `${paymentType}_payment_succeeded`,
             metadata:       { paymentIntentId: pi.id, amount: pi.amount },
           });
+
+          if (paymentType === 'final') {
+            await markProjectCompleted(supabaseAdmin, txn);
+          }
+
+          if (paymentType === 'retainer') {
+            await consumeClientFeeWaiver(supabaseAdmin, txn);
+          }
         }
         break;
       }

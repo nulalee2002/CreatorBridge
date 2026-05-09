@@ -56,7 +56,7 @@ export function FastMatch({ dark, serviceId, onViewProfile }) {
     setOpen(true);
   }
 
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
 
   return (
     <>
@@ -74,10 +74,11 @@ export function FastMatch({ dark, serviceId, onViewProfile }) {
       {/* Modal */}
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className={`relative w-full max-w-sm rounded-2xl border shadow-2xl ${dark ? 'bg-charcoal-900 border-charcoal-700' : 'bg-white border-gray-200'}`}>
+          <div className="absolute inset-0 bg-black/75 backdrop-blur-md" onClick={() => setOpen(false)} />
+          <div className={`relative w-full max-w-sm rounded-2xl border overflow-hidden ${dark ? 'bg-charcoal-950/96 border-white/[0.09] shadow-[0_28px_90px_rgba(0,0,0,0.46)]' : 'bg-white border-gray-200 shadow-2xl'}`}>
+            <div className="h-px bg-gradient-to-r from-transparent via-gold-400/70 to-transparent" />
             <button type="button" onClick={() => setOpen(false)}
-              className={`absolute top-4 right-4 p-1.5 rounded-lg ${dark ? 'text-charcoal-400 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
+              className={`absolute top-4 right-4 p-1.5 rounded-lg ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.08]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
               <X size={16} />
             </button>
 
@@ -99,9 +100,9 @@ export function FastMatch({ dark, serviceId, onViewProfile }) {
 
               {/* Fee warning */}
               {feeWarning && !isFree && (
-                <div className={`flex items-start gap-2 p-3 rounded-xl mb-4 ${dark ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'}`}>
-                  <Zap size={12} className="text-amber-400 mt-0.5 shrink-0" />
-                  <p className={`text-xs ${dark ? 'text-amber-300' : 'text-amber-700'}`}>
+                <div className={`flex items-start gap-2 p-3 rounded-xl mb-4 ${dark ? 'bg-gold-500/10 border border-gold-500/25' : 'bg-gold-50 border border-gold-200'}`}>
+                  <Zap size={12} className="text-gold-400 mt-0.5 shrink-0" />
+                  <p className={`text-xs ${dark ? 'text-gold-300' : 'text-gold-800'}`}>
                     A $25 Fast Match fee applies and will be added to your next booking.
                   </p>
                 </div>
@@ -120,7 +121,7 @@ export function FastMatch({ dark, serviceId, onViewProfile }) {
                       onChange={e => setBudgetMax(e.target.value)}
                       placeholder="No limit"
                       className={`w-full pl-7 pr-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${
-                        dark ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+                        dark ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
                              : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
                       }`}
                     />
@@ -160,7 +161,7 @@ export function FastMatch({ dark, serviceId, onViewProfile }) {
 
               {result && !loading && (
                 <button type="button" onClick={() => { setResult(null); setBudgetMax(''); }}
-                  className={`w-full mt-2 py-2 rounded-xl border text-xs font-medium transition-all ${dark ? 'border-charcoal-600 text-charcoal-400 hover:text-white' : 'border-gray-200 text-gray-500 hover:text-gray-900'}`}>
+                  className={`w-full mt-2 py-2 rounded-xl border text-xs font-medium transition-all ${dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/35 hover:text-white' : 'border-gray-200 text-gray-500 hover:text-gray-900'}`}>
                   Search again
                 </button>
               )}
@@ -174,16 +175,16 @@ export function FastMatch({ dark, serviceId, onViewProfile }) {
 
 function FastMatchResult({ result, dark, onViewProfile }) {
   const { creator, matchPct, rateRange } = result;
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
   const location = creator.location || {};
   const locationStr = [location.city, location.state].filter(Boolean).join(', ');
 
   return (
-    <div className={`rounded-xl border p-4 mb-4 ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-gray-50 border-gray-200'}`}>
+    <div className={`rounded-xl border p-4 mb-4 ${dark ? 'bg-white/[0.04] border-white/[0.08]' : 'bg-gray-50 border-gray-200'}`}>
       {/* Match pct badge */}
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="flex items-center gap-3">
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0 ${dark ? 'bg-charcoal-700' : 'bg-white border border-gray-200'}`}>
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0 ${dark ? 'bg-charcoal-950/70 ring-1 ring-white/[0.08]' : 'bg-white border border-gray-200'}`}>
             {creator.avatar || '🎬'}
           </div>
           <div>
@@ -198,7 +199,7 @@ function FastMatchResult({ result, dark, onViewProfile }) {
           </div>
         </div>
         <div className="text-right shrink-0">
-          <p className={`font-display text-xl font-bold ${matchPct >= 90 ? 'text-teal-400' : 'text-gold-400'}`}>{matchPct}%</p>
+          <p className="font-display text-xl font-bold text-gold-400">{matchPct}%</p>
           <p className={`text-[9px] font-bold uppercase tracking-wider ${textSub}`}>match</p>
         </div>
       </div>

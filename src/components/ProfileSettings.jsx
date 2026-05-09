@@ -3,13 +3,13 @@ import { User, ChevronDown } from 'lucide-react';
 
 export function ProfileSettings({ profile, onChange, dark = true }) {
   const [open, setOpen] = useState(false);
-  const bg = dark ? 'bg-charcoal-800 border-charcoal-600' : 'bg-white border-gray-200';
-  const dropBg = dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200';
+  const bg = dark ? 'bg-charcoal-900/72 border-white/[0.08]' : 'bg-white border-gray-200';
+  const dropBg = dark ? 'bg-charcoal-950/96 border-white/[0.09] shadow-[0_24px_80px_rgba(0,0,0,0.36)]' : 'bg-white border-gray-200';
   const inputCls = dark
-    ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+    ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500';
   const textMain = dark ? 'text-white' : 'text-gray-900';
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
   const labelCls = `text-[10px] font-bold uppercase tracking-wider mb-1 ${textSub}`;
 
   const fields = [
@@ -35,7 +35,7 @@ export function ProfileSettings({ profile, onChange, dark = true }) {
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
           <div className={`absolute right-0 top-full mt-2 z-40 w-72 rounded-2xl border shadow-2xl ${dropBg} overflow-hidden animate-slide-up`}>
-            <div className={`px-4 py-3 border-b ${dark ? 'border-charcoal-700' : 'border-gray-100'}`}>
+            <div className={`px-4 py-3 border-b ${dark ? 'border-white/[0.07]' : 'border-gray-100'}`}>
               <p className={`text-xs font-bold ${textMain}`}>Company Profile</p>
               <p className={`text-[10px] ${textSub}`}>Shows on PDF exports</p>
             </div>

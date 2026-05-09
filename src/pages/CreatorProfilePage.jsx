@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Star, Globe, Mail, Phone, Instagram, Heart, Share2, Check, ExternalLink, MessageSquare, FileText, BadgeCheck } from 'lucide-react';
+import { ArrowLeft, MapPin, Star, Globe, Mail, Phone, Instagram, Heart, Share2, Check, ExternalLink, MessageSquare, FileText, BadgeCheck, X, Search } from 'lucide-react';
 import { VerificationBadge } from '../components/VerificationFlow.jsx';
 import { LoyaltyBadge } from '../components/LoyaltyBadge.jsx';
 import { TierBadge } from '../components/TierBadge.jsx';
@@ -17,6 +17,27 @@ function loadAllListings() {
   try { return JSON.parse(localStorage.getItem('creator-directory') || '[]'); } catch { return []; }
 }
 
+function isApprovedCreator(creator) {
+  return !!(
+    creator?.verified ||
+    creator?.verification_status === 'verified' ||
+    creator?.verification_status === 'pro_verified' ||
+    creator?.id?.startsWith?.('seed-')
+  );
+}
+
+function recordGuestProfileView(profileId) {
+  try {
+    const key = 'cb-guest-profile-views';
+    const views = JSON.parse(localStorage.getItem(key) || '[]');
+    const next = Array.from(new Set([...views, profileId])).slice(-3);
+    localStorage.setItem(key, JSON.stringify(next));
+    return views.includes(profileId) || views.length < 3;
+  } catch {
+    return true;
+  }
+}
+
 /** Returns true if `clientId` has a paid retainer (or completed project) with `creatorId`. */
 async function hasActiveBooking(clientId, creatorId) {
   if (!clientId || !creatorId) return false;
@@ -27,7 +48,7 @@ async function hasActiveBooking(clientId, creatorId) {
         .select('id')
         .eq('client_id', clientId)
         .eq('creator_id', creatorId)
-        .in('payment_type', ['retainer', 'final'])
+        .or('retainer_status.in.(paid,released),final_status.in.(paid,released)')
         .limit(1);
       if (data?.length > 0) return true;
     }
@@ -36,7 +57,11 @@ async function hasActiveBooking(clientId, creatorId) {
     return txns.some(t =>
       t.clientId === clientId &&
       t.creatorId === creatorId &&
-      ['retainer', 'final'].includes(t.paymentType)
+      (
+        ['paid', 'released'].includes(t.retainerStatus || t.retainer_status) ||
+        ['paid', 'released'].includes(t.finalStatus || t.final_status) ||
+        ['retainer', 'final'].includes(t.paymentType)
+      )
     );
   } catch { return false; }
 }
@@ -71,6 +96,8 @@ export function CreatorProfilePage({ dark }) {
   const [quoteDate, setQuoteDate]       = useState('');
   const [contactUnlocked, setContactUnlocked] = useState(false);
   const [showVideoModal, setShowVideoModal]   = useState(false);
+  const [showContactGate, setShowContactGate] = useState(false);
+  const [guestLimitReached, setGuestLimitReached] = useState(false);
 
   const isOwnProfile = user && creator && creator.user_id === user.id;
 
@@ -101,6 +128,9 @@ export function CreatorProfilePage({ dark }) {
           tags: data.tags || [],
         };
         setCreator(normalized);
+        if (!user && !recordGuestProfileView(normalized.id)) {
+          setGuestLimitReached(true);
+        }
         // Increment view count
         supabase.from('creator_listings').update({ view_count: (data.view_count || 0) + 1 }).eq('id', id);
         // Check booking status
@@ -113,6 +143,9 @@ export function CreatorProfilePage({ dark }) {
       const all = loadAllListings();
       const found = all.find(c => c.id === id);
       setCreator(found || null);
+      if (!user && found && !recordGuestProfileView(found.id)) {
+        setGuestLimitReached(true);
+      }
       if (user && found) {
         hasActiveBooking(user.id, id).then(setContactUnlocked);
       }
@@ -155,9 +188,30 @@ export function CreatorProfilePage({ dark }) {
   function handleQuoteClick() {
     // Always open the direct quote form when on a creator's profile page.
     // IntentGate/SmartMatch is only for homepage/directory, never from a profile page.
+    if (!user) {
+      setShowContactGate(true);
+      return;
+    }
     if (!isOwnProfile) {
       setShowQuote(true);
     }
+  }
+
+  function openClientAuth(tab = 'signup') {
+    setShowContactGate(false);
+    window.dispatchEvent(new CustomEvent('open-auth', { detail: { tab, role: 'client' } }));
+  }
+
+  function handleMessageClick() {
+    if (!user) {
+      setShowContactGate(true);
+      return;
+    }
+    navigate(`/messages?with=${creator.user_id || creator.id}`);
+  }
+
+  function handleLockedContactClick() {
+    setShowContactGate(true);
   }
 
   function shareProfile() {
@@ -176,13 +230,75 @@ export function CreatorProfilePage({ dark }) {
 
   if (!creator) {
     return (
-      <div className={`min-h-screen flex flex-col items-center justify-center ${dark ? 'bg-transparent text-white' : 'bg-gray-50 text-gray-900'}`}>
-        <p className="text-4xl mb-4">😕</p>
-        <h2 className="font-display text-xl font-bold mb-2">Creator not found</h2>
+      <div className={`min-h-screen flex items-center justify-center px-5 ${dark ? 'bg-transparent text-white' : 'bg-gray-50 text-gray-900'}`}>
+        <div className={`w-full max-w-md rounded-2xl border p-8 text-center ${dark ? 'bg-charcoal-900/76 border-white/[0.08]' : 'bg-white border-gray-200 shadow-sm'}`}>
+          <div className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl ${dark ? 'bg-gold-500/10 text-gold-300 ring-1 ring-gold-500/20' : 'bg-gold-50 text-gold-600'}`}>
+            <Search size={20} />
+          </div>
+          <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '2.2px', textTransform: 'uppercase' }}>
+            Profile unavailable
+          </p>
+          <h2 className="font-display text-xl font-bold mb-2">Creator not found</h2>
+          <p className={`text-sm leading-6 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
+            This creator may be under review, hidden, or no longer listed.
+          </p>
         <button type="button" onClick={() => navigate('/')}
-          className="mt-4 px-5 py-2.5 rounded-xl bg-gold-500 text-charcoal-900 font-bold text-sm">
+          className="mt-5 px-5 py-2.5 rounded-xl bg-gold-500 text-charcoal-900 font-bold text-sm">
           Back to Directory
         </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isApprovedCreator(creator) && !isOwnProfile) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center px-5 ${dark ? 'bg-transparent text-white' : 'bg-gray-50 text-gray-900'}`}>
+        <div className={`w-full max-w-md rounded-2xl border p-8 text-center ${dark ? 'bg-charcoal-900/76 border-white/[0.08]' : 'bg-white border-gray-200 shadow-sm'}`}>
+          <div className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl ${dark ? 'bg-gold-500/10 text-gold-300 ring-1 ring-gold-500/20' : 'bg-gold-50 text-gold-600'}`}>
+            <Search size={20} />
+          </div>
+          <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '2.2px', textTransform: 'uppercase' }}>
+            Profile under review
+          </p>
+          <h2 className="font-display text-xl font-bold mb-2">This creator is not public yet</h2>
+          <p className={`text-sm leading-6 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
+            CreatorBridge profiles are hidden until manual review is complete.
+          </p>
+          <button type="button" onClick={() => navigate('/')}
+            className="mt-5 px-5 py-2.5 rounded-xl bg-gold-500 text-charcoal-900 font-bold text-sm">
+            Back to Directory
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (guestLimitReached && !user) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center px-5 ${dark ? 'bg-transparent text-white' : 'bg-gray-50 text-gray-900'}`}>
+        <div className={`w-full max-w-md rounded-2xl border p-8 text-center ${dark ? 'bg-charcoal-900/76 border-white/[0.08]' : 'bg-white border-gray-200 shadow-sm'}`}>
+          <div className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl ${dark ? 'bg-gold-500/10 text-gold-300 ring-1 ring-gold-500/20' : 'bg-gold-50 text-gold-600'}`}>
+            <Search size={20} />
+          </div>
+          <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '2.2px', textTransform: 'uppercase' }}>
+            Guest preview complete
+          </p>
+          <h2 className="font-display text-xl font-bold mb-2">Create a free account to keep browsing.</h2>
+          <p className={`text-sm leading-6 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
+            Guests can preview up to 3 creator profiles. Accounts unlock full browsing, saved creators, quotes, and project requests.
+          </p>
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button type="button" onClick={() => openClientAuth('signup')}
+              className="rounded-xl bg-gold-500 px-4 py-3 text-sm font-bold text-charcoal-900 hover:bg-gold-600 transition-colors">
+              Create Account
+            </button>
+            <button type="button" onClick={() => openClientAuth('login')}
+              className={`rounded-xl border px-4 py-3 text-sm font-bold transition-colors ${dark ? 'border-gold-500/25 text-charcoal-200 hover:text-white hover:border-gold-500/45' : 'border-gray-200 text-gray-700 hover:text-gray-900'}`}>
+              Sign In
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -201,42 +317,47 @@ export function CreatorProfilePage({ dark }) {
       drone:            'Drone / Aerial',
       drone_aerial:     'Drone / Aerial',
       podcast:          'Podcast Production',
-      social:           'Social Media',
-      social_media:     'Social Media',
-      post:             'Post-Production',
-      post_production:  'Post-Production',
-      events:           'Live Events',
-      live_events:      'Live Events',
+      social:           'Brand & Short-Form Content',
+      social_media:     'Brand & Short-Form Content',
+      post:             'Editing & Post',
+      post_production:  'Editing & Post',
+      events:           'Live Event Coverage',
+      live_events:      'Live Event Coverage',
     };
     return names[serviceId] || serviceId || 'Services';
   }
   const region = REGIONS[location.regionKey];
-  const expLabel = { entry: '0–2 yrs', mid: '3–6 yrs', senior: '7+ yrs' }[creator.experience] || '';
+  const expLabel = { entry: '2-3 yrs', mid: '4-6 yrs', senior: '7+ yrs' }[creator.experience] || '';
 
   const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
-  const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`;
+  const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.08]' : 'bg-white border-gray-200 shadow-sm'}`;
 
   return (
     <div className={`min-h-screen ${dark ? 'bg-transparent' : 'bg-gray-50'}`}>
       {/* Back button */}
-      <div className="max-w-7xl mx-auto px-6 pt-4">
+      <div className="mx-auto w-full max-w-[1520px] px-5 sm:px-8 lg:px-12 pt-5">
         <button type="button" onClick={() => navigate(-1)}
-          className={`flex items-center gap-2 text-sm font-medium transition-colors ${dark ? 'text-charcoal-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}>
+          className={`flex items-center gap-2 text-sm font-bold transition-colors ${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}>
           <ArrowLeft size={16} /> Back to directory
         </button>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-6 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+      <div className="mx-auto w-full max-w-[1520px] px-5 sm:px-8 lg:px-12 py-6 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-6">
 
         {/* ── LEFT COLUMN ── */}
         <div className="space-y-5">
 
           {/* Profile header */}
-          <div className={`${cardCls} p-6`}>
-            <div className="flex items-start gap-4">
+          <div className={`${cardCls} relative overflow-hidden p-6 sm:p-8`} style={{ boxShadow: dark ? '0 28px 90px rgba(0,0,0,0.24)' : '0 22px 70px rgba(0,0,0,0.08)' }}>
+            <div
+              className="absolute inset-x-0 top-0 h-1"
+              style={{ background: 'linear-gradient(90deg, transparent, rgba(212,169,65,0.85), transparent)' }}
+            />
+            <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-gold-500/10 blur-3xl" />
+            <div className="relative flex flex-col gap-6 md:flex-row md:items-start">
               <div className="relative shrink-0">
                 <div
-                  className={`w-20 h-20 rounded-2xl flex items-center justify-center text-4xl ${dark ? 'bg-charcoal-700' : 'bg-gray-100'} ${creator.video_intro_url ? 'cursor-pointer' : ''}`}
+                  className={`w-24 h-24 rounded-[1.35rem] border flex items-center justify-center text-5xl shadow-[0_20px_60px_rgba(0,0,0,0.22)] ${dark ? 'bg-white/[0.04] border-gold-500/22' : 'bg-gray-100 border-gray-200'} ${creator.video_intro_url ? 'cursor-pointer' : ''}`}
                   onClick={() => creator.video_intro_url && setShowVideoModal(true)}
                 >
                   {creator.avatar || '🎬'}
@@ -257,14 +378,17 @@ export function CreatorProfilePage({ dark }) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2 flex-wrap">
                   <div>
+                    <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
+                      Verified production specialist
+                    </p>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h1 className={`font-display font-bold text-2xl ${dark ? 'text-white' : 'text-gray-900'}`}>
+                      <h1 className={`font-display font-bold text-3xl sm:text-4xl tracking-tight ${dark ? 'text-white' : 'text-gray-950'}`}>
                         {creator.businessName || creator.name}
                       </h1>
                       {creator.verification_status && creator.verification_status !== 'unverified' ? (
                         <VerificationBadge status={creator.verification_status} />
                       ) : creator.verified ? (
-                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-400 text-[10px] font-bold">
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-gold-500/10 text-gold-300 text-[10px] font-bold ring-1 ring-gold-500/20">
                           <BadgeCheck size={11} /> Verified
                         </span>
                       ) : null}
@@ -281,11 +405,11 @@ export function CreatorProfilePage({ dark }) {
                         <MapPin size={13} /> {locationStr}
                         {region && <span className="ml-1">{region.flag}</span>}
                       </span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${dark ? 'bg-charcoal-700 text-charcoal-400' : 'bg-gray-100 text-gray-500'}`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${dark ? 'bg-white/[0.04] text-charcoal-300 ring-1 ring-white/[0.06]' : 'bg-gray-100 text-gray-500'}`}>
                         {expLabel}
                       </span>
                       {creator.availability === 'available' && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-400 font-medium">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-gold-500/10 text-gold-300 font-medium ring-1 ring-gold-500/15">
                           Available Now
                         </span>
                       )}
@@ -295,15 +419,15 @@ export function CreatorProfilePage({ dark }) {
                     <button type="button" onClick={toggleFavorite}
                       className={`p-2 rounded-xl border transition-all ${
                         isFav
-                          ? 'border-red-500/50 bg-red-500/10 text-red-400'
-                          : dark ? 'border-charcoal-600 text-charcoal-400 hover:text-red-400' : 'border-gray-200 text-gray-400 hover:text-red-400'
+                          ? 'border-gold-500/45 bg-gold-500/10 text-gold-400'
+                          : dark ? 'border-charcoal-600 text-charcoal-400 hover:text-gold-400' : 'border-gray-200 text-gray-400 hover:text-gold-500'
                       }`} title={isFav ? 'Remove from favorites' : 'Save to favorites'}>
                       <Heart size={16} className={isFav ? 'fill-current' : ''} />
                     </button>
                     <button type="button" onClick={shareProfile}
                       className={`p-2 rounded-xl border transition-all ${dark ? 'border-charcoal-600 text-charcoal-400 hover:text-white' : 'border-gray-200 text-gray-400 hover:text-gray-900'}`}
                       title="Copy profile link">
-                      {copied ? <Check size={16} className="text-teal-400" /> : <Share2 size={16} />}
+                      {copied ? <Check size={16} className="text-gold-400" /> : <Share2 size={16} />}
                     </button>
                   </div>
                 </div>
@@ -325,13 +449,27 @@ export function CreatorProfilePage({ dark }) {
             </div>
 
             {/* Bio */}
-            <p className={`mt-4 text-sm leading-relaxed ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>{creator.bio}</p>
+            <p className={`relative mt-6 max-w-4xl text-base leading-8 ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>{creator.bio}</p>
+
+            <div className="relative mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {[
+                { label: 'Service types', value: services.length || 0 },
+                { label: 'Work samples', value: portfolio.length || 0 },
+                { label: 'Experience', value: expLabel || 'Reviewed' },
+                { label: 'Payment path', value: 'Protected' },
+              ].map(({ label, value }) => (
+                <div key={label} className={`rounded-2xl border px-4 py-3 ${dark ? 'border-white/[0.07] bg-charcoal-950/50' : 'border-gray-200 bg-gray-50'}`}>
+                  <p className={`text-[10px] uppercase tracking-widest ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>{label}</p>
+                  <p className={`mt-1 text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{value}</p>
+                </div>
+              ))}
+            </div>
 
             {/* Tags */}
             {creator.tags?.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-4">
+              <div className="relative flex flex-wrap gap-2 mt-5">
                 {creator.tags.map(tag => (
-                  <span key={tag} className={`text-xs px-2.5 py-1 rounded-full ${dark ? 'bg-charcoal-700 text-charcoal-300' : 'bg-gray-100 text-gray-600'}`}>
+                  <span key={tag} className={`text-xs px-3 py-1 rounded-full ${dark ? 'bg-white/[0.04] text-charcoal-300 ring-1 ring-white/[0.06]' : 'bg-gray-100 text-gray-600'}`}>
                     {tag}
                   </span>
                 ))}
@@ -341,12 +479,12 @@ export function CreatorProfilePage({ dark }) {
 
           {/* Video intro */}
           {creator.video_intro_url && (
-            <div className={`${cardCls} p-5`}>
+            <div className={`${cardCls} p-5 sm:p-6`}>
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-base">🎬</span>
-                <h2 className={`font-display font-bold text-base ${dark ? 'text-white' : 'text-gray-900'}`}>Video Introduction</h2>
+              <h2 className={`font-display font-bold text-base ${dark ? 'text-white' : 'text-gray-900'}`}>Video Introduction</h2>
               </div>
-              <div className="rounded-xl overflow-hidden aspect-video bg-black">
+              <div className="rounded-2xl overflow-hidden aspect-video bg-black ring-1 ring-gold-500/18">
                 <iframe
                   src={creator.video_intro_url}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -360,15 +498,15 @@ export function CreatorProfilePage({ dark }) {
 
           {/* Services and Packages */}
           {(creator.services || []).length > 0 && (
-            <div className={`${cardCls} p-5`}>
-              <h2 className={`font-display font-bold text-base mb-4
+            <div className={`${cardCls} p-5 sm:p-6`}>
+              <h2 className={`font-display font-bold text-xl mb-1
                 ${dark ? 'text-white' : 'text-gray-900'}`}>
-                Services and Packages
+                Service Offers
               </h2>
+              <p className={`text-sm mb-5 ${textSub}`}>Review the creator's strongest service lanes, pricing structure, and included deliverables before requesting a quote.</p>
 
               {/* Niche tab buttons - service names only */}
-              <div className={`flex border-b mb-6
-                ${dark ? 'border-charcoal-700' : 'border-gray-200'}`}>
+              <div className="flex flex-wrap gap-2 mb-6">
                 {(creator.services || []).slice(0, 3).map((svc, i) => {
                   const sid = svc.serviceId || svc.service_id || '';
                   const name = getServiceDisplayName(sid);
@@ -378,14 +516,14 @@ export function CreatorProfilePage({ dark }) {
                       key={i}
                       type="button"
                       onClick={() => setActiveNiche(i)}
-                      className={`px-4 py-3 text-xs font-bold uppercase
-                        tracking-widest transition-all border-b-2 -mb-px
+                      className={`px-4 py-2 rounded-full text-xs font-bold uppercase
+                        tracking-widest transition-all border
                         ${isActive
-                          ? 'border-gold-500 text-gold-400'
-                          : `border-transparent
+                          ? 'border-gold-500/55 bg-gold-500/12 text-gold-400 shadow-[0_0_24px_rgba(212,169,65,0.1)]'
+                          : `
                             ${dark
-                              ? 'text-charcoal-500 hover:text-charcoal-300'
-                              : 'text-gray-400 hover:text-gray-600'
+                              ? 'border-white/[0.07] text-charcoal-300 hover:text-white hover:border-gold-500/24'
+                              : 'border-gray-200 text-gray-500 hover:text-gray-900'
                             }`
                         }`}
                     >
@@ -402,6 +540,7 @@ export function CreatorProfilePage({ dark }) {
                 if (!activeSvc) return null;
 
                 const sid = activeSvc.serviceId || activeSvc.service_id;
+                const serviceDef = SERVICES[sid] || {};
 
                 // Try structured packages first
                 const pkgs = (creator.packages || []).filter(
@@ -411,19 +550,38 @@ export function CreatorProfilePage({ dark }) {
                 if (pkgs.length > 0) {
                   return (
                     <div className="space-y-4">
+                      {(serviceDef.description || activeSvc.description || activeSvc.subtypes?.length > 0) && (
+                        <div className={`rounded-2xl border p-4 ${dark ? 'border-gold-500/18 bg-gold-500/[0.055]' : 'border-gold-200 bg-gold-50'}`}>
+                          <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase' }}>
+                            Active service lane
+                          </p>
+                          <p className={`text-sm leading-6 ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>
+                            {activeSvc.description || serviceDef.description}
+                          </p>
+                          {activeSvc.subtypes?.length > 0 && (
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {activeSvc.subtypes.slice(0, 8).map(subtype => (
+                                <span key={subtype} className={`rounded-full px-3 py-1 text-[11px] font-semibold ${dark ? 'bg-charcoal-950/65 text-charcoal-300 ring-1 ring-white/[0.06]' : 'bg-white text-gray-600 ring-1 ring-gray-200'}`}>
+                                  {subtype}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                       {pkgs.map((pkg, pi) => {
                         const isStandard = pkg.tier === 'standard'
                           || pkg.name?.toLowerCase().includes('standard')
                           || pi === 1;
                         return (
-                          <div key={pi} className={`rounded-xl border p-5
+                          <div key={pi} className={`rounded-2xl border p-5
                             ${isStandard
-                              ? 'border-l-2 border-l-gold-500 border-t border-r border-b '
+                              ? 'border-gold-500/38 '
                                 + (dark
-                                  ? 'border-charcoal-700 bg-gold-500/5'
+                                  ? 'bg-gold-500/10'
                                   : 'border-gray-200 bg-gold-50')
                               : dark
-                                ? 'border-charcoal-700 bg-charcoal-900/40'
+                                ? 'border-white/[0.07] bg-white/[0.025]'
                                 : 'border-gray-200 bg-gray-50'
                             }`}>
                             {isStandard && (
@@ -456,9 +614,9 @@ export function CreatorProfilePage({ dark }) {
                                     ${dark
                                       ? 'text-charcoal-300'
                                       : 'text-gray-600'}`}>
-                                    <span className="text-teal-400 mt-0.5
+                                    <span className="text-gold-400 mt-0.5
                                       shrink-0">
-                                      ✓
+                                      <Check size={13} />
                                     </span>
                                     {f}
                                   </li>
@@ -489,10 +647,10 @@ export function CreatorProfilePage({ dark }) {
                 // Fallback: build Basic/Standard/Premium from rates
                 const rates = Object.entries(activeSvc.rates || {});
                 if (rates.length === 0) return (
-                  <p className={`text-sm ${dark
-                    ? 'text-charcoal-400' : 'text-gray-500'}`}>
-                    Contact creator for pricing details.
-                  </p>
+                  <div className={`rounded-2xl border p-5 text-sm ${dark
+                    ? 'border-white/[0.07] bg-charcoal-950/45 text-charcoal-300' : 'border-gray-200 bg-gray-50 text-gray-600'}`}>
+                    Pricing is reviewed through a custom quote for this service lane.
+                  </div>
                 );
 
                 const sorted = rates.sort(([,a],[,b]) => Number(a) - Number(b));
@@ -523,15 +681,14 @@ export function CreatorProfilePage({ dark }) {
                       );
                       return (
                         <div key={tier.name}
-                          className={`rounded-xl border p-5
+                          className={`rounded-2xl border p-5
                           ${tier.isStandard
-                            ? 'border-l-2 border-l-gold-500 border-t '
-                              + 'border-r border-b '
+                            ? 'border-gold-500/38 '
                               + (dark
-                                ? 'border-charcoal-700 bg-gold-500/5'
+                                ? 'bg-gold-500/10'
                                 : 'border-gray-200 bg-gold-50')
                             : dark
-                              ? 'border-charcoal-700 bg-charcoal-900/40'
+                              ? 'border-white/[0.07] bg-white/[0.025]'
                               : 'border-gray-200 bg-gray-50'
                           }`}>
                           {tier.isStandard && (
@@ -560,7 +717,7 @@ export function CreatorProfilePage({ dark }) {
                                     ? 'text-charcoal-300'
                                     : 'text-gray-600'}`}>
                                   <span className="flex items-center gap-1.5">
-                                    <span className="text-teal-400">✓</span>
+                                    <Check size={13} className="text-gold-400 shrink-0" />
                                     {meta?.label || key}
                                     {meta?.unit && (
                                       <span className={dark
@@ -597,25 +754,29 @@ export function CreatorProfilePage({ dark }) {
 
           {/* Portfolio */}
           {portfolio.length > 0 && (
-            <div className={`${cardCls} p-5`}>
-              <h2 className={`font-display font-bold text-base mb-4 ${dark ? 'text-white' : 'text-gray-900'}`}>Portfolio</h2>
+            <div className={`${cardCls} p-5 sm:p-6`}>
+              <h2 className={`font-display font-bold text-xl mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>Proof of Work</h2>
+              <p className={`text-sm mb-5 ${textSub}`}>Selected samples clients can review before opening a project.</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {portfolio.map((item, i) => {
                   const def = SERVICES[item.serviceId || item.service_id];
                   return (
-                    <div key={i} className={`rounded-xl border p-4 ${dark ? 'border-charcoal-700 bg-charcoal-900/40' : 'border-gray-200 bg-gray-50'}`}>
+                    <div key={i} className={`rounded-2xl border p-4 ${dark ? 'border-white/[0.07] bg-charcoal-950/42' : 'border-gray-200 bg-gray-50'}`}>
                       {item.image_url && (
                         <img src={item.image_url} alt={item.title}
-                          className="w-full h-32 object-cover rounded-lg mb-3" />
+                          className="w-full h-36 object-cover rounded-2xl mb-3" />
                       )}
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm">{def?.icon || '🎬'}</span>
+                        <span className={`flex h-7 w-7 items-center justify-center rounded-xl ${dark ? 'bg-gold-500/10 ring-1 ring-gold-500/18' : 'bg-white ring-1 ring-gray-200'}`}>{def?.icon || '🎬'}</span>
                         <p className={`text-sm font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>{item.title}</p>
                       </div>
+                      {def?.name && (
+                        <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-gold-400">{def.name}</p>
+                      )}
                       <p className={`text-xs ${textSub}`}>{item.description}</p>
                       {item.link && (
                         <a href={item.link} target="_blank" rel="noreferrer"
-                          className={`mt-2 inline-flex items-center gap-1 text-xs text-gold-400 hover:text-gold-300 transition-colors`}>
+                          className={`mt-3 inline-flex items-center gap-1 text-xs font-semibold text-gold-400 hover:text-gold-300 transition-colors`}>
                           <ExternalLink size={10} /> View project
                         </a>
                       )}
@@ -638,22 +799,31 @@ export function CreatorProfilePage({ dark }) {
           <div className="lg:sticky lg:top-20 space-y-4">
 
             {/* CTA card */}
-            <div className={`${cardCls} p-5`}>
+            <div className={`${cardCls} relative overflow-hidden p-5`}>
+              <div
+                className="absolute inset-x-0 top-0 h-1"
+                style={{ background: 'linear-gradient(90deg, transparent, rgba(212,169,65,0.8), transparent)' }}
+              />
+              <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '2.2px', textTransform: 'uppercase' }}>
+                Start a project
+              </p>
               <button type="button" onClick={handleQuoteClick}
-                className="w-full py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold transition-all flex items-center justify-center gap-2 mb-2">
+                className="w-full py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold transition-all flex items-center justify-center gap-2 mb-2 shadow-[0_16px_38px_rgba(212,169,65,0.16)]">
                 <FileText size={15} /> {quoteDate ? `Book for ${new Date(quoteDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'Request a Quote'}
               </button>
               {!isOwnProfile && (
                 <button type="button"
-                  onClick={() => navigate(`/messages?with=${creator.user_id || creator.id}`)}
+                  onClick={handleMessageClick}
                   className={`w-full py-2.5 rounded-xl border text-sm font-semibold transition-all flex items-center justify-center gap-2 mb-3 ${
-                    dark ? 'border-charcoal-600 text-charcoal-300 hover:border-charcoal-400 hover:text-white' : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:text-gray-900'
+                    dark ? 'border-gold-500/20 text-charcoal-300 hover:border-gold-500/40 hover:text-white hover:bg-white/[0.035]' : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:text-gray-900'
                   }`}>
                   <MessageSquare size={15} /> Message
                 </button>
               )}
-              <p className={`text-center text-[10px] ${textSub}`}>Free to request. No payment until you hire.</p>
-              <p className={`text-center text-[10px] mt-1 ${textSub}`}>CreatorBridge does not verify insurance. Confirm coverage directly with your creator.</p>
+              <div className={`rounded-2xl border px-3 py-2 ${dark ? 'border-white/[0.06] bg-white/[0.025]' : 'border-gray-200 bg-gray-50'}`}>
+                <p className={`text-center text-[10px] ${textSub}`}>Free to request. No payment until you hire.</p>
+                <p className={`text-center text-[10px] mt-1 ${textSub}`}>Confirm insurance directly when a project requires coverage.</p>
+              </div>
 
               {/* Contact links */}
               <div className={`mt-4 border-t pt-4 space-y-2 ${dark ? 'border-charcoal-700' : 'border-gray-200'}`}>
@@ -664,9 +834,10 @@ export function CreatorProfilePage({ dark }) {
                     <Mail size={13} /> {contact.email}
                   </a>
                 ) : contact.email ? (
-                  <div className={`flex items-center gap-2 text-xs italic ${dark ? 'text-charcoal-600' : 'text-gray-400'}`}>
-                    <Mail size={13} /> Book through CreatorBridge to contact
-                  </div>
+                  <button type="button" onClick={handleLockedContactClick}
+                    className={`flex items-center gap-2 text-xs italic text-left ${dark ? 'text-charcoal-500 hover:text-gold-400' : 'text-gray-400 hover:text-gold-600'}`}>
+                    <Mail size={13} /> {user ? 'Book through CreatorBridge to contact' : 'Sign in to contact'}
+                  </button>
                 ) : null}
 
                 {/* Phone: only visible after booking */}
@@ -676,9 +847,10 @@ export function CreatorProfilePage({ dark }) {
                     <Phone size={13} /> {contact.phone}
                   </a>
                 ) : contact.phone ? (
-                  <div className={`flex items-center gap-2 text-xs italic ${dark ? 'text-charcoal-600' : 'text-gray-400'}`}>
-                    <Phone size={13} /> Available after booking
-                  </div>
+                  <button type="button" onClick={handleLockedContactClick}
+                    className={`flex items-center gap-2 text-xs italic text-left ${dark ? 'text-charcoal-500 hover:text-gold-400' : 'text-gray-400 hover:text-gold-600'}`}>
+                    <Phone size={13} /> {user ? 'Available after booking' : 'Sign in to contact'}
+                  </button>
                 ) : null}
 
                 {/* Website: only visible after booking or own profile */}
@@ -689,9 +861,10 @@ export function CreatorProfilePage({ dark }) {
                     <Globe size={13} /> {contact.website}
                   </a>
                 ) : contact.website ? (
-                  <div className={`flex items-center gap-2 text-xs italic ${dark ? 'text-charcoal-600' : 'text-gray-400'}`}>
-                    <Globe size={13} /> Available after booking
-                  </div>
+                  <button type="button" onClick={handleLockedContactClick}
+                    className={`flex items-center gap-2 text-xs italic text-left ${dark ? 'text-charcoal-500 hover:text-gold-400' : 'text-gray-400 hover:text-gold-600'}`}>
+                    <Globe size={13} /> {user ? 'Available after booking' : 'Sign in to contact'}
+                  </button>
                 ) : null}
                 {/* Instagram: only visible after booking or own profile */}
                 {contact.instagram && (isOwnProfile || contactUnlocked) ? (
@@ -701,9 +874,10 @@ export function CreatorProfilePage({ dark }) {
                     <Instagram size={13} /> {contact.instagram}
                   </a>
                 ) : contact.instagram ? (
-                  <div className={`flex items-center gap-2 text-xs italic ${dark ? 'text-charcoal-600' : 'text-gray-400'}`}>
-                    <Instagram size={13} /> Available after booking
-                  </div>
+                  <button type="button" onClick={handleLockedContactClick}
+                    className={`flex items-center gap-2 text-xs italic text-left ${dark ? 'text-charcoal-500 hover:text-gold-400' : 'text-gray-400 hover:text-gold-600'}`}>
+                    <Instagram size={13} /> {user ? 'Available after booking' : 'Sign in to contact'}
+                  </button>
                 ) : null}
               </div>
             </div>
@@ -721,8 +895,8 @@ export function CreatorProfilePage({ dark }) {
             )}
 
             {/* Quick stats */}
-            <div className={`${cardCls} p-4`}>
-              <p className={`text-[10px] font-bold uppercase tracking-wider mb-3 ${textSub}`}>Quick Stats</p>
+            <div className={`${cardCls} p-5`}>
+              <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '2.2px', textTransform: 'uppercase' }}>Quick Stats</p>
               <div className="space-y-2">
                 {[
                   { label: 'Experience', value: expLabel },
@@ -731,7 +905,7 @@ export function CreatorProfilePage({ dark }) {
                   { label: 'Portfolio', value: `${portfolio.length} project${portfolio.length !== 1 ? 's' : ''}` },
                   ...(creator.view_count ? [{ label: 'Profile Views', value: creator.view_count.toLocaleString() }] : []),
                 ].map(({ label, value }) => (
-                  <div key={label} className="flex items-center justify-between">
+                  <div key={label} className={`flex items-center justify-between rounded-2xl px-3 py-2 ${dark ? 'bg-white/[0.025]' : 'bg-gray-50'}`}>
                     <span className={`text-xs ${textSub}`}>{label}</span>
                     <span className={`text-xs font-medium ${dark ? 'text-white' : 'text-gray-900'}`}>{value}</span>
                   </div>
@@ -745,6 +919,46 @@ export function CreatorProfilePage({ dark }) {
 
       {/* Quote modal */}
       {showQuote && <RequestQuoteModal creator={creator} dark={dark} initialDate={quoteDate} onClose={() => setShowQuote(false)} />}
+
+      {showContactGate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowContactGate(false)} />
+          <div className={`relative w-full max-w-md rounded-2xl border p-6 shadow-2xl ${dark ? 'bg-charcoal-950/95 border-gold-500/20' : 'bg-white border-gray-200'}`}>
+            <button type="button" onClick={() => setShowContactGate(false)}
+              className={`absolute right-4 top-4 p-1.5 rounded-lg transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.05]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
+              <X size={16} />
+            </button>
+            <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '2.2px', textTransform: 'uppercase' }}>
+              Creator contact is protected
+            </p>
+            <h3 className={`font-display text-2xl font-bold mb-3 ${dark ? 'text-white' : 'text-gray-900'}`}>
+              {user ? 'Book through CreatorBridge to unlock direct contact.' : 'Create a free client account to contact creators.'}
+            </h3>
+            <p className={`text-sm leading-6 mb-5 ${textSub}`}>
+              {user
+                ? 'Direct contact details unlock after a paid retainer or completed booking path. Until then, keep communication and quote requests inside CreatorBridge.'
+                : 'Guests can review creator work, services, and availability. Messaging, quote requests, and direct contact details stay inside CreatorBridge until an account and booking path are in place.'}
+            </p>
+            {user ? (
+              <button type="button" onClick={handleQuoteClick}
+                className="w-full rounded-xl bg-gold-500 px-4 py-3 text-sm font-bold text-charcoal-900 hover:bg-gold-600 transition-colors">
+                Request a Quote
+              </button>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button type="button" onClick={() => openClientAuth('signup')}
+                  className="rounded-xl bg-gold-500 px-4 py-3 text-sm font-bold text-charcoal-900 hover:bg-gold-600 transition-colors">
+                  Create Free Account
+                </button>
+                <button type="button" onClick={() => openClientAuth('login')}
+                  className={`rounded-xl border px-4 py-3 text-sm font-bold transition-colors ${dark ? 'border-gold-500/25 text-charcoal-200 hover:text-white hover:border-gold-500/45' : 'border-gray-200 text-gray-700 hover:text-gray-900'}`}>
+                  Sign In
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Video intro modal */}
       {showVideoModal && creator.video_intro_url && (

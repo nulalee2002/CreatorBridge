@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "audit:platform": "node scripts/audit-platform.mjs",
+    "audit:env": "node scripts/audit-env.mjs",
+    "qa:create-accounts": "node scripts/create-qa-accounts.mjs",
+    "qa": "npm run build && npm run audit:platform && npm run audit:env"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^6.1.0",

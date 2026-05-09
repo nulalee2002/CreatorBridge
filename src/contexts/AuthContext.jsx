@@ -39,11 +39,19 @@ export function AuthProvider({ children }) {
   }
 
   async function signUp({ email, password, fullName, role }) {
+    let referralCode = null;
+    try {
+      referralCode = sessionStorage.getItem('cm-referral-code');
+    } catch {}
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName, role } },
+      options: { data: { full_name: fullName, role, referral_code: referralCode || undefined } },
     });
+    if (!error && referralCode) {
+      try { sessionStorage.removeItem('cm-referral-code'); } catch {}
+    }
     return { data, error };
   }
 

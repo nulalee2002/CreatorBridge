@@ -16,7 +16,7 @@ export async function generateQuotePDF(quote, state, profile) {
   const colors = {
     charcoal:  [26, 26, 46],
     gold:      [212, 169, 65],
-    teal:      [46, 196, 182],
+    mutedGold: [184, 142, 46],
     white:     [255, 255, 255],
     lightGray: [245, 245, 250],
     midGray:   [160, 160, 180],

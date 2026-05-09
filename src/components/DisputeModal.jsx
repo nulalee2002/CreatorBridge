@@ -27,9 +27,9 @@ export function DisputeModal({ project, dark, onClose, onSubmitted }) {
   const [done, setDone]       = useState(false);
   const [error, setError]     = useState('');
 
-  const textSub  = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
   const inputCls = `w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${
-    dark ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-red-500'
+    dark ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-red-500'
          : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-red-400'
   }`;
 
@@ -83,11 +83,12 @@ export function DisputeModal({ project, dark, onClose, onSubmitted }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={!done ? onClose : undefined} />
-      <div className={`relative w-full max-w-md rounded-2xl border shadow-2xl ${dark ? 'bg-charcoal-900 border-charcoal-700' : 'bg-white border-gray-200'}`}>
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-md" onClick={!done ? onClose : undefined} />
+      <div className={`relative w-full max-w-md rounded-2xl border overflow-hidden ${dark ? 'bg-charcoal-950/96 border-white/[0.09] shadow-[0_28px_90px_rgba(0,0,0,0.46)]' : 'bg-white border-gray-200 shadow-2xl'}`}>
+        <div className={`h-px bg-gradient-to-r from-transparent ${done ? 'via-gold-400/70' : 'via-red-400/70'} to-transparent`} />
         {!done && (
           <button type="button" onClick={onClose}
-            className={`absolute top-4 right-4 p-1.5 rounded-lg ${dark ? 'text-charcoal-400 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
+            className={`absolute top-4 right-4 p-1.5 rounded-lg ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.08]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
             <X size={16} />
           </button>
         )}
@@ -96,8 +97,8 @@ export function DisputeModal({ project, dark, onClose, onSubmitted }) {
           {done ? (
             /* Success state */
             <div className="text-center py-4">
-              <div className="w-16 h-16 rounded-full bg-teal-500/15 flex items-center justify-center mx-auto mb-4">
-                <Shield size={28} className="text-teal-400" />
+              <div className="w-16 h-16 rounded-full bg-gold-500/15 ring-1 ring-gold-500/25 flex items-center justify-center mx-auto mb-4">
+                <Shield size={28} className="text-gold-400" />
               </div>
               <h3 className={`font-display font-bold text-lg mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>
                 Dispute Submitted
@@ -144,10 +145,10 @@ export function DisputeModal({ project, dark, onClose, onSubmitted }) {
                         className={`w-full flex items-center gap-2 p-2.5 rounded-xl border text-left text-xs font-medium transition-all ${
                           reason === r.id
                             ? 'border-red-500/50 bg-red-500/10 text-red-400'
-                            : dark ? 'border-charcoal-700 text-charcoal-400 hover:border-charcoal-500' : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                            : dark ? 'border-white/[0.08] text-charcoal-300 hover:border-red-500/40 hover:text-white' : 'border-gray-200 text-gray-600 hover:border-gray-300'
                         }`}>
                         <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                          reason === r.id ? 'border-red-400 bg-red-400' : dark ? 'border-charcoal-600' : 'border-gray-300'
+                          reason === r.id ? 'border-red-400 bg-red-400' : dark ? 'border-white/[0.16]' : 'border-gray-300'
                         }`}>
                           {reason === r.id && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                         </div>
@@ -172,7 +173,7 @@ export function DisputeModal({ project, dark, onClose, onSubmitted }) {
 
               <div className="flex gap-2 mt-5">
                 <button type="button" onClick={onClose}
-                  className={`flex-1 py-2.5 rounded-xl border text-sm font-semibold ${dark ? 'border-charcoal-600 text-charcoal-300 hover:text-white' : 'border-gray-200 text-gray-600 hover:text-gray-900'}`}>
+                  className={`flex-1 py-2.5 rounded-xl border text-sm font-semibold ${dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/35 hover:text-white' : 'border-gray-200 text-gray-600 hover:text-gray-900'}`}>
                   Cancel
                 </button>
                 <button type="button" onClick={handleSubmit}

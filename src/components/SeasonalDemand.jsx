@@ -1,12 +1,12 @@
 import { SEASONAL_DEMAND } from '../data/regions.js';
 
 const SERVICE_COLORS = {
-  video:          { key: 'video',   label: 'Video',   color: '#9333ea' },
-  photography:    { key: 'photo',   label: 'Photo',   color: '#2563eb' },
-  podcast:        { key: 'podcast', label: 'Podcast', color: '#16a34a' },
-  drone:          { key: 'drone',   label: 'Drone',   color: '#0284c7' },
-  social:         { key: 'social',  label: 'Social',  color: '#db2777' },
-  postProduction: { key: 'post',    label: 'Post',    color: '#ea580c' },
+  video:          { key: 'video',   label: 'Video',   color: '#d4a941' },
+  photography:    { key: 'photo',   label: 'Photo',   color: '#efc970' },
+  podcast:        { key: 'podcast', label: 'Podcast', color: '#d4a941' },
+  drone:          { key: 'drone',   label: 'Drone',   color: '#efc970' },
+  social:         { key: 'social',  label: 'Social',  color: '#d4a941' },
+  postProduction: { key: 'post',    label: 'Post',    color: '#efc970' },
 };
 
 const PEAK_LABELS = {
@@ -41,7 +41,7 @@ export function SeasonalDemand({ serviceId, dark = true }) {
   const color = svc?.color || '#d4a941';
 
   return (
-    <div className={`rounded-2xl border p-5 ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`}>
+    <div className={`rounded-2xl border p-5 shadow-[0_24px_80px_rgba(0,0,0,0.16)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`}>
       <h3 className={`font-display font-bold text-base mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>
         Seasonal Demand
       </h3>
@@ -61,7 +61,7 @@ export function SeasonalDemand({ serviceId, dark = true }) {
           {/* Grid lines */}
           {[25, 50, 75].map(y => (
             <line key={y} x1="0" y1={y} x2="100" y2={y}
-              stroke={dark ? '#333358' : '#e5e7eb'} strokeWidth="0.5" strokeDasharray="2,2" />
+              stroke={dark ? 'rgba(255,255,255,0.08)' : '#e5e7eb'} strokeWidth="0.5" strokeDasharray="2,2" />
           ))}
           {/* Fill */}
           <path d={fillD} fill="url(#demandGrad)" />
@@ -85,7 +85,7 @@ export function SeasonalDemand({ serviceId, dark = true }) {
           const isCurrentMonth = i === new Date().getMonth();
           return (
             <span key={row.month} className={`text-[8px] font-medium ${
-              isCurrentMonth ? 'text-gold-400' : dark ? 'text-charcoal-600' : 'text-gray-400'
+              isCurrentMonth ? 'text-gold-400' : dark ? 'text-charcoal-300' : 'text-gray-400'
             }`}>
               {row.month}
             </span>
@@ -99,7 +99,7 @@ export function SeasonalDemand({ serviceId, dark = true }) {
           const isCurrentMonth = i === new Date().getMonth();
           return (
             <span key={i} className={`text-[7px] ${
-              isCurrentMonth ? 'font-bold text-gold-400' : dark ? 'text-charcoal-700' : 'text-gray-300'
+              isCurrentMonth ? 'font-bold text-gold-400' : dark ? 'text-charcoal-400' : 'text-gray-300'
             }`}>
               {p.val}%
             </span>

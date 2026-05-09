@@ -69,14 +69,14 @@ export function PresetManager({ currentState, onLoad, dark = true }) {
     e.target.value = '';
   };
 
-  const bg = dark ? 'bg-charcoal-800 border-charcoal-600' : 'bg-white border-gray-200';
-  const dropBg = dark ? 'bg-charcoal-800 border-charcoal-600' : 'bg-white border-gray-200';
+  const bg = dark ? 'bg-charcoal-900/72 border-white/[0.08]' : 'bg-white border-gray-200';
+  const dropBg = dark ? 'bg-charcoal-950/96 border-white/[0.09] shadow-[0_24px_80px_rgba(0,0,0,0.36)]' : 'bg-white border-gray-200';
   const inputCls = dark
-    ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+    ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500';
   const textMain = dark ? 'text-white' : 'text-gray-900';
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-400';
-  const hoverRow = dark ? 'hover:bg-charcoal-700' : 'hover:bg-gray-50';
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-400';
+  const hoverRow = dark ? 'hover:bg-white/[0.06]' : 'hover:bg-gray-50';
 
   return (
     <div className="relative">
@@ -98,7 +98,7 @@ export function PresetManager({ currentState, onLoad, dark = true }) {
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
           <div className={`absolute right-0 top-full mt-2 z-40 w-80 rounded-2xl border shadow-2xl ${dropBg} overflow-hidden animate-slide-up`}>
             {/* Save section */}
-            <div className={`px-4 py-3 border-b ${dark ? 'border-charcoal-700' : 'border-gray-100'}`}>
+            <div className={`px-4 py-3 border-b ${dark ? 'border-white/[0.07]' : 'border-gray-100'}`}>
               <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Save Current Settings</p>
               <div className="flex gap-2">
                 <input
@@ -121,7 +121,7 @@ export function PresetManager({ currentState, onLoad, dark = true }) {
             </div>
 
             {/* Import */}
-            <div className={`px-4 py-2 border-b ${dark ? 'border-charcoal-700' : 'border-gray-100'}`}>
+            <div className={`px-4 py-2 border-b ${dark ? 'border-white/[0.07]' : 'border-gray-100'}`}>
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
@@ -139,7 +139,7 @@ export function PresetManager({ currentState, onLoad, dark = true }) {
               ) : (
                 saved.map(preset => (
                   <div key={preset.id}
-                    className={`flex items-center gap-2 px-4 py-2.5 border-b last:border-0 ${dark ? 'border-charcoal-700' : 'border-gray-100'} ${hoverRow} transition-colors`}
+                    className={`flex items-center gap-2 px-4 py-2.5 border-b last:border-0 ${dark ? 'border-white/[0.07]' : 'border-gray-100'} ${hoverRow} transition-colors`}
                   >
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-medium truncate ${textMain}`}>{preset.name}</p>
@@ -149,7 +149,7 @@ export function PresetManager({ currentState, onLoad, dark = true }) {
                     </div>
                     <div className="flex gap-1">
                       <button type="button" onClick={() => { onLoad(preset.state); setOpen(false); }}
-                        className="p-1.5 rounded-lg text-teal-400 hover:bg-teal-400/10 transition-colors text-xs font-medium">
+                        className="p-1.5 rounded-lg text-gold-400 hover:bg-gold-500/10 transition-colors text-xs font-medium">
                         Load
                       </button>
                       <button type="button" onClick={() => exportPreset(preset)}

@@ -1,7 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, Send, ChevronDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
+import { normalizeServiceId } from '../data/rates.js';
+import { parseBudgetRange } from '../utils/matchingAlgorithm.js';
+import { fromSupabaseProject, toSupabaseProject, upsertLocalProject } from '../utils/projectStorage.js';
 
 // ── Animated avatar components ───────────────────────────────────
 function ChatAvatar({ size = 28, animate = true }) {
@@ -23,9 +27,14 @@ function ChatAvatar({ size = 28, animate = true }) {
         .eye-left { animation: blink 4s ease-in-out infinite; transform-origin: 14px 18px; }
         .eye-right { animation: blink 4s ease-in-out infinite 0.1s; transform-origin: 26px 18px; }
         .face-float { animation: float 3s ease-in-out infinite; }
+        .signal-line { stroke-dasharray: 4 5; animation: pulse-ring 2.6s ease-out infinite; }
       `}</style>
+      <circle cx="20" cy="20" r="18" fill="#0d0d18" opacity="0.55" />
+      <path className="signal-line" d="M9 11 C15 5 25 5 31 11" stroke="#d4a941" strokeWidth="1" strokeLinecap="round" opacity="0.55" />
+      <path className="signal-line" d="M7 29 C14 36 26 36 33 29" stroke="#d4a941" strokeWidth="1" strokeLinecap="round" opacity="0.35" />
       <g className={animate ? 'face-float' : ''}>
         <circle cx="20" cy="20" r="16" fill="#d4a941" />
+        <circle cx="20" cy="20" r="13" fill="url(#avatarGlow)" opacity="0.32" />
         <circle cx="20" cy="10" r="3" fill="#0d0d18" opacity="0.4" />
         <circle cx="20" cy="10" r="1.5" fill="#d4a941" opacity="0.6" />
         <ellipse className="eye-left" cx="14" cy="18" rx="2.5" ry="3" fill="#0d0d18" />
@@ -37,6 +46,12 @@ function ChatAvatar({ size = 28, animate = true }) {
         <rect x="4" y="17" width="4" height="7" rx="2" fill="#0d0d18" />
         <rect x="32" y="17" width="4" height="7" rx="2" fill="#0d0d18" />
       </g>
+      <defs>
+        <radialGradient id="avatarGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(15 13) rotate(45) scale(22)">
+          <stop stopColor="#fff4c5" />
+          <stop offset="1" stopColor="#d4a941" stopOpacity="0" />
+        </radialGradient>
+      </defs>
     </svg>
   );
 }
@@ -115,7 +130,7 @@ VIOLATIONS AND STRIKES:
 Strike 1 is a warning. Strike 2 is a 30-day restriction. Strike 3 is account suspension. Violations include sharing contact info in chat, working off-platform, fake reviews, and harassment.
 
 SERVICES OFFERED:
-Video Production, Photography, Drone and Aerial, Social Media Content, Post-Production, Live Events, Corporate Events, and Podcast Production.
+Video Production, Photography, Drone and Aerial, Brand and Short-Form Content, Editing and Post, Live Event Coverage, Corporate Events, and Podcast Production.
 
 GEOGRAPHIC AVAILABILITY:
 US only currently. Expanding to Canada next then Europe.
@@ -123,36 +138,8 @@ US only currently. Expanding to Canada next then Europe.
 SUPPORT:
 For account-specific issues, billing problems, or disputes needing human review email drl33@creatorbridge.studio. For urgent payment disputes mark subject line URGENT. Response within 24 hours.`;
 
-const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
-
 async function sendToAnthropic(messages) {
-  if (!ANTHROPIC_KEY) {
-    return getDemoResponse(messages[messages.length - 1]?.content || '');
-  }
-
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 300,
-      system: SYSTEM_PROMPT,
-      messages,
-    }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `API error ${res.status}`);
-  }
-
-  const data = await res.json();
-  return data.content?.[0]?.text || 'Sorry, I could not get a response.';
+  return getDemoResponse(messages[messages.length - 1]?.content || '');
 }
 
 // Demo responses when no API key is configured
@@ -195,7 +182,7 @@ const BOOKING_STEPS = [
     step: 1, field: 'serviceType',
     question: 'What type of project do you need help with?',
     type: 'options',
-    options: ['Video Production','Photography','Drone and Aerial','Social Media Content','Podcast Production','Corporate Events','Live Events','Post-Production','Not sure yet'],
+    options: ['Video Production','Photography','Drone and Aerial','Brand and Short-Form Content','Podcast Production','Corporate Events','Live Event Coverage','Editing and Post','Not sure yet'],
   },
   {
     step: 2, field: 'location',
@@ -256,7 +243,7 @@ const CREATOR_STEPS = [
     step: 1, field: 'serviceType',
     question: 'What type of service are you quoting for?',
     type: 'options',
-    options: ['Video Production','Photography','Drone and Aerial','Social Media Content','Podcast Production','Corporate Events','Live Events','Post-Production'],
+    options: ['Video Production','Photography','Drone and Aerial','Brand and Short-Form Content','Podcast Production','Corporate Events','Live Event Coverage','Editing and Post'],
   },
   {
     step: 2, field: 'deliverables',
@@ -316,6 +303,81 @@ function saveDraft(data) { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(
 function loadDraft()     { try { const s = localStorage.getItem(DRAFT_KEY); return s ? JSON.parse(s) : null; } catch { return null; } }
 function removeDraft()   { try { localStorage.removeItem(DRAFT_KEY); } catch {} }
 
+function saveLocalQuoteRequest(quote) {
+  try {
+    const all = JSON.parse(localStorage.getItem('quote-requests') || '[]');
+    const exists = all.some(q => q.id === quote.id);
+    const next = exists ? all.map(q => q.id === quote.id ? { ...q, ...quote } : q) : [quote, ...all];
+    localStorage.setItem('quote-requests', JSON.stringify(next));
+  } catch {}
+}
+
+function buildBookingRecords(bookingData, user, profile) {
+  const createdAt = new Date().toISOString();
+  const serviceId = normalizeServiceId(bookingData.serviceType);
+  const budget = parseBudgetRange(bookingData.budget);
+  const projectId = `chat-${Date.now()}`;
+  const clientName = profile?.full_name || user?.email?.split('@')[0] || 'Client';
+  const location = bookingData.location || 'Remote / TBD';
+  const titleService = bookingData.serviceType || 'Media production';
+  const project = {
+    id: projectId,
+    title: `${titleService} request`,
+    description: bookingData.description || 'Booking request created through Bridge Assistant.',
+    serviceId,
+    serviceType: bookingData.serviceType,
+    budgetMin: budget.budgetMin,
+    budgetMax: budget.budgetMax,
+    budgetRange: bookingData.budget,
+    location,
+    locationPreference: location.toLowerCase().includes('remote') ? 'remote' : 'in_person',
+    deadline: bookingData.timeframe || null,
+    timeline: bookingData.timeframe || null,
+    urgency: bookingData.urgency,
+    clientId: user?.id || `guest-${Date.now()}`,
+    clientName,
+    status: 'open',
+    applications: 0,
+    source: 'chatbot',
+    createdAt,
+  };
+  const quote = {
+    id: `quote-${projectId}`,
+    creatorId: null,
+    listing_id: null,
+    clientId: project.clientId,
+    client_id: user?.id || null,
+    clientName,
+    client_name: clientName,
+    clientEmail: user?.email || '',
+    client_email: user?.email || '',
+    projectTitle: project.title,
+    project_title: project.title,
+    serviceId,
+    service_id: serviceId,
+    description: project.description,
+    timeline: bookingData.timeframe || null,
+    projectDate: bookingData.timeframe || null,
+    projectType: bookingData.serviceType,
+    project_type: bookingData.serviceType,
+    venueCity: location,
+    venue_city: location,
+    deliverables: bookingData.description,
+    budgetRange: bookingData.budget,
+    budget_range: bookingData.budget,
+    budget: budget.budgetMax === 999999 ? budget.budgetMin : budget.budgetMax,
+    locationPreference: project.locationPreference,
+    location_preference: project.locationPreference,
+    urgency: bookingData.urgency,
+    status: 'pending',
+    read: false,
+    createdAt,
+    created_at: createdAt,
+    source: 'chatbot',
+  };
+  return { project, quote };
+}
+
 function makeInitialMessages(draft) {
   const welcome = {
     role: 'assistant',
@@ -340,7 +402,8 @@ function makeInitialMessages(draft) {
 
 // ── Main component ───────────────────────────────────────────────
 export function SupportChatbot({ dark = true }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
 
   const [open, setOpen]         = useState(false);
   const [autoOpened, setAutoOpened] = useState(false);
@@ -566,36 +629,60 @@ export function SupportChatbot({ dark = true }) {
     setLoading(true);
     push({ role: 'user', content: 'Submit request' });
 
-    if (supabaseConfigured && supabase) {
+    const { project, quote } = buildBookingRecords(bookingData, user, profile);
+    let savedProject = project;
+    let savedQuote = quote;
+
+    if (supabaseConfigured && supabase && user) {
       try {
-        await supabase.from('booking_requests').insert({
-          user_id:      user.id,
-          service_type: bookingData.serviceType,
-          location:     bookingData.location,
-          timeframe:    bookingData.timeframe,
-          budget:       bookingData.budget,
-          description:  bookingData.description,
-          urgency:      bookingData.urgency,
-          status:       'open',
-        });
-      } catch {}
+        const { data: projectRow } = await supabase
+          .from('projects')
+          .insert(toSupabaseProject(project, user.id))
+          .select()
+          .single();
+        if (projectRow) {
+          savedProject = { ...project, ...fromSupabaseProject(projectRow), clientName: project.clientName, source: 'chatbot' };
+        }
+
+        const { data: quoteRow } = await supabase.from('quote_requests').insert({
+          listing_id:          null,
+          client_id:           user.id,
+          client_name:         quote.clientName,
+          client_email:        user.email || '',
+          service_id:          quote.serviceId,
+          description:         quote.description,
+          timeline:            quote.timeline,
+          budget:              quote.budget,
+          project_title:       quote.projectTitle,
+          project_type:        quote.projectType,
+          venue_city:          quote.venueCity,
+          deliverables:        quote.deliverables,
+          budget_range:        quote.budgetRange,
+          location_preference: quote.locationPreference,
+        }).select().single();
+        if (quoteRow) savedQuote = { ...quote, ...quoteRow, id: quoteRow.id };
+      } catch (err) {
+        console.warn('Chatbot booking Supabase save failed. Local fallback preserved.', err);
+      }
     }
 
-    // Always persist locally as fallback
-    saveDraft(bookingData);
+    upsertLocalProject(savedProject);
+    saveLocalQuoteRequest(savedQuote);
+    removeDraft();
     setBookingMode('submitted');
     setHasDraft(false);
     setLoading(false);
     push({
       role: 'assistant',
-      kind: 'confirmation',
-      content: 'Your booking request has been submitted. Verified creators in your area have been notified and will respond within 24 hours. You can view and manage your request in your dashboard.',
+      kind: 'booking-confirmation',
+      projectId: savedProject.id,
+      content: 'Your booking request has been saved. You can review Smart Match results now or manage the request from Projects.',
     });
   }
 
   // ── Open auth modal ───────────────────────────────────────────
-  function openAuth(tab) {
-    window.dispatchEvent(new CustomEvent('open-auth', { detail: { tab } }));
+  function openAuth(tab, role = 'client') {
+    window.dispatchEvent(new CustomEvent('open-auth', { detail: { tab, role } }));
   }
 
   // ── Main send handler ─────────────────────────────────────────
@@ -697,18 +784,18 @@ export function SupportChatbot({ dark = true }) {
   const lastWelcomeIdx = lastOf('welcome-prompts');
 
   // ── Styles ────────────────────────────────────────────────────
-  const bgPanel  = dark ? 'bg-charcoal-900 border-charcoal-700' : 'bg-white border-gray-200';
+  const bgPanel  = dark ? 'bg-charcoal-950/96 border-gold-500/18 shadow-[0_32px_110px_rgba(0,0,0,0.55)] backdrop-blur-xl' : 'bg-white border-gray-200';
   const bgUser   = 'bg-gold-500 text-charcoal-900';
-  const bgAssist = dark ? 'bg-charcoal-800 text-charcoal-100' : 'bg-gray-100 text-gray-800';
-  const textSub  = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const bgAssist = dark ? 'bg-white/[0.06] text-charcoal-100 ring-1 ring-white/[0.06]' : 'bg-gray-100 text-gray-800';
+  const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
 
   const btnOpt  = `px-2.5 py-1.5 rounded-xl text-[11px] font-semibold transition-all border ${
-    dark ? 'border-charcoal-600 text-charcoal-300 hover:border-gold-500 hover:text-gold-400 hover:bg-gold-500/10'
+    dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/45 hover:text-gold-300 hover:bg-gold-500/10'
          : 'border-gray-200 text-gray-600 hover:border-gold-500 hover:text-gold-600 hover:bg-gold-50'
   }`;
   const btnGold  = 'px-4 py-1.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-[11px] font-bold transition-all';
   const btnGhost = dark
-    ? 'px-3 py-1.5 rounded-xl border border-charcoal-600 text-charcoal-300 hover:text-white text-[11px] font-semibold transition-all'
+    ? 'px-3 py-1.5 rounded-xl border border-white/[0.09] text-charcoal-300 hover:border-gold-500/40 hover:text-white text-[11px] font-semibold transition-all'
     : 'px-3 py-1.5 rounded-xl border border-gray-200 text-gray-600 hover:text-gray-900 text-[11px] font-semibold transition-all';
 
   return (
@@ -716,36 +803,38 @@ export function SupportChatbot({ dark = true }) {
       {/* ── Chat panel ─────────────────────────────────────────── */}
       {open && (
         <div
-          className={`z-50 w-80 sm:w-96 rounded-2xl border shadow-2xl flex flex-col overflow-hidden ${bgPanel}`}
-          style={{ position: 'fixed', bottom: '5rem', right: '1.5rem', maxHeight: '540px', zIndex: 9999 }}
+          className={`z-50 w-[calc(100vw-2rem)] sm:w-[25rem] rounded-[1.35rem] border flex flex-col overflow-hidden ${bgPanel}`}
+          style={{ position: 'fixed', bottom: '5rem', right: '1rem', maxHeight: '540px', maxWidth: '25rem', zIndex: 9999 }}
         >
+          <div className="h-px bg-gradient-to-r from-transparent via-gold-400/70 to-transparent shrink-0" />
           {/* Header */}
-          <div className={`flex items-center justify-between px-4 py-3 border-b shrink-0 ${dark ? 'border-charcoal-700 bg-charcoal-800' : 'border-gray-200 bg-gray-50'}`}>
+          <div className={`relative flex items-center justify-between px-4 py-3 border-b shrink-0 overflow-hidden ${dark ? 'border-white/[0.07] bg-charcoal-950/82' : 'border-gray-200 bg-gray-50'}`}>
+            <div className="pointer-events-none absolute -right-6 -top-10 h-24 w-24 rounded-full bg-gold-500/10 blur-2xl" />
             <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-full flex items-center justify-center">
-                <ChatAvatar size={24} animate={false} />
+              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-[0_14px_34px_rgba(0,0,0,0.2)] ${dark ? 'bg-gold-500/10 ring-1 ring-gold-500/28' : 'bg-gold-50 ring-1 ring-gold-200'}`}>
+                <ChatAvatar size={30} animate={false} />
               </div>
               <div>
-                <p className={`text-xs font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>CreatorBridge Support</p>
+                <p className={`text-xs font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>Bridge Assistant</p>
                 <p className={`text-[10px] ${textSub}`}>
-                  {bookingMode ? 'Booking assistant' : quoteMode ? 'Quote assistant' : 'Powered by AI - usually instant'}
+                  {bookingMode ? 'Booking path active' : quoteMode ? 'Quote builder active' : 'Booking, quotes, platform help'}
                 </p>
               </div>
             </div>
             <button type="button" onClick={() => setOpen(false)}
-              className={`p-1 rounded-lg transition-colors ${dark ? 'text-charcoal-400 hover:text-white' : 'text-gray-400 hover:text-gray-900'}`}>
+              className={`p-1 rounded-lg transition-colors ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.08]' : 'text-gray-400 hover:text-gray-900'}`}>
               <ChevronDown size={16} />
             </button>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0" style={{ maxHeight: '400px' }}>
+          <div className={`flex-1 overflow-y-auto p-4 space-y-3 min-h-0 ${dark ? 'bg-[radial-gradient(circle_at_30%_0%,rgba(212,169,65,0.1),transparent_34%)]' : ''}`} style={{ maxHeight: '400px' }}>
             {messages.map((msg, i) => (
               <div key={i} className="space-y-1.5">
 
                 {/* Bubble */}
                 <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-xs leading-relaxed ${
+                  <div className={`max-w-[86%] rounded-2xl px-3 py-2 text-xs leading-relaxed shadow-[0_10px_28px_rgba(0,0,0,0.14)] ${
                     msg.role === 'user' ? bgUser : bgAssist
                   } ${msg.role === 'user' ? 'rounded-br-sm' : 'rounded-bl-sm'}`}>
                     {msg.content}
@@ -776,7 +865,7 @@ export function SupportChatbot({ dark = true }) {
 
                 {/* Summary card */}
                 {msg.kind === 'summary' && i === lastSummaryIdx && (
-                  <div className={`ml-1 rounded-xl border p-3 text-xs space-y-1.5 ${dark ? 'border-charcoal-600 bg-charcoal-800/80' : 'border-gray-200 bg-gray-50'}`}>
+                  <div className={`ml-1 rounded-xl border p-3 text-xs space-y-1.5 ${dark ? 'border-white/[0.09] bg-charcoal-900/80' : 'border-gray-200 bg-gray-50'}`}>
                     {[
                       ['Service',     msg.data?.serviceType],
                       ['Location',    msg.data?.location],
@@ -786,12 +875,12 @@ export function SupportChatbot({ dark = true }) {
                       ['Urgency',     msg.data?.urgency],
                     ].map(([label, value]) => value ? (
                       <div key={label} className="flex gap-2">
-                        <span className={`font-semibold shrink-0 w-20 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>{label}:</span>
+                        <span className={`font-semibold shrink-0 w-20 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>{label}:</span>
                         <span className={`break-words ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>{value}</span>
                       </div>
                     ) : null)}
                     {bookingMode === 'summary' && (
-                      <div className="flex gap-2 pt-2 border-t border-charcoal-700/50">
+                      <div className={`flex gap-2 pt-2 border-t ${dark ? 'border-white/[0.07]' : 'border-gray-200'}`}>
                         <button type="button" onClick={() => handleSummaryAction('submit')} disabled={loading}
                           className={`${btnGold} flex-1 disabled:opacity-50`}>
                           {loading ? 'Submitting...' : 'Submit Request'}
@@ -807,22 +896,34 @@ export function SupportChatbot({ dark = true }) {
                 {/* Guest sign-up CTA */}
                 {msg.kind === 'guest-cta' && i === lastGuestCtaIdx && (
                   <div className="flex gap-2 pl-1">
-                    <button type="button" onClick={() => openAuth('signup')} className={btnGold}>Create Account</button>
-                    <button type="button" onClick={() => openAuth('login')} className={btnGhost}>Sign In</button>
+                    <button type="button" onClick={() => openAuth('signup', 'client')} className={btnGold}>Create Account</button>
+                    <button type="button" onClick={() => openAuth('login', 'client')} className={btnGhost}>Sign In</button>
+                  </div>
+                )}
+
+                {/* Booking confirmation actions */}
+                {msg.kind === 'booking-confirmation' && msg.projectId && (
+                  <div className="flex flex-wrap gap-2 pl-1">
+                    <button type="button" onClick={() => { setOpen(false); navigate(`/matches/${msg.projectId}`); }} className={btnGold}>
+                      View Matches
+                    </button>
+                    <button type="button" onClick={() => { setOpen(false); navigate('/projects'); }} className={btnGhost}>
+                      Open Projects
+                    </button>
                   </div>
                 )}
 
                 {/* Welcome prompt buttons */}
                 {msg.kind === 'welcome-prompts' && i === lastWelcomeIdx && !bookingMode && !quoteMode && (
                   <div className="flex flex-col gap-1.5 pl-1">
-                    <p className={`text-[10px] font-semibold mb-1 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>Try saying:</p>
+                    <p className={`text-[10px] font-semibold mb-1 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>Quick paths</p>
                     {[
-                      { label: '📸 Find a Photographer', text: 'I need a photographer' },
-                      { label: '🎥 Book a Videographer', text: 'I need a videographer' },
-                      { label: '🎙️ Find a Podcast Producer', text: 'I need a podcast producer' },
-                      { label: '🚁 Hire a Drone Operator', text: 'I need a drone operator' },
-                      { label: '💬 Ask a Question', text: 'How does CreatorBridge work?' },
-                      { label: '📋 Build a Quote', text: 'I want to send a quote' },
+                      { label: 'Find a Photographer', text: 'I need a photographer' },
+                      { label: 'Book a Videographer', text: 'I need a videographer' },
+                      { label: 'Find a Podcast Producer', text: 'I need a podcast producer' },
+                      { label: 'Hire a Drone Operator', text: 'I need a drone operator' },
+                      { label: 'Ask a Question', text: 'How does CreatorBridge work?' },
+                      { label: 'Build a Quote', text: 'I want to send a quote' },
                     ].map(({ label, text }) => (
                       <button key={text} type="button"
                         onClick={() => {
@@ -836,9 +937,9 @@ export function SupportChatbot({ dark = true }) {
                             if (isCreatorIntent(syntheticInput)) { startQuote(); return; }
                           }, 100);
                         }}
-                        className={`text-left px-3 py-2 rounded-xl text-[11px] font-medium border transition-all ${
+                        className={`text-left px-3 py-2 rounded-xl text-[11px] font-semibold border transition-all ${
                           dark
-                            ? 'border-charcoal-600 text-charcoal-300 hover:border-gold-500 hover:text-gold-400 hover:bg-gold-500/10'
+                            ? 'border-white/[0.09] bg-charcoal-900/55 text-charcoal-300 hover:border-gold-500/45 hover:text-gold-300 hover:bg-gold-500/10'
                             : 'border-gray-200 text-gray-600 hover:border-gold-500 hover:text-gold-600 hover:bg-gold-50'
                         }`}>
                         {label}
@@ -862,7 +963,7 @@ export function SupportChatbot({ dark = true }) {
 
                 {/* Creator summary card */}
                 {msg.kind === 'creator-summary' && i === lastCreatorSummaryIdx && (
-                  <div className={`ml-1 rounded-xl border p-3 text-xs space-y-1.5 ${dark ? 'border-charcoal-600 bg-charcoal-800/80' : 'border-gray-200 bg-gray-50'}`}>
+                  <div className={`ml-1 rounded-xl border p-3 text-xs space-y-1.5 ${dark ? 'border-white/[0.09] bg-charcoal-900/80' : 'border-gray-200 bg-gray-50'}`}>
                     {[
                       ['Service',      msg.data?.serviceType],
                       ['Deliverables', msg.data?.deliverables],
@@ -872,12 +973,12 @@ export function SupportChatbot({ dark = true }) {
                       ['Notes',        msg.data?.notes],
                     ].map(([label, value]) => value ? (
                       <div key={label} className="flex gap-2">
-                        <span className={`font-semibold shrink-0 w-24 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>{label}:</span>
+                        <span className={`font-semibold shrink-0 w-24 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>{label}:</span>
                         <span className={`break-words ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>{value}</span>
                       </div>
                     ) : null)}
                     {quoteMode === 'summary' && (
-                      <div className="flex gap-2 pt-2 border-t border-charcoal-700/50">
+                      <div className={`flex gap-2 pt-2 border-t ${dark ? 'border-white/[0.07]' : 'border-gray-200'}`}>
                         <button type="button" onClick={() => handleQuoteSummaryAction('confirm')}
                           className={`${btnGold} flex-1`}>
                           Confirm Quote
@@ -907,7 +1008,7 @@ export function SupportChatbot({ dark = true }) {
           </div>
 
           {/* Input */}
-          <div className={`px-3 py-2.5 border-t shrink-0 flex gap-2 ${dark ? 'border-charcoal-700' : 'border-gray-200'}`}>
+          <div className={`px-3 py-3 border-t shrink-0 flex gap-2 ${dark ? 'border-white/[0.07] bg-charcoal-950/90' : 'border-gray-200'}`}>
             <input
               ref={inputRef}
               type="text"
@@ -919,16 +1020,16 @@ export function SupportChatbot({ dark = true }) {
               className={`flex-1 text-xs px-3 py-2 rounded-xl border outline-none transition-all ${
                 isOptionsStep
                   ? dark
-                    ? 'bg-charcoal-800 border-charcoal-700 text-charcoal-600 cursor-not-allowed'
+                    ? 'bg-white/[0.04] border-white/[0.06] text-charcoal-600 cursor-not-allowed'
                     : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
                   : dark
-                    ? 'bg-charcoal-800 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+                    ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
                     : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:border-gold-500'
               }`}
             />
             <button type="button" onClick={handleSend}
               disabled={!input.trim() || loading || isOptionsStep}
-              className="w-8 h-8 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 flex items-center justify-center transition-all shrink-0">
+              className="w-8 h-8 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 flex items-center justify-center transition-all shrink-0 shadow-[0_10px_28px_rgba(212,169,65,0.22)]">
               <Send size={13} className="text-charcoal-900" />
             </button>
           </div>
@@ -939,16 +1040,16 @@ export function SupportChatbot({ dark = true }) {
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="z-50 w-12 h-12 rounded-full bg-gold-500 hover:bg-gold-600 shadow-lg flex items-center justify-center transition-all hover:scale-105 active:scale-95 relative"
-        style={{ position: 'fixed', bottom: '1.5rem', right: '1.5rem', zIndex: 9999 }}
+        className="z-50 w-14 h-14 rounded-2xl bg-gold-500 hover:bg-gold-600 shadow-[0_20px_52px_rgba(0,0,0,0.38)] ring-1 ring-gold-300/45 flex items-center justify-center transition-all hover:scale-105 active:scale-95 relative"
+        style={{ position: 'fixed', bottom: '1.25rem', right: '1rem', zIndex: 9999 }}
         aria-label="Open support chat"
       >
         {hasDraft && !open && (
-          <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-amber-300 border-2 border-charcoal-900 z-10" />
+          <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-gold-300 border-2 border-charcoal-900 z-10" />
         )}
         {open
-          ? <X size={20} className="text-charcoal-900" />
-          : <ChatAvatar size={32} animate={true} />
+          ? <X size={22} className="text-charcoal-900" />
+          : <ChatAvatar size={38} animate={true} />
         }
       </button>
     </>

@@ -30,18 +30,6 @@ export default {
           800: '#7c5a14',
           900: '#5e430a',
         },
-        teal: {
-          50:  '#e8faf9',
-          100: '#c0f3f0',
-          200: '#87e9e4',
-          300: '#4ddcd5',
-          400: '#2ec4b6',
-          500: '#24a99d',
-          600: '#1a8e83',
-          700: '#127368',
-          800: '#0a584f',
-          900: '#053d37',
-        },
       },
       fontFamily: {
         display: ['"Space Grotesk"', 'sans-serif'],

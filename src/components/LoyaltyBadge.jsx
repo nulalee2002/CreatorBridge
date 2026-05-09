@@ -30,8 +30,8 @@ export function LoyaltyBadge({ completedProjects = 0 }) {
 export function LoyaltyProgress({ completedProjects = 0, dark }) {
   const { name, feePct, badge, nextTier, projectsToNext } = getLoyaltyTier(completedProjects);
 
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
-  const cardBg  = dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200';
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
+  const cardBg  = dark ? 'bg-charcoal-900/72 border-white/[0.07] shadow-[0_24px_80px_rgba(0,0,0,0.16)]' : 'bg-white border-gray-200';
 
   const tierColor = badge === 'gold'
     ? 'text-gold-400'
@@ -55,7 +55,7 @@ export function LoyaltyProgress({ completedProjects = 0, dark }) {
         <span className={`text-xs font-semibold ${tierColor}`}>{feePct}% fee</span>
       </div>
 
-      <div className={`h-1.5 rounded-full overflow-hidden ${dark ? 'bg-charcoal-700' : 'bg-gray-100'} mb-2`}>
+      <div className={`h-1.5 rounded-full overflow-hidden ${dark ? 'bg-white/[0.08]' : 'bg-gray-100'} mb-2`}>
         <div
           className={`h-full rounded-full transition-all ${badge === 'gold' ? 'bg-gold-500' : badge === 'silver' ? 'bg-gray-400' : 'bg-charcoal-500'}`}
           style={{ width: `${Math.min(100, pct)}%` }}

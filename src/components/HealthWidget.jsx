@@ -48,17 +48,17 @@ export function HealthWidget({ serviceId, regionKey, lineItems, experienceLevel 
 
   if (score === null) {
     return (
-      <div className={`rounded-2xl border p-5 ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`}>
+      <div className={`rounded-2xl border p-5 shadow-[0_24px_80px_rgba(0,0,0,0.16)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`}>
         <h3 className={`font-display font-bold text-base mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>Am I Charging Enough?</h3>
-        <p className={`text-xs ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>Enable some line items to see your rate health score.</p>
+        <p className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>Enable some line items to see your rate health score.</p>
       </div>
     );
   }
 
   const tier = score <= 4 ? 'low' : score <= 7 ? 'mid' : 'high';
   const label = { low: 'Undercharging', mid: 'Healthy Range', high: 'Premium Pricing' }[tier];
-  const scoreColor = { low: 'text-red-400', mid: 'text-teal-400', high: 'text-blue-400' }[tier];
-  const fillColor = { low: 'bg-red-400', mid: 'bg-teal-400', high: 'bg-blue-400' }[tier];
+  const scoreColor = { low: 'text-red-400', mid: 'text-gold-400', high: 'text-gold-300' }[tier];
+  const fillColor = { low: 'bg-red-400', mid: 'bg-gold-500', high: 'bg-gold-300' }[tier];
   const tips = HEALTH_TIPS[tier];
 
   const arcPct = (score / 10) * 100;
@@ -68,7 +68,7 @@ export function HealthWidget({ serviceId, regionKey, lineItems, experienceLevel 
   const strokeDash = (arcPct / 100) * circumference;
 
   return (
-    <div className={`rounded-2xl border p-5 ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`}>
+    <div className={`rounded-2xl border p-5 shadow-[0_24px_80px_rgba(0,0,0,0.16)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`}>
       <h3 className={`font-display font-bold text-base mb-4 ${dark ? 'text-white' : 'text-gray-900'}`}>
         Am I Charging Enough?
       </h3>
@@ -81,7 +81,7 @@ export function HealthWidget({ serviceId, regionKey, lineItems, experienceLevel 
             <path
               d="M 8 50 A 42 42 0 0 1 92 50"
               fill="none"
-              stroke={dark ? '#333358' : '#e5e7eb'}
+              stroke={dark ? 'rgba(255,255,255,0.08)' : '#e5e7eb'}
               strokeWidth="8"
               strokeLinecap="round"
             />
@@ -89,7 +89,7 @@ export function HealthWidget({ serviceId, regionKey, lineItems, experienceLevel 
             <path
               d="M 8 50 A 42 42 0 0 1 92 50"
               fill="none"
-              stroke={tier === 'low' ? '#f87171' : tier === 'high' ? '#60a5fa' : '#2ec4b6'}
+              stroke={tier === 'low' ? '#f87171' : tier === 'high' ? '#efc970' : '#d4a941'}
               strokeWidth="8"
               strokeLinecap="round"
               strokeDasharray={`${strokeDash} ${circumference}`}
@@ -97,12 +97,12 @@ export function HealthWidget({ serviceId, regionKey, lineItems, experienceLevel 
             />
             {/* Score text */}
             <text x="50" y="46" textAnchor="middle" fontSize="18" fontWeight="bold"
-              fill={tier === 'low' ? '#f87171' : tier === 'high' ? '#60a5fa' : '#2ec4b6'}
+              fill={tier === 'low' ? '#f87171' : tier === 'high' ? '#efc970' : '#d4a941'}
               fontFamily="Space Grotesk, sans-serif">
               {score}
             </text>
             <text x="50" y="56" textAnchor="middle" fontSize="7"
-              fill={dark ? '#5555a0' : '#9ca3af'} fontFamily="DM Sans, sans-serif">
+              fill={dark ? '#8888b8' : '#9ca3af'} fontFamily="DM Sans, sans-serif">
               OUT OF 10
             </text>
           </svg>
@@ -111,21 +111,21 @@ export function HealthWidget({ serviceId, regionKey, lineItems, experienceLevel 
         {/* Rating label + bar */}
         <div className="flex-1 min-w-0">
           <p className={`font-bold text-base ${scoreColor}`}>{label}</p>
-          <div className={`mt-2 h-1.5 rounded-full ${dark ? 'bg-charcoal-700' : 'bg-gray-200'} overflow-hidden`}>
+          <div className={`mt-2 h-1.5 rounded-full ${dark ? 'bg-white/[0.08]' : 'bg-gray-200'} overflow-hidden`}>
             <div
               className={`h-full rounded-full transition-all duration-700 ${fillColor}`}
               style={{ width: `${arcPct}%` }}
             />
           </div>
-          <div className={`flex justify-between text-[9px] mt-0.5 ${dark ? 'text-charcoal-600' : 'text-gray-400'}`}>
+          <div className={`flex justify-between text-[9px] mt-0.5 ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>
             <span>1</span><span>5</span><span>10</span>
           </div>
         </div>
       </div>
 
       {/* Tips */}
-      <div className={`mt-4 rounded-xl px-4 py-3 ${dark ? 'bg-charcoal-900/60' : 'bg-gray-50'}`}>
-        <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>Tips</p>
+      <div className={`mt-4 rounded-xl px-4 py-3 ${dark ? 'bg-charcoal-950/60 border border-white/[0.06]' : 'bg-gray-50'}`}>
+        <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>Tips</p>
         <ul className="space-y-1.5">
           {tips.slice(0, 2).map((tip, i) => (
             <li key={i} className={`text-xs flex gap-2 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>

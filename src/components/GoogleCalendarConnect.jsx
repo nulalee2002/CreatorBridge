@@ -132,8 +132,8 @@ export function GoogleCalendarConnect({ creatorId, dark, onSync }) {
   const [syncResult, setSyncResult] = useState('');
   const [error, setError]         = useState('');
 
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
-  const cardCls = `rounded-2xl border p-4 ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`;
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
+  const cardCls = `rounded-2xl border p-4 shadow-[0_24px_80px_rgba(0,0,0,0.16)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`;
 
   useEffect(() => {
     if (!creatorId) return;
@@ -190,7 +190,7 @@ export function GoogleCalendarConnect({ creatorId, dark, onSync }) {
   if (!CLIENT_ID) {
     return (
       <div className={`${cardCls} flex items-start gap-3`}>
-        <AlertCircle size={16} className="text-amber-400 shrink-0 mt-0.5" />
+        <AlertCircle size={16} className="text-gold-400 shrink-0 mt-0.5" />
         <div>
           <p className={`text-xs font-semibold mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>Google Calendar</p>
           <p className={`text-xs ${textSub}`}>
@@ -204,8 +204,8 @@ export function GoogleCalendarConnect({ creatorId, dark, onSync }) {
   return (
     <div className={cardCls}>
       <div className="flex items-center gap-3 mb-3">
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${connected ? 'bg-teal-500/15' : dark ? 'bg-charcoal-700' : 'bg-gray-100'}`}>
-          <Calendar size={16} className={connected ? 'text-teal-400' : textSub} />
+        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${connected ? 'bg-gold-500/15 ring-1 ring-gold-500/25' : dark ? 'bg-white/[0.08]' : 'bg-gray-100'}`}>
+          <Calendar size={16} className={connected ? 'text-gold-400' : textSub} />
         </div>
         <div>
           <p className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>Google Calendar</p>
@@ -213,7 +213,7 @@ export function GoogleCalendarConnect({ creatorId, dark, onSync }) {
             {connected ? 'Connected - busy times are synced to your availability' : 'Auto-import your busy days from Google Calendar'}
           </p>
         </div>
-        {connected && <Check size={14} className="text-teal-400 ml-auto shrink-0" />}
+        {connected && <Check size={14} className="text-gold-400 ml-auto shrink-0" />}
       </div>
 
       {error && (
@@ -224,9 +224,9 @@ export function GoogleCalendarConnect({ creatorId, dark, onSync }) {
       )}
 
       {syncResult && (
-        <div className="mb-3 flex items-start gap-2 p-2.5 rounded-xl bg-teal-500/10 border border-teal-500/20">
-          <Check size={12} className="text-teal-400 shrink-0 mt-0.5" />
-          <p className="text-xs text-teal-400">{syncResult}</p>
+        <div className="mb-3 flex items-start gap-2 p-2.5 rounded-xl bg-gold-500/10 border border-gold-500/25">
+          <Check size={12} className="text-gold-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-gold-300">{syncResult}</p>
         </div>
       )}
 
@@ -239,12 +239,12 @@ export function GoogleCalendarConnect({ creatorId, dark, onSync }) {
         ) : (
           <>
             <button type="button" onClick={() => handleSync(null)} disabled={syncing}
-              className="flex-1 py-2 rounded-xl bg-teal-400/20 hover:bg-teal-400/30 text-teal-400 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 border border-teal-500/30">
+              className="flex-1 py-2 rounded-xl bg-gold-500/15 hover:bg-gold-500/25 text-gold-300 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 border border-gold-500/30">
               <RefreshCw size={12} className={syncing ? 'animate-spin' : ''} />
               {syncing ? 'Syncing...' : 'Sync Now'}
             </button>
             <button type="button" onClick={handleDisconnect}
-              className={`px-3 py-2 rounded-xl border text-xs font-medium transition-all ${dark ? 'border-charcoal-600 text-charcoal-400 hover:text-white' : 'border-gray-200 text-gray-500 hover:text-gray-900'}`}>
+              className={`px-3 py-2 rounded-xl border text-xs font-medium transition-all ${dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/35 hover:text-white' : 'border-gray-200 text-gray-500 hover:text-gray-900'}`}>
               <Unlink size={12} />
             </button>
           </>

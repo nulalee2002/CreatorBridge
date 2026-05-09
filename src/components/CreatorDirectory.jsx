@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { getNewCreatorSpotlight } from '../utils/matchingAlgorithm.js';
 import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Star, X, Plus, Trash2, ArrowRight, Filter, UserPlus, Heart, ExternalLink, BadgeCheck, AlertCircle } from 'lucide-react';
-import { SERVICES, RATES } from '../data/rates.js';
+import { SERVICES, RATES, MARKETPLACE_CATEGORIES, getMarketplaceServiceIds, serviceMatchesMarketplaceCategory } from '../data/rates.js';
 import { REGIONS } from '../data/regions.js';
 import { SEED_CREATORS, initSeedData, SHOW_DEMO_CREATORS } from '../data/seedCreators.js';
 import { zipToRegion, zipToCity } from '../data/zipCodes.js';
@@ -15,6 +15,36 @@ import { supabase, supabaseConfigured } from '../lib/supabase.js';
 
 // Initialize seed data (version-gated — replaces stale seeds automatically)
 initSeedData();
+
+function parseYearsExperience(value) {
+  if (value === '2 years') return 2;
+  if (value === '3 to 5 years') return 3;
+  if (value === '5 to 10 years') return 5;
+  if (value === '10+ years') return 10;
+  return 0;
+}
+
+function serviceHasRates(service) {
+  return Object.values(service?.rates || {}).some(value => Number(value) > 0);
+}
+
+function portfolioItemComplete(item) {
+  return !!(
+    item?.title?.trim() &&
+    item?.description?.trim() &&
+    item?.serviceId &&
+    item?.link?.trim()
+  );
+}
+
+function isApprovedCreator(creator) {
+  return !!(
+    creator?.verified ||
+    creator?.verification_status === 'verified' ||
+    creator?.verification_status === 'pro_verified' ||
+    creator?.id?.startsWith?.('seed-')
+  );
+}
 
 // ── LocalStorage helpers ──────────────────────────────────────
 function loadListings() {
@@ -75,7 +105,7 @@ function CreatorCard({ creator, dark, onDelete, onViewProfile }) {
   }
 
   const location = creator.location || {};
-  const expLabel = { entry: '0-2 yrs', mid: '3-6 yrs', senior: '7+ yrs' }[creator.experience] || '';
+  const expLabel = { entry: '2-3 yrs', mid: '4-6 yrs', senior: '7+ yrs' }[creator.experience] || '';
   const locationStr = [location.city, location.state, location.country].filter(Boolean).join(', ');
 
   return (
@@ -96,7 +126,7 @@ function CreatorCard({ creator, dark, onDelete, onViewProfile }) {
               {creator.verification_status && creator.verification_status !== 'unverified' ? (
                 <VerificationBadge status={creator.verification_status} />
               ) : creator.verified ? (
-                <BadgeCheck size={14} className="text-teal-400 shrink-0 mt-0.5" title="Verified creator" />
+                <BadgeCheck size={14} className="text-gold-400 shrink-0 mt-0.5" title="Verified creator" />
               ) : null}
               {creator.tier && creator.tier !== 'launch' && <TierBadge tierId={creator.tier} />}
               {creator.completed_projects > 0 && <LoyaltyBadge completedProjects={creator.completed_projects} />}
@@ -116,7 +146,7 @@ function CreatorCard({ creator, dark, onDelete, onViewProfile }) {
                 </span>
               )}
               {creator.availability === 'available' && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-teal-500/15 text-teal-400 font-medium">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gold-500/10 text-gold-300 font-medium ring-1 ring-gold-500/15">
                   Available
                 </span>
               )}
@@ -220,13 +250,17 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
   const setLocation = (field, val) => setForm(f => ({ ...f, location: { ...f.location, [field]: val } }));
   const setContact = (field, val) => setForm(f => ({ ...f, contact: { ...f.contact, [field]: val } }));
 
-  const updateService = (idx, field, val) => {
-    setForm(f => {
-      const services = [...f.services];
-      services[idx] = { ...services[idx], [field]: val };
-      return { ...f, services };
-    });
-  };
+	  const updateService = (idx, field, val) => {
+	    setForm(f => {
+	      const services = [...f.services];
+	      services[idx] = {
+	        ...services[idx],
+	        [field]: val,
+	        ...(field === 'serviceId' ? { rates: {}, subtypes: '', description: '' } : {}),
+	      };
+	      return { ...f, services };
+	    });
+	  };
   const setServiceRate = (idx, key, val) => {
     setForm(f => {
       const services = [...f.services];
@@ -267,28 +301,50 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
   };
 
   const inputCls = dark
-    ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40'
+    ? 'bg-charcoal-950/70 border-white/[0.08] text-white placeholder-charcoal-600 focus:border-gold-500/70 focus:ring-2 focus:ring-gold-500/20'
     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500';
-  const labelCls = `text-xs font-medium ${dark ? 'text-charcoal-400' : 'text-gray-500'} mb-1`;
+  const labelCls = `text-[11px] font-semibold uppercase tracking-[0.14em] ${dark ? 'text-charcoal-300' : 'text-gray-500'} mb-2`;
+  const stepMeta = [
+    { n: 1, label: 'About You', title: 'Start with the creator identity clients will see.', desc: 'Use clear professional details, location, and positioning that match the standard of work you want to book.' },
+    { n: 2, label: 'Standards', title: 'Confirm the marketplace requirements.', desc: 'CreatorBridge is built around experienced, US-based professionals with reviewed profiles.' },
+    { n: 3, label: 'Services', title: 'Build real service packages and rates.', desc: 'Add the production services you want clients to book, with transparent pricing attached.' },
+    { n: 4, label: 'Portfolio', title: 'Show proof of the work.', desc: 'Add your intro video and at least three portfolio samples from real client work.' },
+    { n: 5, label: 'Submit', title: 'Review contact details and final acknowledgments.', desc: 'These confirmations protect clients, creators, and the quality of the marketplace.' },
+  ];
+  const currentStep = stepMeta[step - 1];
 
   // Derived validation state
   const bioLen = form.bio.length;
   const expBlocked = BLOCKED_EXPERIENCE.includes(form.yearsExperience);
-  const portfolioMet = form.portfolio.length >= 3;
+  const completePortfolioCount = form.portfolio.filter(portfolioItemComplete).length;
+  const portfolioMet = completePortfolioCount >= 3;
   const videoIntroMet = form.videoIntroUrl.trim().length > 0;
+  const serviceOffersMet = form.services.length > 0 && form.services.every(serviceHasRates);
+  const usLocationMet = form.location.country === 'US' && form.usBasedConfirm;
 
   const nextDisabled =
-    (step === 1 && (!form.name || bioLen < 100)) ||
-    (step === 2 && (!form.yearsExperience || expBlocked || !form.usBasedConfirm || !form.ageConfirm)) ||
+    (step === 1 && (!form.name || bioLen < 100 || form.location.country !== 'US')) ||
+    (step === 2 && (!form.yearsExperience || expBlocked || !usLocationMet || !form.ageConfirm)) ||
+    (step === 3 && !serviceOffersMet) ||
     (step === 4 && (!portfolioMet || !videoIntroMet));
 
-  const canPublish =
-    !!(form.name && form.contact.email &&
-    form.yearsExperience && !expBlocked &&
-    form.usBasedConfirm && form.ageConfirm &&
-    videoIntroMet && bioLen >= 100 && portfolioMet &&
-    form.insuranceAck && form.lockConfirm && form.reviewNoticeConfirm &&
-    form.tosAccepted && form.aiOriginalWorkConfirm);
+	  const canPublish =
+	    !!(form.name && form.contact.email &&
+	    form.yearsExperience && !expBlocked &&
+	    usLocationMet && form.ageConfirm &&
+	    serviceOffersMet &&
+	    videoIntroMet && bioLen >= 100 && portfolioMet &&
+	    form.insuranceAck && form.lockConfirm && form.reviewNoticeConfirm &&
+	    form.tosAccepted && form.aiOriginalWorkConfirm);
+
+	  const publishChecks = [
+	    { label: 'Creator identity', done: !!form.name && bioLen >= 100 },
+	    { label: 'Marketplace standards', done: !!form.yearsExperience && !expBlocked && usLocationMet && form.ageConfirm },
+	    { label: 'Service offers', done: serviceOffersMet },
+	    { label: 'Proof of work', done: videoIntroMet && portfolioMet },
+	    { label: 'Contact email', done: !!form.contact.email },
+	    { label: 'Final acknowledgments', done: form.insuranceAck && form.lockConfirm && form.reviewNoticeConfirm && form.tosAccepted && form.aiOriginalWorkConfirm },
+	  ];
 
   const handleSubmit = () => {
     if (!canPublish) return;
@@ -307,6 +363,11 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
       rating: parseFloat(form.rating) || null,
       reviewCount: parseInt(form.reviewCount) || null,
       availability: 'available',
+      verified: false,
+      verification_status: 'pending',
+      review_status: 'pending_review',
+      years_experience: parseYearsExperience(form.yearsExperience),
+      video_intro_url: form.videoIntroUrl.trim(),
       createdAt: new Date().toISOString(),
     };
     onSave(listing);
@@ -332,98 +393,127 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-7">
       {/* Creator Standards notice box */}
-      <div className="rounded-xl border border-gold-500/40 bg-gold-500/8 p-5 mb-6">
-        <h3 className="font-bold text-gold-400 text-sm mb-2">CreatorBridge Creator Standards</h3>
-        <p className="text-xs text-charcoal-300 leading-relaxed mb-3">
-          CreatorBridge is a verified professional marketplace. Every creator is manually reviewed before their profile goes live. To be approved you must meet ALL of the following requirements:
-        </p>
-        <ul className="text-xs text-charcoal-400 space-y-1">
-          <li>• Based in the US with 2 or more years of paid professional experience</li>
-          <li>• Minimum 3 portfolio samples showing real client work</li>
-          <li>• Complete service packages with real pricing</li>
-          <li>• A 60 to 90 second professional video intro</li>
-          <li>• Stripe identity verification with a government ID</li>
-          <li>• Profile information is locked for 90 days after submission</li>
-        </ul>
+      <div className={`relative overflow-hidden rounded-2xl border p-6 ${
+        dark ? 'border-gold-500/25 bg-charcoal-950/55 shadow-[0_24px_80px_rgba(0,0,0,0.25)]' : 'border-gold-500/30 bg-gold-50'
+      }`}>
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/70 to-transparent" />
+        <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+          <div>
+            <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+              Creator Application
+            </p>
+            <h3 className={`font-display text-2xl font-bold leading-tight ${dark ? 'text-white' : 'text-gray-950'}`}>
+              CreatorBridge Creator Standards
+            </h3>
+            <p className={`mt-3 text-sm leading-6 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
+              Every creator is manually reviewed before their profile goes live. To be approved, the application needs to meet all core marketplace standards.
+            </p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {[
+              'US-based with 2+ years paid experience',
+              '3 portfolio samples from real client work',
+              'Service packages with real pricing',
+              '60 to 90 second professional intro video',
+              'Stripe identity verification with government ID',
+              'Profile locked for 90 days after submission',
+            ].map(item => (
+              <div key={item} className={`flex items-start gap-2 rounded-xl border px-3 py-3 ${
+                dark ? 'border-white/[0.07] bg-white/[0.035]' : 'border-gold-200 bg-white'
+              }`}>
+                <BadgeCheck size={14} className="mt-0.5 shrink-0 text-gold-400" />
+                <span className={`text-xs leading-5 ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Step indicator */}
-      <div className="flex gap-1.5">
-        {[
-          { n: 1, label: 'About You' },
-          { n: 2, label: 'Standards' },
-          { n: 3, label: 'Services' },
-          { n: 4, label: 'Portfolio' },
-          { n: 5, label: 'Submit' },
-        ].map(({ n, label }) => (
+      <div className={`rounded-2xl border p-3 ${dark ? 'border-white/[0.06] bg-charcoal-950/40' : 'border-gray-200 bg-gray-50'}`}>
+        <div className="flex gap-1.5">
+        {stepMeta.map(({ n, label }) => (
           <div key={n} className="flex items-center gap-1 flex-1">
             <button type="button" onClick={() => n < step && setStep(n)}
-              className={`w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center transition-all shrink-0 ${
-                n <= step ? 'bg-gold-500 text-charcoal-900' : dark ? 'bg-charcoal-700 text-charcoal-500' : 'bg-gray-200 text-gray-400'
+              className={`w-8 h-8 rounded-full text-[10px] font-bold flex items-center justify-center transition-all shrink-0 ${
+                n <= step ? 'bg-gold-500 text-charcoal-950 shadow-[0_0_24px_rgba(212,169,65,0.2)]' : dark ? 'bg-white/[0.04] text-charcoal-500' : 'bg-gray-200 text-gray-400'
               }`}>{n}</button>
-            <span className={`text-[10px] hidden sm:inline ${n === step ? 'text-gold-400 font-medium' : dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
+            <span className={`text-[10px] hidden sm:inline uppercase tracking-[0.14em] ${n === step ? 'text-gold-400 font-bold' : dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
               {label}
             </span>
             {n < TOTAL_STEPS && <div className={`flex-1 h-px ${n < step ? 'bg-gold-500/50' : dark ? 'bg-charcoal-700' : 'bg-gray-200'}`} />}
           </div>
         ))}
+        </div>
+      </div>
+
+      <div className={`rounded-2xl border p-5 ${dark ? 'border-white/[0.07] bg-white/[0.025]' : 'border-gray-200 bg-white'}`}>
+        <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+          Step {currentStep.n} of {TOTAL_STEPS}
+        </p>
+        <h2 className={`font-display text-xl font-bold ${dark ? 'text-white' : 'text-gray-950'}`}>
+          {currentStep.title}
+        </h2>
+        <p className={`mt-2 text-sm leading-6 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
+          {currentStep.desc}
+        </p>
       </div>
 
       {/* Step 1: About You */}
       {step === 1 && (
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <p className={labelCls}>Your Name *</p>
               <input type="text" value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Marcus Chen"
-                className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
+                className={`w-full px-4 py-3 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
             </div>
             <div>
               <p className={labelCls}>Business Name</p>
               <input type="text" value={form.businessName} onChange={e => set('businessName', e.target.value)} placeholder="e.g. Elevation Films"
-                className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
+                className={`w-full px-4 py-3 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
             </div>
           </div>
           <div>
             <p className={labelCls}>Professional Bio *</p>
             <textarea value={form.bio} onChange={e => set('bio', e.target.value)} rows={4}
               placeholder="Tell clients what you specialize in, your style, and what makes you stand out..."
-              className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all resize-none ${inputCls}`} />
-            <p className={`text-xs mt-1 ${bioLen >= 100 ? 'text-teal-400' : dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
+              className={`w-full px-4 py-3 text-sm rounded-xl border outline-none transition-all resize-none ${inputCls}`} />
+            <p className={`text-xs mt-1 ${bioLen >= 100 ? 'text-gold-400' : dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
               {bioLen} / 100 characters minimum
             </p>
             {bioLen > 0 && bioLen < 100 && (
               <p className="text-xs text-red-400 mt-0.5">Your bio must be at least 100 characters.</p>
             )}
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <p className={labelCls}>City</p>
               <input type="text" value={form.location.city} onChange={e => setLocation('city', e.target.value)} placeholder="Los Angeles"
-                className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
+                className={`w-full px-4 py-3 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
             </div>
             <div>
               <p className={labelCls}>State / Region</p>
               <input type="text" value={form.location.state} onChange={e => setLocation('state', e.target.value)} placeholder="CA"
-                className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
+                className={`w-full px-4 py-3 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
             </div>
             <div>
               <p className={labelCls}>ZIP Code</p>
               <input type="text" maxLength={5} value={form.location.zip} onChange={e => setLocation('zip', e.target.value.replace(/\D/g, ''))}
                 placeholder="90028"
-                className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
+                className={`w-full px-4 py-3 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
               {form.location.zip.length >= 3 && zipToCity(form.location.zip) && (
-                <p className="text-[10px] text-teal-400 mt-1">{zipToCity(form.location.zip)}</p>
+                <p className="text-[10px] text-gold-400 mt-1">{zipToCity(form.location.zip)}</p>
               )}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <p className={labelCls}>Country</p>
               <select value={form.location.country} onChange={e => setLocation('country', e.target.value)}
-                className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`}>
+                className={`w-full px-4 py-3 text-sm rounded-xl border outline-none transition-all ${inputCls}`}>
                 <option value="US">United States</option>
                 <option value="CA">Canada</option>
                 <option value="UK">United Kingdom</option>
@@ -434,66 +524,32 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
                 <option value="SE">Scandinavia</option>
                 <option value="NL">Netherlands</option>
               </select>
+              {form.location.country !== 'US' && (
+                <p className="mt-1 text-xs text-red-400">
+                  CreatorBridge is US-only at launch. Canada and Europe are later expansion markets.
+                </p>
+              )}
             </div>
             <div>
               <p className={labelCls}>Experience Level</p>
               <div className={`flex rounded-xl border overflow-hidden h-[42px] ${dark ? 'border-charcoal-600' : 'border-gray-200'}`}>
-                {[['entry','0-2y'],['mid','3-6y'],['senior','7+y']].map(([id, lbl]) => (
+                {[['entry','2-3y'],['mid','4-6y'],['senior','7+y']].map(([id, lbl]) => (
                   <button key={id} type="button" onClick={() => set('experience', id)}
                     className={`flex-1 text-xs font-medium transition-colors ${
                       form.experience === id ? 'bg-gold-500 text-charcoal-900' : dark ? 'text-charcoal-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'
                     }`}>{lbl}</button>
                 ))}
               </div>
+              <p className={`mt-1.5 text-[11px] ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
+                CreatorBridge accepts creators with 2+ years of paid professional experience.
+              </p>
             </div>
           </div>
           <div>
             <p className={labelCls}>Tags (comma-separated)</p>
             <input type="text" value={form.tags} onChange={e => set('tags', e.target.value)}
               placeholder="Corporate, Wedding, Drone, UGC, Real Estate"
-              className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
-          </div>
-          <div>
-            <p className={labelCls}>AI Tools Disclosure (Optional)</p>
-            <p className={`text-xs mb-2 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
-              Select any AI tools you use in your workflow. This is shown on your profile for transparency.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {[
-                'I do not use AI tools',
-                'AI assisted editing (color, audio cleanup)',
-                'AI generated music or sound',
-                'AI upscaling or enhancement',
-                'AI generated graphics or overlays',
-                'AI scripting or captioning',
-                'Other AI tools',
-              ].map(option => {
-                const selected = form.aiToolsDisclosure.includes(option);
-                return (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => {
-                      if (option === 'I do not use AI tools') {
-                        set('aiToolsDisclosure', selected ? [] : ['I do not use AI tools']);
-                      } else {
-                        const without = form.aiToolsDisclosure.filter(o => o !== 'I do not use AI tools' && o !== option);
-                        set('aiToolsDisclosure', selected ? without : [...without, option]);
-                      }
-                    }}
-                    className={`px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all ${
-                      selected
-                        ? 'border-gold-500 bg-gold-500/15 text-gold-400'
-                        : dark
-                          ? 'border-charcoal-600 text-charcoal-400 hover:border-gold-500/50 hover:text-gold-400'
-                          : 'border-gray-300 text-gray-500 hover:border-gold-500/50 hover:text-gold-500'
-                    }`}
-                  >
-                    {option}
-                  </button>
-                );
-              })}
-            </div>
+              className={`w-full px-4 py-3 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
           </div>
         </div>
       )}
@@ -504,7 +560,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
           <div>
             <p className={labelCls}>Years of Experience *</p>
             <select value={form.yearsExperience} onChange={e => set('yearsExperience', e.target.value)}
-              className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`}>
+              className={`w-full px-4 py-3 text-sm rounded-xl border outline-none transition-all ${inputCls}`}>
               <option value="">Select your experience level...</option>
               <option value="Less than 1 year">Less than 1 year</option>
               <option value="1 year">1 year</option>
@@ -548,70 +604,109 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
         </div>
       )}
 
-      {/* Step 3: Services & Rates */}
-      {step === 3 && (
-        <div className="space-y-4">
-          {form.services.map((svc, sIdx) => {
-            const serviceDef = SERVICES[svc.serviceId];
-            const serviceRates = RATES[svc.serviceId] || {};
-            const allRateKeys = serviceDef ? [...(serviceDef.primaryRates || []), ...(serviceDef.packageRates || [])] : [];
-            return (
-              <div key={sIdx} className={`rounded-xl border p-4 ${dark ? 'border-charcoal-700 bg-charcoal-900/40' : 'border-gray-200 bg-gray-50'}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <p className={`text-xs font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>Service {sIdx + 1}</p>
-                  {form.services.length > 1 && (
-                    <button type="button" onClick={() => removeService(sIdx)}
-                      className="text-red-400 hover:text-red-300 transition-colors"><Trash2 size={12} /></button>
-                  )}
-                </div>
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 mb-3">
-                  {Object.values(SERVICES).map(s => (
-                    <button key={s.id} type="button" onClick={() => updateService(sIdx, 'serviceId', s.id)}
-                      className={`flex flex-col items-center gap-0.5 p-2 rounded-xl border text-center transition-all ${
-                        svc.serviceId === s.id
-                          ? 'border-gold-500 bg-gold-500/10 text-gold-400'
-                          : dark ? 'border-charcoal-700 text-charcoal-400 hover:border-charcoal-600' : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                      }`}>
-                      <span className="text-base">{s.icon}</span>
-                      <span className="text-[9px] font-medium leading-tight">{s.name}</span>
-                    </button>
-                  ))}
-                </div>
-                <div className="mb-3">
-                  <p className={labelCls}>Specialties (comma-separated)</p>
-                  <input type="text" value={svc.subtypes} onChange={e => updateService(sIdx, 'subtypes', e.target.value)}
-                    placeholder={serviceDef?.subtypes?.join(', ')}
-                    className={`w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
-                </div>
-                <div className="mb-3">
-                  <p className={labelCls}>Description</p>
-                  <textarea value={svc.description} onChange={e => updateService(sIdx, 'description', e.target.value)} rows={2}
-                    placeholder="Describe what's included in your service..."
-                    className={`w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all resize-none ${inputCls}`} />
-                </div>
-                <p className={labelCls}>Your Rates ($)</p>
-                <div className="space-y-1.5">
-                  {allRateKeys.map(key => {
-                    const meta = serviceRates[key];
-                    if (!meta) return null;
-                    return (
-                      <div key={key} className="flex items-center gap-3">
-                        <span className={`text-xs flex-1 truncate ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>{meta.label}</span>
-                        <div className="relative flex items-center w-28 shrink-0">
-                          <span className={`absolute left-2 text-xs pointer-events-none ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>$</span>
-                          <input type="number" min={0} value={svc.rates[key] || ''}
-                            onChange={e => setServiceRate(sIdx, key, e.target.value)} placeholder="0"
-                            className={`w-full pl-5 pr-2 py-1.5 text-sm rounded-lg border outline-none transition-all ${inputCls}`} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
+	      {/* Step 3: Services & Rates */}
+	      {step === 3 && (
+	        <div className="space-y-4">
+	          <div className={`rounded-2xl border p-4 ${dark ? 'border-gold-500/20 bg-gold-500/10' : 'border-gold-200 bg-gold-50'}`}>
+	            <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '2.2px', textTransform: 'uppercase' }}>
+	              Service positioning
+	            </p>
+	            <p className={`text-sm leading-6 ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>
+	              Choose up to 3 focused specialties. CreatorBridge is not built for every possible gig, so your strongest services, clear package language, and real rates matter more than a long menu.
+	            </p>
+	          </div>
+	          {form.services.map((svc, sIdx) => {
+	            const serviceDef = SERVICES[svc.serviceId];
+	            const serviceRates = RATES[svc.serviceId] || {};
+	            const allRateKeys = serviceDef ? [...(serviceDef.primaryRates || []), ...(serviceDef.packageRates || [])] : [];
+	            const ratesEntered = allRateKeys.filter(key => Number(svc.rates[key]) > 0).length;
+	            return (
+	              <div key={sIdx} className={`rounded-2xl border p-4 sm:p-5 ${dark ? 'border-white/[0.07] bg-charcoal-950/55' : 'border-gray-200 bg-gray-50'}`}>
+	                <div className="flex items-start justify-between gap-3 mb-4">
+	                  <div>
+	                    <p className="text-gold-400 mb-1" style={{ fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase' }}>
+	                      Service {sIdx + 1}
+	                    </p>
+	                    <p className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>
+	                      {serviceDef?.name || 'Choose a service'}
+	                    </p>
+	                    <p className={`mt-1 text-xs leading-5 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
+	                      {serviceDef?.description || 'Select the production category that best matches this offer.'}
+	                    </p>
+	                  </div>
+	                  {form.services.length > 1 && (
+	                    <button type="button" onClick={() => removeService(sIdx)}
+	                      className="rounded-lg p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"><Trash2 size={14} /></button>
+	                  )}
+	                </div>
+	                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+	                  {Object.values(SERVICES).map(s => (
+	                    <button key={s.id} type="button" onClick={() => updateService(sIdx, 'serviceId', s.id)}
+	                      className={`flex items-start gap-3 p-3 rounded-xl border text-left transition-all ${
+	                        svc.serviceId === s.id
+	                          ? 'border-gold-500 bg-gold-500/10 text-gold-400'
+	                          : dark ? 'border-white/[0.07] text-charcoal-300 hover:border-gold-500/35 hover:bg-white/[0.035]' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+	                      }`}>
+	                      <span className="text-xl leading-none">{s.icon}</span>
+	                      <span>
+	                        <span className="block text-xs font-bold leading-tight">{s.name}</span>
+	                        <span className={`mt-1 block text-[10px] leading-4 ${svc.serviceId === s.id ? 'text-gold-300' : dark ? 'text-charcoal-500' : 'text-gray-400'}`}>{s.description}</span>
+	                      </span>
+	                    </button>
+	                  ))}
+	                </div>
+	                <div className="grid gap-3 md:grid-cols-2 mb-4">
+	                <div>
+	                  <p className={labelCls}>Specialties (comma-separated)</p>
+	                  <input type="text" value={svc.subtypes} onChange={e => updateService(sIdx, 'subtypes', e.target.value)}
+	                    placeholder={serviceDef?.subtypes?.join(', ')}
+	                    className={`w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
+	                </div>
+	                <div>
+	                  <p className={labelCls}>Description</p>
+	                  <textarea value={svc.description} onChange={e => updateService(sIdx, 'description', e.target.value)} rows={2}
+	                    placeholder="Describe what clients receive, your style, and what is included..."
+	                    className={`w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all resize-none ${inputCls}`} />
+	                </div>
+	                </div>
+	                <div className="flex items-center justify-between gap-3 mb-3">
+	                  <p className={labelCls}>Your Rates ($)</p>
+	                  <span className={`text-[10px] font-bold uppercase tracking-[0.14em] ${ratesEntered ? 'text-gold-400' : dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
+	                    {ratesEntered}/{allRateKeys.length} entered
+	                  </span>
+	                </div>
+	                <div className="grid gap-2 md:grid-cols-2">
+	                  {allRateKeys.map(key => {
+	                    const meta = serviceRates[key];
+	                    if (!meta) return null;
+	                    return (
+	                      <div key={key} className={`rounded-xl border p-3 ${dark ? 'border-white/[0.06] bg-charcoal-950/45' : 'border-gray-200 bg-white'}`}>
+	                        <div className="flex items-center gap-3">
+	                        <span className={`text-xs flex-1 leading-4 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>{meta.label}</span>
+	                        <div className="relative flex items-center w-32 shrink-0">
+	                          <span className={`absolute left-2 text-xs pointer-events-none ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>$</span>
+	                          <input type="number" min={0} value={svc.rates[key] || ''}
+	                            onChange={e => setServiceRate(sIdx, key, e.target.value)} placeholder="0"
+	                            className={`w-full pl-5 pr-2 py-1.5 text-sm rounded-lg border outline-none transition-all ${inputCls}`} />
+	                        </div>
+	                        </div>
+	                        {meta.tooltip && (
+	                          <p className={`mt-2 text-[10px] leading-4 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>{meta.tooltip}</p>
+	                        )}
+	                      </div>
+	                    );
+	                  })}
+	                </div>
+	                {ratesEntered === 0 && (
+	                  <p className="text-xs text-gold-400 mt-3">
+	                    Add at least one realistic rate so clients can understand your pricing.
+	                  </p>
+	                )}
+	              </div>
+	            );
+	          })}
           {serviceLimit && (
-            <div className={`rounded-xl border p-3 text-xs ${dark ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-amber-300 bg-amber-50 text-amber-700'}`}>
+            <div className={`rounded-xl border p-3 text-xs ${dark ? 'border-gold-500/25 bg-gold-500/10 text-gold-300' : 'border-gold-300 bg-gold-50 text-gold-700'}`}>
               {serviceLimit}
             </div>
           )}
@@ -626,139 +721,233 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
         </div>
       )}
 
-      {/* Step 4: Portfolio + Video Intro */}
-      {step === 4 && (
-        <div className="space-y-3">
-          {/* Video intro URL */}
-          <div>
-            <p className={labelCls}>Professional Video Intro *</p>
-            <input
-              type="url"
-              value={form.videoIntroUrl}
-              onChange={e => set('videoIntroUrl', e.target.value)}
-              placeholder="Paste your 60 to 90 second intro video link (YouTube, Vimeo, or Loom)"
-              className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`}
-            />
-            <p className={`text-xs mt-1 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
-              A professional video intro is required. Keep it between 60 and 90 seconds. Introduce yourself, your specialty, and show examples of your work.
-            </p>
-          </div>
+	      {/* Step 4: Portfolio + Video Intro */}
+	      {step === 4 && (
+	        <div className="space-y-4">
+	          <div className={`rounded-2xl border p-4 ${dark ? 'border-gold-500/20 bg-gold-500/10' : 'border-gold-200 bg-gold-50'}`}>
+	            <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '2.2px', textTransform: 'uppercase' }}>
+	              Proof of work
+	            </p>
+	            <p className={`text-sm leading-6 ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>
+	              This is the trust layer of your profile. Clients should be able to understand your voice, your real client experience, and the kind of production work you can repeat.
+	            </p>
+	          </div>
+	          {/* Video intro URL */}
+	          <div className={`rounded-2xl border p-4 sm:p-5 ${dark ? 'border-white/[0.07] bg-charcoal-950/55' : 'border-gray-200 bg-gray-50'}`}>
+	            <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
+	              <div>
+	                <div className="flex items-center justify-between gap-3 mb-3">
+	                  <div>
+	                    <p className={labelCls}>Professional Video Intro *</p>
+	                    <p className={`text-xs leading-5 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
+	                      Link a 60 to 90 second intro that shows who clients will be hiring.
+	                    </p>
+	                  </div>
+	                  <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${videoIntroMet ? 'bg-gold-500/15 text-gold-400 ring-1 ring-gold-500/25' : dark ? 'bg-white/[0.06] text-charcoal-400 ring-1 ring-white/[0.08]' : 'bg-gray-100 text-gray-500'}`}>
+	                    {videoIntroMet ? 'Added' : 'Required'}
+	                  </span>
+	                </div>
+	                <input
+	                  type="url"
+	                  value={form.videoIntroUrl}
+	                  onChange={e => set('videoIntroUrl', e.target.value)}
+	                  placeholder="Paste your intro video link from YouTube, Vimeo, or Loom"
+	                  className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`}
+	                />
+	              </div>
+	              <div className={`rounded-xl border p-3 ${dark ? 'border-gold-500/15 bg-gold-500/[0.06]' : 'border-gold-200 bg-white'}`}>
+	                <p className={`text-xs font-bold mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>What to cover</p>
+	                <div className={`space-y-1.5 text-[11px] leading-5 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
+	                  <p>- Who you are and where you work</p>
+	                  <p>- Your strongest production specialty</p>
+	                  <p>- What clients can expect from you</p>
+	                  <p>- A quick mention of real client work</p>
+	                </div>
+	              </div>
+	            </div>
+	          </div>
 
-          {/* Portfolio items */}
-          <div className="flex items-center justify-between mt-1">
-            <p className={`text-xs font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>
-              Portfolio Samples ({form.portfolio.length}/3 minimum) *
-            </p>
-          </div>
-          <p className={`text-xs ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
-            Show off your best work. Minimum 3 portfolio items required.
-          </p>
-          {form.portfolio.map((item, i) => (
-            <div key={i} className={`rounded-xl border p-3 ${dark ? 'border-charcoal-700 bg-charcoal-900/40' : 'border-gray-200 bg-gray-50'}`}>
-              <div className="flex gap-2 mb-2">
-                <input type="text" value={item.title} onChange={e => updatePortfolio(i, 'title', e.target.value)}
-                  placeholder="Project title" className={`flex-1 px-3 py-2 text-sm rounded-lg border outline-none transition-all ${inputCls}`} />
-                <select value={item.serviceId} onChange={e => updatePortfolio(i, 'serviceId', e.target.value)}
-                  className={`px-2 py-2 text-xs rounded-lg border outline-none transition-all ${inputCls}`}>
-                  {form.services.map((s, si) => (
-                    <option key={si} value={s.serviceId}>{SERVICES[s.serviceId]?.icon} {SERVICES[s.serviceId]?.name}</option>
-                  ))}
-                </select>
-                <button type="button" onClick={() => removePortfolio(i)}
-                  className="text-red-400 hover:text-red-300 p-1 transition-colors"><Trash2 size={12} /></button>
-              </div>
-              <input type="text" value={item.description} onChange={e => updatePortfolio(i, 'description', e.target.value)}
-                placeholder="Brief description of the project"
-                className={`w-full px-3 py-2 text-sm rounded-lg border outline-none transition-all ${inputCls}`} />
-            </div>
-          ))}
+	          {/* Portfolio items */}
+	          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+	            <div>
+	              <p className={labelCls}>Portfolio Samples *</p>
+	              <p className={`text-xs ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
+	                Add at least 3 real client projects. Use titles and short descriptions that prove scope, not vague labels.
+	              </p>
+	            </div>
+	            <div className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${portfolioMet ? 'bg-gold-500/15 text-gold-400 ring-1 ring-gold-500/25' : dark ? 'bg-white/[0.06] text-charcoal-400 ring-1 ring-white/[0.08]' : 'bg-gray-100 text-gray-500'}`}>
+	              {completePortfolioCount}/3 complete
+	            </div>
+	          </div>
+	          {form.portfolio.map((item, i) => (
+	            <div key={i} className={`rounded-2xl border p-4 ${dark ? 'border-white/[0.07] bg-charcoal-950/55' : 'border-gray-200 bg-gray-50'}`}>
+	              <div className="flex items-start justify-between gap-3 mb-3">
+	                <div>
+	                  <p className="text-gold-400" style={{ fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase' }}>
+	                    Sample {i + 1}
+	                  </p>
+	                  <p className={`mt-1 text-xs ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
+	                    Real client work, campaign, event, production, or published project.
+	                  </p>
+	                </div>
+	                <button type="button" onClick={() => removePortfolio(i)}
+	                  className="rounded-lg p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"><Trash2 size={14} /></button>
+	              </div>
+	              <div className="grid gap-3 md:grid-cols-[1fr_220px] mb-3">
+	                <input type="text" value={item.title} onChange={e => updatePortfolio(i, 'title', e.target.value)}
+	                  placeholder="Project title, e.g. Product launch campaign"
+	                  className={`w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
+	                <select value={item.serviceId} onChange={e => updatePortfolio(i, 'serviceId', e.target.value)}
+	                  className={`w-full px-3 py-2 text-xs rounded-xl border outline-none transition-all ${inputCls}`}>
+	                  {form.services.map((s, si) => (
+	                    <option key={si} value={s.serviceId}>{SERVICES[s.serviceId]?.icon} {SERVICES[s.serviceId]?.name}</option>
+	                  ))}
+	                </select>
+	              </div>
+	              <textarea value={item.description} onChange={e => updatePortfolio(i, 'description', e.target.value)}
+	                rows={2}
+	                placeholder="Briefly describe the client, scope, deliverables, or result."
+	                className={`w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all resize-none ${inputCls}`} />
+	              <input type="url" value={item.link || ''} onChange={e => updatePortfolio(i, 'link', e.target.value)}
+	                placeholder="Portfolio link, e.g. YouTube, Vimeo, website, Drive, or published project URL"
+	                className={`mt-3 w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
+	            </div>
+	          ))}
           <button type="button" onClick={addPortfolio}
             className={`w-full py-2.5 rounded-xl border-2 border-dashed text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
               dark ? 'border-charcoal-600 text-charcoal-400 hover:border-gold-500/50 hover:text-gold-400' : 'border-gray-300 text-gray-500 hover:border-gold-500/50 hover:text-gold-500'
             }`}>
             <Plus size={14} /> Add Portfolio Item
           </button>
-          {form.portfolio.length < 3 && (
-            <p className="text-xs text-amber-400 mt-1">
-              Please add at least 3 portfolio samples showing real client work before submitting.
+          {completePortfolioCount < 3 && (
+            <p className="text-xs text-gold-400 mt-1">
+              Please add at least 3 complete portfolio samples with title, description, service, and link before submitting.
             </p>
           )}
         </div>
       )}
 
-      {/* Step 5: Contact + Acknowledgments */}
-      {step === 5 && (
-        <div className="space-y-3">
-          {[
-            { key: 'email',     label: 'Email *',          placeholder: 'hello@yourstudio.com',  type: 'email' },
-            { key: 'phone',     label: 'Phone',            placeholder: '(555) 000-0000',        type: 'tel' },
-            { key: 'website',   label: 'Website',          placeholder: 'yourstudio.com',        type: 'text' },
-            { key: 'instagram', label: 'Instagram Handle', placeholder: '@yourstudio',           type: 'text' },
-          ].map(({ key, label, placeholder, type }) => (
-            <div key={key}>
-              <p className={labelCls}>{label}</p>
-              <input type={type} value={form.contact[key]} onChange={e => setContact(key, e.target.value)} placeholder={placeholder}
-                className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
-            </div>
-          ))}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <p className={labelCls}>Your Rating (optional)</p>
-              <input type="number" min={0} max={5} step={0.1} value={form.rating} onChange={e => set('rating', e.target.value)} placeholder="4.8"
-                className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
-            </div>
-            <div>
-              <p className={labelCls}># of Reviews (optional)</p>
-              <input type="number" min={0} value={form.reviewCount} onChange={e => set('reviewCount', e.target.value)} placeholder="47"
-                className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
-            </div>
-          </div>
+	      {/* Step 5: Contact + Acknowledgments */}
+	      {step === 5 && (
+	        <div className="space-y-4">
+	          <div className={`rounded-2xl border p-4 ${dark ? 'border-gold-500/20 bg-gold-500/10' : 'border-gold-200 bg-gold-50'}`}>
+	            <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '2.2px', textTransform: 'uppercase' }}>
+	              Final review
+	            </p>
+	            <p className={`text-sm leading-6 ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>
+	              Confirm the contact details and platform rules before your profile goes into review. This protects clients, creators, and the quality of the marketplace.
+	            </p>
+	          </div>
 
-          {/* Insurance and liability */}
-          <div className={`rounded-xl border p-3 space-y-3 ${dark ? 'border-amber-500/30 bg-amber-500/8' : 'border-amber-200 bg-amber-50'}`}>
-            <p className={`text-xs font-semibold ${dark ? 'text-amber-300' : 'text-amber-700'}`}>Acknowledgments Required</p>
-            <p className={`text-xs ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
-              CreatorBridge does not require insurance, but many clients -- especially for on-site work -- will ask about your coverage.
-            </p>
-            <label className="flex items-start gap-2 cursor-pointer">
-              <input type="checkbox" checked={form.insuranceAck} onChange={e => set('insuranceAck', e.target.checked)} className="mt-0.5 accent-gold-500" />
-              <span className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-700'}`}>
-                I understand that CreatorBridge does not verify or require insurance. I am responsible for disclosing my coverage to clients who ask, and I acknowledge I may be required to show proof of insurance before some bookings.
-              </span>
-            </label>
-            <label className="flex items-start gap-2 cursor-pointer">
-              <input type="checkbox" checked={form.lockConfirm} onChange={e => set('lockConfirm', e.target.checked)} className="mt-0.5 accent-gold-500" />
-              <span className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-700'}`}>
-                I understand that my profile information cannot be changed for 90 days after submission. I have reviewed all details and confirm everything is accurate.
-              </span>
-            </label>
-            <label className="flex items-start gap-2 cursor-pointer">
-              <input type="checkbox" checked={form.reviewNoticeConfirm} onChange={e => set('reviewNoticeConfirm', e.target.checked)} className="mt-0.5 accent-gold-500" />
-              <span className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-700'}`}>
-                I understand my profile will be reviewed by the CreatorBridge team before going live. I will receive an email with the decision within 3 to 5 business days.
-              </span>
-            </label>
-            <label className="flex items-start gap-2 cursor-pointer">
-              <input type="checkbox" checked={form.tosAccepted} onChange={e => set('tosAccepted', e.target.checked)} className="mt-0.5 accent-gold-500" />
-              <span className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-700'}`}>
-                I have read and agree to the{' '}
+	          <div className={`rounded-2xl border p-4 sm:p-5 ${dark ? 'border-white/[0.07] bg-charcoal-950/55' : 'border-gray-200 bg-gray-50'}`}>
+	            <div className="flex items-center justify-between gap-3 mb-4">
+	              <div>
+	                <p className={labelCls}>Contact Details</p>
+	                <p className={`text-xs leading-5 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
+	                  Direct contact stays protected until booking rules allow it, but CreatorBridge needs accurate details for review and account support.
+	                </p>
+	              </div>
+	              <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${form.contact.email ? 'bg-gold-500/15 text-gold-400 ring-1 ring-gold-500/25' : dark ? 'bg-white/[0.06] text-charcoal-400 ring-1 ring-white/[0.08]' : 'bg-gray-100 text-gray-500'}`}>
+	                {form.contact.email ? 'Email added' : 'Email required'}
+	              </span>
+	            </div>
+	            <div className="grid gap-3 md:grid-cols-2">
+	              {[
+	                { key: 'email',     label: 'Email *',          placeholder: 'hello@yourstudio.com',  type: 'email' },
+	                { key: 'phone',     label: 'Phone',            placeholder: '(555) 000-0000',        type: 'tel' },
+	                { key: 'website',   label: 'Website',          placeholder: 'yourstudio.com',        type: 'text' },
+	                { key: 'instagram', label: 'Instagram Handle', placeholder: '@yourstudio',           type: 'text' },
+	              ].map(({ key, label, placeholder, type }) => (
+	                <div key={key}>
+	                  <p className={labelCls}>{label}</p>
+	                  <input type={type} value={form.contact[key]} onChange={e => setContact(key, e.target.value)} placeholder={placeholder}
+	                    className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
+	                </div>
+	              ))}
+	            </div>
+	          </div>
+
+	          <div className={`rounded-2xl border p-4 sm:p-5 ${dark ? 'border-white/[0.07] bg-charcoal-950/55' : 'border-gray-200 bg-gray-50'}`}>
+	            <p className={labelCls}>Optional reputation signals</p>
+	            <p className={`text-xs leading-5 mb-3 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
+	              Add existing rating and review count only if they reflect real public client history.
+	            </p>
+	            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+	              <div>
+	                <p className={labelCls}>Your Rating (optional)</p>
+	                <input type="number" min={0} max={5} step={0.1} value={form.rating} onChange={e => set('rating', e.target.value)} placeholder="4.8"
+	                  className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
+	              </div>
+	              <div>
+	                <p className={labelCls}># of Reviews (optional)</p>
+	                <input type="number" min={0} value={form.reviewCount} onChange={e => set('reviewCount', e.target.value)} placeholder="47"
+	                  className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
+	              </div>
+	            </div>
+	          </div>
+
+	          {/* Insurance and liability */}
+	          <div className={`rounded-2xl border p-4 sm:p-5 space-y-3 ${dark ? 'border-gold-500/25 bg-gold-500/10' : 'border-gold-200 bg-gold-50'}`}>
+	            <p className={`text-xs font-semibold ${dark ? 'text-gold-300' : 'text-gold-700'}`}>Acknowledgments Required</p>
+	            <p className={`text-xs leading-5 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
+	              CreatorBridge does not require insurance, but many clients, especially for on-site work, will ask about your coverage.
+	            </p>
+	            <label className={`flex items-start gap-3 cursor-pointer rounded-xl border p-3 ${dark ? 'border-white/[0.06] bg-charcoal-950/35' : 'border-gold-200 bg-white'}`}>
+	              <input type="checkbox" checked={form.insuranceAck} onChange={e => set('insuranceAck', e.target.checked)} className="mt-0.5 accent-gold-500" />
+	              <span className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-700'}`}>
+	                I understand that CreatorBridge does not verify or require insurance. I am responsible for disclosing my coverage to clients who ask, and I acknowledge I may be required to show proof of insurance before some bookings.
+	              </span>
+	            </label>
+	            <label className={`flex items-start gap-3 cursor-pointer rounded-xl border p-3 ${dark ? 'border-white/[0.06] bg-charcoal-950/35' : 'border-gold-200 bg-white'}`}>
+	              <input type="checkbox" checked={form.lockConfirm} onChange={e => set('lockConfirm', e.target.checked)} className="mt-0.5 accent-gold-500" />
+	              <span className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-700'}`}>
+	                I understand that my profile information cannot be changed for 90 days after submission. I have reviewed all details and confirm everything is accurate.
+	              </span>
+	            </label>
+	            <label className={`flex items-start gap-3 cursor-pointer rounded-xl border p-3 ${dark ? 'border-white/[0.06] bg-charcoal-950/35' : 'border-gold-200 bg-white'}`}>
+	              <input type="checkbox" checked={form.reviewNoticeConfirm} onChange={e => set('reviewNoticeConfirm', e.target.checked)} className="mt-0.5 accent-gold-500" />
+	              <span className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-700'}`}>
+	                I understand my profile will be reviewed by the CreatorBridge team before going live. I will receive an email with the decision within 3 to 5 business days.
+	              </span>
+	            </label>
+	            <label className={`flex items-start gap-3 cursor-pointer rounded-xl border p-3 ${dark ? 'border-white/[0.06] bg-charcoal-950/35' : 'border-gold-200 bg-white'}`}>
+	              <input type="checkbox" checked={form.tosAccepted} onChange={e => set('tosAccepted', e.target.checked)} className="mt-0.5 accent-gold-500" />
+	              <span className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-700'}`}>
+	                I have read and agree to the{' '}
                 <button type="button"
                   onClick={e => { e.preventDefault(); setShowTermsModal(true); }}
                   className="text-gold-400 hover:text-gold-300 underline font-medium">
                   Terms of Service
                 </button>
-                {' '}and platform policies.
-              </span>
-            </label>
-            <label className="flex items-start gap-2 cursor-pointer">
-              <input type="checkbox" checked={form.aiOriginalWorkConfirm} onChange={e => set('aiOriginalWorkConfirm', e.target.checked)} className="mt-0.5 accent-gold-500" />
-              <span className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-700'}`}>
-                I confirm that all portfolio samples and work shown on my profile are original work created by me and do not contain AI generated content. I understand that submitting AI generated content as my own work is grounds for immediate account removal.
-              </span>
-            </label>
-          </div>
-        </div>
-      )}
+	                {' '}and platform policies.
+	              </span>
+	            </label>
+	            <label className={`flex items-start gap-3 cursor-pointer rounded-xl border p-3 ${dark ? 'border-white/[0.06] bg-charcoal-950/35' : 'border-gold-200 bg-white'}`}>
+	              <input type="checkbox" checked={form.aiOriginalWorkConfirm} onChange={e => set('aiOriginalWorkConfirm', e.target.checked)} className="mt-0.5 accent-gold-500" />
+	              <span className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-700'}`}>
+	                I confirm that all portfolio samples and work shown on my profile are original work created by me and do not contain AI generated content. I understand that submitting AI generated content as my own work is grounds for immediate account removal.
+	              </span>
+	            </label>
+	          </div>
+
+	          <div className={`rounded-2xl border p-4 sm:p-5 ${dark ? 'border-white/[0.07] bg-charcoal-950/55' : 'border-gray-200 bg-gray-50'}`}>
+	            <div className="flex items-center justify-between gap-3 mb-3">
+	              <p className={labelCls}>Submission readiness</p>
+	              <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${canPublish ? 'bg-gold-500/15 text-gold-400 ring-1 ring-gold-500/25' : dark ? 'bg-white/[0.06] text-charcoal-400 ring-1 ring-white/[0.08]' : 'bg-gray-100 text-gray-500'}`}>
+	                {publishChecks.filter(c => c.done).length}/{publishChecks.length} ready
+	              </span>
+	            </div>
+	            <div className="grid gap-2 sm:grid-cols-2">
+	              {publishChecks.map(check => (
+	                <div key={check.label} className={`flex items-center gap-2 rounded-xl px-3 py-2 ${check.done ? 'bg-gold-500/10 text-gold-400' : dark ? 'bg-white/[0.035] text-charcoal-400' : 'bg-white text-gray-500'}`}>
+	                  <BadgeCheck size={13} />
+	                  <span className="text-xs font-medium">{check.label}</span>
+	                </div>
+	              ))}
+	            </div>
+	          </div>
+	        </div>
+	      )}
 
       {/* Navigation */}
       <div className="flex gap-2">
@@ -777,7 +966,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
         ) : (
           <button type="button" onClick={handleSubmit}
             disabled={!canPublish}
-            className="flex-1 py-2.5 rounded-xl bg-teal-400 hover:bg-teal-500 text-charcoal-900 text-xs font-bold disabled:opacity-40 transition-all">
+            className="flex-1 py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-xs font-bold disabled:opacity-40 transition-all">
             Publish My Profile
           </button>
         )}
@@ -870,12 +1059,19 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
 
   // Filter and sort creators
   const filtered = useMemo(() => {
-    let list = [...listings];
+    let list = listings.filter(creator => isApprovedCreator(creator) || creator.user_id === user?.id);
+    const serviceIds = getMarketplaceServiceIds(serviceFilter);
+    const findMatchingService = (creator) => {
+      const services = creator.services || [];
+      return serviceFilter === 'all'
+        ? services[0]
+        : services.find(s => serviceMatchesMarketplaceCategory(s.serviceId, serviceFilter));
+    };
 
     // Service filter
     if (serviceFilter !== 'all') {
       list = list.filter(c =>
-        c.services?.some(s => s.serviceId === serviceFilter)
+        c.services?.some(s => serviceIds.includes(s.serviceId))
       );
     }
 
@@ -909,7 +1105,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
     // Budget filter
     if (budgetNum > 0 && serviceFilter !== 'all') {
       list = list.filter(c => {
-        const svc = c.services?.find(s => s.serviceId === serviceFilter);
+        const svc = findMatchingService(c);
         if (!svc?.rates) return true;
         const rates = Object.values(svc.rates).filter(Boolean);
         if (rates.length === 0) return true;
@@ -928,7 +1124,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
         break;
       case 'price_asc': {
         const getMin = (c) => {
-          const svc = serviceFilter !== 'all' ? c.services?.find(s => s.serviceId === serviceFilter) : c.services?.[0];
+          const svc = findMatchingService(c);
           const rates = Object.values(svc?.rates || {}).filter(Boolean);
           return rates.length > 0 ? Math.min(...rates) : Infinity;
         };
@@ -937,7 +1133,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
       }
       case 'price_desc': {
         const getMax = (c) => {
-          const svc = serviceFilter !== 'all' ? c.services?.find(s => s.serviceId === serviceFilter) : c.services?.[0];
+          const svc = findMatchingService(c);
           const rates = Object.values(svc?.rates || {}).filter(Boolean);
           return rates.length > 0 ? Math.max(...rates) : 0;
         };
@@ -947,8 +1143,8 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
       case 'match':
         if (budgetNum > 0 && serviceFilter !== 'all') {
           list.sort((a, b) => {
-            const aRate = Object.values(a.services?.find(s => s.serviceId === serviceFilter)?.rates || {});
-            const bRate = Object.values(b.services?.find(s => s.serviceId === serviceFilter)?.rates || {});
+            const aRate = Object.values(findMatchingService(a)?.rates || {});
+            const bRate = Object.values(findMatchingService(b)?.rates || {});
             const aDist = aRate.length ? Math.min(...aRate.map(r => Math.abs(r - budgetNum))) : Infinity;
             const bDist = bRate.length ? Math.min(...bRate.map(r => Math.abs(r - budgetNum))) : Infinity;
             return aDist - bDist;
@@ -973,17 +1169,75 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
     });
 
     return list;
-  }, [listings, serviceFilter, searchQuery, budgetNum, zipRegion, sortBy]);
+  }, [listings, serviceFilter, searchQuery, budgetNum, zipRegion, sortBy, user?.id]);
 
-  const displayListings = isGuest ? getRotatingPreviewCreators(listings) : filtered;
+  const displayListings = isGuest ? getRotatingPreviewCreators(filtered) : filtered;
 
   // 5D. New creator spotlight — recently verified with no bookings, rotated weekly
   const spotlightCreators = useMemo(() => getNewCreatorSpotlight(listings, 3), [listings]);
 
-  const handleSaveListing = (listing) => {
+  const handleSaveListing = async (listing) => {
     // Attach user_id to the listing if a user is logged in
     const enriched = { ...listing, user_id: user?.id || null };
-    const updated = [enriched, ...listings];
+    let savedListing = enriched;
+    if (supabaseConfigured && user) {
+      try {
+        const { data: row, error } = await supabase
+          .from('creator_listings')
+          .insert({
+            user_id: user.id,
+            name: enriched.name,
+            business_name: enriched.businessName || null,
+            avatar: enriched.avatar || '🎬',
+            bio: enriched.bio,
+            experience: enriched.experience,
+            years_experience: enriched.years_experience,
+            tags: enriched.tags,
+            availability: enriched.availability,
+            verified: false,
+            verification_status: 'pending',
+            city: enriched.location?.city || null,
+            state: enriched.location?.state || null,
+            country: 'US',
+            zip: enriched.location?.zip || null,
+            region_key: enriched.location?.regionKey || 'us-tier2',
+            email: enriched.contact?.email || null,
+            phone: enriched.contact?.phone || null,
+            website: enriched.contact?.website || null,
+            instagram: enriched.contact?.instagram || null,
+            rating: enriched.rating,
+            review_count: enriched.reviewCount,
+            video_intro_url: enriched.video_intro_url || enriched.videoIntroUrl || null,
+          })
+          .select()
+          .single();
+        if (error) throw error;
+
+        savedListing = { ...enriched, id: row.id, createdAt: row.created_at };
+
+        const serviceRows = savedListing.services.map(service => ({
+          listing_id: row.id,
+          service_id: service.serviceId,
+          subtypes: service.subtypes || [],
+          description: service.description || null,
+          rates: service.rates || {},
+        }));
+        if (serviceRows.length) await supabase.from('creator_services').insert(serviceRows);
+
+        const portfolioRows = savedListing.portfolio.map((item, index) => ({
+          listing_id: row.id,
+          service_id: item.serviceId,
+          title: item.title,
+          description: item.description,
+          link: item.link,
+          display_order: index,
+        }));
+        if (portfolioRows.length) await supabase.from('portfolio_items').insert(portfolioRows);
+      } catch {
+        savedListing = enriched;
+      }
+    }
+    const updated = [savedListing, ...listings.filter(item => item.user_id !== user?.id)];
     setListings(updated);
     saveListings(updated);
     if (onSwitchToSearch) onSwitchToSearch();
@@ -1003,29 +1257,35 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
   // ── Register mode ──
   if (mode === 'register') {
     return (
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
         {/* Hero */}
-        <div className="text-center mb-8">
-          <h1 className={`font-display text-3xl font-bold mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>
+        <div className="text-center mb-10">
+          <p className="text-gold-400 mb-4" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+            Verified creative talent only
+          </p>
+          <h1 className={`font-display text-4xl md:text-5xl font-bold mb-4 ${dark ? 'text-white' : 'text-gray-900'}`}>
             Join <span className="text-gradient-gold">CreatorBridge</span>
           </h1>
-          <p className={`text-sm ${textSub} max-w-lg mx-auto`}>
-            List your services, set your rates, and let clients find you. Creators from all over the world are signing up.
+          <p className={`text-sm md:text-base leading-7 ${textSub} max-w-2xl mx-auto`}>
+            Apply to list your services, set professional rates, and get reviewed for a curated marketplace built for US-based media creators.
           </p>
         </div>
 
-        <div className={`rounded-2xl border p-6 ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`}>
+        <div className={`relative overflow-hidden rounded-[28px] border p-5 md:p-8 ${
+          dark ? 'bg-charcoal-900/72 border-white/[0.08] shadow-[0_30px_100px_rgba(0,0,0,0.35)]' : 'bg-white border-gray-200'
+        }`}>
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/60 to-transparent" />
           <RegisterForm onSave={handleSaveListing} dark={dark} user={user} />
         </div>
 
         {/* Stats */}
-        <div className={`mt-6 grid grid-cols-3 gap-4 text-center`}>
+        <div className={`mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center`}>
           {[
-            { n: listings.length, label: 'Creators listed' },
+            { n: listings.filter(isApprovedCreator).length, label: 'Approved creators' },
             { n: Object.keys(SERVICES).length, label: 'Service types' },
             { n: new Set(listings.map(l => l.location?.country).filter(Boolean)).size, label: 'Countries' },
           ].map(({ n, label }) => (
-            <div key={label} className={`rounded-xl border p-3 ${dark ? 'border-charcoal-700 bg-charcoal-800' : 'border-gray-200 bg-white'}`}>
+            <div key={label} className={`rounded-2xl border p-4 ${dark ? 'border-white/[0.07] bg-white/[0.03]' : 'border-gray-200 bg-white'}`}>
               <p className="font-display text-xl font-bold text-gradient-gold">{n}</p>
               <p className={`text-[10px] ${textSub}`}>{label}</p>
             </div>
@@ -1037,155 +1297,223 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
 
   // ── Search mode (default) ──
 
-  const FEE_ROWS = [
-    { label: 'Creator fee',          cm: '10% → 6%',   fiv: '20%',     up: '10-20%',  tt: 'Pay to bid' },
-    { label: 'Client fee',           cm: '5% booking', fiv: '5.5%+',   up: '3-5%',    tt: 'Free' },
-    { label: 'Payment protection',   cm: 'Yes',        fiv: 'Yes',     up: 'Yes',     tt: 'No' },
-    { label: 'Verified creators',    cm: 'Yes',        fiv: 'Partial', up: 'Partial', tt: 'No' },
-    { label: 'Fee drops w/ loyalty', cm: 'Yes',        fiv: 'No',      up: 'No',      tt: 'No' },
+  const MARKETPLACE_PROOFS = [
+    { label: 'Creator review', value: 'Manual', detail: 'Profiles are checked before they publish.' },
+    { label: 'Payment rhythm', value: '50 / 50', detail: 'Retainer upfront, final payment on delivery.' },
+    { label: 'Creator fee', value: '10% to 6%', detail: 'Fees drop as completed work grows.' },
+  ];
+
+  const VALUE_PILLARS = [
+    { headline: 'Curated media professionals', desc: 'CreatorBridge is built for video, photo, podcast, drone, events, and content production work, not general gig listings.' },
+    { headline: 'Cleaner client decisions', desc: 'Brands can review focused creator profiles, service fit, availability, and reputation before starting a project.' },
+    { headline: 'A marketplace with standards', desc: 'Creator profiles are gated by experience, portfolio, verification, and platform rules before they can go live.' },
+  ];
+
+  const PROCESS_STEPS = [
+    { step: '01', title: 'Define the production need', copy: 'Choose the service type, market, budget range, and delivery expectations.' },
+    { step: '02', title: 'Review curated creator fit', copy: 'Browse verified media specialists instead of sorting through general gig profiles.' },
+    { step: '03', title: 'Book with protected payments', copy: 'Use the 50% retainer and 50% delivery structure to keep both sides accountable.' },
+  ];
+
+  const COMPARISON_ROWS = [
+    { label: 'Creator fee', creatorbridge: '10% to 6%', alternative: 'Often up to 20%' },
+    { label: 'Client booking fee', creatorbridge: '5%', alternative: 'Often higher or unclear' },
+    { label: 'Media-only focus', creatorbridge: 'Yes', alternative: 'Usually broad categories' },
+    { label: 'Verified creator standards', creatorbridge: 'Required', alternative: 'Mixed or self-managed' },
+    { label: 'Protected payment structure', creatorbridge: '50 / 50', alternative: 'Varies by platform' },
   ];
 
   const TAB_STYLE_BASE = {
-    padding: '14px 20px',
+    padding: '10px 14px',
     fontSize: '11px',
-    letterSpacing: '1.5px',
+    letterSpacing: '1.4px',
     textTransform: 'uppercase',
     fontFamily: 'inherit',
-    background: 'none',
-    border: 'none',
+    background: 'rgba(255,255,255,0.025)',
+    border: '1px solid rgba(212,169,65,0.1)',
+    borderRadius: '999px',
     cursor: 'pointer',
     whiteSpace: 'nowrap',
-    transition: 'color 0.2s, border-color 0.2s',
+    transition: 'color 0.2s, border-color 0.2s, background 0.2s, box-shadow 0.2s',
   };
 
-  const cardBg = dark
-    ? { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }
-    : { background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.08)' };
-
   return (
-    <div className="w-full">
+    <div className="w-full overflow-hidden">
 
       {/* 1. Service filter bar */}
       <div
         className="w-full overflow-x-auto no-scrollbar"
-        style={{ borderBottom: dark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)' }}
+        style={{
+          borderBottom: dark ? '1px solid rgba(212,169,65,0.16)' : '1px solid rgba(0,0,0,0.08)',
+          background: dark ? 'linear-gradient(90deg, rgba(13,13,24,0.92), rgba(22,22,42,0.7), rgba(13,13,24,0.92))' : 'rgba(255,255,255,0.86)',
+        }}
       >
-        <div className="flex min-w-max px-10">
-          <button
-            type="button"
-            onClick={() => setServiceFilter('all')}
-            className={serviceFilter === 'all' ? 'text-gold-400' : 'text-charcoal-200 hover:text-white'}
-            style={{ ...TAB_STYLE_BASE, borderBottom: serviceFilter === 'all' ? '2px solid #d4a941' : '2px solid transparent' }}
-          >
-            All Services
-          </button>
-          {Object.values(SERVICES).map(s => (
+        <div className="mx-auto flex min-w-max max-w-[1520px] items-center gap-3 px-5 py-3 sm:px-8 lg:px-12">
+          <div className="hidden xl:flex mr-2 items-center gap-3 pr-4 border-r border-gold-500/14">
+            <span className="h-2 w-2 rounded-full bg-gold-400 shadow-[0_0_16px_rgba(212,169,65,0.55)]" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-gold-400">Production categories</span>
+          </div>
+          {[
+            ...MARKETPLACE_CATEGORIES,
+          ].map(s => (
             <button
               key={s.id}
               type="button"
               onClick={() => setServiceFilter(s.id)}
               className={serviceFilter === s.id ? 'text-gold-400' : 'text-charcoal-200 hover:text-white'}
-              style={{ ...TAB_STYLE_BASE, borderBottom: serviceFilter === s.id ? '2px solid #d4a941' : '2px solid transparent', display: 'flex', alignItems: 'center', gap: '6px' }}
+              style={{
+                ...TAB_STYLE_BASE,
+                borderColor: serviceFilter === s.id ? 'rgba(212,169,65,0.55)' : 'rgba(212,169,65,0.1)',
+                background: serviceFilter === s.id ? 'rgba(212,169,65,0.13)' : 'rgba(255,255,255,0.025)',
+                boxShadow: serviceFilter === s.id ? '0 0 24px rgba(212,169,65,0.12)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '7px',
+              }}
             >
-              <span>{s.icon}</span>{s.name}
+              <span>{s.icon}</span><span>{s.name}</span>
             </button>
           ))}
+          <div className="hidden 2xl:flex ml-auto items-center gap-2 pl-4 text-[10px] font-bold uppercase tracking-[0.18em] text-charcoal-300">
+            <span className="h-px w-12 bg-gold-500/35" />
+            Verified creators only
+          </div>
         </div>
       </div>
 
       {/* Page content wrapper */}
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="mx-auto w-full max-w-[1520px] px-5 sm:px-8 lg:px-12">
 
-        {/* 2. Two-column hero */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 py-10 sm:py-14">
+        {/* 2. Editorial hero */}
+        <section className="relative py-12 sm:py-16 lg:py-20">
+          <div
+            className="absolute inset-x-0 top-8 h-px"
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(212,169,65,0.45), transparent)' }}
+          />
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.15fr)_minmax(420px,0.85fr)] gap-10 lg:gap-14 items-center">
 
-          {/* Left column */}
-          <div className="flex flex-col justify-center">
-            <p
-              className="text-gold-400 mb-5"
-              style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}
-            >
-              Media Production and Digital Content Services
-            </p>
-            <h1
-              className={`leading-tight mb-5 ${dark ? 'text-white' : 'text-gray-900'}`}
-              style={{ fontFamily: "'Georgia', 'Times New Roman', serif", fontWeight: 400, fontSize: 'clamp(26px, 3.5vw, 42px)' }}
-            >
-              Where creators meet{' '}
-              <em className="text-gold-400">brands and clients.</em>
-            </h1>
-            <p className={`mb-8 ${textSub}`} style={{ fontSize: '14px', maxWidth: '420px', lineHeight: '1.7' }}>
-              CreatorBridge connects videographers, photographers, podcast producers, drone operators, and digital content specialists with brands and clients who need their work.
-            </p>
-            <div className="flex gap-3 flex-wrap">
-              <button
-                type="button"
-                onClick={() => document.getElementById('creator-search')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-                className="bg-gold-500 hover:bg-gold-600 text-charcoal-900 font-bold transition-all"
-                style={{ padding: '14px 28px', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', borderRadius: 0, border: 'none', cursor: 'pointer' }}
+            {/* Left column */}
+            <div className="relative z-10 max-w-5xl">
+              <div className="mb-7 flex flex-wrap items-center gap-3">
+                <span
+                  className="text-gold-400"
+                  style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}
+                >
+                  Curated media production marketplace
+                </span>
+                <span className="hidden sm:block h-px w-20 bg-gold-500/35" />
+                <span className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} text-[11px] font-semibold uppercase tracking-[0.18em]`}>
+                  Phoenix built, national reach
+                </span>
+              </div>
+              <h1
+                className={`max-w-5xl leading-[0.96] ${dark ? 'text-white' : 'text-gray-950'}`}
+                style={{ fontFamily: "'Georgia', 'Times New Roman', serif", fontWeight: 400, fontSize: 'clamp(42px, 7.6vw, 118px)' }}
               >
-                Find Creators
-              </button>
-              <button
-                type="button"
-                onClick={onSwitchToRegister}
-                className={`font-bold transition-all ${dark ? 'text-white hover:text-gold-400' : 'text-gray-900 hover:text-gold-500'}`}
-                style={{ padding: '14px 28px', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', borderRadius: 0, background: 'none', border: dark ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(0,0,0,0.2)', cursor: 'pointer' }}
+                Verified creative talent for brands that need the work done right.
+              </h1>
+              <div className="mt-8 grid grid-cols-1 lg:grid-cols-[minmax(0,520px)_auto] gap-6 lg:gap-10 items-end">
+                <p className={`${dark ? 'text-charcoal-200' : 'text-gray-700'} text-base sm:text-lg leading-8`}>
+                  CreatorBridge connects brands with reviewed videographers, photographers, podcast producers, drone operators, event crews, and content specialists who are built for professional production work.
+                </p>
+                <div className="flex gap-3 flex-wrap lg:justify-end">
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById('creator-search')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                    className="bg-gold-500 hover:bg-gold-600 text-charcoal-900 font-bold transition-all inline-flex items-center gap-2"
+                    style={{ padding: '15px 26px', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', borderRadius: 8, border: 'none', cursor: 'pointer', boxShadow: '0 18px 42px rgba(212,169,65,0.18)' }}
+                  >
+                    Find Creators <ArrowRight size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onSwitchToRegister}
+                    className={`font-bold transition-all ${dark ? 'text-white hover:text-gold-400' : 'text-gray-900 hover:text-gold-500'}`}
+                    style={{ padding: '15px 24px', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', borderRadius: 8, background: dark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)', border: dark ? '1px solid rgba(212,169,65,0.28)' : '1px solid rgba(0,0,0,0.18)', cursor: 'pointer' }}
+                  >
+                    Join as Creator
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right column */}
+            <div className="relative">
+              <div
+                className="absolute -inset-8 opacity-70"
+                style={{ background: 'radial-gradient(circle at 50% 30%, rgba(212,169,65,0.12), transparent 62%)' }}
+              />
+              <div
+                className={`relative overflow-hidden rounded-lg border p-5 sm:p-6 ${dark ? 'bg-charcoal-950/80 border-gold-500/25' : 'bg-white/90 border-gold-500/20'}`}
+                style={{ boxShadow: dark ? '0 28px 90px rgba(0,0,0,0.36)' : '0 24px 80px rgba(0,0,0,0.12)' }}
               >
-                Join as Creator
-              </button>
+                <div
+                  className="absolute inset-x-0 top-0 h-1"
+                  style={{ background: 'linear-gradient(90deg, transparent, rgba(212,169,65,0.85), transparent)' }}
+                />
+                <p className="text-gold-400 mb-5" style={{ fontSize: '10px', letterSpacing: '2.5px', textTransform: 'uppercase' }}>
+                  Marketplace standards
+                </p>
+                <div className="space-y-3">
+                  {MARKETPLACE_PROOFS.map(({ label, value, detail }) => (
+                    <div
+                      key={label}
+                      className={`rounded-lg border p-4 ${dark ? 'bg-white/[0.035] border-white/[0.07]' : 'bg-gray-50 border-gray-200'}`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className={`${dark ? 'text-charcoal-300' : 'text-gray-500'} text-[10px] font-bold uppercase tracking-[0.18em]`}>{label}</p>
+                          <p className={`${dark ? 'text-white' : 'text-gray-950'} mt-1 text-sm font-semibold`}>{detail}</p>
+                        </div>
+                        <p className="shrink-0 text-right font-display text-xl font-bold text-gold-400">{value}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className={`mt-5 rounded-lg border px-4 py-3 ${dark ? 'bg-gold-500/10 border-gold-500/25' : 'bg-gold-50 border-gold-200'}`}>
+                  <p className={`${dark ? 'text-gold-200' : 'text-gold-800'} text-sm font-bold`}>Built for serious production work</p>
+                  <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} mt-1 text-xs leading-5`}>
+                    Profiles, packages, booking flow, and payment structure are designed around media projects that need trust before the first invoice.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
+        </section>
 
-          {/* Right column — stat cards */}
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between" style={{ ...cardBg, padding: '20px 24px', borderRadius: 0 }}>
-              <div>
-                <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#6b6b8a', marginBottom: '4px' }}>For Creators</p>
-                <p className={`text-sm font-medium ${dark ? 'text-white' : 'text-gray-900'}`}>Keep more of what you earn</p>
-              </div>
-              <div className="text-right shrink-0">
-                <p className="text-gold-400 font-bold" style={{ fontSize: '22px', lineHeight: 1 }}>10%</p>
-                <p style={{ fontSize: '11px', color: '#6b6b8a', marginTop: '2px' }}>platform fee, drops to 6%</p>
-              </div>
+        {/* 3. Curation strip */}
+        <section className="mb-8 grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4 lg:gap-6 items-stretch">
+          <div className={`rounded-lg border p-5 flex flex-col justify-between ${dark ? 'bg-charcoal-950/80 border-gold-500/20' : 'bg-white border-gray-200'}`}>
+            <div>
+              <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
+                Guided discovery
+              </p>
+              <p className={`${dark ? 'text-white' : 'text-gray-950'} font-display text-2xl font-bold leading-tight`}>
+                Start with fit, not endless scrolling.
+              </p>
             </div>
-
-            <div className="flex items-center justify-between" style={{ ...cardBg, padding: '20px 24px', borderRadius: 0 }}>
-              <div>
-                <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#6b6b8a', marginBottom: '4px' }}>For Clients</p>
-                <p className={`text-sm font-medium ${dark ? 'text-white' : 'text-gray-900'}`}>Stress-free booking</p>
-              </div>
-              <div className="text-right shrink-0">
-                <p className="text-gold-400 font-bold" style={{ fontSize: '22px', lineHeight: 1 }}>5%</p>
-                <p style={{ fontSize: '11px', color: '#6b6b8a', marginTop: '2px' }}>booking fee only</p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between" style={{ ...cardBg, padding: '20px 24px', borderRadius: 0 }}>
-              <div>
-                <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#6b6b8a', marginBottom: '4px' }}>Payment Protection</p>
-                <p className={`text-sm font-medium ${dark ? 'text-white' : 'text-gray-900'}`}>50% retainer, 50% on delivery</p>
-              </div>
-              <div className="text-right shrink-0">
-                <p className="text-gold-400 font-bold" style={{ fontSize: '14px', lineHeight: 1 }}>Always</p>
-                <p style={{ fontSize: '11px', color: '#6b6b8a', marginTop: '2px' }}>secured by Stripe</p>
-              </div>
+            <div className="mt-5">
+              <FastMatch dark={dark} />
             </div>
           </div>
-        </div>
-
-        {/* 3. Fast Match */}
-        <div className="flex justify-center mb-3">
-          <FastMatch dark={dark} />
-        </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {PROCESS_STEPS.map(({ step, title, copy }) => (
+              <div key={step} className={`rounded-lg border p-5 ${dark ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-white border-gray-200'}`}>
+                <p className="text-gold-400 font-display text-xl font-bold">{step}</p>
+                <p className={`${dark ? 'text-white' : 'text-gray-950'} mt-3 text-sm font-bold`}>{title}</p>
+                <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} mt-2 text-xs leading-5`}>{copy}</p>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {/* 4. Search bar (logged-in only) / Guest banner */}
         {isGuest ? (
-          <div className="rounded-xl border border-gold-500/40 bg-gold-500/8 p-4 mb-4 flex items-center justify-between gap-4 flex-wrap">
+          <div id="creator-search" className="rounded-lg border border-gold-500/35 bg-gold-500/10 p-5 mb-5 flex items-center justify-between gap-4 flex-wrap">
             <div>
-              <p className="text-sm font-bold text-gold-400 mb-1">Browsing as a guest</p>
-              <p className="text-xs text-charcoal-400">
-                You are seeing 3 verified creators today. These rotate daily. Create a free account to browse all creators, view full profiles, packages, and rates.
+              <p className="text-sm font-bold text-gold-400 mb-1">Daily curated preview</p>
+              <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} text-xs leading-5`}>
+                Guests see 3 verified creators each day. Create a free account to browse full profiles, packages, rates, and project requests.
               </p>
             </div>
             <button
@@ -1199,8 +1527,8 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
           <>
             <div
               id="creator-search"
-              className={`flex overflow-hidden mb-3 shadow-sm ${dark ? 'bg-charcoal-800' : 'bg-white'}`}
-              style={{ border: dark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.12)' }}
+              className={`flex overflow-hidden mb-3 shadow-sm rounded-lg ${dark ? 'bg-charcoal-950/80' : 'bg-white'}`}
+              style={{ border: dark ? '1px solid rgba(212,169,65,0.22)' : '1px solid rgba(0,0,0,0.12)' }}
             >
               <div className="relative flex-1 flex items-center">
                 <Search size={16} className={`absolute left-4 pointer-events-none ${dark ? 'text-charcoal-400' : 'text-gray-400'}`} />
@@ -1209,7 +1537,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Search by name, service, location, or specialty..."
-                  className={`w-full pl-11 pr-4 py-3 text-sm bg-transparent outline-none ${dark ? 'text-white placeholder-charcoal-500' : 'text-gray-900 placeholder-gray-400'}`}
+                  className={`w-full pl-11 pr-4 py-4 text-sm bg-transparent outline-none ${dark ? 'text-white placeholder-charcoal-400' : 'text-gray-900 placeholder-gray-400'}`}
                 />
               </div>
               <button
@@ -1246,7 +1574,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                         placeholder="e.g. 90210"
                         className={`w-full pl-9 pr-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
                     </div>
-                    {zipCity && <p className="text-[10px] text-teal-400 mt-1">{zipCity}</p>}
+                    {zipCity && <p className="text-[10px] text-gold-400 mt-1">{zipCity}</p>}
                   </div>
                   <div>
                     <p className={`text-xs font-medium mb-1 ${textSub}`}>Sort By</p>
@@ -1267,20 +1595,25 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
 
         {/* 5. Spotlight */}
         {spotlightCreators.length > 0 && (
-          <div className="mt-4 mb-4">
-            <div className="flex items-center gap-2 mb-1">
-              <BadgeCheck size={15} className="text-teal-400" />
-              <h2 className={`font-display font-bold text-sm ${dark ? 'text-white' : 'text-gray-900'}`}>
-                Recently Verified Creators
-              </h2>
+          <section className="mt-8 mb-6">
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <BadgeCheck size={15} className="text-gold-400" />
+                  <h2 className={`font-display font-bold text-xl ${dark ? 'text-white' : 'text-gray-900'}`}>
+                    Recently verified creators
+                  </h2>
+                </div>
+                <p className={`text-sm ${textSub}`}>A rotating look at fresh professional talent ready for real production work.</p>
+              </div>
+              <p className="text-gold-400 text-[10px] font-bold uppercase tracking-[0.2em]">Curated preview</p>
             </div>
-            <p className={`text-xs mb-3 ${textSub}`}>Fresh talent, verified and ready to work.</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
               {spotlightCreators.map(creator => (
                 <CreatorCard key={creator.id} creator={creator} dark={dark} />
               ))}
             </div>
-          </div>
+          </section>
         )}
 
         {/* Results count (logged-in only) */}
@@ -1296,17 +1629,17 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
 
         {/* 6. Creator cards grid */}
         {displayListings.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+          <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
             {displayListings.map(creator => (
               <CreatorCard
                 key={creator.id}
                 creator={creator}
                 dark={dark}
-                onViewProfile={isGuest ? () => setShowGuestGate(true) : undefined}
+                onViewProfile={isGuest && !creator.id?.startsWith('seed-') ? () => setShowGuestGate(true) : undefined}
                 onDelete={!isGuest && !creator.id?.startsWith('seed-') ? () => handleDelete(creator.id) : undefined}
               />
             ))}
-          </div>
+          </section>
         ) : (
           <div className={`border p-10 text-center ${dark ? 'border-charcoal-700 text-charcoal-500' : 'border-gray-200 text-gray-400'}`}>
             <p className="text-4xl mb-2">{searchQuery ? '🔍' : '🎬'}</p>
@@ -1320,24 +1653,28 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
         )}
 
         {/* 7. CTA */}
-        <div
-          className={`mt-8 p-6 text-center`}
-          style={{ border: dark ? '1px dashed rgba(255,255,255,0.12)' : '1px dashed rgba(0,0,0,0.15)' }}
-        >
-          <p className={`font-display text-base font-bold mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>
-            Are you a content creator?
-          </p>
-          <p className={`text-xs mb-4 ${textSub} max-w-md mx-auto`}>
-            List your services and rates so clients worldwide can find you. It is free to join.
-          </p>
+        <div className={`mt-10 rounded-lg border p-7 sm:p-8 ${dark ? 'bg-charcoal-950/80 border-gold-500/20' : 'bg-white border-gray-200'}`}>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 items-center">
+            <div>
+              <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
+                For working creators
+              </p>
+              <p className={`font-display text-2xl font-bold mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>
+                Bring your best work into a marketplace with standards.
+              </p>
+              <p className={`text-sm ${textSub} max-w-2xl`}>
+                List focused services, show proof of experience, and meet clients who need professional media production.
+              </p>
+            </div>
           <button
             type="button"
             onClick={onSwitchToRegister}
-            className="bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold transition-all flex items-center gap-2 mx-auto"
-            style={{ padding: '12px 24px', borderRadius: 0, border: 'none', cursor: 'pointer' }}
+            className="bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold transition-all flex items-center gap-2 justify-center"
+            style={{ padding: '14px 24px', borderRadius: 8, border: 'none', cursor: 'pointer' }}
           >
             <UserPlus size={14} /> Join as Creator
           </button>
+          </div>
         </div>
 
       </div>
@@ -1376,96 +1713,70 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
         </div>
       )}
 
-      {/* 8. Two-column bottom: fee table + value props */}
-      <div
-        className="max-w-7xl mx-auto px-6 py-12"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}
+      {/* 8. Bottom value section */}
+      <section
+        className="mx-auto w-full max-w-[1520px] px-5 sm:px-8 lg:px-12 py-14"
+        style={{ borderTop: '1px solid rgba(212,169,65,0.14)' }}
       >
-        <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-12 items-start">
-
-          {/* Left: compact fee comparison table */}
+        <div className="grid grid-cols-1 lg:grid-cols-[0.75fr_1.25fr] gap-8 lg:gap-12 items-start">
           <div>
-            <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
-              Transparent Pricing
+            <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+              Why CreatorBridge
             </p>
-            <p
-              className={`mb-6 ${dark ? 'text-white' : 'text-gray-900'}`}
-              style={{ fontFamily: "'Georgia','Times New Roman',serif", fontSize: '18px', fontStyle: 'italic', fontWeight: 400 }}
+            <h2
+              className={`${dark ? 'text-white' : 'text-gray-950'} max-w-xl leading-tight`}
+              style={{ fontFamily: "'Georgia','Times New Roman',serif", fontWeight: 400, fontSize: 'clamp(30px, 4vw, 58px)' }}
             >
-              How our fees compare
+              A more disciplined way to find creative production talent.
+            </h2>
+            <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} mt-5 max-w-lg text-sm leading-7`}>
+              CreatorBridge gives clients a cleaner path to vetted media specialists while giving creators a platform that respects professional standards and protected payment structure.
             </p>
-            <table className="w-full border-collapse">
-              <thead>
-                <tr>
-                  {[
-                    { label: 'Feature',       gold: false },
-                    { label: 'CreatorBridge',  gold: true  },
-                    { label: 'Fiverr',        gold: false },
-                    { label: 'Upwork',        gold: false },
-                    { label: 'Thumbtack',     gold: false },
-                  ].map(({ label, gold }, i) => (
-                    <th
-                      key={label}
-                      style={{
-                        fontSize: '10px',
-                        letterSpacing: '1.5px',
-                        textTransform: 'uppercase',
-                        color: gold ? '#d4a941' : '#6b6b8a',
-                        fontWeight: 700,
-                        textAlign: i === 0 ? 'left' : 'center',
-                        paddingBottom: '10px',
-                        paddingTop: 0,
-                      }}
-                    >
-                      {label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {FEE_ROWS.map(row => (
-                  <tr key={row.label} style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                    <td style={{ fontSize: '12px', color: dark ? '#a0a0b8' : '#555', padding: '8px 0', textAlign: 'left' }}>{row.label}</td>
-                    <td style={{ fontSize: '12px', color: '#d4a941', fontWeight: 600, padding: '8px 4px', textAlign: 'center' }}>{row.cm}</td>
-                    <td style={{ fontSize: '12px', color: dark ? '#6b6b8a' : '#888', padding: '8px 4px', textAlign: 'center' }}>{row.fiv}</td>
-                    <td style={{ fontSize: '12px', color: dark ? '#6b6b8a' : '#888', padding: '8px 4px', textAlign: 'center' }}>{row.up}</td>
-                    <td style={{ fontSize: '12px', color: dark ? '#6b6b8a' : '#888', padding: '8px 4px', textAlign: 'center' }}>{row.tt}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
 
-          {/* Right: value props */}
-          <div>
-            <div className="space-y-6">
-              {[
-                { headline: 'Built for media professionals',    desc: 'Not a general gig platform. Every creator is a verified media specialist.' },
-                { headline: 'Your fee drops the more you work', desc: 'Start at 10%, earn down to 6% as your completed projects grow.' },
-                { headline: 'Protected payments, every time',   desc: '50% retainer upfront, 50% on delivery approval. Never chase an invoice again.' },
-                { headline: 'Curated matches, not a crowd',     desc: 'Smart Match finds your top 3 to 5 fits. No scrolling through hundreds of unqualified profiles.' },
-              ].map(({ headline, desc }) => (
-                <div key={headline} className="flex gap-3">
-                  <span className="text-gold-400 shrink-0 mt-0.5" style={{ fontSize: '14px', lineHeight: 1 }}>&#8212;</span>
-                  <div>
-                    <p className={`text-sm font-bold mb-0.5 ${dark ? 'text-white' : 'text-gray-900'}`}>{headline}</p>
-                    <p style={{ fontSize: '12px', color: '#6b6b8a', lineHeight: 1.55 }}>{desc}</p>
-                  </div>
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {VALUE_PILLARS.map(({ headline, desc }) => (
+                <div key={headline} className={`rounded-lg border p-5 ${dark ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-white border-gray-200'}`}>
+                  <div className="mb-5 h-px w-14 bg-gold-500/65" />
+                  <p className={`${dark ? 'text-white' : 'text-gray-950'} text-sm font-bold leading-5`}>{headline}</p>
+                  <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} mt-3 text-xs leading-5`}>{desc}</p>
                 </div>
               ))}
             </div>
-            <button
-              type="button"
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className={`mt-8 font-bold transition-all ${dark ? 'text-white hover:text-gold-400' : 'text-gray-900 hover:text-gold-500'}`}
-              style={{ padding: '12px 24px', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', background: 'none', border: dark ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(0,0,0,0.15)', borderRadius: 0, cursor: 'pointer' }}
-            >
-              See How It Works
-            </button>
-          </div>
 
+            <div className={`rounded-lg border overflow-hidden ${dark ? 'bg-charcoal-950/80 border-gold-500/20' : 'bg-white border-gray-200'}`}>
+              <div className={`grid grid-cols-1 md:grid-cols-[1fr_0.8fr_0.9fr] gap-0 ${dark ? 'border-b border-gold-500/14' : 'border-b border-gray-200'}`}>
+                <div className="p-5">
+                  <p className="text-gold-400 mb-1" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
+                    Fee comparison
+                  </p>
+                  <p className={`${dark ? 'text-white' : 'text-gray-950'} text-lg font-display font-bold`}>
+                    Built to cost less and feel more focused.
+                  </p>
+                </div>
+                <div className="hidden md:flex items-end p-5">
+                  <p className="text-gold-400 text-[10px] font-bold uppercase tracking-[0.18em]">CreatorBridge</p>
+                </div>
+                <div className="hidden md:flex items-end p-5">
+                  <p className={`${dark ? 'text-charcoal-400' : 'text-gray-500'} text-[10px] font-bold uppercase tracking-[0.18em]`}>General marketplaces</p>
+                </div>
+              </div>
+
+              {COMPARISON_ROWS.map(({ label, creatorbridge, alternative }) => (
+                <div
+                  key={label}
+                  className={`grid grid-cols-1 md:grid-cols-[1fr_0.8fr_0.9fr] gap-2 md:gap-0 px-5 py-4 ${dark ? 'border-b border-white/[0.06]' : 'border-b border-gray-100'} last:border-b-0`}
+                >
+                  <p className={`${dark ? 'text-charcoal-200' : 'text-gray-700'} text-sm font-semibold`}>{label}</p>
+                  <p className="text-gold-400 text-sm font-bold">{creatorbridge}</p>
+                  <p className={`${dark ? 'text-charcoal-400' : 'text-gray-500'} text-sm`}>{alternative}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
     </div>
   );

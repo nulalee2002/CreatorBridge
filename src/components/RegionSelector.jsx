@@ -33,14 +33,14 @@ export function RegionSelector({ value, onChange, dark = true }) {
     regions: Object.entries(REGIONS).filter(([, r]) => r.group === group),
   }));
 
-  const bg       = dark ? 'bg-charcoal-800 border-charcoal-600' : 'bg-white border-gray-200';
-  const dropBg   = dark ? 'bg-charcoal-800 border-charcoal-600' : 'bg-white border-gray-200';
-  const hoverRow = dark ? 'hover:bg-charcoal-700' : 'hover:bg-gray-50';
+  const bg       = dark ? 'bg-charcoal-900/72 border-white/[0.08]' : 'bg-white border-gray-200';
+  const dropBg   = dark ? 'bg-charcoal-950/96 border-white/[0.09] shadow-[0_24px_80px_rgba(0,0,0,0.36)]' : 'bg-white border-gray-200';
+  const hoverRow = dark ? 'hover:bg-white/[0.06]' : 'hover:bg-gray-50';
   const textMain = dark ? 'text-white' : 'text-gray-900';
-  const textSub  = dark ? 'text-charcoal-400' : 'text-gray-500';
-  const groupLbl = dark ? 'text-charcoal-500 border-charcoal-700' : 'text-gray-400 border-gray-100';
+  const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
+  const groupLbl = dark ? 'text-charcoal-300 border-white/[0.07]' : 'text-gray-400 border-gray-100';
   const inputCls = dark
-    ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40'
+    ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40'
     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500';
 
   return (
@@ -69,7 +69,7 @@ export function RegionSelector({ value, onChange, dark = true }) {
           <div className={`absolute left-0 right-0 top-full mt-2 z-40 rounded-xl border shadow-2xl ${dropBg} overflow-hidden animate-slide-up`}>
 
             {/* Tab switcher */}
-            <div className={`flex border-b ${dark ? 'border-charcoal-700' : 'border-gray-100'}`}>
+            <div className={`flex border-b ${dark ? 'border-white/[0.07]' : 'border-gray-100'}`}>
               {[
                 { id: 'browse', label: '🗺 Browse Regions' },
                 { id: 'zip',    label: '🔍 Search by ZIP' },
@@ -111,7 +111,7 @@ export function RegionSelector({ value, onChange, dark = true }) {
 
                 {/* Result */}
                 {zipResult === 'not_found' && zip.length >= 3 && (
-                  <div className={`rounded-xl px-4 py-3 border ${dark ? 'border-charcoal-700 bg-charcoal-900/60' : 'border-gray-200 bg-gray-50'}`}>
+                  <div className={`rounded-xl px-4 py-3 border ${dark ? 'border-white/[0.08] bg-charcoal-950/55' : 'border-gray-200 bg-gray-50'}`}>
                     <p className={`text-sm font-medium ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
                       ZIP {zip} not found in our database.
                     </p>
@@ -120,11 +120,11 @@ export function RegionSelector({ value, onChange, dark = true }) {
                 )}
 
                 {zipResult && zipResult !== 'not_found' && (
-                  <div className={`rounded-xl border overflow-hidden ${dark ? 'border-teal-500/40' : 'border-teal-400/40'}`}>
-                    <div className={`px-4 py-2 ${dark ? 'bg-teal-500/10' : 'bg-teal-50'}`}>
-                      <p className="text-xs font-bold text-teal-400 uppercase tracking-wider">Match Found</p>
+                  <div className={`rounded-xl border overflow-hidden ${dark ? 'border-gold-500/40' : 'border-gold-400/40'}`}>
+                    <div className={`px-4 py-2 ${dark ? 'bg-gold-500/10' : 'bg-gold-50'}`}>
+                      <p className="text-xs font-bold text-gold-400 uppercase tracking-wider">Match Found</p>
                     </div>
-                    <div className={`px-4 py-3 ${dark ? 'bg-charcoal-900/60' : 'bg-white'}`}>
+                    <div className={`px-4 py-3 ${dark ? 'bg-charcoal-950/55' : 'bg-white'}`}>
                       <div className="flex items-center justify-between">
                         <div>
                           {zipResult.city && (
@@ -133,7 +133,7 @@ export function RegionSelector({ value, onChange, dark = true }) {
                           <p className={`text-xs mt-0.5 ${textSub}`}>
                             {REGIONS[zipResult.region]?.flag} {REGIONS[zipResult.region]?.name}
                           </p>
-                          <p className={`text-[10px] mt-0.5 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
+                          <p className={`text-[10px] mt-0.5 ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
                             {REGIONS[zipResult.region]?.cities}
                           </p>
                         </div>
@@ -146,7 +146,7 @@ export function RegionSelector({ value, onChange, dark = true }) {
                   </div>
                 )}
 
-                <p className={`text-[10px] text-center ${dark ? 'text-charcoal-600' : 'text-gray-300'}`}>
+                <p className={`text-[10px] text-center ${dark ? 'text-charcoal-300' : 'text-gray-300'}`}>
                   Rates auto-fill based on matched market tier
                 </p>
               </div>
@@ -179,7 +179,7 @@ export function RegionSelector({ value, onChange, dark = true }) {
                           </div>
                         </div>
                         <div className={`text-[10px] shrink-0 px-1.5 py-0.5 rounded-full ${
-                          dark ? 'bg-charcoal-700 text-charcoal-400' : 'bg-gray-100 text-gray-400'
+                          dark ? 'bg-white/[0.08] text-charcoal-300' : 'bg-gray-100 text-gray-400'
                         }`}>
                           {region.nativeCurrency}
                         </div>

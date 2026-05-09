@@ -465,8 +465,8 @@ export const SERVICES = {
     id: 'video',
     name: 'Video Production',
     icon: '🎬',
-    color: 'from-purple-600 to-purple-800',
-    accent: '#9333ea',
+    color: 'from-gold-500 to-gold-700',
+    accent: '#d4a941',
     subtypes: ['Corporate', 'Wedding', 'Event', 'Music Video', 'Documentary', 'Social Media Content', 'Podcast (Video)', 'Podcast (Audio Only)'],
     description: 'Corporate, wedding, event, music video, documentary, podcast',
     primaryRates: ['hourlyShoot', 'halfDay', 'fullDay', 'editHourly'],
@@ -476,8 +476,8 @@ export const SERVICES = {
     id: 'photography',
     name: 'Photography',
     icon: '📷',
-    color: 'from-blue-600 to-blue-800',
-    accent: '#2563eb',
+    color: 'from-gold-400 to-gold-700',
+    accent: '#c99a2e',
     subtypes: ['Event', 'Commercial', 'Portraits', 'Headshots', 'Real Estate', 'Product'],
     description: 'Real estate, commercial, portraits, product, events',
     primaryRates: ['hourlyEvent', 'dayRateCommercial', 'editHourly'],
@@ -487,8 +487,8 @@ export const SERVICES = {
     id: 'drone',
     name: 'Drone / Aerial',
     icon: '🚁',
-    color: 'from-sky-600 to-sky-800',
-    accent: '#0284c7',
+    color: 'from-gold-500 to-charcoal-800',
+    accent: '#d4a941',
     subtypes: ['Real Estate', 'Event', 'Commercial', 'Mapping/Survey', 'Film/TV'],
     description: 'FAA Part 107, photo, video, mapping, real estate',
     primaryRates: ['hourlyPhoto', 'hourlyVideo', 'editingHourly'],
@@ -496,21 +496,21 @@ export const SERVICES = {
   },
   social: {
     id: 'social',
-    name: 'Social Media Content',
+    name: 'Brand & Short-Form Content',
     icon: '📱',
-    color: 'from-pink-600 to-pink-800',
-    accent: '#db2777',
+    color: 'from-gold-400 to-charcoal-900',
+    accent: '#c99a2e',
     subtypes: ['Reels/TikTok', 'YouTube', 'UGC', 'Brand Campaign', 'Monthly Package'],
-    description: 'Reels, TikTok, YouTube, brand campaigns, monthly packages',
+    description: 'Short-form video, UGC, brand campaigns, monthly content',
     primaryRates: ['singleReelTikTok', 'ugcPerVideo'],
     packageRates: ['contentDay', 'monthlyBasic', 'monthlyStandard', 'monthlyPremium', 'brandCampaignProject'],
   },
   postProduction: {
     id: 'postProduction',
-    name: 'Post-Production',
+    name: 'Editing & Post',
     icon: '🎛️',
-    color: 'from-orange-600 to-orange-800',
-    accent: '#ea580c',
+    color: 'from-gold-600 to-charcoal-900',
+    accent: '#b88622',
     subtypes: ['Video Editing', 'Color Grading', 'Audio Mix/Master', 'Motion Graphics', 'Photo Retouching'],
     description: 'Video editing, color, audio, motion graphics, retouching',
     primaryRates: ['videoEditingHourly', 'colorGradingHourly', 'audioMixPerEp', 'motionGraphicsHourly', 'photoRetouchingPerImg'],
@@ -518,10 +518,10 @@ export const SERVICES = {
   },
   liveevents: {
     id: 'liveevents',
-    name: 'Live Events',
+    name: 'Live Event Coverage',
     icon: '🎪',
-    color: 'from-rose-600 to-rose-800',
-    accent: '#e11d48',
+    color: 'from-gold-500 to-charcoal-950',
+    accent: '#d4a941',
     subtypes: ['Conference', 'Concert / Performance', 'Corporate Event', 'Festival', 'Sports', 'Gala / Awards'],
     description: 'Conferences, concerts, festivals, multi-day events, live streaming',
     primaryRates: ['halfDayEvent', 'fullDayEvent', 'photographyEvent'],
@@ -531,8 +531,8 @@ export const SERVICES = {
     id: 'corporate_events',
     name: 'Corporate Events',
     icon: '🏢',
-    color: 'from-amber-600 to-amber-800',
-    accent: '#d97706',
+    color: 'from-gold-400 to-gold-800',
+    accent: '#c99a2e',
     subtypes: ['Conference Coverage', 'Product Launch', 'Award Ceremony', 'Trade Show', 'Company Retreat', 'Executive Portraits at Events', 'Investor Presentation', 'Town Hall / All-Hands', 'Other'],
     description: 'Conference coverage, product launches, award ceremonies, trade shows, and executive events',
     primaryRates: ['halfDayRate', 'fullDayRate', 'conferenceDay'],
@@ -542,14 +542,140 @@ export const SERVICES = {
     id: 'podcast',
     name: 'Podcast Production',
     icon: '🎙️',
-    color: 'from-violet-600 to-violet-800',
-    accent: '#7c3aed',
+    color: 'from-gold-300 to-charcoal-900',
+    accent: '#d4a941',
     subtypes: ['Audio Only', 'Video Podcast', 'Remote Recording', 'In-Studio Recording', 'Show Launch Package', 'Monthly Retainer', 'Other'],
     description: 'Audio and video podcast production, remote and in-studio recording, show launches',
     primaryRates: ['episodeEdit', 'fullProductionPerEp', 'remoteRecordingPerEp'],
     packageRates: ['monthlyRetainer4Eps', 'showLaunchPackage'],
   },
 };
+
+export const SERVICE_TYPE_OPTIONS = Object.values(SERVICES).map(service => service.name);
+
+export const MARKETPLACE_CATEGORIES = [
+  {
+    id: 'all',
+    name: 'All Services',
+    icon: '✦',
+    description: 'Browse all verified production talent',
+    serviceIds: Object.keys(SERVICES),
+  },
+  {
+    id: 'video',
+    name: 'Video Production',
+    icon: '🎬',
+    description: 'Brand films, commercial video, documentary, campaign work',
+    serviceIds: ['video'],
+  },
+  {
+    id: 'photo',
+    name: 'Photography',
+    icon: '📷',
+    description: 'Commercial, event, product, real estate, portraits',
+    serviceIds: ['photography'],
+  },
+  {
+    id: 'podcast',
+    name: 'Podcast Production',
+    icon: '🎙️',
+    description: 'Audio, video podcast, launch packages, retainers',
+    serviceIds: ['podcast'],
+  },
+  {
+    id: 'aerial',
+    name: 'Drone & Aerial',
+    icon: '🚁',
+    description: 'Licensed aerial photo, video, mapping, property work',
+    serviceIds: ['drone'],
+  },
+  {
+    id: 'events',
+    name: 'Events & Corporate',
+    icon: '🏢',
+    description: 'Conferences, launches, live coverage, executive events',
+    serviceIds: ['liveevents', 'corporate_events'],
+  },
+  {
+    id: 'brand_content',
+    name: 'Brand Content',
+    icon: '📱',
+    description: 'Short-form assets, UGC, campaign content, monthly packages',
+    serviceIds: ['social'],
+  },
+  {
+    id: 'editing',
+    name: 'Editing & Post',
+    icon: '🎛️',
+    description: 'Editing, color, audio, retouching, motion graphics',
+    serviceIds: ['postProduction'],
+  },
+];
+
+export function getMarketplaceCategory(categoryId) {
+  return MARKETPLACE_CATEGORIES.find(category => category.id === categoryId) || MARKETPLACE_CATEGORIES[0];
+}
+
+export function getMarketplaceServiceIds(categoryId) {
+  return getMarketplaceCategory(categoryId).serviceIds || Object.keys(SERVICES);
+}
+
+export function serviceMatchesMarketplaceCategory(serviceId, categoryId) {
+  return getMarketplaceServiceIds(categoryId).includes(serviceId);
+}
+
+const SERVICE_ID_ALIASES = {
+  video: 'video',
+  video_production: 'video',
+  videoproduction: 'video',
+  'Video Production': 'video',
+  photography: 'photography',
+  photo: 'photography',
+  Photography: 'photography',
+  drone: 'drone',
+  drone_aerial: 'drone',
+  droneaerial: 'drone',
+  'Drone/Aerial': 'drone',
+  'Drone / Aerial': 'drone',
+  'Drone and Aerial': 'drone',
+  social: 'social',
+  socialmedia: 'social',
+  social_media: 'social',
+  socialmediacontent: 'social',
+  'Social Media Content': 'social',
+  'Brand & Short-Form Content': 'social',
+  'Brand and Short-Form Content': 'social',
+  brandcontent: 'social',
+  brandshortformcontent: 'social',
+  post: 'postProduction',
+  post_production: 'postProduction',
+  postproduction: 'postProduction',
+  'Post-Production': 'postProduction',
+  'Editing & Post': 'postProduction',
+  'Editing and Post': 'postProduction',
+  editingpost: 'postProduction',
+  liveevents: 'liveevents',
+  live_events: 'liveevents',
+  liveeventcoverage: 'liveevents',
+  'Live Event Coverage': 'liveevents',
+  'Live Events': 'liveevents',
+  eventscorporate: 'liveevents',
+  'Events & Corporate': 'liveevents',
+  corporate_events: 'corporate_events',
+  corporateevents: 'corporate_events',
+  'Corporate Events': 'corporate_events',
+  podcast: 'podcast',
+  podcastproduction: 'podcast',
+  'Podcast Production': 'podcast',
+};
+
+export function normalizeServiceId(value) {
+  if (!value) return null;
+  if (SERVICES[value]) return value;
+  if (SERVICE_ID_ALIASES[value]) return SERVICE_ID_ALIASES[value];
+  const compact = String(value).toLowerCase().replace(/[^a-z0-9]/g, '');
+  return SERVICE_ID_ALIASES[compact] || null;
+}
 
 // ─── PACKAGE TIER DEFINITIONS ──────────────────────────────────
 export const PACKAGE_TIERS = {

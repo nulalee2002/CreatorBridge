@@ -20,17 +20,17 @@ export function PackageComparison({ serviceId, regionKey, currency = 'USD', exch
   };
 
   const tierColors = {
-    basic:    { border: 'border-charcoal-600', badge: 'bg-charcoal-600 text-charcoal-200', btn: dark ? 'border-charcoal-500 text-charcoal-300' : 'border-gray-300 text-gray-600' },
+    basic:    { border: 'border-white/[0.08]', badge: 'bg-white/[0.08] text-charcoal-300', btn: dark ? 'border-white/[0.09] text-charcoal-300' : 'border-gray-300 text-gray-600' },
     standard: { border: 'border-gold-500/50',  badge: 'bg-gold-500/20 text-gold-400',     btn: 'border-gold-500 text-gold-400 bg-gold-500/5' },
-    premium:  { border: 'border-teal-500/50',  badge: 'bg-teal-500/20 text-teal-400',     btn: 'border-teal-500 text-teal-400 bg-teal-500/5' },
+    premium:  { border: 'border-gold-400/50',  badge: 'bg-gold-500/25 text-gold-300',     btn: 'border-gold-400 text-gold-300 bg-gold-500/10' },
   };
 
   return (
-    <div className={`rounded-2xl border p-5 ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`}>
+    <div className={`rounded-2xl border p-5 shadow-[0_24px_80px_rgba(0,0,0,0.16)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`}>
       <h3 className={`font-display font-bold text-base mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>
         Package Comparison
       </h3>
-      <p className={`text-xs mb-4 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
+      <p className={`text-xs mb-4 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
         Side-by-side view of all three tiers at market mid rates
       </p>
 
@@ -44,7 +44,7 @@ export function PackageComparison({ serviceId, regionKey, currency = 'USD', exch
               className={`rounded-xl border p-3 flex flex-col ${colors.border} ${
                 tierKey === 'standard'
                   ? dark ? 'bg-gold-500/5' : 'bg-gold-50/50'
-                  : dark ? 'bg-charcoal-900/40' : 'bg-gray-50/50'
+                  : dark ? 'bg-charcoal-950/45' : 'bg-gray-50/50'
               }`}
             >
               {/* Badge */}
@@ -59,16 +59,16 @@ export function PackageComparison({ serviceId, regionKey, currency = 'USD', exch
               <p className={`font-display text-xl font-bold mb-0.5 ${dark ? 'text-white' : 'text-gray-900'}`}>
                 {fmt(total)}
               </p>
-              <p className={`text-[10px] mb-3 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>est. at mid rates</p>
+              <p className={`text-[10px] mb-3 ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>est. at mid rates</p>
 
               {/* Description */}
-              <p className={`text-xs mb-3 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>{tierDef.description}</p>
+              <p className={`text-xs mb-3 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>{tierDef.description}</p>
 
               {/* Includes */}
               <ul className="space-y-1 flex-1 mb-3">
                 {(tierDef.includes || []).map((inc, i) => (
                   <li key={i} className={`flex items-start gap-1.5 text-[11px] ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
-                    <Check size={10} className="text-teal-400 mt-0.5 shrink-0" />
+                    <Check size={10} className="text-gold-400 mt-0.5 shrink-0" />
                     {inc}
                   </li>
                 ))}

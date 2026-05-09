@@ -99,9 +99,9 @@ export function ClientVerification({ user, dark, onComplete, requireLevel = 'bas
   const [saving, setSaving]   = useState(false);
   const [saved, setSaved]     = useState(false);
 
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
   const inputCls = `w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all ${
-    dark ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+    dark ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
          : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
   }`;
 
@@ -190,9 +190,9 @@ export function ClientVerification({ user, dark, onComplete, requireLevel = 'bas
     return (
       <div className="flex items-center gap-2">
         <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
-          done ? 'bg-teal-500/20' : dark ? 'bg-charcoal-700' : 'bg-gray-200'
+          done ? 'bg-gold-500/20 ring-1 ring-gold-500/25' : dark ? 'bg-white/[0.08]' : 'bg-gray-200'
         }`}>
-          {done ? <Check size={10} className="text-teal-400" /> : <X size={10} className={textSub} />}
+          {done ? <Check size={10} className="text-gold-400" /> : <X size={10} className={textSub} />}
         </div>
         <span className={`text-xs ${done ? (dark ? 'text-charcoal-300' : 'text-gray-600') : textSub}`}>{label}</span>
       </div>
@@ -200,7 +200,7 @@ export function ClientVerification({ user, dark, onComplete, requireLevel = 'bas
   }
 
   return (
-    <div className={`rounded-2xl border p-5 ${dark ? 'bg-charcoal-800 border-amber-500/30' : 'bg-amber-50 border-amber-200'}`}>
+    <div className={`rounded-2xl border p-5 shadow-[0_24px_80px_rgba(0,0,0,0.16)] ${dark ? 'bg-charcoal-900/72 border-gold-500/25' : 'bg-gold-50 border-gold-200'}`}>
       <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Account Verification Required</p>
       <p className={`text-sm font-semibold mb-4 ${dark ? 'text-white' : 'text-gray-900'}`}>
         Complete your profile to send messages and book creators.
@@ -268,9 +268,9 @@ export function ClientVerification({ user, dark, onComplete, requireLevel = 'bas
       </form>
 
       {/* Insurance notice */}
-      <div className={`mt-3 flex items-start gap-2 p-3 rounded-xl border ${dark ? 'border-amber-500/30 bg-amber-500/8' : 'border-amber-200 bg-amber-50'}`}>
-        <AlertCircle size={13} className="text-amber-400 shrink-0 mt-0.5" />
-        <p className={`text-[11px] leading-relaxed ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
+      <div className={`mt-3 flex items-start gap-2 p-3 rounded-xl border ${dark ? 'border-gold-500/25 bg-gold-500/10' : 'border-gold-200 bg-gold-50'}`}>
+        <AlertCircle size={13} className="text-gold-400 shrink-0 mt-0.5" />
+        <p className={`text-[11px] leading-relaxed ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
           CreatorBridge does not verify creator insurance. For on-site projects, confirm insurance coverage directly with your creator before booking.
         </p>
       </div>

@@ -58,8 +58,8 @@ const US_STATES = [
 
 const TIER_LABELS = {
   1: { label: 'Major Market', color: 'text-gold-400', bg: 'bg-gold-500/10', regionKey: 'us-tier1' },
-  2: { label: 'Mid-Market',   color: 'text-teal-400',  bg: 'bg-teal-500/10',  regionKey: 'us-tier2' },
-  3: { label: 'Smaller Market', color: 'text-charcoal-300', bg: 'bg-charcoal-700/50', regionKey: 'us-tier3' },
+  2: { label: 'Mid-Market',   color: 'text-gold-300',  bg: 'bg-gold-500/10',  regionKey: 'us-tier2' },
+  3: { label: 'Smaller Market', color: 'text-charcoal-300', bg: 'bg-white/[0.08]', regionKey: 'us-tier3' },
 };
 
 /**
@@ -72,12 +72,12 @@ export function StateCitySelector({ value, onChange, dark = true }) {
   const [selState, setSelState] = useState(value?.state || '');
 
   const inputCls = dark
-    ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+    ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500';
-  const dropBg   = dark ? 'bg-charcoal-800 border-charcoal-600' : 'bg-white border-gray-200';
+  const dropBg   = dark ? 'bg-charcoal-950/96 border-white/[0.09] shadow-[0_24px_80px_rgba(0,0,0,0.36)]' : 'bg-white border-gray-200';
   const textMain = dark ? 'text-white' : 'text-gray-900';
-  const textSub  = dark ? 'text-charcoal-400' : 'text-gray-500';
-  const hoverRow = dark ? 'hover:bg-charcoal-700' : 'hover:bg-gray-50';
+  const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
+  const hoverRow = dark ? 'hover:bg-white/[0.06]' : 'hover:bg-gray-50';
 
   const filteredStates = useMemo(() => {
     if (!search) return US_STATES;
@@ -111,7 +111,7 @@ export function StateCitySelector({ value, onChange, dark = true }) {
         type="button"
         onClick={() => setOpen(o => !o)}
         className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl border ${
-          dark ? 'bg-charcoal-800 border-charcoal-600' : 'bg-white border-gray-200'
+          dark ? 'bg-charcoal-900/72 border-white/[0.08]' : 'bg-white border-gray-200'
         } ${textMain} transition-all hover:border-gold-500/50 focus:outline-none focus:border-gold-500`}
       >
         <MapPin size={16} className="text-gold-400 shrink-0" />
@@ -129,7 +129,7 @@ export function StateCitySelector({ value, onChange, dark = true }) {
           <div className="fixed inset-0 z-30" onClick={() => { setOpen(false); setSelState(''); setSearch(''); }} />
           <div className={`absolute left-0 right-0 top-full mt-2 z-40 rounded-xl border shadow-2xl ${dropBg} overflow-hidden`}>
             {/* Search */}
-            <div className={`p-3 border-b ${dark ? 'border-charcoal-700' : 'border-gray-100'}`}>
+            <div className={`p-3 border-b ${dark ? 'border-white/[0.07]' : 'border-gray-100'}`}>
               <div className="relative">
                 <Search size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${textSub}`} />
                 <input
@@ -167,7 +167,7 @@ export function StateCitySelector({ value, onChange, dark = true }) {
                       type="button"
                       onClick={() => setSelState('')}
                       className={`w-full flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b transition-colors ${
-                        dark ? 'border-charcoal-700 text-charcoal-400 hover:text-white' : 'border-gray-100 text-gray-400 hover:text-gray-900'
+                        dark ? 'border-white/[0.07] text-charcoal-300 hover:text-white' : 'border-gray-100 text-gray-400 hover:text-gray-900'
                       }`}
                     >
                       ← {currentState?.name}
@@ -210,7 +210,7 @@ export function StateCitySelector({ value, onChange, dark = true }) {
             </div>
 
             {/* Tier legend */}
-            <div className={`px-4 py-2.5 border-t flex items-center gap-4 ${dark ? 'border-charcoal-700' : 'border-gray-100'}`}>
+            <div className={`px-4 py-2.5 border-t flex items-center gap-4 ${dark ? 'border-white/[0.07]' : 'border-gray-100'}`}>
               {Object.entries(TIER_LABELS).map(([, t]) => (
                 <div key={t.regionKey} className="flex items-center gap-1">
                   <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${t.color} ${t.bg}`}>{t.label}</span>

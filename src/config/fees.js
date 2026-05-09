@@ -32,15 +32,17 @@ export function getLoyaltyTier(completedProjects = 0) {
  * Returns amounts in both dollars and cents.
  * @param {number} projectAmountDollars
  * @param {number} [creatorFeePctOverride] - Override the creator fee % (for loyalty tiers)
+ * @param {number} [clientFeePctOverride] - Override the client booking fee % (for referral rewards)
  */
-export function calcFees(projectAmountDollars, creatorFeePctOverride) {
+export function calcFees(projectAmountDollars, creatorFeePctOverride, clientFeePctOverride) {
   const total      = Number(projectAmountDollars) || 0;
   const retainer   = total * (PLATFORM_FEES.retainerPct / 100);
   const final      = total - retainer;
   const creatorPct = creatorFeePctOverride != null ? creatorFeePctOverride : PLATFORM_FEES.creatorFeePct;
+  const clientPct  = clientFeePctOverride != null ? clientFeePctOverride : PLATFORM_FEES.clientFeePct;
 
-  const clientFeeRetainer  = retainer  * (PLATFORM_FEES.clientFeePct / 100);
-  const clientFeeFinal     = final     * (PLATFORM_FEES.clientFeePct / 100);
+  const clientFeeRetainer  = retainer  * (clientPct / 100);
+  const clientFeeFinal     = final     * (clientPct / 100);
   const creatorFeeRetainer = retainer  * (creatorPct / 100);
   const creatorFeeFinal    = final     * (creatorPct / 100);
 
@@ -167,28 +169,28 @@ export function getCancellationFee(projectTotal, projectStatus) {
 
 /** Project status labels and badge colors */
 export const PROJECT_STATUSES = {
-  open:             { label: 'Open',                   color: 'teal'   },
+  open:             { label: 'Open',                   color: 'gold'   },
   accepted:         { label: 'Awaiting Retainer',       color: 'gold'   },
-  retainer_paid:    { label: 'Retainer Secured',        color: 'teal'   },
-  in_progress:      { label: 'In Progress',             color: 'blue'   },
-  delivered:        { label: 'Delivered, Awaiting Review', color: 'amber' },
-  revision:         { label: 'Revision Requested',      color: 'amber'  },
-  approved:         { label: 'Approved',                color: 'green'  },
-  final_paid:       { label: 'Payment Released',        color: 'green'  },
-  completed:        { label: 'Completed',               color: 'green'  },
+  retainer_paid:    { label: 'Retainer Secured',        color: 'gold'   },
+  in_progress:      { label: 'In Progress',             color: 'gold'   },
+  delivered:        { label: 'Delivered, Awaiting Review', color: 'gold' },
+  revision:         { label: 'Revision Requested',      color: 'gold'   },
+  approved:         { label: 'Approved',                color: 'gold'   },
+  final_paid:       { label: 'Payment Released',        color: 'gold'   },
+  completed:        { label: 'Completed',               color: 'gold'   },
   disputed:         { label: 'Disputed',                color: 'red'    },
   cancelled:        { label: 'Cancelled',               color: 'gray'   },
 };
 
 export function statusBadgeClass(status, dark) {
   const colorMap = {
-    gold:  'bg-gold-500/15 text-gold-400',
-    teal:  'bg-teal-500/15 text-teal-400',
-    blue:  'bg-blue-500/15 text-blue-400',
-    amber: 'bg-amber-500/15 text-amber-400',
-    green: 'bg-green-500/15 text-green-400',
+    gold:  'bg-gold-500/15 text-gold-400 border border-gold-500/20',
+    teal:  'bg-gold-500/15 text-gold-400 border border-gold-500/20',
+    blue:  'bg-gold-500/15 text-gold-400 border border-gold-500/20',
+    amber: 'bg-gold-500/15 text-gold-400 border border-gold-500/20',
+    green: 'bg-gold-500/15 text-gold-400 border border-gold-500/20',
     red:   'bg-red-500/15 text-red-400',
-    gray:  dark ? 'bg-charcoal-700/50 text-charcoal-400' : 'bg-gray-100 text-gray-500',
+    gray:  dark ? 'bg-charcoal-700/50 text-charcoal-300 border border-white/[0.06]' : 'bg-gray-100 text-gray-500',
   };
   const s = PROJECT_STATUSES[status];
   return s ? colorMap[s.color] : colorMap.gray;

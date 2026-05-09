@@ -3,8 +3,8 @@ import { X } from 'lucide-react';
 
 export function PrivacyModal({ dark, onClose }) {
   const textBody = dark ? 'text-charcoal-300' : 'text-gray-600';
-  const textSub  = dark ? 'text-charcoal-400' : 'text-gray-500';
-  const cardCls  = `rounded-xl border p-4 my-3 ${dark ? 'border-charcoal-600 bg-charcoal-900/40' : 'border-gray-200 bg-gray-50'}`;
+  const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
+  const cardCls  = `rounded-xl border p-4 my-3 ${dark ? 'border-white/[0.08] bg-charcoal-950/55' : 'border-gray-200 bg-gray-50'}`;
   const linkCls  = 'text-gold-400 hover:text-gold-300 underline';
 
   useEffect(() => {
@@ -15,30 +15,31 @@ export function PrivacyModal({ dark, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-md" onClick={onClose} />
       <div className={`relative w-full max-w-3xl max-h-[90vh] flex flex-col rounded-2xl border shadow-2xl ${
-        dark ? 'bg-charcoal-900 border-charcoal-700' : 'bg-white border-gray-200'
+        dark ? 'bg-charcoal-950/96 border-white/[0.09] shadow-[0_28px_90px_rgba(0,0,0,0.46)]' : 'bg-white border-gray-200'
       }`}>
+        <div className="h-px bg-gradient-to-r from-transparent via-gold-400/70 to-transparent shrink-0" />
         {/* Header */}
-        <div className={`flex items-center justify-between px-6 py-4 border-b ${dark ? 'border-charcoal-700' : 'border-gray-200'} shrink-0`}>
+        <div className={`flex items-center justify-between px-6 py-4 border-b ${dark ? 'border-white/[0.07] bg-charcoal-950/80' : 'border-gray-200 bg-gray-50'} shrink-0`}>
           <div>
             <p className={`text-[10px] font-bold uppercase tracking-widest ${textSub}`}>Legal</p>
             <h2 className={`font-display font-bold text-xl ${dark ? 'text-white' : 'text-gray-900'}`}>Privacy Policy</h2>
           </div>
           <button type="button" onClick={onClose}
-            className={`p-2 rounded-xl transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
+            className={`p-2 rounded-xl transition-colors ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.08]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
             <X size={18} />
           </button>
         </div>
 
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className={`flex-1 overflow-y-auto px-6 py-5 ${dark ? 'bg-[radial-gradient(circle_at_25%_0%,rgba(212,169,65,0.06),transparent_34%)]' : ''}`}>
           <p className={`text-xs mb-6 ${textSub}`}>Effective April 17, 2026. Last updated April 17, 2026.</p>
 
           <div className={`space-y-3 text-sm leading-relaxed ${textBody}`}>
 
             <section className="mb-8">
-              <h2 className={`font-display font-bold text-lg mb-3 pb-2 border-b ${dark ? 'text-white border-charcoal-700' : 'text-gray-900 border-gray-200'}`}>
+              <h2 className={`font-display font-bold text-lg mb-3 pb-2 border-b ${dark ? 'text-white border-white/[0.07]' : 'text-gray-900 border-gray-200'}`}>
                 1. What Data We Collect
               </h2>
               <p>
@@ -56,7 +57,7 @@ export function PrivacyModal({ dark, onClose }) {
             </section>
 
             <section className="mb-8">
-              <h2 className={`font-display font-bold text-lg mb-3 pb-2 border-b ${dark ? 'text-white border-charcoal-700' : 'text-gray-900 border-gray-200'}`}>
+              <h2 className={`font-display font-bold text-lg mb-3 pb-2 border-b ${dark ? 'text-white border-white/[0.07]' : 'text-gray-900 border-gray-200'}`}>
                 2. How We Store Your Data
               </h2>
               <p>
@@ -75,7 +76,7 @@ export function PrivacyModal({ dark, onClose }) {
             </section>
 
             <section className="mb-8">
-              <h2 className={`font-display font-bold text-lg mb-3 pb-2 border-b ${dark ? 'text-white border-charcoal-700' : 'text-gray-900 border-gray-200'}`}>
+              <h2 className={`font-display font-bold text-lg mb-3 pb-2 border-b ${dark ? 'text-white border-white/[0.07]' : 'text-gray-900 border-gray-200'}`}>
                 3. How We Use Your Data
               </h2>
               <p>We use your information to:</p>
@@ -91,7 +92,7 @@ export function PrivacyModal({ dark, onClose }) {
             </section>
 
             <section className="mb-8">
-              <h2 className={`font-display font-bold text-lg mb-3 pb-2 border-b ${dark ? 'text-white border-charcoal-700' : 'text-gray-900 border-gray-200'}`}>
+              <h2 className={`font-display font-bold text-lg mb-3 pb-2 border-b ${dark ? 'text-white border-white/[0.07]' : 'text-gray-900 border-gray-200'}`}>
                 4. Third-Party Sharing Policy
               </h2>
               <div className={cardCls}>
@@ -123,7 +124,7 @@ export function PrivacyModal({ dark, onClose }) {
             </section>
 
             <section className="mb-8">
-              <h2 className={`font-display font-bold text-lg mb-3 pb-2 border-b ${dark ? 'text-white border-charcoal-700' : 'text-gray-900 border-gray-200'}`}>
+              <h2 className={`font-display font-bold text-lg mb-3 pb-2 border-b ${dark ? 'text-white border-white/[0.07]' : 'text-gray-900 border-gray-200'}`}>
                 5. Your Rights
               </h2>
               <p>You have the following rights regarding your data:</p>
@@ -155,7 +156,7 @@ export function PrivacyModal({ dark, onClose }) {
             </section>
 
             <section className="mb-8">
-              <h2 className={`font-display font-bold text-lg mb-3 pb-2 border-b ${dark ? 'text-white border-charcoal-700' : 'text-gray-900 border-gray-200'}`}>
+              <h2 className={`font-display font-bold text-lg mb-3 pb-2 border-b ${dark ? 'text-white border-white/[0.07]' : 'text-gray-900 border-gray-200'}`}>
                 6. Cookie Policy
               </h2>
               <p>
@@ -183,7 +184,7 @@ export function PrivacyModal({ dark, onClose }) {
             </section>
 
             <section className="mb-8">
-              <h2 className={`font-display font-bold text-lg mb-3 pb-2 border-b ${dark ? 'text-white border-charcoal-700' : 'text-gray-900 border-gray-200'}`}>
+              <h2 className={`font-display font-bold text-lg mb-3 pb-2 border-b ${dark ? 'text-white border-white/[0.07]' : 'text-gray-900 border-gray-200'}`}>
                 7. Data Retention
               </h2>
               <p>We retain your data as follows:</p>
@@ -197,7 +198,7 @@ export function PrivacyModal({ dark, onClose }) {
             </section>
 
             <section className="mb-8">
-              <h2 className={`font-display font-bold text-lg mb-3 pb-2 border-b ${dark ? 'text-white border-charcoal-700' : 'text-gray-900 border-gray-200'}`}>
+              <h2 className={`font-display font-bold text-lg mb-3 pb-2 border-b ${dark ? 'text-white border-white/[0.07]' : 'text-gray-900 border-gray-200'}`}>
                 8. Contact for Privacy Requests
               </h2>
               <p>
@@ -214,7 +215,7 @@ export function PrivacyModal({ dark, onClose }) {
               </p>
             </section>
 
-            <div className={`pt-4 border-t text-xs ${dark ? 'border-charcoal-700 text-charcoal-500' : 'border-gray-200 text-gray-400'}`}>
+            <div className={`pt-4 border-t text-xs ${dark ? 'border-white/[0.07] text-charcoal-300' : 'border-gray-200 text-gray-400'}`}>
               <p>CreatorBridge. Questions? Contact <a href="mailto:drl33@creatorbridge.studio" className={linkCls}>drl33@creatorbridge.studio</a></p>
               {/* TODO: Update to support@creatorbridge.studio once domain email is active */}
             </div>
@@ -222,10 +223,10 @@ export function PrivacyModal({ dark, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className={`flex items-center justify-end gap-3 px-6 py-4 border-t ${dark ? 'border-charcoal-700' : 'border-gray-200'} shrink-0`}>
+        <div className={`flex items-center justify-end gap-3 px-6 py-4 border-t ${dark ? 'border-white/[0.07] bg-charcoal-950/80' : 'border-gray-200'} shrink-0`}>
           <button type="button" onClick={onClose}
             className={`px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${
-              dark ? 'border-charcoal-600 text-charcoal-300 hover:text-white' : 'border-gray-200 text-gray-600 hover:text-gray-900'
+              dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/35 hover:text-white' : 'border-gray-200 text-gray-600 hover:text-gray-900'
             }`}>
             Close
           </button>

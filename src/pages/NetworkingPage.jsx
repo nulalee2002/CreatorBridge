@@ -33,11 +33,11 @@ const US_STATES = [
 ];
 
 const POST_TYPES = [
-  { id: 'general', label: 'General', color: 'bg-charcoal-700 text-charcoal-300' },
-  { id: 'collab', label: 'Creator Looking for Collab', color: 'bg-teal-500/20 text-teal-400' },
-  { id: 'looking_for_creator', label: 'Client Looking for Creator', color: 'bg-gold-500/20 text-gold-400' },
-  { id: 'industry_news', label: 'Industry News', color: 'bg-purple-500/20 text-purple-400' },
-  { id: 'portfolio', label: 'Portfolio Share', color: 'bg-blue-500/20 text-blue-400' },
+  { id: 'general', label: 'General', color: 'bg-white/[0.04] text-charcoal-300 ring-1 ring-white/[0.06]' },
+  { id: 'collab', label: 'Creator Looking for Collab', color: 'bg-gold-500/15 text-gold-400 ring-1 ring-gold-500/20' },
+  { id: 'looking_for_creator', label: 'Client Looking for Creator', color: 'bg-gold-500/15 text-gold-400 ring-1 ring-gold-500/20' },
+  { id: 'industry_news', label: 'Industry News', color: 'bg-gold-500/15 text-gold-400 ring-1 ring-gold-500/20' },
+  { id: 'portfolio', label: 'Portfolio Share', color: 'bg-gold-500/15 text-gold-400 ring-1 ring-gold-500/20' },
 ];
 
 const SEED_NETWORK_POSTS = [
@@ -153,7 +153,7 @@ function linkifyText(text) {
 }
 
 function getPostTypeStyle(type) {
-  return POST_TYPES.find(t => t.id === type)?.color || 'bg-charcoal-700 text-charcoal-300';
+  return POST_TYPES.find(t => t.id === type)?.color || 'bg-white/[0.04] text-charcoal-300';
 }
 
 function getPostTypeLabel(type) {
@@ -196,7 +196,7 @@ function saveLocalMessage(stateCode, msg) {
 function VerificationDot({ status }) {
   if (!status || status === 'unverified') return null;
   return (
-    <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-teal-500/20 text-teal-400 text-[8px] font-bold ml-1">
+    <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-gold-500/15 text-gold-400 text-[8px] font-bold ml-1">
       ✓
     </span>
   );
@@ -209,7 +209,7 @@ function PostCard({ post, dark, isVerified, onLike, onReport }) {
   const [liked, setLiked] = useState(false);
   const [localLikes, setLocalLikes] = useState(post.likes_count || 0);
 
-  const cardBg = dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200';
+  const cardBg = dark ? 'bg-charcoal-900/72 border-white/[0.07] shadow-[0_22px_70px_rgba(0,0,0,0.18)]' : 'bg-white border-gray-200';
 
   function handleLike() {
     if (liked) return;
@@ -238,7 +238,7 @@ function PostCard({ post, dark, isVerified, onLike, onReport }) {
   }
 
   return (
-    <div className={`rounded-2xl border p-5 ${cardBg}`}>
+    <div className={`rounded-2xl border p-5 transition-all ${cardBg}`}>
       <div className="flex items-start gap-3">
         <div className="w-9 h-9 rounded-full bg-gold-500/20 text-gold-400 flex items-center justify-center text-xs font-bold shrink-0">
           {getInitials(post.user_display_name)}
@@ -250,11 +250,11 @@ function PostCard({ post, dark, isVerified, onLike, onReport }) {
             </span>
             <VerificationDot status={post.user_verification_status} />
             {post.user_primary_service && (
-              <span className={`text-xs px-2 py-0.5 rounded-full ml-1 ${dark ? 'bg-charcoal-700 text-charcoal-400' : 'bg-gray-100 text-gray-500'}`}>
+              <span className={`text-xs px-2 py-0.5 rounded-full ml-1 ${dark ? 'bg-white/[0.04] text-charcoal-300 ring-1 ring-white/[0.06]' : 'bg-gray-100 text-gray-500'}`}>
                 {post.user_primary_service}
               </span>
             )}
-            <span className={`text-xs px-2 py-0.5 rounded-full ml-1 ${dark ? 'bg-charcoal-700 text-charcoal-400' : 'bg-gray-100 text-gray-500'}`}>
+            <span className={`text-xs px-2 py-0.5 rounded-full ml-1 ${dark ? 'bg-white/[0.04] text-charcoal-300 ring-1 ring-white/[0.06]' : 'bg-gray-100 text-gray-500'}`}>
               <MapPin size={9} className="inline mr-0.5" />{post.state_code}
             </span>
           </div>
@@ -295,7 +295,7 @@ function PostCard({ post, dark, isVerified, onLike, onReport }) {
           </div>
 
           {showReplies && (
-            <div className="mt-3 space-y-2 pl-3 border-l-2 border-charcoal-700">
+            <div className={`mt-3 space-y-2 pl-3 border-l-2 ${dark ? 'border-gold-500/25' : 'border-gold-200'}`}>
               {replies.map(r => (
                 <div key={r.id} className="text-xs">
                   <span className={`font-semibold ${dark ? 'text-charcoal-300' : 'text-gray-700'}`}>{r.user_display_name}</span>
@@ -311,7 +311,7 @@ function PostCard({ post, dark, isVerified, onLike, onReport }) {
                     onChange={e => setReplyText(e.target.value)}
                     maxLength={280}
                     placeholder="Write a reply..."
-                    className={`flex-1 text-xs rounded-lg px-3 py-1.5 border outline-none focus:border-gold-500 ${dark ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'}`}
+                    className={`flex-1 text-xs rounded-lg px-3 py-1.5 border outline-none focus:border-gold-500 ${dark ? 'bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'}`}
                   />
                   <button type="submit" className="text-xs px-3 py-1.5 rounded-lg bg-gold-500 hover:bg-gold-600 text-charcoal-900 font-bold transition-all">
                     Reply
@@ -509,32 +509,42 @@ export function NetworkingPage({ dark, user }) {
   }
 
   const bg = dark ? 'bg-transparent' : 'bg-gray-50';
-  const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`;
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`;
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
 
   return (
     <div className={`min-h-screen ${bg}`}>
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
 
         {/* Page header */}
-        <div className="mb-8">
-          <h1 className={`font-display font-bold text-3xl mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>
+        <div className={`relative overflow-hidden rounded-[28px] border p-6 md:p-8 mb-6 ${
+          dark ? 'bg-charcoal-900/72 border-white/[0.08] shadow-[0_28px_90px_rgba(0,0,0,0.28)]' : 'bg-white border-gray-200'
+        }`}>
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/60 to-transparent" />
+          <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+            State Creator Network
+          </p>
+          <h1 className={`font-display font-bold text-4xl md:text-5xl mb-4 ${dark ? 'text-white' : 'text-gray-900'}`}>
             Creator Network
           </h1>
-          <p className={`text-sm ${textSub}`}>
-            Connect with creators and clients in your area. Professional networking for media professionals.
+          <p className={`text-sm md:text-base leading-7 max-w-2xl ${textSub}`}>
+            Connect with verified media professionals in your area while keeping opportunities, referrals, and production conversations inside CreatorBridge.
           </p>
         </div>
 
         {/* State selector */}
         <div className={`${cardCls} p-5 mb-6`}>
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-4 flex-wrap">
             <MapPin size={16} className="text-gold-400 shrink-0" />
+            <div>
+              <p className={`text-xs font-bold uppercase tracking-[0.16em] ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>Choose a state network</p>
+              <p className={`text-xs mt-1 ${textSub}`}>Posts and live chat are organized by state.</p>
+            </div>
             <div className="relative">
               <select
                 value={selectedState}
                 onChange={e => setSelectedState(e.target.value)}
-                className={`appearance-none pl-3 pr-8 py-2 rounded-xl border text-sm font-medium outline-none focus:border-gold-500 cursor-pointer ${dark ? 'bg-charcoal-900 border-charcoal-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                className={`appearance-none pl-3 pr-8 py-2 rounded-xl border text-sm font-medium outline-none focus:border-gold-500 cursor-pointer ${dark ? 'bg-charcoal-950/75 border-white/[0.09] text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
               >
                 <option value="">Select your state...</option>
                 {US_STATES.map(s => (
@@ -557,7 +567,7 @@ export function NetworkingPage({ dark, user }) {
                   selectedState === s.code
                     ? 'bg-gold-500 text-charcoal-900 border-gold-500'
                     : dark
-                      ? 'border-charcoal-600 text-charcoal-400 hover:border-gold-500 hover:text-gold-400'
+                      ? 'border-white/[0.09] text-charcoal-400 hover:border-gold-500 hover:text-gold-400'
                       : 'border-gray-200 text-gray-500 hover:border-gold-500 hover:text-gold-500'
                 }`}
               >
@@ -582,7 +592,7 @@ export function NetworkingPage({ dark, user }) {
               {/* Post composer */}
               <div className={`${cardCls} p-5`}>
                 {/* Warning banner */}
-                <div className={`rounded-xl p-3 mb-4 text-xs ${dark ? 'bg-charcoal-900 text-charcoal-400 border border-charcoal-700' : 'bg-amber-50 text-amber-800 border border-amber-200'}`}>
+                <div className={`rounded-xl p-3 mb-4 text-xs ${dark ? 'bg-charcoal-950/75 text-charcoal-400 border border-white/[0.07]' : 'bg-gold-50 text-gold-800 border border-gold-200'}`}>
                   Keep all posts professional and relevant to media production. Mentioning job postings from the Project Board is not allowed here. Violations result in strikes against your account.
                 </div>
 
@@ -594,7 +604,7 @@ export function NetworkingPage({ dark, user }) {
                       maxLength={500}
                       rows={3}
                       placeholder={`Share something with the ${stateName} community...`}
-                      className={`w-full rounded-xl border p-3 text-sm outline-none focus:border-gold-500 resize-none ${dark ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'}`}
+                      className={`w-full rounded-xl border p-3 text-sm outline-none focus:border-gold-500 resize-none ${dark ? 'bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'}`}
                     />
                     <div className="flex items-center justify-between mt-1 mb-3">
                       <span className={`text-xs ${textSub}`}>{postContent.length}/500</span>
@@ -611,7 +621,7 @@ export function NetworkingPage({ dark, user }) {
                             postType === pt.id
                               ? 'border-gold-500 bg-gold-500/10 text-gold-400'
                               : dark
-                                ? 'border-charcoal-600 text-charcoal-400 hover:border-charcoal-500'
+                                ? 'border-white/[0.09] text-charcoal-400 hover:border-charcoal-500'
                                 : 'border-gray-200 text-gray-500 hover:border-gray-300'
                           }`}
                         >
@@ -633,7 +643,7 @@ export function NetworkingPage({ dark, user }) {
                     </button>
                   </form>
                 ) : (
-                  <div className={`flex items-center gap-3 p-4 rounded-xl ${dark ? 'bg-charcoal-900 border border-charcoal-700' : 'bg-gray-50 border border-gray-200'}`}>
+                  <div className={`flex items-center gap-3 p-4 rounded-xl ${dark ? 'bg-charcoal-950/75 border border-white/[0.07]' : 'bg-gray-50 border border-gray-200'}`}>
                     <Lock size={18} className={textSub} />
                     <div>
                       <p className={`text-sm font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>Verify your account to post in state networks.</p>
@@ -672,12 +682,12 @@ export function NetworkingPage({ dark, user }) {
             <div className="space-y-4 lg:col-span-1">
               <div className={`${cardCls} flex flex-col`} style={{ height: '520px' }}>
                 {/* Chat header */}
-                <div className={`p-4 border-b flex items-center gap-2 ${dark ? 'border-charcoal-700' : 'border-gray-200'}`}>
-                  <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
+                <div className={`p-4 border-b flex items-center gap-2 ${dark ? 'border-white/[0.07]' : 'border-gray-200'}`}>
+                  <span className="w-2 h-2 rounded-full bg-gold-400 animate-pulse" />
                   <span className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>
                     {stateName} Live Chat
                   </span>
-                  <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${dark ? 'bg-charcoal-700 text-charcoal-400' : 'bg-gray-100 text-gray-500'}`}>
+                  <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${dark ? 'bg-white/[0.04] text-charcoal-300 ring-1 ring-white/[0.06]' : 'bg-gray-100 text-gray-500'}`}>
                     <Users size={10} className="inline mr-1" />
                     Live
                   </span>
@@ -690,7 +700,7 @@ export function NetworkingPage({ dark, user }) {
                   ) : (
                     messages.map(msg => (
                       <div key={msg.id} className="flex items-start gap-2">
-                        <div className="w-7 h-7 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center text-[10px] font-bold shrink-0">
+                        <div className="w-7 h-7 rounded-full bg-gold-500/15 text-gold-400 flex items-center justify-center text-[10px] font-bold shrink-0">
                           {getInitials(msg.user_display_name)}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -714,7 +724,7 @@ export function NetworkingPage({ dark, user }) {
                 </div>
 
                 {/* Chat input */}
-                <div className={`p-3 border-t ${dark ? 'border-charcoal-700' : 'border-gray-200'}`}>
+                <div className={`p-3 border-t ${dark ? 'border-white/[0.07]' : 'border-gray-200'}`}>
                   {chatError && <p className="text-xs text-red-400 mb-2">{chatError}</p>}
                   {isVerified ? (
                     <form onSubmit={handleSendMessage} className="flex gap-2">
@@ -724,7 +734,7 @@ export function NetworkingPage({ dark, user }) {
                         onChange={e => setChatInput(e.target.value)}
                         maxLength={300}
                         placeholder={`Message ${stateName} chat...`}
-                        className={`flex-1 text-xs rounded-xl px-3 py-2 border outline-none focus:border-gold-500 ${dark ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'}`}
+                        className={`flex-1 text-xs rounded-xl px-3 py-2 border outline-none focus:border-gold-500 ${dark ? 'bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'}`}
                         onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); }}}
                       />
                       <button type="submit" className="p-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 transition-all">
@@ -732,7 +742,7 @@ export function NetworkingPage({ dark, user }) {
                       </button>
                     </form>
                   ) : (
-                    <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-xl ${dark ? 'bg-charcoal-900 text-charcoal-600' : 'bg-gray-100 text-gray-400'}`} title="Verify your account to join the chat">
+                    <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-xl ${dark ? 'bg-charcoal-950/75 text-charcoal-600' : 'bg-gray-100 text-gray-400'}`} title="Verify your account to join the chat">
                       <Lock size={12} /> Verify your account to join the chat
                     </div>
                   )}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Copy, Check, Users, Gift, TrendingUp } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { supabase, supabaseConfigured } from '../lib/supabase.js';
 
 // ── Referral helpers ──────────────────────────────────────────
 
@@ -10,10 +11,10 @@ function getReferralCode(userId) {
 }
 
 function getReferralLink(userId) {
-  return `https://creatorbridge.studio/join?ref=${getReferralCode(userId)}`;
+  return `https://www.creatorbridge.studio/?ref=${getReferralCode(userId)}`;
 }
 
-function loadReferralStats(userId) {
+function loadLocalReferralStats(userId) {
   try {
     const all = JSON.parse(localStorage.getItem('cm-referrals') || '[]');
     const mine = all.filter(r => r.referrerId === userId);
@@ -24,6 +25,28 @@ function loadReferralStats(userId) {
       rewards:     mine.filter(r => r.rewardIssued).length,
     };
   } catch { return { sent: 0, signedUp: 0, completed: 0, rewards: 0 }; }
+}
+
+async function loadReferralStats(userId) {
+  if (!userId) return { sent: 0, signedUp: 0, completed: 0, rewards: 0 };
+
+  if (supabaseConfigured && supabase) {
+    const { data, error } = await supabase
+      .from('referrals')
+      .select('status, reward_issued')
+      .eq('referrer_id', userId);
+
+    if (!error && Array.isArray(data)) {
+      return {
+        sent:      data.length,
+        signedUp:  data.filter(r => r.status !== 'pending').length,
+        completed: data.filter(r => r.status === 'completed').length,
+        rewards:   data.filter(r => r.reward_issued).length,
+      };
+    }
+  }
+
+  return loadLocalReferralStats(userId);
 }
 
 /**
@@ -45,8 +68,6 @@ export function applyReferralOnSignup(newUserId, referralCode) {
   if (!referralCode) return;
   try {
     const all = JSON.parse(localStorage.getItem('cm-referrals') || '[]');
-    // Find which referrer has this code
-    const referrers = JSON.parse(localStorage.getItem('creator-directory') || '[]');
     const referrerEntry = all.find(r => r.referralCode === referralCode);
     all.push({
       id:            Date.now().toString(),
@@ -79,13 +100,17 @@ export function ReferralSection({ dark, userType = 'creator' }) {
   const [stats, setStats]   = useState({ sent: 0, signedUp: 0, completed: 0, rewards: 0 });
 
   useEffect(() => {
+    let alive = true;
     if (user) {
-      setStats(loadReferralStats(user.id));
+      loadReferralStats(user.id).then(nextStats => {
+        if (alive) setStats(nextStats);
+      });
     }
+    return () => { alive = false; };
   }, [user]);
 
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
-  const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`;
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
+  const cardCls = `rounded-2xl border shadow-[0_24px_80px_rgba(0,0,0,0.16)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`;
 
   const referralLink = user ? getReferralLink(user.id) : '';
 
@@ -132,13 +157,13 @@ export function ReferralSection({ dark, userType = 'creator' }) {
         {/* Referral link */}
         <div>
           <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Your Referral Link</p>
-          <div className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${dark ? 'border-charcoal-600 bg-charcoal-900' : 'border-gray-200 bg-gray-50'}`}>
+          <div className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${dark ? 'border-white/[0.09] bg-charcoal-950/60' : 'border-gray-200 bg-gray-50'}`}>
             <span className={`flex-1 text-xs font-mono truncate ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
               {referralLink}
             </span>
             <button type="button" onClick={copyLink}
               className={`shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-all ${
-                copied ? 'text-teal-400' : 'text-gold-400 hover:text-gold-300'
+                copied ? 'text-gold-300' : 'text-gold-400 hover:text-gold-300'
               }`}>
               {copied ? <><Check size={11} /> Copied</> : <><Copy size={11} /> Copy</>}
             </button>
@@ -150,9 +175,9 @@ export function ReferralSection({ dark, userType = 'creator' }) {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: 'Links Shared', value: stats.sent,      icon: Users,      color: 'text-gold-400' },
-          { label: 'Signed Up',    value: stats.signedUp,  icon: TrendingUp, color: 'text-teal-400' },
-          { label: 'Completed',    value: stats.completed, icon: Check,      color: 'text-green-400' },
-          { label: 'Rewards',      value: stats.rewards,   icon: Gift,       color: 'text-purple-400' },
+          { label: 'Signed Up',    value: stats.signedUp,  icon: TrendingUp, color: 'text-gold-300' },
+          { label: 'Completed',    value: stats.completed, icon: Check,      color: 'text-gold-400' },
+          { label: 'Rewards',      value: stats.rewards,   icon: Gift,       color: 'text-gold-300' },
         ].map(({ label, value, icon: Icon, color }) => (
           <div key={label} className={`${cardCls} p-4`}>
             <Icon size={14} className={color + ' mb-2'} />
@@ -167,7 +192,7 @@ export function ReferralSection({ dark, userType = 'creator' }) {
         <p className={`text-xs font-bold uppercase tracking-wider mb-3 ${textSub}`}>How Rewards Work</p>
         <div className="space-y-3">
           {rewards.map((r, i) => (
-            <div key={i} className={`rounded-xl border p-3 ${dark ? 'border-charcoal-700 bg-charcoal-900/40' : 'border-gray-200 bg-gray-50'}`}>
+            <div key={i} className={`rounded-xl border p-3 ${dark ? 'border-white/[0.07] bg-charcoal-950/45' : 'border-gray-200 bg-gray-50'}`}>
               <p className={`text-sm font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>{r.title}</p>
               <p className={`text-xs mt-1 ${textSub}`}>
                 <span className="font-medium">Trigger:</span> {r.trigger}
@@ -177,9 +202,9 @@ export function ReferralSection({ dark, userType = 'creator' }) {
               </p>
             </div>
           ))}
-          <div className={`rounded-xl border p-3 ${dark ? 'border-charcoal-700 bg-charcoal-900/40' : 'border-gray-200 bg-gray-50'}`}>
+          <div className={`rounded-xl border p-3 ${dark ? 'border-white/[0.07] bg-charcoal-950/45' : 'border-gray-200 bg-gray-50'}`}>
             <p className={`text-sm font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>People who join through your link</p>
-            <p className={`text-xs mt-1 text-teal-400 font-medium`}>
+            <p className={`text-xs mt-1 text-gold-300 font-medium`}>
               Their reward: First client booking fee waived (the 5% booking fee is removed on their very first project)
             </p>
           </div>

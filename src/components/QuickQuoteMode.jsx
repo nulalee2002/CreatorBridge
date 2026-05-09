@@ -61,13 +61,13 @@ export function QuickQuoteMode({ dark = true, onFullMode }) {
   const total = calcTierTotal(tier);
   const fmt   = (v) => formatCurrency(v, 'USD');
 
-  const bg       = dark ? 'bg-charcoal-900' : 'bg-gray-50';
-  const card     = dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200';
+  const bg       = dark ? 'bg-charcoal-950/75' : 'bg-gray-50';
+  const card     = dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200';
   const textMain = dark ? 'text-white' : 'text-gray-900';
-  const textSub  = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
   const inputCls = `w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${
     dark
-      ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+      ? 'bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
   }`;
   const labelCls = `text-xs font-medium ${textSub} mb-1`;
@@ -119,7 +119,7 @@ export function QuickQuoteMode({ dark = true, onFullMode }) {
   return (
     <div className={`min-h-screen ${bg} flex flex-col`}>
       {/* Header */}
-      <div className={`px-4 py-4 border-b ${dark ? 'border-charcoal-700' : 'border-gray-200'} flex items-center justify-between`}>
+      <div className={`px-4 py-4 border-b ${dark ? 'border-white/[0.07]' : 'border-gray-200'} flex items-center justify-between`}>
         <div className="flex items-center gap-2">
           <Zap size={16} className="text-gold-400" />
           <span className={`font-display font-bold text-sm ${textMain}`}>Quick Quote</span>
@@ -134,13 +134,13 @@ export function QuickQuoteMode({ dark = true, onFullMode }) {
         {STEPS.map((s, i) => (
           <div key={s} className="flex items-center gap-2 flex-1">
             <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
-              i < step ? 'bg-teal-400 text-charcoal-900' :
+              i < step ? 'bg-gold-500 text-charcoal-900' :
               i === step ? 'bg-gold-500 text-charcoal-900' :
-              dark ? 'bg-charcoal-700 text-charcoal-500' : 'bg-gray-200 text-gray-400'
+              dark ? 'bg-white/[0.04] text-charcoal-300' : 'bg-gray-200 text-gray-400'
             }`}>{i < step ? '✓' : i + 1}</div>
             <span className={`text-[11px] font-medium hidden sm:inline ${i === step ? 'text-gold-400' : textSub}`}>{s}</span>
             {i < STEPS.length - 1 && (
-              <div className={`flex-1 h-px ${i < step ? 'bg-teal-400/50' : dark ? 'bg-charcoal-700' : 'bg-gray-200'}`} />
+              <div className={`flex-1 h-px ${i < step ? 'bg-gold-500/50' : dark ? 'bg-white/[0.04]' : 'bg-gray-200'}`} />
             )}
           </div>
         ))}
@@ -159,7 +159,7 @@ export function QuickQuoteMode({ dark = true, onFullMode }) {
                   className={`flex flex-col items-start gap-2 p-4 rounded-2xl border text-left transition-all ${
                     serviceId === svc.id
                       ? 'border-gold-500 bg-gold-500/10'
-                      : dark ? 'border-charcoal-700 bg-charcoal-800' : 'border-gray-200 bg-white'
+                      : dark ? 'border-white/[0.07] bg-charcoal-900/72' : 'border-gray-200 bg-white'
                   }`}
                 >
                   <span className="text-2xl">{svc.icon}</span>
@@ -192,7 +192,7 @@ export function QuickQuoteMode({ dark = true, onFullMode }) {
                       className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
                         projectType === st
                           ? 'border-gold-500 bg-gold-500/10 text-gold-400'
-                          : dark ? 'border-charcoal-600 text-charcoal-400 hover:border-charcoal-500' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                          : dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/35' : 'border-gray-200 text-gray-500 hover:border-gray-300'
                       }`}
                     >{st}</button>
                   ))}
@@ -248,7 +248,7 @@ export function QuickQuoteMode({ dark = true, onFullMode }) {
                         className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-left transition-all ${
                           tier === key
                             ? 'border-gold-500 bg-gold-500/10'
-                            : dark ? 'border-charcoal-700 bg-charcoal-800' : 'border-gray-200 bg-white'
+                            : dark ? 'border-white/[0.07] bg-charcoal-900/72' : 'border-gray-200 bg-white'
                         }`}
                       >
                         <div>
@@ -281,7 +281,7 @@ export function QuickQuoteMode({ dark = true, onFullMode }) {
                   ? <p className="text-xs text-red-400">{notesError}</p>
                   : <p className={`text-[10px] ${textSub}`}>Min 50 chars if provided. More detail = better matches.</p>
                 }
-                <span className={`text-[10px] shrink-0 ml-2 ${notes.length >= 50 ? 'text-teal-400' : textSub}`}>{notes.length} chars</span>
+                <span className={`text-[10px] shrink-0 ml-2 ${notes.length >= 50 ? 'text-gold-400' : textSub}`}>{notes.length} chars</span>
               </div>
             </div>
           </div>
@@ -338,13 +338,13 @@ export function QuickQuoteMode({ dark = true, onFullMode }) {
                 </div>
 
                 {notes && (
-                  <div className={`rounded-xl p-3 text-xs ${dark ? 'bg-charcoal-900/60 text-charcoal-300' : 'bg-gray-50 text-gray-600'}`}>
+                  <div className={`rounded-xl p-3 text-xs ${dark ? 'bg-charcoal-950/60 text-charcoal-300' : 'bg-gray-50 text-gray-600'}`}>
                     <p className={`text-[10px] font-bold uppercase tracking-wide mb-1 ${textSub}`}>Project Notes</p>
                     {notes}
                   </div>
                 )}
 
-                <div className={`rounded-xl p-4 ${dark ? 'bg-charcoal-900/60' : 'bg-gray-50'}`}>
+                <div className={`rounded-xl p-4 ${dark ? 'bg-charcoal-950/60' : 'bg-gray-50'}`}>
                   <p className={`text-xs ${textSub}`}>Estimated budget</p>
                   <p className="font-display text-3xl font-bold text-gradient-gold">{fmt(total)}</p>
                   <p className={`text-[11px] mt-1 ${textSub}`}>Mid-market rate estimate. Final price depends on your creator.</p>
@@ -354,7 +354,7 @@ export function QuickQuoteMode({ dark = true, onFullMode }) {
 
             {submitted && (
               <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
-                <div className="w-16 h-16 rounded-full bg-teal-500/15 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-gold-500/15 flex items-center justify-center">
                   <span className="text-3xl">✅</span>
                 </div>
                 <p className={`text-sm font-semibold ${textMain}`}>Quote saved!</p>
@@ -366,10 +366,10 @@ export function QuickQuoteMode({ dark = true, onFullMode }) {
       </div>
 
       {/* Navigation */}
-      <div className={`px-4 py-4 border-t ${dark ? 'border-charcoal-700' : 'border-gray-200'} flex gap-3`}>
+      <div className={`px-4 py-4 border-t ${dark ? 'border-white/[0.07]' : 'border-gray-200'} flex gap-3`}>
         {step > 0 && !submitted && (
           <button type="button" onClick={() => setStep(s => s - 1)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border ${dark ? 'border-charcoal-600 text-charcoal-300' : 'border-gray-200 text-gray-600'} text-sm font-medium transition-all`}>
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border ${dark ? 'border-white/[0.09] text-charcoal-300' : 'border-gray-200 text-gray-600'} text-sm font-medium transition-all`}>
             <ArrowLeft size={14} /> Back
           </button>
         )}

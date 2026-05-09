@@ -3,9 +3,9 @@ import { Check, Package, Save } from 'lucide-react';
 import { SERVICES } from '../data/rates.js';
 
 const PACKAGE_TEMPLATES = {
-  Basic:    { color: 'text-charcoal-400', bg: 'bg-charcoal-700/50', border: 'border-charcoal-600', label: 'Basic' },
-  Standard: { color: 'text-gold-400',     bg: 'bg-gold-500/10',     border: 'border-gold-500/40',  label: 'Standard' },
-  Premium:  { color: 'text-purple-400',   bg: 'bg-purple-500/10',   border: 'border-purple-500/40', label: 'Premium' },
+  Basic:    { color: 'text-charcoal-300', bg: 'bg-white/[0.035]',    border: 'border-white/[0.08]', label: 'Basic' },
+  Standard: { color: 'text-gold-400',     bg: 'bg-gold-500/10',      border: 'border-gold-500/35',  label: 'Standard' },
+  Premium:  { color: 'text-gold-300',     bg: 'bg-gold-500/[0.16]',  border: 'border-gold-400/50',  label: 'Premium' },
 };
 
 const TIER_NAMES = ['Basic', 'Standard', 'Premium'];
@@ -40,7 +40,7 @@ function defaultPackage(name, serviceId) {
 function Toggle({ value, onChange, dark }) {
   return (
     <button type="button" onClick={() => onChange(!value)}
-      className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${value ? 'bg-gold-500' : dark ? 'bg-charcoal-600' : 'bg-gray-300'}`}>
+      className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${value ? 'bg-gold-500' : dark ? 'bg-white/[0.09]' : 'bg-gray-300'}`}>
       <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${value ? 'translate-x-4' : ''}`} />
     </button>
   );
@@ -179,7 +179,7 @@ function BasicFields({ pkg, onUpdate, dark, inputCls, textSub, labelCls }) {
         <div className="space-y-1.5">
           {(pkg.deliverables || ['']).map((d, i) => (
             <div key={i} className="flex items-center gap-1.5">
-              <Check size={10} className="text-teal-400 shrink-0" />
+              <Check size={10} className="text-gold-400 shrink-0" />
               <input type="text" value={d}
                 onChange={e => {
                   const arr = [...(pkg.deliverables || [''])];
@@ -188,7 +188,7 @@ function BasicFields({ pkg, onUpdate, dark, inputCls, textSub, labelCls }) {
                 }}
                 placeholder="e.g. 10 edited images"
                 className={`flex-1 px-2 py-1.5 text-xs rounded-lg border outline-none transition-all ${
-                  dark ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-600 focus:border-gold-500'
+                  dark ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
                        : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:border-gold-500'
                 }`} />
               {(pkg.deliverables || []).length > 1 && (
@@ -200,7 +200,7 @@ function BasicFields({ pkg, onUpdate, dark, inputCls, textSub, labelCls }) {
           ))}
           <button type="button"
             onClick={() => onUpdate('deliverables', [...(pkg.deliverables || ['']), ''])}
-            className={`text-[10px] flex items-center gap-1 mt-1 transition-colors ${dark ? 'text-charcoal-500 hover:text-gold-400' : 'text-gray-400 hover:text-gold-500'}`}>
+            className={`text-[10px] flex items-center gap-1 mt-1 transition-colors ${dark ? 'text-charcoal-400 hover:text-gold-400' : 'text-gray-400 hover:text-gold-500'}`}>
             + Add item
           </button>
         </div>
@@ -221,10 +221,10 @@ export function PackageBuilder({ creatorId, dark, serviceIds = [] }) {
 
   const inputCls = `w-full px-3 py-2 text-xs rounded-xl border outline-none transition-all ${
     dark
-      ? 'bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-500 focus:border-gold-500'
+      ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
   }`;
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
   const labelCls = `text-[10px] font-medium mb-1 ${textSub}`;
 
   function updatePkg(id, field, val) {
@@ -243,7 +243,7 @@ export function PackageBuilder({ creatorId, dark, serviceIds = [] }) {
   const isPhotography = serviceId === 'photography';
 
   return (
-    <div className={`rounded-2xl border p-5 ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`}>
+    <div className={`rounded-2xl border p-5 shadow-[0_24px_80px_rgba(0,0,0,0.18)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`}>
       <div className="flex items-center justify-between mb-5">
         <div>
           <h3 className={`font-display font-bold text-base flex items-center gap-2 ${dark ? 'text-white' : 'text-gray-900'}`}>
@@ -255,7 +255,7 @@ export function PackageBuilder({ creatorId, dark, serviceIds = [] }) {
         </div>
         <button type="button" onClick={handleSave}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            saved ? 'bg-teal-500 text-white' : 'bg-gold-500 hover:bg-gold-600 text-charcoal-900'
+            saved ? 'bg-gold-500 text-charcoal-900' : 'bg-gold-500 hover:bg-gold-600 text-charcoal-900'
           }`}>
           {saved ? <><Check size={12} /> Saved</> : <><Save size={12} /> Save Packages</>}
         </button>
@@ -267,7 +267,7 @@ export function PackageBuilder({ creatorId, dark, serviceIds = [] }) {
           const onUpdate = (field, val) => updatePkg(pkg.id, field, val);
 
           return (
-            <div key={pkg.id} className={`rounded-2xl border p-4 ${template.border} ${template.bg}`}>
+            <div key={pkg.id} className={`rounded-2xl border p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${template.border} ${template.bg}`}>
               {/* Package header */}
               <input
                 type="text"

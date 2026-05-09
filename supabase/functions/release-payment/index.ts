@@ -49,10 +49,11 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Fetch transaction + creator stripe account
+    // Fetch transaction, then fetch creator Stripe account separately. The schema stores
+    // creator_id as text for compatibility with local/demo ids, so do not rely on an FK join.
     const { data: txn, error: txnErr } = await supabaseAdmin
       .from('transactions')
-      .select('*, creator_listings!transactions_creator_id_fkey(stripe_account_id)')
+      .select('*')
       .eq('id', transactionId)
       .single();
 
@@ -70,7 +71,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    const creatorStripeAccountId = txn.creator_listings?.stripe_account_id;
+    const { data: creatorListing } = await supabaseAdmin
+      .from('creator_listings')
+      .select('stripe_account_id')
+      .eq('id', txn.creator_id)
+      .single();
+
+    const creatorStripeAccountId = creatorListing?.stripe_account_id;
     if (!creatorStripeAccountId) {
       return new Response(
         JSON.stringify({ error: 'Creator has no connected Stripe account' }),
