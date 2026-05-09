@@ -317,7 +317,7 @@ function ArchivedProjectNotice({ project, dark, onStatusChange }) {
 function PostProjectModal({ dark, onClose, onPost, user }) {
   const [form, setForm] = useState({
     title: '', description: '', serviceId: '', budgetMin: '', budgetMax: '',
-    deadline: '', location: '', remote: true, skills: '',
+    projectDuration: '', deadline: '', location: '', remote: true, skills: '',
   });
   const [errors, setErrors] = useState({});
   const set = (k, v) => {
@@ -339,6 +339,7 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
     if (!form.title.trim()) next.title = 'Add a clear project title.';
     if (!form.serviceId) next.serviceId = 'Choose the production service you need.';
     if (form.description.trim().length < 80) next.description = 'Add at least 80 characters so creators understand the scope.';
+    if (!form.projectDuration) next.projectDuration = 'Select how long you need the creator or crew.';
     if (form.budgetMin && minBudget < 0) next.budgetMin = 'Budget cannot be negative.';
     if (form.budgetMax && maxBudget < 0) next.budgetMax = 'Budget cannot be negative.';
     if (form.budgetMin && form.budgetMax && minBudget > maxBudget) next.budgetMax = 'Max budget should be higher than min budget.';
@@ -356,6 +357,7 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
       serviceId:   form.serviceId,
       budgetMin:   parseFloat(form.budgetMin) || null,
       budgetMax:   parseFloat(form.budgetMax) || null,
+      projectDuration: form.projectDuration,
       deadline:    form.deadline || null,
       location:    form.location.trim(),
       remote:      form.remote,
@@ -462,6 +464,21 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
+                <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Project Duration *</p>
+                <select value={form.projectDuration} onChange={e => set('projectDuration', e.target.value)}
+                  className={inputCls('projectDuration')}>
+                  <option value="">Select duration...</option>
+                  <option value="1-2 hours">1-2 hours</option>
+                  <option value="3-4 hours">3-4 hours</option>
+                  <option value="Half day (4-5 hours)">Half day (4-5 hours)</option>
+                  <option value="Full day (6-8 hours)">Full day (6-8 hours)</option>
+                  <option value="Multi-day">Multi-day</option>
+                  <option value="Ongoing / retainer">Ongoing / retainer</option>
+                  <option value="Not sure yet">Not sure yet</option>
+                </select>
+                {errors.projectDuration && <p className="mt-1 text-xs text-red-400">{errors.projectDuration}</p>}
+              </div>
+              <div>
                 <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Deadline</p>
                 <input type="date" value={form.deadline} onChange={e => set('deadline', e.target.value)}
                   className={inputCls('deadline')} />
@@ -495,7 +512,7 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
               Cancel
             </button>
             <button type="button" onClick={handlePost}
-              disabled={!form.title.trim() || !form.description.trim() || !form.serviceId}
+              disabled={!form.title.trim() || !form.description.trim() || !form.serviceId || !form.projectDuration}
               className="flex-1 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 text-charcoal-900 text-sm font-bold transition-all flex items-center justify-center gap-2">
               <Briefcase size={14} /> Post Project
             </button>
@@ -798,6 +815,11 @@ function ProjectCard({ project, dark, onApply, myApplications, isClient, onView,
             <Calendar size={10} /> {new Date(project.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </span>
         )}
+        {project.projectDuration && (
+          <span className={`flex items-center gap-1 text-xs ${textSub}`}>
+            <Clock size={10} /> {project.projectDuration}
+          </span>
+        )}
         {locationStr(project.location) && (
           <span className={`flex items-center gap-1 text-xs ${textSub}`}>
             <MapPin size={10} /> {locationStr(project.location)}
@@ -912,6 +934,7 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
             {[
               { icon: DollarSign, label: 'Budget', value: budgetStr, color: 'text-gold-400' },
               { icon: Users,      label: 'Applications', value: `${project.applications || 0} proposals`, color: textSub },
+              ...(project.projectDuration ? [{ icon: Clock, label: 'Duration', value: project.projectDuration, color: textSub }] : []),
               ...(project.deadline ? [{ icon: Calendar, label: 'Deadline', value: new Date(project.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), color: textSub }] : []),
               ...(locationStr(project.location) ? [{ icon: MapPin, label: 'Location', value: locationStr(project.location) + (project.remote ? ' (Remote OK)' : ''), color: textSub }] : []),
             ].map(({ icon: Icon, label, value, color }) => (

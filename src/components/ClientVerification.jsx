@@ -98,6 +98,7 @@ export function ClientVerification({ user, dark, onComplete, requireLevel = 'bas
   const [form, setForm]       = useState({ displayName: '', phone: '', tosAccepted: false });
   const [saving, setSaving]   = useState(false);
   const [saved, setSaved]     = useState(false);
+  const [error, setError]     = useState('');
 
   const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
   const inputCls = `w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all ${
@@ -117,7 +118,7 @@ export function ClientVerification({ user, dark, onComplete, requireLevel = 'bas
         .from('client_profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
       p = data;
     } else {
       p = loadClientProfile(user.id);
@@ -125,10 +126,15 @@ export function ClientVerification({ user, dark, onComplete, requireLevel = 'bas
     if (p) {
       setProfile(p);
       setForm({
-        displayName: p.display_name || p.displayName || '',
+        displayName: p.display_name || p.displayName || user.user_metadata?.full_name || user.email?.split('@')[0] || '',
         phone: p.phone || '',
         tosAccepted: !!(p.tos_accepted_at || p.tosAcceptedAt),
       });
+    } else {
+      setForm(f => ({
+        ...f,
+        displayName: f.displayName || user.user_metadata?.full_name || user.email?.split('@')[0] || '',
+      }));
     }
   }
 
@@ -136,6 +142,7 @@ export function ClientVerification({ user, dark, onComplete, requireLevel = 'bas
     e.preventDefault();
     if (!form.tosAccepted) return;
     setSaving(true);
+    setError('');
 
     const now = new Date().toISOString();
     const profileData = {
@@ -153,14 +160,19 @@ export function ClientVerification({ user, dark, onComplete, requireLevel = 'bas
     };
 
     if (supabaseConfigured) {
-      await supabase.from('client_profiles').upsert({
+      const { error: saveError } = await supabase.from('client_profiles').upsert({
         user_id: user.id,
         display_name: form.displayName,
-        phone: form.phone,
+        phone: form.phone || null,
         tos_accepted_at: now,
-        email_verified: !!user.email_confirmed_at,
+        email_verified: !!user.email,
         updated_at: now,
-      });
+      }, { onConflict: 'user_id' });
+      if (saveError) {
+        setError(saveError.message || 'Verification could not be saved.');
+        setSaving(false);
+        return;
+      }
     } else {
       saveClientProfile(profileData);
     }
@@ -265,6 +277,7 @@ export function ClientVerification({ user, dark, onComplete, requireLevel = 'bas
           className="w-full py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 text-charcoal-900 text-sm font-bold transition-all">
           {saving ? 'Saving...' : 'Complete Verification'}
         </button>
+        {error && <p className="text-xs text-red-400 bg-red-400/10 rounded-lg px-3 py-2">{error}</p>}
       </form>
 
       {/* Insurance notice */}

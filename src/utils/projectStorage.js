@@ -46,6 +46,7 @@ export function fromSupabaseProject(row) {
     serviceId: row.service_id,
     budgetMin: row.budget_min,
     budgetMax: row.budget_max,
+    projectDuration: row.project_duration || row.projectDuration || null,
     location: row.location || '',
     deadline: row.timeline || null,
     clientId: row.client_id,

@@ -35,11 +35,12 @@ export function TermsPage({ dark }) {
   const location = useLocation();
 
   useEffect(() => {
-    if (location.hash) {
-      const el = document.querySelector(location.hash);
+    const targetHash = location.hash || (location.pathname === '/privacy' ? '#privacy' : '');
+    if (targetHash) {
+      const el = document.querySelector(targetHash);
       if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth' }), 100);
     }
-  }, [location.hash]);
+  }, [location.hash, location.pathname]);
 
   const cardCls  = `rounded-2xl border shadow-[0_24px_80px_rgba(0,0,0,0.16)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`;
   const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';

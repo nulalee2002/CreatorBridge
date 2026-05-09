@@ -37,6 +37,7 @@ const CheckoutPage = lazy(() => import('./pages/CheckoutPage.jsx').then(m => ({ 
 const MatchResultsPage = lazy(() => import('./pages/MatchResultsPage.jsx').then(m => ({ default: m.MatchResultsPage })));
 const NetworkingPage = lazy(() => import('./pages/NetworkingPage.jsx').then(m => ({ default: m.NetworkingPage })));
 const ClientProfilePage = lazy(() => import('./pages/ClientProfilePage.jsx').then(m => ({ default: m.ClientProfilePage })));
+const TermsPage = lazy(() => import('./pages/TermsPage.jsx').then(m => ({ default: m.TermsPage })));
 const QuickQuoteMode = lazy(() => import('./components/QuickQuoteMode.jsx').then(m => ({ default: m.QuickQuoteMode })));
 
 function RouteLoading({ dark }) {
@@ -550,6 +551,8 @@ export default function App() {
         <Route path="/checkout/:projectId" element={<LazyRoute dark={dark}><CheckoutPage dark={dark} /></LazyRoute>} />
         <Route path="/matches/:projectId" element={<LazyRoute dark={dark}><MatchResultsPage dark={dark} /></LazyRoute>} />
         <Route path="/network" element={<LazyRoute dark={dark}><NetworkingPage dark={dark} user={user} /></LazyRoute>} />
+        <Route path="/terms" element={<LazyRoute dark={dark}><TermsPage dark={dark} /></LazyRoute>} />
+        <Route path="/privacy" element={<LazyRoute dark={dark}><TermsPage dark={dark} /></LazyRoute>} />
         <Route path="/calculator" element={null} />
       </Routes>
 
