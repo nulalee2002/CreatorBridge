@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight, Briefcase, CheckCircle2, Clock, CreditCard, FileText,
-  MessageSquare, Phone, Search, ShieldCheck, Star, User, Users, Zap,
+  Globe, Image, MessageSquare, Phone, Search, ShieldCheck, Star, User, Users, Zap,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
@@ -96,6 +96,19 @@ function serviceName(project) {
   return SERVICES[id]?.name || project.serviceType || 'Production';
 }
 
+function normalizeUrl(url = '') {
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
+function clientInitials(name = '') {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const first = parts[0]?.[0] || 'C';
+  const second = parts.length > 1 ? parts[parts.length - 1][0] : 'B';
+  return `${first}${second}`.toUpperCase();
+}
+
 export function ClientProfilePage({ dark }) {
   const { user, profile: authProfile } = useAuth();
   const navigate = useNavigate();
@@ -104,7 +117,7 @@ export function ClientProfilePage({ dark }) {
   const [transactions, setTransactions] = useState([]);
   const [reputation, setReputation] = useState(null);
   const [savedCreatorCount, setSavedCreatorCount] = useState(0);
-  const [form, setForm] = useState({ displayName: '', companyName: '', phone: '' });
+  const [form, setForm] = useState({ displayName: '', companyName: '', phone: '', avatarUrl: '', website: '', bio: '' });
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -188,6 +201,9 @@ export function ClientProfilePage({ dark }) {
       displayName: profile?.display_name || profile?.displayName || authProfile?.full_name || user.email?.split('@')[0] || '',
       companyName: profile?.company_name || profile?.companyName || '',
       phone: profile?.phone || '',
+      avatarUrl: profile?.avatar_url || profile?.avatarUrl || '',
+      website: profile?.website || '',
+      bio: profile?.bio || '',
     });
     setReputation(await loadClientReputation(user.id));
     setLoading(false);
@@ -206,6 +222,10 @@ export function ClientProfilePage({ dark }) {
       companyName: form.companyName,
       company_name: form.companyName,
       phone: form.phone,
+      avatarUrl: form.avatarUrl,
+      avatar_url: form.avatarUrl,
+      website: form.website,
+      bio: form.bio,
       emailVerified: !!user.email,
       email_verified: !!user.email,
       updatedAt: now,
@@ -218,6 +238,9 @@ export function ClientProfilePage({ dark }) {
         display_name: form.displayName,
         company_name: form.companyName || null,
         phone: form.phone || null,
+        avatar_url: form.avatarUrl || null,
+        website: form.website || null,
+        bio: form.bio.trim() || null,
         email_verified: !!user.email,
         updated_at: now,
       }, { onConflict: 'user_id' });
@@ -242,6 +265,9 @@ export function ClientProfilePage({ dark }) {
     .slice()
     .sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0))
     .slice(0, 4);
+  const clientName = form.companyName || form.displayName || 'Client Account';
+  const clientAvatar = normalizeUrl(form.avatarUrl);
+  const clientWebsite = normalizeUrl(form.website);
 
   if (loading) {
     return (
@@ -283,12 +309,27 @@ export function ClientProfilePage({ dark }) {
           </div>
           <div className={`rounded-2xl border p-4 ${dark ? 'bg-gold-500/10 border-gold-500/20' : 'bg-gold-50 border-gold-200'}`}>
             <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className={`text-xs font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{form.companyName || form.displayName || 'Client Account'}</p>
-                <p className={`mt-1 text-[11px] ${textSub}`}>{user.email}</p>
+              <div className="flex min-w-0 items-center gap-3">
+                <div className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border text-sm font-black ${dark ? 'border-gold-500/25 bg-charcoal-950/65 text-gold-300' : 'border-gold-200 bg-white text-gold-700'}`}>
+                  {clientAvatar ? (
+                    <img src={clientAvatar} alt="" className="h-full w-full object-cover" />
+                  ) : clientInitials(clientName)}
+                </div>
+                <div className="min-w-0">
+                  <p className={`truncate text-xs font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{clientName}</p>
+                  <p className={`mt-1 truncate text-[11px] ${textSub}`}>{user.email}</p>
+                  {clientWebsite && (
+                    <a href={clientWebsite} target="_blank" rel="noreferrer" className="mt-1 inline-flex max-w-full items-center gap-1 truncate text-[11px] font-semibold text-gold-400 hover:text-gold-300">
+                      <Globe size={11} /> Website
+                    </a>
+                  )}
+                </div>
               </div>
               <ClientReputationBadge metrics={reputation || { totalProjects: stats.completed }} dark={dark} size="md" />
             </div>
+            {form.bio && (
+              <p className={`mt-3 line-clamp-2 text-[11px] leading-5 ${textSub}`}>{form.bio}</p>
+            )}
           </div>
         </div>
       </section>
@@ -407,6 +448,31 @@ export function ClientProfilePage({ dark }) {
                   <Phone size={14} className={`pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 ${textSub}`} />
                   <input className={`${inputCls} pl-9`} value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+1 (555) 000-0000" />
                 </div>
+              </label>
+              <label className="block">
+                <span className={`mb-1.5 block text-xs font-medium ${textSub}`}>Logo or headshot URL</span>
+                <div className="relative">
+                  <Image size={14} className={`pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 ${textSub}`} />
+                  <input className={`${inputCls} pl-9`} value={form.avatarUrl} onChange={e => setForm(f => ({ ...f, avatarUrl: e.target.value }))} placeholder="https://..." />
+                </div>
+              </label>
+              <label className="block">
+                <span className={`mb-1.5 block text-xs font-medium ${textSub}`}>Website or brand link</span>
+                <div className="relative">
+                  <Globe size={14} className={`pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 ${textSub}`} />
+                  <input className={`${inputCls} pl-9`} value={form.website} onChange={e => setForm(f => ({ ...f, website: e.target.value }))} placeholder="yourbrand.com" />
+                </div>
+              </label>
+              <label className="block">
+                <span className={`mb-1.5 block text-xs font-medium ${textSub}`}>About this client</span>
+                <textarea
+                  className={`${inputCls} min-h-[96px] resize-none`}
+                  maxLength={300}
+                  value={form.bio}
+                  onChange={e => setForm(f => ({ ...f, bio: e.target.value }))}
+                  placeholder="Short context creators should know before accepting work."
+                />
+                <span className={`mt-1 block text-right text-[11px] ${textSub}`}>{form.bio.length}/300</span>
               </label>
             </div>
             <button type="submit" disabled={saving || !form.displayName}
