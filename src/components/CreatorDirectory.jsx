@@ -1315,11 +1315,31 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
     { label: 'Commercial photo', detail: 'Product, real estate, portraits, campaigns', range: '$500+' },
   ];
 
+  const CREATORBRIDGE_IMAGES = {
+    post: '/images/creatorbridge/post-production-suite.png',
+    drone: '/images/creatorbridge/drone-operator-golden-hour.png',
+    podcast: '/images/creatorbridge/podcast-producer-studio.png',
+    event: '/images/creatorbridge/event-crew-stage.png',
+    photo: '/images/creatorbridge/commercial-photographer.png',
+    lens: '/images/creatorbridge/camera-lens-event-reflection.png',
+  };
+
+  const CATEGORY_IMAGE_BY_ID = {
+    video: CREATORBRIDGE_IMAGES.post,
+    photo: CREATORBRIDGE_IMAGES.photo,
+    podcast: CREATORBRIDGE_IMAGES.podcast,
+    aerial: CREATORBRIDGE_IMAGES.drone,
+    events: CREATORBRIDGE_IMAGES.event,
+    brand_content: CREATORBRIDGE_IMAGES.photo,
+    editing: CREATORBRIDGE_IMAGES.post,
+  };
+
   const CATEGORY_PREVIEWS = MARKETPLACE_CATEGORIES
     .filter(category => category.id !== 'all')
     .slice(0, 7)
     .map(category => ({
       ...category,
+      image: CATEGORY_IMAGE_BY_ID[category.id],
       count: listings.filter(creator => (creator.services || []).some(service => serviceMatchesMarketplaceCategory(service.serviceId || service.service_id, category.id))).length,
     }));
 
@@ -1484,17 +1504,32 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                 style={{ background: 'radial-gradient(circle at 50% 30%, rgba(212,169,65,0.12), transparent 62%)' }}
               />
               <div
-                className={`relative overflow-hidden rounded-lg border p-5 sm:p-6 xl:p-7 ${dark ? 'bg-charcoal-950/80 border-gold-500/25' : 'bg-white/90 border-gold-500/20'}`}
+                className={`relative overflow-hidden rounded-lg border ${dark ? 'bg-charcoal-950/80 border-gold-500/25' : 'bg-white/90 border-gold-500/20'}`}
                 style={{ boxShadow: dark ? '0 28px 90px rgba(0,0,0,0.36)' : '0 24px 80px rgba(0,0,0,0.12)' }}
               >
                 <div
                   className="absolute inset-x-0 top-0 h-1"
                   style={{ background: 'linear-gradient(90deg, transparent, rgba(212,169,65,0.85), transparent)' }}
                 />
-                <p className="text-gold-400 mb-5" style={{ fontSize: '10px', letterSpacing: '2.5px', textTransform: 'uppercase' }}>
-                  Marketplace standards
-                </p>
-                <div className="space-y-3">
+                <div className="relative min-h-[270px] overflow-hidden">
+                  <img
+                    src={CREATORBRIDGE_IMAGES.post}
+                    alt="Professional post-production suite with editing monitors"
+                    className="absolute inset-0 h-full w-full object-cover"
+                    loading="eager"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950 via-charcoal-950/42 to-charcoal-950/18" />
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_18%,rgba(212,169,65,0.24),transparent_34%)]" />
+                  <div className="relative flex min-h-[270px] flex-col justify-end p-5 sm:p-6 xl:p-7">
+                    <p className="text-gold-300 mb-3" style={{ fontSize: '10px', letterSpacing: '2.5px', textTransform: 'uppercase' }}>
+                      Production done right
+                    </p>
+                    <p className="max-w-sm font-display text-3xl font-bold leading-tight text-white">
+                      Real media work deserves real production standards.
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-3 p-5 sm:p-6 xl:p-7">
                   {MARKETPLACE_PROOFS.map(({ label, value, detail }) => (
                     <div
                       key={label}
@@ -1509,12 +1544,12 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                       </div>
                     </div>
                   ))}
-                </div>
-                <div className={`mt-5 rounded-lg border px-4 py-3 ${dark ? 'bg-gold-500/10 border-gold-500/25' : 'bg-gold-50 border-gold-200'}`}>
-                  <p className={`${dark ? 'text-gold-200' : 'text-gold-800'} text-sm font-bold`}>Built for serious production work</p>
-                  <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} mt-1 text-xs leading-5`}>
-                    Profiles, packages, booking flow, and payment structure are designed around media projects that need trust before the first invoice.
-                  </p>
+                  <div className={`rounded-lg border px-4 py-3 ${dark ? 'bg-gold-500/10 border-gold-500/25' : 'bg-gold-50 border-gold-200'}`}>
+                    <p className={`${dark ? 'text-gold-200' : 'text-gold-800'} text-sm font-bold`}>Built for serious production work</p>
+                    <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} mt-1 text-xs leading-5`}>
+                      Profiles, packages, booking flow, and payment structure are designed around media projects that need trust before the first invoice.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1546,11 +1581,27 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                     setServiceFilter(category.id);
                     document.getElementById('creator-search')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }}
-                  className={`rounded-lg border p-4 text-left transition-all ${dark ? 'bg-white/[0.025] border-white/[0.07] hover:border-gold-500/35' : 'bg-gray-50 border-gray-200 hover:border-gold-300'}`}
+                  className={`group overflow-hidden rounded-lg border text-left transition-all ${dark ? 'bg-white/[0.025] border-white/[0.07] hover:border-gold-500/35' : 'bg-gray-50 border-gray-200 hover:border-gold-300'}`}
                 >
-                  <span className="text-lg">{category.icon}</span>
-                  <p className={`${dark ? 'text-white' : 'text-gray-950'} mt-3 text-xs font-bold uppercase tracking-[0.12em]`}>{category.name}</p>
-                  <p className={`${dark ? 'text-charcoal-400' : 'text-gray-500'} mt-2 text-[11px]`}>{category.count || 'Curated'} available</p>
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    {category.image ? (
+                      <img
+                        src={category.image}
+                        alt=""
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className={`grid h-full place-items-center text-2xl ${dark ? 'bg-charcoal-900' : 'bg-white'}`}>{category.icon}</div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950/92 via-charcoal-950/18 to-transparent" />
+                    <span className="absolute left-3 top-3 rounded-full bg-charcoal-950/72 px-2.5 py-1 text-sm ring-1 ring-gold-500/18">{category.icon}</span>
+                    <p className="absolute bottom-3 left-3 right-3 text-xs font-bold uppercase tracking-[0.12em] text-white">{category.name}</p>
+                  </div>
+                  <div className="p-4">
+                    <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} text-xs leading-5`}>{category.description}</p>
+                    <p className={`${dark ? 'text-charcoal-400' : 'text-gray-500'} mt-3 text-[11px]`}>{category.count || 'Curated'} available</p>
+                  </div>
                 </button>
               ))}
             </div>
@@ -1830,6 +1881,25 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
             <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} mt-5 max-w-lg text-sm leading-7`}>
               CreatorBridge gives clients a cleaner path to vetted media specialists while giving creators a platform that respects professional standards and protected payment structure.
             </p>
+            <div className={`mt-7 overflow-hidden rounded-lg border ${dark ? 'border-gold-500/20 bg-charcoal-950/70' : 'border-gray-200 bg-white'}`}>
+              <div className="relative aspect-[16/10]">
+                <img
+                  src={CREATORBRIDGE_IMAGES.lens}
+                  alt="Camera lens reflecting a professional event"
+                  className="absolute inset-0 h-full w-full object-cover"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950/86 via-charcoal-950/18 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-5">
+                  <p className="text-gold-300 mb-2" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
+                    Risk control
+                  </p>
+                  <p className="max-w-sm text-sm font-bold leading-6 text-white">
+                    Stop guessing who can deliver. Start with creators built for production work.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-5">
