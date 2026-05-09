@@ -179,7 +179,7 @@ function NewConversationModal({ dark, onClose, onStart, myUser, myProfile }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="cb-modal-backdrop" onClick={onClose} />
       <div className={`relative w-full max-w-md rounded-2xl border shadow-2xl p-6 ${dark ? 'bg-charcoal-900 border-white/[0.08]' : 'bg-white border-gray-200'}`}>
         <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
           Secure Message

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-export function CircuitBackground() {
+export function CircuitBackground({ subdued = false }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -193,7 +193,8 @@ export function CircuitBackground() {
         height: '100vh',
         pointerEvents: 'none',
         zIndex: 0,
-        opacity: 0.62,
+        opacity: subdued ? 0.42 : 0.62,
+        filter: subdued ? 'saturate(0.72) contrast(0.88)' : 'none',
         display: 'block',
       }}
     />

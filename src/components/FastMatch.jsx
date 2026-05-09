@@ -74,7 +74,7 @@ export function FastMatch({ dark, serviceId, onViewProfile }) {
       {/* Modal */}
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/75 backdrop-blur-md" onClick={() => setOpen(false)} />
+          <div className="cb-modal-backdrop" onClick={() => setOpen(false)} />
           <div className={`relative w-full max-w-sm rounded-2xl border overflow-hidden ${dark ? 'bg-charcoal-950/96 border-white/[0.09] shadow-[0_28px_90px_rgba(0,0,0,0.46)]' : 'bg-white border-gray-200 shadow-2xl'}`}>
             <div className="h-px bg-gradient-to-r from-transparent via-gold-400/70 to-transparent" />
             <button type="button" onClick={() => setOpen(false)}

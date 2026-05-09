@@ -922,7 +922,7 @@ export function CreatorProfilePage({ dark }) {
 
       {showContactGate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowContactGate(false)} />
+          <div className="cb-modal-backdrop" onClick={() => setShowContactGate(false)} />
           <div className={`relative w-full max-w-md rounded-2xl border p-6 shadow-2xl ${dark ? 'bg-charcoal-950/95 border-gold-500/20' : 'bg-white border-gray-200'}`}>
             <button type="button" onClick={() => setShowContactGate(false)}
               className={`absolute right-4 top-4 p-1.5 rounded-lg transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.05]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
@@ -963,7 +963,7 @@ export function CreatorProfilePage({ dark }) {
       {/* Video intro modal */}
       {showVideoModal && creator.video_intro_url && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowVideoModal(false)} />
+          <div className="cb-modal-backdrop" onClick={() => setShowVideoModal(false)} />
           <div className={`relative w-full max-w-2xl rounded-2xl border shadow-2xl overflow-hidden ${dark ? 'bg-charcoal-900 border-charcoal-700' : 'bg-white border-gray-200'}`}>
             <div className={`flex items-center justify-between px-5 py-3 border-b ${dark ? 'border-charcoal-700' : 'border-gray-200'}`}>
               <p className={`text-sm font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>

@@ -350,7 +350,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
   if (submitted) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+        <div className="cb-modal-backdrop" />
         <div className={`relative w-full max-w-sm rounded-2xl border shadow-2xl p-8 text-center ${dark ? 'bg-charcoal-950/90 border-white/[0.08]' : 'bg-white border-gray-200'}`}>
           <div className="text-4xl mb-4 animate-pulse text-gold-400">🔍</div>
           <h3 className={`font-display font-bold text-lg mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>
@@ -366,7 +366,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="cb-modal-backdrop" onClick={onClose} />
       <div className={`relative w-full max-w-2xl rounded-[28px] border shadow-2xl flex flex-col max-h-[90vh] overflow-hidden ${dark ? 'bg-charcoal-950/92 border-white/[0.08]' : 'bg-white border-gray-200'}`}>
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/60 to-transparent" />
         {/* Header */}

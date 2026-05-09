@@ -356,18 +356,20 @@ export default function App() {
   const bgMain = dark ? '' : 'bg-gray-50';
   const textMain = dark ? 'text-white' : 'text-gray-900';
   const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.07] shadow-[0_22px_70px_rgba(0,0,0,0.18)]' : 'bg-white border-gray-200'}`;
+  const softFocusBackground = dark && location.pathname !== '/';
 
   return (
     <>
     <div className={`min-h-screen ${bgMain} font-body transition-colors duration-200`} style={{ position: 'relative', zIndex: 1 }}>
-      <CircuitBackground />
+      <CircuitBackground subdued={softFocusBackground} />
+      {softFocusBackground && <div className="cb-page-depth-veil" />}
 
       {/* ── Top Nav ── */}
       <header
         className={`sticky top-0 z-20 border-b backdrop-blur-xl ${dark ? 'bg-charcoal-950/88 border-gold-500/14' : 'bg-white/92 border-gray-200'}`}
         style={{ boxShadow: dark ? '0 18px 60px rgba(0,0,0,0.24)' : '0 12px 40px rgba(0,0,0,0.08)' }}
       >
-        <div className="mx-auto w-full max-w-[1520px] px-5 sm:px-8 lg:px-12 h-16 flex items-center gap-4">
+        <div className="cb-home-wide mx-auto w-full px-5 sm:px-8 lg:px-14 2xl:px-16 h-16 flex items-center gap-4">
 
           {/* Logo */}
           <div className="group flex items-center gap-3 shrink-0 cursor-pointer" onClick={() => navigate('/')}>

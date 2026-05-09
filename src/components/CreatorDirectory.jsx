@@ -975,7 +975,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
       {/* Inline Terms of Service modal */}
       {showTermsModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowTermsModal(false)} />
+          <div className="cb-modal-backdrop" onClick={() => setShowTermsModal(false)} />
           <div className={`relative w-full max-w-lg max-h-[80vh] flex flex-col rounded-2xl border shadow-2xl ${
             dark ? 'bg-charcoal-900 border-charcoal-700' : 'bg-white border-gray-200'
           }`}>
@@ -1348,7 +1348,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
           background: dark ? 'linear-gradient(90deg, rgba(13,13,24,0.92), rgba(22,22,42,0.7), rgba(13,13,24,0.92))' : 'rgba(255,255,255,0.86)',
         }}
       >
-        <div className="mx-auto flex min-w-max max-w-[1520px] items-center gap-3 px-5 py-3 sm:px-8 lg:px-12">
+        <div className="cb-home-wide mx-auto flex min-w-max items-center gap-3 px-5 py-3 sm:px-8 lg:px-14 2xl:px-16">
           <div className="hidden xl:flex mr-2 items-center gap-3 pr-4 border-r border-gold-500/14">
             <span className="h-2 w-2 rounded-full bg-gold-400 shadow-[0_0_16px_rgba(212,169,65,0.55)]" />
             <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-gold-400">Production categories</span>
@@ -1382,18 +1382,18 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
       </div>
 
       {/* Page content wrapper */}
-      <div className="mx-auto w-full max-w-[1520px] px-5 sm:px-8 lg:px-12">
+      <div className="cb-home-wide mx-auto w-full px-5 sm:px-8 lg:px-14 2xl:px-16">
 
         {/* 2. Editorial hero */}
-        <section className="relative py-12 sm:py-16 lg:py-20">
+        <section className="relative py-12 sm:py-16 lg:py-20 2xl:py-24">
           <div
             className="absolute inset-x-0 top-8 h-px"
             style={{ background: 'linear-gradient(90deg, transparent, rgba(212,169,65,0.45), transparent)' }}
           />
-          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.15fr)_minmax(420px,0.85fr)] gap-10 lg:gap-14 items-center">
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.22fr)_minmax(500px,0.78fr)] 2xl:grid-cols-[minmax(0,1.28fr)_minmax(560px,0.72fr)] gap-10 lg:gap-16 2xl:gap-24 items-center">
 
             {/* Left column */}
-            <div className="relative z-10 max-w-5xl">
+            <div className="relative z-10 max-w-6xl">
               <div className="mb-7 flex flex-wrap items-center gap-3">
                 <span
                   className="text-gold-400"
@@ -1407,12 +1407,12 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                 </span>
               </div>
               <h1
-                className={`max-w-5xl leading-[0.96] ${dark ? 'text-white' : 'text-gray-950'}`}
-                style={{ fontFamily: "'Georgia', 'Times New Roman', serif", fontWeight: 400, fontSize: 'clamp(42px, 7.6vw, 118px)' }}
+                className={`max-w-6xl leading-[0.96] ${dark ? 'text-white' : 'text-gray-950'}`}
+                style={{ fontFamily: "'Georgia', 'Times New Roman', serif", fontWeight: 400, fontSize: 'clamp(42px, 6.6vw, 124px)' }}
               >
                 Verified creative talent for brands that need the work done right.
               </h1>
-              <div className="mt-8 grid grid-cols-1 lg:grid-cols-[minmax(0,520px)_auto] gap-6 lg:gap-10 items-end">
+              <div className="mt-8 grid grid-cols-1 lg:grid-cols-[minmax(0,580px)_auto] gap-6 lg:gap-10 items-end">
                 <p className={`${dark ? 'text-charcoal-200' : 'text-gray-700'} text-base sm:text-lg leading-8`}>
                   CreatorBridge connects brands with reviewed videographers, photographers, podcast producers, drone operators, event crews, and content specialists who are built for professional production work.
                 </p>
@@ -1438,13 +1438,13 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
             </div>
 
             {/* Right column */}
-            <div className="relative">
+            <div className="relative xl:justify-self-end xl:w-full">
               <div
                 className="absolute -inset-8 opacity-70"
                 style={{ background: 'radial-gradient(circle at 50% 30%, rgba(212,169,65,0.12), transparent 62%)' }}
               />
               <div
-                className={`relative overflow-hidden rounded-lg border p-5 sm:p-6 ${dark ? 'bg-charcoal-950/80 border-gold-500/25' : 'bg-white/90 border-gold-500/20'}`}
+                className={`relative overflow-hidden rounded-lg border p-5 sm:p-6 xl:p-7 ${dark ? 'bg-charcoal-950/80 border-gold-500/25' : 'bg-white/90 border-gold-500/20'}`}
                 style={{ boxShadow: dark ? '0 28px 90px rgba(0,0,0,0.36)' : '0 24px 80px rgba(0,0,0,0.12)' }}
               >
                 <div
@@ -1482,7 +1482,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
         </section>
 
         {/* 3. Curation strip */}
-        <section className="mb-8 grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4 lg:gap-6 items-stretch">
+        <section className="mb-8 grid grid-cols-1 lg:grid-cols-[320px_1fr] 2xl:grid-cols-[340px_1fr] gap-4 lg:gap-6 items-stretch">
           <div className={`rounded-lg border p-5 flex flex-col justify-between ${dark ? 'bg-charcoal-950/80 border-gold-500/20' : 'bg-white border-gray-200'}`}>
             <div>
               <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
@@ -1496,9 +1496,9 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
               <FastMatch dark={dark} />
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 2xl:gap-5">
             {PROCESS_STEPS.map(({ step, title, copy }) => (
-              <div key={step} className={`rounded-lg border p-5 ${dark ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-white border-gray-200'}`}>
+              <div key={step} className={`rounded-lg border p-5 2xl:p-6 ${dark ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-white border-gray-200'}`}>
                 <p className="text-gold-400 font-display text-xl font-bold">{step}</p>
                 <p className={`${dark ? 'text-white' : 'text-gray-950'} mt-3 text-sm font-bold`}>{title}</p>
                 <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} mt-2 text-xs leading-5`}>{copy}</p>
@@ -1682,7 +1682,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
       {/* Guest gate modal */}
       {showGuestGate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowGuestGate(false)} />
+          <div className="cb-modal-backdrop" onClick={() => setShowGuestGate(false)} />
           <div className="relative w-full max-w-md rounded-2xl border border-charcoal-700 bg-charcoal-900 p-8 text-center shadow-2xl">
             <div className="w-14 h-14 rounded-full bg-gold-500/15 flex items-center justify-center mx-auto mb-4">
               <span className="text-2xl">🎬</span>
@@ -1715,7 +1715,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
 
       {/* 8. Bottom value section */}
       <section
-        className="mx-auto w-full max-w-[1520px] px-5 sm:px-8 lg:px-12 py-14"
+        className="cb-home-wide mx-auto w-full px-5 sm:px-8 lg:px-14 2xl:px-16 py-14"
         style={{ borderTop: '1px solid rgba(212,169,65,0.14)' }}
       >
         <div className="grid grid-cols-1 lg:grid-cols-[0.75fr_1.25fr] gap-8 lg:gap-12 items-start">

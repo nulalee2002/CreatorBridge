@@ -131,7 +131,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="cb-modal-backdrop" onClick={onClose} />
 
       {/* Modal */}
       <div className={`relative w-full max-w-md rounded-[28px] border shadow-2xl overflow-hidden ${

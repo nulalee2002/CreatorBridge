@@ -156,4 +156,39 @@
         rgba(255,255,255,0.006) 4px
       );
   }
+
+  .cb-page-depth-veil {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(circle at 18% 16%, rgba(212,169,65,0.08), transparent 24%),
+      radial-gradient(circle at 82% 26%, rgba(212,169,65,0.055), transparent 28%),
+      rgba(5, 5, 8, 0.28);
+    backdrop-filter: blur(1.2px) saturate(0.88);
+    -webkit-backdrop-filter: blur(1.2px) saturate(0.88);
+  }
+
+  .cb-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 50% 32%, rgba(212,169,65,0.09), transparent 34%),
+      rgba(0, 0, 0, 0.78);
+    backdrop-filter: blur(9px) saturate(0.76);
+    -webkit-backdrop-filter: blur(9px) saturate(0.76);
+  }
+
+  .cb-glass-focus {
+    background: linear-gradient(145deg, rgba(18,18,30,0.96), rgba(9,9,14,0.9));
+    border-color: rgba(255,255,255,0.1);
+    box-shadow:
+      0 32px 110px rgba(0,0,0,0.58),
+      inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  .cb-home-wide {
+    max-width: 1760px;
+  }
 }
