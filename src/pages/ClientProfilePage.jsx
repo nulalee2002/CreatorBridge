@@ -7,7 +7,7 @@ import {
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { ClientVerification } from '../components/ClientVerification.jsx';
-import { ClientReputationBadge, ClientReputationCard, loadClientReputation } from '../components/ClientReputationBadge.jsx';
+import { ClientReputationBadge, loadClientReputation } from '../components/ClientReputationBadge.jsx';
 import { SERVICES, normalizeServiceId } from '../data/rates.js';
 import { fromSupabaseProject, mergeProjects } from '../utils/projectStorage.js';
 
@@ -316,9 +316,9 @@ export function ClientProfilePage({ dark }) {
             <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="mb-2 text-gold-400" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
-                  Project Activity
+                  Booking Activity
                 </p>
-                <h2 className={`font-display text-2xl font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>Recent client work</h2>
+                <h2 className={`font-display text-2xl font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>Project Pipeline</h2>
               </div>
               <button type="button" onClick={() => navigate('/projects')}
                 className="inline-flex items-center gap-2 rounded-xl bg-gold-500 px-4 py-2.5 text-sm font-bold text-charcoal-900 hover:bg-gold-600">
@@ -346,8 +346,18 @@ export function ClientProfilePage({ dark }) {
             ) : (
               <div className={`rounded-2xl border p-8 text-center ${dark ? 'bg-charcoal-950/45 border-white/[0.07]' : 'bg-gray-50 border-gray-200'}`}>
                 <Search size={30} className="mx-auto mb-3 text-gold-400" />
-                <p className={`font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>No client projects yet</p>
-                <p className={`mx-auto mt-2 max-w-md text-sm ${textSub}`}>Start by browsing creators or building a project brief so CreatorBridge can match you with the right production talent.</p>
+                <p className={`font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>No projects in motion yet</p>
+                <p className={`mx-auto mt-2 max-w-md text-sm ${textSub}`}>Post a project brief or browse verified creators to start building your first booking path.</p>
+                <div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row">
+                  <button type="button" onClick={() => navigate('/projects')}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-gold-500 px-4 py-2.5 text-sm font-bold text-charcoal-900 hover:bg-gold-600">
+                    Post a project <ArrowRight size={14} />
+                  </button>
+                  <button type="button" onClick={() => navigate('/')}
+                    className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold transition-colors ${dark ? 'border-white/[0.09] text-charcoal-200 hover:border-gold-500/35 hover:text-white' : 'border-gray-200 text-gray-700 hover:border-gold-300'}`}>
+                    Browse creators
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -405,7 +415,33 @@ export function ClientProfilePage({ dark }) {
             </button>
           </form>
 
-          <ClientReputationCard clientName={form.companyName || form.displayName} metrics={reputation || { totalProjects: stats.completed, completionRate: 100, avgRating: 0 }} dark={dark} />
+          <div className={`${panelCls} p-5`}>
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="mb-2 text-gold-400" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
+                  Client Trust Profile
+                </p>
+                <h2 className={`font-display text-xl font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>Booking signals</h2>
+              </div>
+              <ClientReputationBadge metrics={reputation || { totalProjects: stats.completed }} dark={dark} size="md" />
+            </div>
+            <div className="space-y-2">
+              {[
+                { label: 'Projects posted', value: stats.all },
+                { label: 'Completed bookings', value: stats.completed },
+                { label: 'Creator reviews', value: reputation?.totalReviews || 0 },
+                { label: 'Average rating', value: reputation?.avgRating ? reputation.avgRating.toFixed(1) : 'Pending' },
+              ].map(({ label, value }) => (
+                <div key={label} className={`flex items-center justify-between rounded-xl px-3 py-2 ${dark ? 'bg-white/[0.025]' : 'bg-gray-50'}`}>
+                  <span className={`text-xs ${textSub}`}>{label}</span>
+                  <span className={`text-xs font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{value}</span>
+                </div>
+              ))}
+            </div>
+            <p className={`mt-3 text-[11px] leading-5 ${textSub}`}>
+              These signals help creators understand booking reliability before accepting work.
+            </p>
+          </div>
 
           <div className={`${panelCls} p-5`}>
             <div className="mb-4 flex items-center gap-3">
