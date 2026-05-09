@@ -649,7 +649,7 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
 }
 
 // ── Action buttons (context-aware by role + status) ──────────────
-function ProjectActionButtons({ project, isClient, applied, dark, onApply, onStatusChange, navigate, onOpenDelivery, onOpenRevision }) {
+function ProjectActionButtons({ project, isClient, canApply, applied, dark, onApply, onStatusChange, navigate, onOpenDelivery, onOpenRevision }) {
   const { status } = project;
 
   function changeStatus(newStatus, patch = {}) {
@@ -727,6 +727,8 @@ function ProjectActionButtons({ project, isClient, applied, dark, onApply, onSta
   }
 
   // Creator buttons
+  if (!canApply) return null;
+
   if (status === 'open') {
     return (
       <button type="button"
@@ -764,7 +766,7 @@ function InlineClientRep({ clientId, dark }) {
 }
 
 // ── Project Card ─────────────────────────────────────────────────
-function ProjectCard({ project, dark, onApply, myApplications, isClient, onView, onStatusChange }) {
+function ProjectCard({ project, dark, onApply, myApplications, isClient, canApply, onView, onStatusChange }) {
   const navigate = useNavigate();
   const serviceId = normalizeServiceId(project.serviceId || project.service_id || project.serviceType);
   const svc      = SERVICES[serviceId];
@@ -848,6 +850,7 @@ function ProjectCard({ project, dark, onApply, myApplications, isClient, onView,
       <ProjectActionButtons
         project={project}
         isClient={isClient}
+        canApply={canApply}
         applied={applied}
         dark={dark}
         onApply={e => { e.stopPropagation(); onApply(project); }}
@@ -859,7 +862,7 @@ function ProjectCard({ project, dark, onApply, myApplications, isClient, onView,
 }
 
 // ── Project Detail Modal ─────────────────────────────────────────
-function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, applications, isClient, onStatusChange }) {
+function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, applications, isClient, canApply, onStatusChange }) {
   const navigate    = useNavigate();
   const serviceId   = normalizeServiceId(project.serviceId || project.service_id || project.serviceType);
   const svc         = SERVICES[serviceId];
@@ -1031,6 +1034,7 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
             <ProjectActionButtons
               project={localProject}
               isClient={isClient}
+              canApply={canApply}
               applied={applied}
               dark={dark}
               onApply={() => { onClose(); onApply(project); }}
@@ -1043,7 +1047,7 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
               onOpenRevision={(mode) => mode === 'dispute' ? setShowDispute(true) : setShowRevision(true)}
             />
             {/* Rate Client - shown for creators on completed projects */}
-            {!isClient && project.status === 'completed' && (
+            {canApply && project.status === 'completed' && (
               <button type="button" onClick={() => setShowRateClient(true)}
                 className="w-full py-2 rounded-xl bg-gold-500/15 border border-gold-500/30 text-gold-400 text-xs font-bold transition-all hover:bg-gold-500/25">
                 ⭐ Rate This Client
@@ -1378,6 +1382,7 @@ export function ProjectBoard({ dark }) {
                 onApply={setApplyTarget}
                 myApplications={myApplications}
                 isClient={p.clientId === user?.id}
+                canApply={isCreator && p.clientId !== user?.id}
                 onView={setViewTarget}
                 onStatusChange={handleStatusChange}
               />
@@ -1415,6 +1420,7 @@ export function ProjectBoard({ dark }) {
           myApplications={myApplications}
           applications={applications}
           isClient={viewTarget.clientId === user?.id}
+          canApply={isCreator && viewTarget.clientId !== user?.id}
           onStatusChange={handleStatusChange}
         />
       )}
