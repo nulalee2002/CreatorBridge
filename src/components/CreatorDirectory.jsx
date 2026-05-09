@@ -1303,6 +1303,26 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
     { label: 'Creator fee', value: '10% to 6%', detail: 'Fees drop as completed work grows.' },
   ];
 
+  const MARKETPLACE_SIGNALS = [
+    { label: 'Profile gate', value: '2+ yrs', detail: 'Paid production experience required before review.' },
+    { label: 'Proof layer', value: '3+', detail: 'Portfolio samples required before a listing can publish.' },
+    { label: 'Intro check', value: '60-90s', detail: 'Creators submit a short professional intro video.' },
+  ];
+
+  const PROJECT_SIGNALS = [
+    { label: 'Brand film', detail: 'Corporate story, event recap, launch video', range: '$1.5k+' },
+    { label: 'Podcast', detail: 'Edit, launch, studio, remote recording', range: '$350+' },
+    { label: 'Commercial photo', detail: 'Product, real estate, portraits, campaigns', range: '$500+' },
+  ];
+
+  const CATEGORY_PREVIEWS = MARKETPLACE_CATEGORIES
+    .filter(category => category.id !== 'all')
+    .slice(0, 7)
+    .map(category => ({
+      ...category,
+      count: listings.filter(creator => (creator.services || []).some(service => serviceMatchesMarketplaceCategory(service.serviceId || service.service_id, category.id))).length,
+    }));
+
   const VALUE_PILLARS = [
     { headline: 'Curated media professionals', desc: 'CreatorBridge is built for video, photo, podcast, drone, events, and content production work, not general gig listings.' },
     { headline: 'Cleaner client decisions', desc: 'Brands can review focused creator profiles, service fit, availability, and reputation before starting a project.' },
@@ -1390,7 +1410,27 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
             className="absolute inset-x-0 top-8 h-px"
             style={{ background: 'linear-gradient(90deg, transparent, rgba(212,169,65,0.45), transparent)' }}
           />
-          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.22fr)_minmax(500px,0.78fr)] 2xl:grid-cols-[minmax(0,1.28fr)_minmax(560px,0.72fr)] gap-10 lg:gap-16 2xl:gap-24 items-center">
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.18fr)_minmax(500px,0.82fr)] 2xl:grid-cols-[300px_minmax(0,1fr)_540px] gap-8 lg:gap-14 2xl:gap-16 items-center">
+
+            {/* Wide-screen left rail */}
+            <aside className="hidden 2xl:block">
+              <div className={`rounded-lg border p-5 ${dark ? 'bg-charcoal-950/72 border-gold-500/18' : 'bg-white/90 border-gray-200'}`}>
+                <p className="text-gold-400 mb-4" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
+                  Marketplace pulse
+                </p>
+                <div className="space-y-4">
+                  {MARKETPLACE_SIGNALS.map(({ label, value, detail }) => (
+                    <div key={label} className={`border-b pb-4 last:border-b-0 last:pb-0 ${dark ? 'border-white/[0.07]' : 'border-gray-200'}`}>
+                      <div className="flex items-baseline justify-between gap-4">
+                        <p className={`${dark ? 'text-charcoal-300' : 'text-gray-500'} text-[10px] font-bold uppercase tracking-[0.18em]`}>{label}</p>
+                        <p className="font-display text-lg font-bold text-gold-400">{value}</p>
+                      </div>
+                      <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} mt-2 text-xs leading-5`}>{detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </aside>
 
             {/* Left column */}
             <div className="relative z-10 max-w-6xl">
@@ -1477,6 +1517,64 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 2B. Wide category and project signals */}
+        <section className="mb-8 grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_390px] 2xl:grid-cols-[minmax(0,1fr)_430px] gap-5">
+          <div className={`rounded-lg border p-5 2xl:p-6 ${dark ? 'bg-charcoal-950/72 border-gold-500/16' : 'bg-white border-gray-200'}`}>
+            <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
+                  Production lanes
+                </p>
+                <h2 className={`${dark ? 'text-white' : 'text-gray-950'} font-display text-2xl font-bold`}>
+                  Media categories built around real booking needs.
+                </h2>
+              </div>
+              <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} max-w-md text-xs leading-5`}>
+                Categories stay focused so clients choose the type of production work first, then compare creators by proof, package, and fit.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 2xl:grid-cols-7 gap-3">
+              {CATEGORY_PREVIEWS.map(category => (
+                <button
+                  key={category.id}
+                  type="button"
+                  onClick={() => {
+                    setServiceFilter(category.id);
+                    document.getElementById('creator-search')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }}
+                  className={`rounded-lg border p-4 text-left transition-all ${dark ? 'bg-white/[0.025] border-white/[0.07] hover:border-gold-500/35' : 'bg-gray-50 border-gray-200 hover:border-gold-300'}`}
+                >
+                  <span className="text-lg">{category.icon}</span>
+                  <p className={`${dark ? 'text-white' : 'text-gray-950'} mt-3 text-xs font-bold uppercase tracking-[0.12em]`}>{category.name}</p>
+                  <p className={`${dark ? 'text-charcoal-400' : 'text-gray-500'} mt-2 text-[11px]`}>{category.count || 'Curated'} available</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className={`rounded-lg border p-5 2xl:p-6 ${dark ? 'bg-gold-500/[0.08] border-gold-500/20' : 'bg-gold-50 border-gold-200'}`}>
+            <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
+              Project signals
+            </p>
+            <h2 className={`${dark ? 'text-white' : 'text-gray-950'} font-display text-xl font-bold`}>
+              The page should teach clients what to book.
+            </h2>
+            <div className="mt-4 space-y-3">
+              {PROJECT_SIGNALS.map(({ label, detail, range }) => (
+                <div key={label} className={`rounded-lg border p-4 ${dark ? 'bg-charcoal-950/55 border-white/[0.07]' : 'bg-white border-gold-100'}`}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className={`${dark ? 'text-white' : 'text-gray-950'} text-sm font-bold`}>{label}</p>
+                      <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} mt-1 text-xs leading-5`}>{detail}</p>
+                    </div>
+                    <p className="shrink-0 text-sm font-bold text-gold-400">{range}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
