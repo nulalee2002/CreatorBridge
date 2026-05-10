@@ -148,9 +148,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
         <div className="p-6">
           {/* Logo */}
           <div className="text-center mb-6">
-            <span className={`mx-auto grid h-14 w-14 place-items-center rounded-2xl border shadow-[0_0_24px_rgba(212,169,65,0.12)] ${dark ? 'border-gold-500/24 bg-charcoal-950/72' : 'border-gold-500/24 bg-white'}`}>
-              <BrandMark className="h-11 w-11" />
-            </span>
+            <BrandMark className="mx-auto h-16 w-16 rounded-2xl shadow-[0_0_24px_rgba(212,169,65,0.14)]" />
             <p className="text-gold-400 mt-4 mb-2" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
               Account Access
             </p>

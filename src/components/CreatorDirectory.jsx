@@ -1325,6 +1325,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
   };
 
   const CATEGORY_IMAGE_BY_ID = {
+    all: CREATORBRIDGE_IMAGES.lens,
     video: CREATORBRIDGE_IMAGES.post,
     photo: CREATORBRIDGE_IMAGES.photo,
     podcast: CREATORBRIDGE_IMAGES.podcast,
@@ -1335,12 +1336,12 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
   };
 
   const CATEGORY_PREVIEWS = MARKETPLACE_CATEGORIES
-    .filter(category => category.id !== 'all')
-    .slice(0, 7)
     .map(category => ({
       ...category,
       image: CATEGORY_IMAGE_BY_ID[category.id],
-      count: listings.filter(creator => (creator.services || []).some(service => serviceMatchesMarketplaceCategory(service.serviceId || service.service_id, category.id))).length,
+      count: category.id === 'all'
+        ? listings.filter(isApprovedCreator).length
+        : listings.filter(creator => (creator.services || []).some(service => serviceMatchesMarketplaceCategory(service.serviceId || service.service_id, category.id))).length,
     }));
 
   const VALUE_PILLARS = [
@@ -1363,63 +1364,8 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
     { label: 'Protected payment structure', creatorbridge: '50 / 50', alternative: 'Varies by platform' },
   ];
 
-  const TAB_STYLE_BASE = {
-    padding: '10px 14px',
-    fontSize: '11px',
-    letterSpacing: '1.4px',
-    textTransform: 'uppercase',
-    fontFamily: 'inherit',
-    background: 'rgba(255,255,255,0.025)',
-    border: '1px solid rgba(212,169,65,0.1)',
-    borderRadius: '999px',
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    transition: 'color 0.2s, border-color 0.2s, background 0.2s, box-shadow 0.2s',
-  };
-
   return (
     <div className="w-full overflow-hidden">
-
-      {/* 1. Service filter bar */}
-      <div
-        className="w-full overflow-x-auto no-scrollbar"
-        style={{
-          borderBottom: dark ? '1px solid rgba(212,169,65,0.16)' : '1px solid rgba(0,0,0,0.08)',
-          background: dark ? 'linear-gradient(90deg, rgba(13,13,24,0.92), rgba(22,22,42,0.7), rgba(13,13,24,0.92))' : 'rgba(255,255,255,0.86)',
-        }}
-      >
-        <div className="cb-home-wide mx-auto flex min-w-max items-center gap-3 px-5 py-3 sm:px-8 lg:px-14 2xl:px-16">
-          <div className="hidden xl:flex mr-2 items-center gap-3 pr-4 border-r border-gold-500/14">
-            <span className="h-2 w-2 rounded-full bg-gold-400 shadow-[0_0_16px_rgba(212,169,65,0.55)]" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-gold-400">Production categories</span>
-          </div>
-          {[
-            ...MARKETPLACE_CATEGORIES,
-          ].map(s => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => setServiceFilter(s.id)}
-              className={serviceFilter === s.id ? 'text-gold-400' : 'text-charcoal-200 hover:text-white'}
-              style={{
-                ...TAB_STYLE_BASE,
-                borderColor: serviceFilter === s.id ? 'rgba(212,169,65,0.55)' : 'rgba(212,169,65,0.1)',
-                background: serviceFilter === s.id ? 'rgba(212,169,65,0.13)' : 'rgba(255,255,255,0.025)',
-                boxShadow: serviceFilter === s.id ? '0 0 24px rgba(212,169,65,0.12)' : 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '7px',
-              }}
-            >
-              <span>{s.icon}</span><span>{s.name}</span>
-            </button>
-          ))}
-          <div className="hidden 2xl:flex ml-auto items-center gap-2 pl-4 text-[10px] font-bold uppercase tracking-[0.18em] text-charcoal-300">
-            <span className="h-px w-12 bg-gold-500/35" />
-            Verified creators only
-          </div>
-        </div>
-      </div>
 
       {/* Page content wrapper */}
       <div className="cb-home-wide mx-auto w-full px-5 sm:px-8 lg:px-14 2xl:px-16">
@@ -1572,7 +1518,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                 Categories stay focused so clients choose the type of production work first, then compare creators by proof, package, and fit.
               </p>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 2xl:grid-cols-7 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 2xl:grid-cols-8 gap-3">
               {CATEGORY_PREVIEWS.map(category => (
                 <button
                   key={category.id}
@@ -1881,25 +1827,6 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
             <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} mt-5 max-w-lg text-sm leading-7`}>
               CreatorBridge gives clients a cleaner path to vetted media specialists while giving creators a platform that respects professional standards and protected payment structure.
             </p>
-            <div className={`mt-7 overflow-hidden rounded-lg border ${dark ? 'border-gold-500/20 bg-charcoal-950/70' : 'border-gray-200 bg-white'}`}>
-              <div className="relative aspect-[16/10]">
-                <img
-                  src={CREATORBRIDGE_IMAGES.lens}
-                  alt="Camera lens reflecting a professional event"
-                  className="absolute inset-0 h-full w-full object-cover"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950/86 via-charcoal-950/18 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-5">
-                  <p className="text-gold-300 mb-2" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
-                    Risk control
-                  </p>
-                  <p className="max-w-sm text-sm font-bold leading-6 text-white">
-                    Stop guessing who can deliver. Start with creators built for production work.
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
 
           <div className="space-y-5">
