@@ -161,11 +161,11 @@
     position: fixed;
     inset: 0;
     pointer-events: none;
-    z-index: 0;
+    z-index: -1;
     background:
       radial-gradient(circle at 18% 16%, rgba(212,169,65,0.035), transparent 24%),
       radial-gradient(circle at 82% 26%, rgba(212,169,65,0.026), transparent 28%),
-      rgba(5, 5, 8, 0.12);
+      rgba(5, 5, 8, 0.04);
   }
 
   .cb-modal-backdrop {

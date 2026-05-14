@@ -11,8 +11,9 @@ export function CircuitBackground({ subdued = false }) {
     let height = 0;
     let dpr = 1;
     const GOLD = '212,169,65';
-    const muted = subdued ? 0.58 : 1;
+    const muted = subdued ? 0.52 : 1;
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const motionScale = reducedMotion ? 0.35 : 1;
 
     function resize() {
       width = document.documentElement.clientWidth || window.innerWidth;
@@ -27,9 +28,9 @@ export function CircuitBackground({ subdued = false }) {
 
     function fillBase() {
       const base = ctx.createLinearGradient(0, 0, width, height);
-      base.addColorStop(0, 'rgba(8,8,13,0.96)');
-      base.addColorStop(0.48, 'rgba(15,14,22,0.88)');
-      base.addColorStop(1, 'rgba(7,7,11,0.98)');
+      base.addColorStop(0, 'rgba(8,8,13,0.74)');
+      base.addColorStop(0.48, 'rgba(15,14,22,0.58)');
+      base.addColorStop(1, 'rgba(7,7,11,0.76)');
       ctx.fillStyle = base;
       ctx.fillRect(0, 0, width, height);
     }
@@ -37,8 +38,8 @@ export function CircuitBackground({ subdued = false }) {
     function drawVignette() {
       const vignette = ctx.createRadialGradient(width * 0.5, height * 0.42, 0, width * 0.5, height * 0.42, Math.max(width, height) * 0.78);
       vignette.addColorStop(0, 'rgba(255,255,255,0)');
-      vignette.addColorStop(0.62, 'rgba(0,0,0,0.12)');
-      vignette.addColorStop(1, 'rgba(0,0,0,0.74)');
+      vignette.addColorStop(0.66, 'rgba(0,0,0,0.04)');
+      vignette.addColorStop(1, 'rgba(0,0,0,0.26)');
       ctx.fillStyle = vignette;
       ctx.fillRect(0, 0, width, height);
     }
@@ -81,8 +82,8 @@ export function CircuitBackground({ subdued = false }) {
       centers.forEach((center, index) => {
         for (let i = 0; i < 5; i += 1) {
           const radius = center.r + i * 58;
-          const start = time * 0.00008 * center.spin + i * 0.72 + index * 0.42;
-          const alpha = (0.06 - i * 0.008) * muted;
+          const start = time * 0.00018 * motionScale * center.spin + i * 0.72 + index * 0.42;
+          const alpha = (0.075 - i * 0.009) * muted;
           ctx.strokeStyle = `rgba(${GOLD},${Math.max(alpha, 0.012)})`;
           ctx.beginPath();
           ctx.arc(center.x, center.y, radius, start, start + Math.PI * 0.62);
@@ -103,11 +104,11 @@ export function CircuitBackground({ subdued = false }) {
       ];
 
       wells.forEach(well => {
-        const x = well.x + Math.sin(time * 0.00022 + well.phase) * 28;
-        const y = well.y + Math.cos(time * 0.0002 + well.phase) * 20;
+        const x = well.x + Math.sin(time * 0.00046 * motionScale + well.phase) * 42;
+        const y = well.y + Math.cos(time * 0.0004 * motionScale + well.phase) * 30;
         const glow = ctx.createRadialGradient(x, y, 0, x, y, well.size);
-        glow.addColorStop(0, `rgba(${GOLD},${0.13 * muted})`);
-        glow.addColorStop(0.26, `rgba(${GOLD},${0.045 * muted})`);
+        glow.addColorStop(0, `rgba(${GOLD},${0.18 * muted})`);
+        glow.addColorStop(0.26, `rgba(${GOLD},${0.06 * muted})`);
         glow.addColorStop(1, `rgba(${GOLD},0)`);
         ctx.fillStyle = glow;
         ctx.beginPath();
@@ -121,8 +122,8 @@ export function CircuitBackground({ subdued = false }) {
       ctx.lineWidth = 1;
       for (let i = 0; i < 6; i += 1) {
         const y = height * (0.16 + i * 0.14);
-        const control = Math.sin(time * 0.00012 + i) * 46;
-        const alpha = (i % 2 === 0 ? 0.075 : 0.045) * muted;
+        const control = Math.sin(time * 0.00032 * motionScale + i) * 58;
+        const alpha = (i % 2 === 0 ? 0.095 : 0.06) * muted;
         ctx.strokeStyle = `rgba(${GOLD},${alpha})`;
         ctx.beginPath();
         ctx.moveTo(-80, y + control * 0.3);
@@ -130,10 +131,10 @@ export function CircuitBackground({ subdued = false }) {
         ctx.stroke();
       }
 
-      const sweepX = reducedMotion ? width * 0.76 : ((time * 0.026) % (width + 460)) - 230;
+      const sweepX = ((time * 0.075 * motionScale) % (width + 520)) - 260;
       const sweep = ctx.createLinearGradient(sweepX - 160, 0, sweepX + 160, 0);
       sweep.addColorStop(0, 'rgba(255,255,255,0)');
-      sweep.addColorStop(0.5, `rgba(${GOLD},${0.048 * muted})`);
+      sweep.addColorStop(0.5, `rgba(${GOLD},${0.095 * muted})`);
       sweep.addColorStop(1, 'rgba(255,255,255,0)');
       ctx.fillStyle = sweep;
       ctx.fillRect(sweepX - 160, 0, 320, height);
@@ -163,9 +164,7 @@ export function CircuitBackground({ subdued = false }) {
       drawSignalGlass(time);
       drawTexture();
       drawVignette();
-      if (!reducedMotion) {
-        animationId = requestAnimationFrame(draw);
-      }
+      animationId = requestAnimationFrame(draw);
     }
 
     const initTimer = setTimeout(() => {
@@ -192,9 +191,9 @@ export function CircuitBackground({ subdued = false }) {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: 0,
-        opacity: subdued ? 0.36 : 0.78,
-        filter: subdued ? 'saturate(0.68) contrast(0.9)' : 'saturate(1.04)',
+        zIndex: -1,
+        opacity: subdued ? 0.42 : 0.92,
+        filter: subdued ? 'saturate(0.82) contrast(0.96)' : 'saturate(1.08)',
         display: 'block',
       }}
     />
