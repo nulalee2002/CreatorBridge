@@ -85,8 +85,6 @@ create policy "Users can read own CreatorBridge storage objects"
       or (storage.foldername(name))[1] = (select auth.uid())::text
     )
   );
-comment on policy "Users can read own CreatorBridge storage objects" on storage.objects
-  is 'Keeps private uploads readable only by the uploading account until signed URL access is added for approved project participants.';
 
 drop policy if exists "Users can upload to own CreatorBridge storage folder" on storage.objects;
 create policy "Users can upload to own CreatorBridge storage folder"
@@ -102,8 +100,6 @@ create policy "Users can upload to own CreatorBridge storage folder"
     )
     and (storage.foldername(name))[1] = (select auth.uid())::text
   );
-comment on policy "Users can upload to own CreatorBridge storage folder" on storage.objects
-  is 'Requires every user upload path to start with the authenticated user id, preventing cross-account object writes.';
 
 drop policy if exists "Users can update own CreatorBridge storage objects" on storage.objects;
 create policy "Users can update own CreatorBridge storage objects"
@@ -132,8 +128,6 @@ create policy "Users can update own CreatorBridge storage objects"
     )
     and (storage.foldername(name))[1] = (select auth.uid())::text
   );
-comment on policy "Users can update own CreatorBridge storage objects" on storage.objects
-  is 'Allows safe upsert behavior only inside the user-owned folder.';
 
 drop policy if exists "Users can delete own CreatorBridge storage objects" on storage.objects;
 create policy "Users can delete own CreatorBridge storage objects"
@@ -152,5 +146,3 @@ create policy "Users can delete own CreatorBridge storage objects"
       or (storage.foldername(name))[1] = (select auth.uid())::text
     )
   );
-comment on policy "Users can delete own CreatorBridge storage objects" on storage.objects
-  is 'Prevents users from deleting files owned by another creator or client.';
