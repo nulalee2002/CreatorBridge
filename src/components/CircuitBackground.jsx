@@ -10,140 +10,9 @@ export function CircuitBackground({ subdued = false }) {
     let width = 0;
     let height = 0;
     let dpr = 1;
-    let filaments = [];
-    let nodes = [];
-    const GRID = 72;
     const GOLD = '212,169,65';
-
-    function buildScene() {
-      const span = Math.max(width, height);
-      filaments = [
-        { y: height * 0.18, amp: 28, speed: 0.00018, phase: 0.2, alpha: 0.26 },
-        { y: height * 0.38, amp: 44, speed: 0.00014, phase: 1.7, alpha: 0.18 },
-        { y: height * 0.66, amp: 36, speed: 0.00016, phase: 3.1, alpha: 0.2 },
-      ];
-
-      nodes = [];
-      const points = [
-        [0.18, 0.22], [0.34, 0.16], [0.62, 0.2], [0.82, 0.3],
-        [0.22, 0.54], [0.48, 0.48], [0.72, 0.58], [0.88, 0.72],
-        [0.14, 0.78], [0.38, 0.82], [0.66, 0.78],
-      ];
-      points.forEach(([x, y], index) => {
-        nodes.push({
-          x: x * width,
-          y: y * height,
-          radius: 1.4 + (index % 3) * 0.7,
-          phase: index * 0.73,
-          orbit: span * (0.006 + (index % 4) * 0.002),
-        });
-      });
-    }
-
-    function drawGrid(time) {
-      ctx.save();
-      ctx.lineWidth = 1;
-      for (let x = 0; x <= width + GRID; x += GRID) {
-        const alpha = x % (GRID * 3) === 0 ? 0.055 : 0.026;
-        ctx.strokeStyle = `rgba(212,169,65,${alpha})`;
-        ctx.beginPath();
-        ctx.moveTo(x + Math.sin(time * 0.00012 + x * 0.01) * 3, 0);
-        ctx.lineTo(x, height);
-        ctx.stroke();
-      }
-      for (let y = 0; y <= height + GRID; y += GRID) {
-        const alpha = y % (GRID * 3) === 0 ? 0.05 : 0.024;
-        ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(width, y + Math.cos(time * 0.00012 + y * 0.01) * 3);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-
-    function drawLensMotifs(time) {
-      const cx = width * 0.72;
-      const cy = height * 0.42;
-      const base = Math.min(width, height) * 0.26;
-      ctx.save();
-      ctx.lineWidth = 1;
-      [0, 1, 2].forEach(i => {
-        const r = base + i * 42;
-        const start = time * 0.00008 + i * 0.7;
-        ctx.strokeStyle = `rgba(${GOLD},${0.07 - i * 0.012})`;
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, start, start + Math.PI * 0.72);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, start + Math.PI * 1.08, start + Math.PI * 1.58);
-        ctx.stroke();
-      });
-
-      ctx.strokeStyle = `rgba(${GOLD},0.05)`;
-      ctx.strokeRect(width * 0.08, height * 0.16, width * 0.24, height * 0.18);
-      ctx.strokeRect(width * 0.68, height * 0.62, width * 0.2, height * 0.16);
-      ctx.restore();
-    }
-
-    function drawFilaments(time) {
-      filaments.forEach((line, index) => {
-        ctx.save();
-        ctx.lineWidth = index === 0 ? 1.4 : 1;
-        ctx.strokeStyle = `rgba(${GOLD},${line.alpha})`;
-        ctx.shadowColor = `rgba(${GOLD},0.28)`;
-        ctx.shadowBlur = 12;
-        ctx.beginPath();
-        for (let x = -40; x <= width + 40; x += 28) {
-          const progress = x / Math.max(width, 1);
-          const y =
-            line.y +
-            Math.sin(progress * Math.PI * 2.3 + line.phase + time * line.speed) * line.amp +
-            Math.cos(progress * Math.PI * 5.1 + time * line.speed * 0.7) * (line.amp * 0.22);
-          if (x === -40) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-        ctx.restore();
-
-        const pulseX = ((time * (0.018 + index * 0.006)) % (width + 180)) - 90;
-        const progress = pulseX / Math.max(width, 1);
-        const pulseY =
-          line.y +
-          Math.sin(progress * Math.PI * 2.3 + line.phase + time * line.speed) * line.amp +
-          Math.cos(progress * Math.PI * 5.1 + time * line.speed * 0.7) * (line.amp * 0.22);
-        const gradient = ctx.createRadialGradient(pulseX, pulseY, 0, pulseX, pulseY, 34);
-        gradient.addColorStop(0, `rgba(${GOLD},0.5)`);
-        gradient.addColorStop(1, `rgba(${GOLD},0)`);
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(pulseX, pulseY, 34, 0, Math.PI * 2);
-        ctx.fill();
-      });
-    }
-
-    function drawNodes(time) {
-      nodes.forEach((node, index) => {
-        const x = node.x + Math.sin(time * 0.00025 + node.phase) * node.orbit;
-        const y = node.y + Math.cos(time * 0.0002 + node.phase) * node.orbit;
-        const alpha = 0.16 + Math.sin(time * 0.001 + node.phase) * 0.08;
-
-        if (index > 0) {
-          const prev = nodes[index - 1];
-          ctx.strokeStyle = `rgba(${GOLD},0.045)`;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(prev.x, prev.y);
-          ctx.lineTo(x, y);
-          ctx.stroke();
-        }
-
-        ctx.fillStyle = `rgba(${GOLD},${alpha})`;
-        ctx.beginPath();
-        ctx.arc(x, y, node.radius, 0, Math.PI * 2);
-        ctx.fill();
-      });
-    }
+    const muted = subdued ? 0.58 : 1;
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
     function resize() {
       width = document.documentElement.clientWidth || window.innerWidth;
@@ -151,27 +20,158 @@ export function CircuitBackground({ subdued = false }) {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.floor(width * dpr);
       canvas.height = Math.floor(height * dpr);
-      canvas.style.width = width + 'px';
-      canvas.style.height = height + 'px';
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      buildScene();
+    }
+
+    function fillBase() {
+      const base = ctx.createLinearGradient(0, 0, width, height);
+      base.addColorStop(0, 'rgba(8,8,13,0.96)');
+      base.addColorStop(0.48, 'rgba(15,14,22,0.88)');
+      base.addColorStop(1, 'rgba(7,7,11,0.98)');
+      ctx.fillStyle = base;
+      ctx.fillRect(0, 0, width, height);
+    }
+
+    function drawVignette() {
+      const vignette = ctx.createRadialGradient(width * 0.5, height * 0.42, 0, width * 0.5, height * 0.42, Math.max(width, height) * 0.78);
+      vignette.addColorStop(0, 'rgba(255,255,255,0)');
+      vignette.addColorStop(0.62, 'rgba(0,0,0,0.12)');
+      vignette.addColorStop(1, 'rgba(0,0,0,0.74)');
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, width, height);
+    }
+
+    function drawProductionFrames(time) {
+      const drift = Math.sin(time * 0.00018) * 18;
+      const frameAlpha = 0.045 * muted;
+      ctx.save();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = `rgba(255,255,255,${frameAlpha})`;
+
+      const columns = [
+        { x: width * 0.06, w: width * 0.19, y: height * 0.12, h: height * 0.58 },
+        { x: width * 0.72, w: width * 0.22, y: height * 0.1, h: height * 0.66 },
+        { x: width * 0.34, w: width * 0.34, y: height * 0.72, h: height * 0.16 },
+      ];
+
+      columns.forEach((frame, index) => {
+        const x = frame.x + drift * (index === 1 ? -0.45 : 0.28);
+        const y = frame.y + Math.cos(time * 0.00016 + index) * 9;
+        ctx.strokeRect(x, y, frame.w, frame.h);
+        ctx.strokeStyle = `rgba(${GOLD},${0.035 * muted})`;
+        ctx.beginPath();
+        ctx.moveTo(x + frame.w * 0.08, y + frame.h * 0.12);
+        ctx.lineTo(x + frame.w * 0.92, y + frame.h * 0.12);
+        ctx.stroke();
+        ctx.strokeStyle = `rgba(255,255,255,${frameAlpha})`;
+      });
+      ctx.restore();
+    }
+
+    function drawApertureFields(time) {
+      const centers = [
+        { x: width * 0.22, y: height * 0.5, r: Math.min(width, height) * 0.42, spin: 1 },
+        { x: width * 0.78, y: height * 0.44, r: Math.min(width, height) * 0.48, spin: -1 },
+      ];
+
+      ctx.save();
+      ctx.lineWidth = 1;
+      centers.forEach((center, index) => {
+        for (let i = 0; i < 5; i += 1) {
+          const radius = center.r + i * 58;
+          const start = time * 0.00008 * center.spin + i * 0.72 + index * 0.42;
+          const alpha = (0.06 - i * 0.008) * muted;
+          ctx.strokeStyle = `rgba(${GOLD},${Math.max(alpha, 0.012)})`;
+          ctx.beginPath();
+          ctx.arc(center.x, center.y, radius, start, start + Math.PI * 0.62);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(center.x, center.y, radius, start + Math.PI * 1.08, start + Math.PI * 1.46);
+          ctx.stroke();
+        }
+      });
+      ctx.restore();
+    }
+
+    function drawLightWells(time) {
+      const wells = [
+        { x: width * 0.18, y: height * 0.24, size: 260, phase: 0.1 },
+        { x: width * 0.52, y: height * 0.7, size: 320, phase: 1.9 },
+        { x: width * 0.84, y: height * 0.32, size: 280, phase: 3.2 },
+      ];
+
+      wells.forEach(well => {
+        const x = well.x + Math.sin(time * 0.00022 + well.phase) * 28;
+        const y = well.y + Math.cos(time * 0.0002 + well.phase) * 20;
+        const glow = ctx.createRadialGradient(x, y, 0, x, y, well.size);
+        glow.addColorStop(0, `rgba(${GOLD},${0.13 * muted})`);
+        glow.addColorStop(0.26, `rgba(${GOLD},${0.045 * muted})`);
+        glow.addColorStop(1, `rgba(${GOLD},0)`);
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(x, y, well.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    function drawSignalGlass(time) {
+      ctx.save();
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 6; i += 1) {
+        const y = height * (0.16 + i * 0.14);
+        const control = Math.sin(time * 0.00012 + i) * 46;
+        const alpha = (i % 2 === 0 ? 0.075 : 0.045) * muted;
+        ctx.strokeStyle = `rgba(${GOLD},${alpha})`;
+        ctx.beginPath();
+        ctx.moveTo(-80, y + control * 0.3);
+        ctx.bezierCurveTo(width * 0.26, y - 42 + control, width * 0.62, y + 58 - control, width + 80, y + control * 0.2);
+        ctx.stroke();
+      }
+
+      const sweepX = reducedMotion ? width * 0.76 : ((time * 0.026) % (width + 460)) - 230;
+      const sweep = ctx.createLinearGradient(sweepX - 160, 0, sweepX + 160, 0);
+      sweep.addColorStop(0, 'rgba(255,255,255,0)');
+      sweep.addColorStop(0.5, `rgba(${GOLD},${0.048 * muted})`);
+      sweep.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = sweep;
+      ctx.fillRect(sweepX - 160, 0, 320, height);
+      ctx.restore();
+    }
+
+    function drawTexture() {
+      ctx.save();
+      ctx.globalAlpha = 0.055 * muted;
+      ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      for (let x = 0; x < width; x += 4) {
+        for (let y = 0; y < height; y += 4) {
+          if (((x * 17 + y * 31) % 23) === 0) {
+            ctx.fillRect(x, y, 1, 1);
+          }
+        }
+      }
+      ctx.restore();
     }
 
     function draw(time = 0) {
       ctx.clearRect(0, 0, width, height);
-      drawGrid(time);
-      drawLensMotifs(time);
-      drawFilaments(time);
-      drawNodes(time);
-      animationId = requestAnimationFrame(draw);
+      fillBase();
+      drawLightWells(time);
+      drawApertureFields(time);
+      drawProductionFrames(time);
+      drawSignalGlass(time);
+      drawTexture();
+      drawVignette();
+      if (!reducedMotion) {
+        animationId = requestAnimationFrame(draw);
+      }
     }
 
-    // Use setTimeout to ensure DOM is fully laid out
-    // before reading viewport dimensions
     const initTimer = setTimeout(() => {
       resize();
       draw();
-    }, 100);
+    }, 80);
 
     window.addEventListener('resize', resize);
 
@@ -180,7 +180,7 @@ export function CircuitBackground({ subdued = false }) {
       cancelAnimationFrame(animationId);
       window.removeEventListener('resize', resize);
     };
-  }, []);
+  }, [subdued]);
 
   return (
     <canvas
@@ -193,8 +193,8 @@ export function CircuitBackground({ subdued = false }) {
         height: '100vh',
         pointerEvents: 'none',
         zIndex: 0,
-        opacity: subdued ? 0.42 : 0.62,
-        filter: subdued ? 'saturate(0.72) contrast(0.88)' : 'none',
+        opacity: subdued ? 0.36 : 0.78,
+        filter: subdued ? 'saturate(0.68) contrast(0.9)' : 'saturate(1.04)',
         display: 'block',
       }}
     />
