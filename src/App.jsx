@@ -57,6 +57,47 @@ function LazyRoute({ dark, children }) {
   return <Suspense fallback={<RouteLoading dark={dark} />}>{children}</Suspense>;
 }
 
+function AuthRequired({ dark, user, loading, role = 'client', title, copy, children }) {
+  if (loading) return <RouteLoading dark={dark} />;
+  if (user) return children;
+
+  return (
+    <main className="min-h-[62vh] grid place-items-center px-5 py-14">
+      <section className={`w-full max-w-xl rounded-[28px] border p-7 text-center ${
+        dark ? 'bg-charcoal-900/76 border-gold-500/18 shadow-[0_30px_100px_rgba(0,0,0,0.28)]' : 'bg-white border-gray-200 shadow-sm'
+      }`}>
+        <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+          Account required
+        </p>
+        <h1 className={`font-display text-3xl font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>
+          {title}
+        </h1>
+        <p className={`mx-auto mt-3 max-w-md text-sm leading-6 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
+          {copy}
+        </p>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent('open-auth', { detail: { tab: 'login', role } }))}
+            className="rounded-xl bg-gold-500 px-5 py-3 text-sm font-bold text-charcoal-900 transition-colors hover:bg-gold-600"
+          >
+            Sign In
+          </button>
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent('open-auth', { detail: { tab: 'signup', role } }))}
+            className={`rounded-xl border px-5 py-3 text-sm font-bold transition-colors ${
+              dark ? 'border-white/[0.09] text-charcoal-200 hover:text-white hover:border-gold-500/35' : 'border-gray-200 text-gray-700 hover:text-gray-900'
+            }`}
+          >
+            Create Account
+          </button>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 // ── Initial State ────────────────────────────────────────────
 const DEFAULT_STATE = {
   serviceId:              null,
@@ -250,7 +291,7 @@ function reducer(state, action) {
 
 // ── App ───────────────────────────────────────────────────────
 export default function App() {
-  const { user, profile: authProfile, signOut } = useAuth();
+  const { user, profile: authProfile, loading: authLoading, signOut } = useAuth();
   const navigate  = useNavigate();
   const location  = useLocation();
 
@@ -533,11 +574,27 @@ export default function App() {
         <Route path="/" element={<CreatorDirectory dark={dark} mode="search" onSwitchToRegister={() => navigate('/register')} />} />
         <Route path="/register" element={<CreatorDirectory dark={dark} mode="register" onSwitchToSearch={() => navigate('/')} />} />
         <Route path="/creator/:id" element={<LazyRoute dark={dark}><CreatorProfilePage dark={dark} /></LazyRoute>} />
-        <Route path="/dashboard" element={<LazyRoute dark={dark}><CreatorDashboard dark={dark} /></LazyRoute>} />
-        <Route path="/client" element={<LazyRoute dark={dark}><ClientProfilePage dark={dark} /></LazyRoute>} />
-        <Route path="/messages" element={<LazyRoute dark={dark}><MessagesPage dark={dark} /></LazyRoute>} />
+        <Route path="/dashboard" element={
+          <AuthRequired dark={dark} user={user} loading={authLoading} role="creator" title="Sign in to manage your creator account." copy="Creator tools, Stripe setup, packages, availability, earnings, and verification need an authenticated account.">
+            <LazyRoute dark={dark}><CreatorDashboard dark={dark} /></LazyRoute>
+          </AuthRequired>
+        } />
+        <Route path="/client" element={
+          <AuthRequired dark={dark} user={user} loading={authLoading} role="client" title="Sign in to manage your client profile." copy="Your booking identity, saved creators, project pipeline, and client trust signals belong behind your account.">
+            <LazyRoute dark={dark}><ClientProfilePage dark={dark} /></LazyRoute>
+          </AuthRequired>
+        } />
+        <Route path="/messages" element={
+          <AuthRequired dark={dark} user={user} loading={authLoading} role="client" title="Sign in to view messages." copy="CreatorBridge keeps project conversations attached to verified accounts so contact and booking history stay protected.">
+            <LazyRoute dark={dark}><MessagesPage dark={dark} /></LazyRoute>
+          </AuthRequired>
+        } />
         <Route path="/projects" element={<ErrorBoundary dark={dark} fallbackMessage="Could not load the Project Board"><LazyRoute dark={dark}><ProjectBoard dark={dark} /></LazyRoute></ErrorBoundary>} />
-        <Route path="/checkout/:projectId" element={<LazyRoute dark={dark}><CheckoutPage dark={dark} /></LazyRoute>} />
+        <Route path="/checkout/:projectId" element={
+          <AuthRequired dark={dark} user={user} loading={authLoading} role="client" title="Sign in before payment." copy="Payments require a verified client session before CreatorBridge can create a protected Stripe payment.">
+            <LazyRoute dark={dark}><CheckoutPage dark={dark} /></LazyRoute>
+          </AuthRequired>
+        } />
         <Route path="/matches/:projectId" element={<LazyRoute dark={dark}><MatchResultsPage dark={dark} /></LazyRoute>} />
         <Route path="/network" element={<LazyRoute dark={dark}><NetworkingPage dark={dark} user={user} /></LazyRoute>} />
         <Route path="/terms" element={<LazyRoute dark={dark}><TermsPage dark={dark} /></LazyRoute>} />
@@ -556,23 +613,40 @@ export default function App() {
             dark ? 'bg-charcoal-900/72 border-white/[0.08] shadow-[0_28px_90px_rgba(0,0,0,0.28)]' : 'bg-white border-gray-200'
           }`}>
             <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/60 to-transparent" />
-            <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
-              Creator Pricing Tool
-            </p>
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-6 items-stretch">
               <div>
+                <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+                  Creator Pricing Tool
+                </p>
                 <h1 className={`font-display font-bold text-4xl md:text-5xl leading-tight ${dark ? 'text-white' : 'text-gray-900'}`}>
                   Build rates with professional confidence.
                 </h1>
                 <p className={`mt-4 text-sm md:text-base leading-7 max-w-2xl ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
                   Use this creator-side tool to calculate service pricing, quote structure, costs, margin, and package fit before sending work to a client.
                 </p>
+                <div className={`mt-6 max-w-md rounded-2xl border p-4 ${dark ? 'bg-gold-500/10 border-gold-500/20' : 'bg-gold-50 border-gold-200'}`}>
+                  <Zap size={18} className="text-gold-400 mb-3" />
+                  <p className={`text-xs leading-5 ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>
+                    This calculator is for creator pricing strategy, not the public client booking flow.
+                  </p>
+                </div>
               </div>
-              <div className={`rounded-2xl border p-4 ${dark ? 'bg-gold-500/10 border-gold-500/20' : 'bg-gold-50 border-gold-200'}`}>
-                <Zap size={18} className="text-gold-400 mb-3" />
-                <p className={`text-xs leading-5 ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>
-                  This calculator is for creator pricing strategy, not the public client booking flow.
-                </p>
+              <div className={`relative hidden min-h-[230px] overflow-hidden rounded-2xl border lg:block ${dark ? 'border-gold-500/18 bg-charcoal-950/70' : 'border-gray-200 bg-gray-50'}`}>
+                <img
+                  src="/images/creatorbridge/post-production-suite.png"
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950/92 via-charcoal-950/35 to-charcoal-950/10" />
+                <div className="absolute bottom-0 left-0 right-0 p-5">
+                  <p className="text-gold-300 mb-2" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
+                    Quote discipline
+                  </p>
+                  <p className="max-w-sm text-sm font-bold leading-6 text-white">
+                    Build packages around the work, not guesses.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -755,6 +829,25 @@ export default function App() {
         {/* ── RIGHT: Quote panel ── */}
         <div className="space-y-4">
           <div className="lg:sticky lg:top-20 space-y-4">
+            <div className={`${cardCls} overflow-hidden`}>
+              <div className="relative aspect-[16/10]">
+                <img
+                  src="/images/creatorbridge/commercial-photographer.png"
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950/90 via-charcoal-950/25 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <p className="text-gold-300 mb-1" style={{ fontSize: '10px', letterSpacing: '2.2px', textTransform: 'uppercase' }}>
+                    Rate clarity
+                  </p>
+                  <p className="text-sm font-bold leading-5 text-white">
+                    Price the shoot, edit, deliverables, and revisions before work starts.
+                  </p>
+                </div>
+              </div>
+            </div>
 
             {quote.grandTotal > 0 && (
               <div className={`${cardCls} p-4 glow-gold`}>

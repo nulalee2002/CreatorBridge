@@ -4,7 +4,7 @@ import {
   Briefcase, Plus, MapPin, DollarSign,
   Check, X, Search, Send, Users,
   Star, Calendar, CreditCard, ThumbsUp, RotateCcw, Zap,
-  Upload, AlertCircle, Timer,
+  Upload, AlertCircle, Timer, Clock,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { SERVICES, MARKETPLACE_CATEGORIES, getMarketplaceServiceIds, normalizeServiceId } from '../data/rates.js';
@@ -15,10 +15,13 @@ import { CancellationModal } from '../components/CancellationModal.jsx';
 import { ClientReputationBadge, loadClientReputation, RateClientModal } from '../components/ClientReputationBadge.jsx';
 import { ReferralSection } from '../components/ReferralSection.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
+import { sanitizeLongText, sanitizePlainText, sanitizeTagList, clampNumber, sanitizeUrl } from '../utils/inputSecurity.js';
+import { checkMessage, logFilterEvent } from '../utils/messageFilter.js';
 import {
   fromSupabaseProject,
   loadLocalProjects,
   mergeProjects,
+  sanitizeProjectDraft,
   saveLocalProjects,
   toSupabaseProject,
   upsertLocalProject,
@@ -117,14 +120,16 @@ function DeliverySubmitModal({ project, dark, onClose, onDelivered }) {
   }`;
 
   async function handleSubmit() {
-    if (!link.trim()) { setError('Please add a delivery link.'); return; }
+    const cleanLink = sanitizeUrl(link, 500);
+    const cleanNotes = sanitizeLongText(notes, 2000);
+    if (!cleanLink) { setError('Please add a valid delivery link.'); return; }
     if (!confirmed)   { setError('Please confirm that you have kept your own copy of the delivered files.'); return; }
     const deliveredAt = new Date().toISOString();
     const patch = {
       status:      'delivered',
       deliveredAt,
-      deliveryLink: link.trim(),
-      deliveryNotes: notes.trim(),
+      deliveryLink: cleanLink,
+      deliveryNotes: cleanNotes,
     };
     const updated = updateProject(project.id, patch);
     if (supabaseConfigured && isUuid(project.id)) {
@@ -134,8 +139,8 @@ function DeliverySubmitModal({ project, dark, onClose, onDelivered }) {
           .update({
             status: 'delivered',
             delivered_at: deliveredAt,
-            delivery_link: link.trim(),
-            delivery_notes: notes.trim(),
+            delivery_link: cleanLink,
+            delivery_notes: cleanNotes,
           })
           .eq('id', project.id);
       } catch {}
@@ -210,7 +215,8 @@ function RevisionRequestModal({ project, dark, onClose, onRevisionSubmitted }) {
   const isPaidRevision = revisionCount >= 2;
 
   async function handleSubmit() {
-    if (details.trim().length < 50) { setError('Please describe what needs to change (at least 50 characters).'); return; }
+    const cleanDetails = sanitizeLongText(details, 2000);
+    if (cleanDetails.length < 50) { setError('Please describe what needs to change (at least 50 characters).'); return; }
     if (!isPaidRevision) {
       const newCount = revisionCount + 1;
       const patch = {
@@ -336,9 +342,11 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
     const next = {};
     const minBudget = parseFloat(form.budgetMin);
     const maxBudget = parseFloat(form.budgetMax);
-    if (!form.title.trim()) next.title = 'Add a clear project title.';
+    const cleanTitle = sanitizePlainText(form.title, 120);
+    const cleanDescription = sanitizeLongText(form.description, 4000);
+    if (!cleanTitle) next.title = 'Add a clear project title.';
     if (!form.serviceId) next.serviceId = 'Choose the production service you need.';
-    if (form.description.trim().length < 80) next.description = 'Add at least 80 characters so creators understand the scope.';
+    if (cleanDescription.length < 80) next.description = 'Add at least 80 characters so creators understand the scope.';
     if (!form.projectDuration) next.projectDuration = 'Select how long you need the creator or crew.';
     if (form.budgetMin && minBudget < 0) next.budgetMin = 'Budget cannot be negative.';
     if (form.budgetMax && maxBudget < 0) next.budgetMax = 'Budget cannot be negative.';
@@ -350,24 +358,25 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
   async function handlePost() {
     if (!validate()) return;
     setErrors({});
-    const project = {
+    const cleanProject = sanitizeProjectDraft({
       id:          Date.now().toString() + Math.random(),
-      title:       form.title.trim(),
-      description: form.description.trim(),
+      title:       sanitizePlainText(form.title, 120),
+      description: sanitizeLongText(form.description, 4000),
       serviceId:   form.serviceId,
-      budgetMin:   parseFloat(form.budgetMin) || null,
-      budgetMax:   parseFloat(form.budgetMax) || null,
+      budgetMin:   clampNumber(form.budgetMin, { min: 0, max: 1000000, fallback: null }),
+      budgetMax:   clampNumber(form.budgetMax, { min: 0, max: 1000000, fallback: null }),
       projectDuration: form.projectDuration,
       deadline:    form.deadline || null,
-      location:    form.location.trim(),
+      location:    sanitizePlainText(form.location, 160),
       remote:      form.remote,
-      skills:      form.skills.split(',').map(s => s.trim()).filter(Boolean),
+      skills:      sanitizeTagList(form.skills, 12, 36),
       clientId:    user?.id || 'anon',
       clientName:  user?.email?.split('@')[0] || 'Anonymous',
       status:      'open',
       applications: 0,
       createdAt:   new Date().toISOString(),
-    };
+    });
+    const project = cleanProject;
     let saved = project;
     if (supabaseConfigured && user) {
       try {
@@ -531,6 +540,7 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
     creatorListing?.businessName || creatorListing?.name || ''
   );
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
   const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
   const inputCls = `w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${
     dark ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
@@ -538,15 +548,27 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
   }`;
 
   async function handleApply() {
-    if (!proposal.trim()) return;
+    const cleanProposal = sanitizeLongText(proposal, 3000);
+    const cleanCreatorName = sanitizePlainText(creatorName, 100);
+    const cleanRate = clampNumber(rate, { min: 0, max: 1000000, fallback: null });
+    if (!cleanProposal) return;
+
+    const { blocked, patternType } = checkMessage(cleanProposal);
+    if (blocked) {
+      setError('Keep contact details inside CreatorBridge. The client can review your fit without email, phone, social, or website links.');
+      logFilterEvent(creatorListing?.user_id || creatorListing?.id || 'unknown', patternType, supabase, supabaseConfigured);
+      return;
+    }
+    setError('');
+
     const app = {
       id:          Date.now().toString() + Math.random(),
       projectId:   project.id,
       creatorId:   creatorListing?.id || 'unknown',
-      creatorName: creatorName.trim() || creatorListing?.businessName || creatorListing?.name || 'Creator',
+      creatorName: cleanCreatorName || creatorListing?.businessName || creatorListing?.name || 'Creator',
       creatorAvatar: creatorListing?.avatar || '🎬',
-      proposal:    proposal.trim(),
-      rate:        parseFloat(rate) || null,
+      proposal:    cleanProposal,
+      rate:        cleanRate,
       status:      'pending',
       createdAt:   new Date().toISOString(),
     };
@@ -558,8 +580,8 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
           .insert({
             project_id: project.id,
             listing_id: creatorListing.id,
-            message: proposal.trim(),
-            proposed_rate: parseFloat(rate) || null,
+            message: cleanProposal,
+            proposed_rate: cleanRate,
             status: 'pending',
           })
           .select()
@@ -618,17 +640,22 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
                   <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Your Proposed Rate ($)</p>
                   <div className="relative">
                     <DollarSign size={13} className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${textSub}`} />
-                    <input type="number" min={0} value={rate} onChange={e => setRate(e.target.value)}
+                  <input type="number" min={0} value={rate} onChange={e => setRate(e.target.value)}
                       placeholder={project.budgetMax || '1500'} className={`${inputCls} pl-8`} />
                   </div>
                 </div>
                 <div>
                   <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Proposal / Cover Letter *</p>
-                  <textarea rows={5} value={proposal} onChange={e => setProposal(e.target.value)}
+                  <textarea rows={5} value={proposal} onChange={e => { setProposal(e.target.value); setError(''); }}
                     placeholder="Introduce yourself, explain why you're a great fit, and outline your approach to this project..."
                     className={`${inputCls} resize-none`} />
                 </div>
               </div>
+              {error && (
+                <p className="mt-4 rounded-xl border border-gold-500/25 bg-gold-500/10 px-3 py-2 text-xs leading-relaxed text-gold-300">
+                  {error}
+                </p>
+              )}
 
               <div className="flex gap-2 mt-5">
                 <button type="button" onClick={onClose}

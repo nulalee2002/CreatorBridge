@@ -7,6 +7,7 @@ import {
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { SERVICES } from '../data/rates.js';
+import { sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
 import { checkMessage, logFilterEvent } from '../utils/messageFilter.js';
 import { ClientReputationBadge, loadClientReputation } from '../components/ClientReputationBadge.jsx';
 
@@ -141,6 +142,7 @@ function NewConversationModal({ dark, onClose, onStart, myUser, myProfile }) {
   const [message, setMessage]             = useState('');
   const [searching, setSearching]         = useState(false);
   const [results, setResults]             = useState([]);
+  const [error, setError]                 = useState('');
 
   const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
   const inputCls = `w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${
@@ -166,14 +168,26 @@ function NewConversationModal({ dark, onClose, onStart, myUser, myProfile }) {
     setRecipientId(c.id);
     setRecipientName(c.businessName || c.name);
     setResults([]);
+    setError('');
   }
 
   function handleStart() {
-    if (!recipientId || !message.trim()) return;
+    const cleanMessage = sanitizeLongText(message, 1500);
+    const cleanRecipientName = sanitizePlainText(recipientName, 80);
+    if (!recipientId || !cleanMessage) return;
+
+    const { blocked, patternType } = checkMessage(cleanMessage);
+    if (blocked) {
+      setError('Contact details must stay inside CreatorBridge until a booking is active.');
+      logFilterEvent(myUser.id, patternType, supabase, supabaseConfigured);
+      return;
+    }
+
+    setError('');
     onStart({
       recipientId,
-      recipientName,
-      text: message.trim(),
+      recipientName: cleanRecipientName || 'Creator',
+      text: cleanMessage,
     });
   }
 
@@ -194,7 +208,7 @@ function NewConversationModal({ dark, onClose, onStart, myUser, myProfile }) {
           <input
             type="text"
             value={recipientName}
-            onChange={e => { setRecipientName(e.target.value); setRecipientId(''); searchCreators(e.target.value); }}
+            onChange={e => { setRecipientName(e.target.value); setRecipientId(''); setError(''); searchCreators(e.target.value); }}
             placeholder="Search by name..."
             className={inputCls}
           />
@@ -217,11 +231,16 @@ function NewConversationModal({ dark, onClose, onStart, myUser, myProfile }) {
           <textarea
             rows={3}
             value={message}
-            onChange={e => setMessage(e.target.value)}
+            onChange={e => { setMessage(e.target.value); setError(''); }}
             placeholder="Introduce yourself and describe your project..."
             className={`${inputCls} resize-none`}
           />
         </div>
+        {error && (
+          <p className="mb-4 rounded-xl border border-gold-500/25 bg-gold-500/10 px-3 py-2 text-xs leading-relaxed text-gold-300">
+            {error}
+          </p>
+        )}
 
         <div className="flex gap-2">
           <button type="button" onClick={onClose}
@@ -295,10 +314,11 @@ export function MessagesPage({ dark }) {
   }
 
   function sendMessage() {
-    if (!text.trim() || !activeThread) return;
+    const cleanText = sanitizeLongText(text, 1500);
+    if (!cleanText || !activeThread) return;
 
     // Check for contact info violations
-    const { blocked, patternType } = checkMessage(text.trim());
+    const { blocked, patternType } = checkMessage(cleanText);
     if (blocked) {
       setFilterWarning(true);
       logFilterEvent(user.id, patternType, supabase, supabaseConfigured);
@@ -315,7 +335,7 @@ export function MessagesPage({ dark }) {
       recipientId:    activeThread.otherUserId,
       recipientName:  activeThread.otherName,
       recipientAvatar:activeThread.otherAvatar,
-      text:           text.trim(),
+      text:           cleanText,
       read:           false,
       createdAt:      new Date().toISOString(),
     };
@@ -332,6 +352,18 @@ export function MessagesPage({ dark }) {
   }
 
   function startNewConversation({ recipientId, recipientName, text: initText }) {
+    const cleanText = sanitizeLongText(initText, 1500);
+    const cleanRecipientName = sanitizePlainText(recipientName, 80) || 'Creator';
+    if (!recipientId || !cleanText) return;
+
+    const { blocked, patternType } = checkMessage(cleanText);
+    if (blocked) {
+      setFilterWarning(true);
+      logFilterEvent(user.id, patternType, supabase, supabaseConfigured);
+      return;
+    }
+    setFilterWarning(false);
+
     const threadId = [user.id, recipientId].sort().join('_');
     const msg = {
       id:            Date.now().toString() + Math.random(),
@@ -340,15 +372,15 @@ export function MessagesPage({ dark }) {
       senderName:    myName,
       senderAvatar:  myAvatar,
       recipientId,
-      recipientName,
-      text:          initText,
+      recipientName: cleanRecipientName,
+      text:          cleanText,
       read:          false,
       createdAt:     new Date().toISOString(),
     };
     saveMessage(msg);
     const newThread = {
       threadId, myId: user.id,
-      otherUserId: recipientId, otherName: recipientName, otherAvatar: null,
+      otherUserId: recipientId, otherName: cleanRecipientName, otherAvatar: null,
       messages: [msg], lastMessage: msg,
     };
     setThreads(prev => [newThread, ...prev]);

@@ -23,17 +23,19 @@ function calculateTrustedFees(projectAmountCents: number, paymentType: 'retainer
   const retainerBase = Math.round(total * 0.5);
   const finalBase = total - retainerBase;
   const base = paymentType === 'final' ? finalBase : retainerBase;
-  const creatorFeeAmountCents = Math.round(base * (creatorFeePct / 100));
-  const clientFeeAmountCents = Math.round(base * (clientFeePct / 100));
+  const totalCreatorFeeAmountCents = Math.round(total * (creatorFeePct / 100));
+  const totalClientFeeAmountCents = Math.round(total * (clientFeePct / 100));
+  const chargeClientFeeAmountCents = Math.round(base * (clientFeePct / 100));
 
   return {
     projectAmountCents: total,
     retainerAmountCents: retainerBase,
     finalAmountCents: finalBase,
-    chargeAmountCents: base + clientFeeAmountCents,
-    platformFeeCents: creatorFeeAmountCents + clientFeeAmountCents,
-    creatorFeeAmountCents,
-    clientFeeAmountCents,
+    chargeAmountCents: base + chargeClientFeeAmountCents,
+    platformFeeCents: totalCreatorFeeAmountCents + totalClientFeeAmountCents,
+    creatorFeeAmountCents: totalCreatorFeeAmountCents,
+    clientFeeAmountCents: totalClientFeeAmountCents,
+    chargeClientFeeAmountCents,
   };
 }
 
@@ -48,23 +50,12 @@ Deno.serve(async (req) => {
   try {
     const {
       projectId,
-      amountCents,
-      retainerAmountCents,   // base retainer amount, kept for older clients
-      projectAmountCents,
       creatorId,
       clientId,
       paymentType = 'retainer',  // 'retainer' | 'final'
     } = await req.json();
 
     const normalizedPaymentType = paymentType === 'final' ? 'final' : 'retainer';
-    const requestedAmountCents = Number(amountCents ?? retainerAmountCents);
-
-    if (!requestedAmountCents || requestedAmountCents <= 0) {
-      return new Response(
-        JSON.stringify({ error: 'amountCents is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
 
     if (!projectId || !creatorId || !clientId) {
       return new Response(
@@ -93,7 +84,7 @@ Deno.serve(async (req) => {
 
     const { data: project, error: projectError } = await supabaseAdmin
       .from('projects')
-      .select('id, client_id, budget_min, budget_max, accepted_creator_id')
+      .select('id, client_id, budget_min, budget_max, accepted_creator_id, status')
       .eq('id', projectId)
       .maybeSingle();
 
@@ -104,9 +95,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (project.accepted_creator_id && project.accepted_creator_id !== creatorId) {
+    if (!project.accepted_creator_id || project.accepted_creator_id !== creatorId) {
       return new Response(
-        JSON.stringify({ error: 'Creator is not accepted for this project' }),
+        JSON.stringify({ error: 'A creator must be accepted for this project before payment' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -125,19 +116,49 @@ Deno.serve(async (req) => {
       );
     }
 
+    const { data: existingTxn } = await supabaseAdmin
+      .from('transactions')
+      .select('id, retainer_status, final_status, retainer_payment_intent, final_payment_intent')
+      .eq('project_id', projectId)
+      .eq('creator_id', creatorId)
+      .eq('client_id', clientId)
+      .maybeSingle();
+
+    const existingPaymentIntentId = normalizedPaymentType === 'final'
+      ? existingTxn?.final_payment_intent
+      : existingTxn?.retainer_payment_intent;
+    const existingPaymentStatus = normalizedPaymentType === 'final'
+      ? existingTxn?.final_status
+      : existingTxn?.retainer_status;
+
+    if (['paid', 'released'].includes(existingPaymentStatus || '')) {
+      return new Response(
+        JSON.stringify({ error: `${normalizedPaymentType} payment has already been completed` }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (existingPaymentIntentId && existingPaymentStatus === 'pending') {
+      const existingIntent = await stripe.paymentIntents.retrieve(existingPaymentIntentId);
+      if (existingIntent?.client_secret && !['canceled', 'succeeded'].includes(existingIntent.status)) {
+        return new Response(
+          JSON.stringify({ clientSecret: existingIntent.client_secret, paymentIntentId: existingIntent.id, reused: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('first_booking_fee_waived, next_booking_fee_waived')
       .eq('id', clientId)
       .maybeSingle();
 
-    const trustedProjectAmountCents = Math.round(Number(
-      project.budget_max ?? project.budget_min ?? (projectAmountCents ? Number(projectAmountCents) / 100 : 0)
-    ) * 100);
+    const trustedProjectAmountCents = Math.round(Number(project.budget_max ?? project.budget_min ?? 0) * 100);
     const trustedCreatorFeePct = creatorFeePctFor(listing.completed_projects, listing.next_project_fee_pct);
     const trustedClientFeePct = profile?.first_booking_fee_waived || profile?.next_booking_fee_waived ? 0 : 5;
     const trustedFees = calculateTrustedFees(
-      trustedProjectAmountCents || Number(projectAmountCents || 0),
+      trustedProjectAmountCents,
       normalizedPaymentType,
       trustedCreatorFeePct,
       trustedClientFeePct
@@ -154,25 +175,16 @@ Deno.serve(async (req) => {
       amount:   trustedFees.chargeAmountCents,
       currency: 'usd',
       automatic_payment_methods: { enabled: true },
-      application_fee_amount: trustedFees.platformFeeCents,
-      transfer_data: {
-        destination: trustedCreatorStripeAccountId,
-      },
       metadata: {
         projectId:   projectId ?? '',
         paymentType: normalizedPaymentType,
         creatorId:   creatorId ?? '',
         clientId:    clientId  ?? '',
+        paymentFlow: 'platform_charge_then_transfer',
       },
+    }, {
+      idempotencyKey: `cb_${projectId}_${creatorId}_${clientId}_${normalizedPaymentType}`,
     });
-
-    const { data: existingTxn } = await supabaseAdmin
-      .from('transactions')
-      .select('id')
-      .eq('project_id', projectId)
-      .eq('creator_id', creatorId)
-      .eq('client_id', clientId)
-      .maybeSingle();
 
     const transactionPatch = {
       project_id:          projectId,
@@ -186,6 +198,7 @@ Deno.serve(async (req) => {
       creator_fee_amount:  trustedFees.creatorFeeAmountCents,
       client_fee_amount:   trustedFees.clientFeeAmountCents,
       platform_revenue:    trustedFees.platformFeeCents,
+      payment_flow:        'platform_charge_then_transfer',
       updated_at:          new Date().toISOString(),
       ...(normalizedPaymentType === 'final'
         ? { final_status: 'pending', final_payment_intent: paymentIntent.id }

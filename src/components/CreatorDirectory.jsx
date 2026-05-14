@@ -1345,9 +1345,9 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
     }));
 
   const VALUE_PILLARS = [
-    { headline: 'Curated media professionals', desc: 'CreatorBridge is built for video, photo, podcast, drone, events, and content production work, not general gig listings.' },
-    { headline: 'Cleaner client decisions', desc: 'Brands can review focused creator profiles, service fit, availability, and reputation before starting a project.' },
-    { headline: 'A marketplace with standards', desc: 'Creator profiles are gated by experience, portfolio, verification, and platform rules before they can go live.' },
+    { headline: 'Production talent on demand', desc: 'CreatorBridge gives companies a flexible production bench without hiring a full internal media department.' },
+    { headline: 'Cleaner client decisions', desc: 'Brands can compare focused creator profiles, service fit, availability, packages, and proof before starting a project.' },
+    { headline: 'Standards before booking', desc: 'Creator profiles are gated by experience, portfolio, verification, and platform rules before they can go live.' },
   ];
 
   const PROCESS_STEPS = [
@@ -1405,7 +1405,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                   className="text-gold-400"
                   style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}
                 >
-                  Curated media production marketplace
+                  On-demand media production hub
                 </span>
                 <span className="hidden sm:block h-px w-20 bg-gold-500/35" />
                 <span className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} text-[11px] font-semibold uppercase tracking-[0.18em]`}>
@@ -1420,7 +1420,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
               </h1>
               <div className="mt-8 grid grid-cols-1 lg:grid-cols-[minmax(0,580px)_auto] gap-6 lg:gap-10 items-end">
                 <p className={`${dark ? 'text-charcoal-200' : 'text-gray-700'} text-base sm:text-lg leading-8`}>
-                  CreatorBridge connects brands with reviewed videographers, photographers, podcast producers, drone operators, event crews, and content specialists who are built for professional production work.
+                  CreatorBridge helps companies source vetted video, photo, podcast, drone, event, and post-production specialists without building an internal production department.
                 </p>
                 <div className="flex gap-3 flex-wrap lg:justify-end">
                   <button
@@ -1492,8 +1492,8 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                   ))}
                   <div className={`rounded-lg border px-4 py-3 ${dark ? 'bg-gold-500/10 border-gold-500/25' : 'bg-gold-50 border-gold-200'}`}>
                     <p className={`${dark ? 'text-gold-200' : 'text-gold-800'} text-sm font-bold`}>Built for serious production work</p>
-                    <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} mt-1 text-xs leading-5`}>
-                      Profiles, packages, booking flow, and payment structure are designed around media projects that need trust before the first invoice.
+                <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} mt-1 text-xs leading-5`}>
+                      Profiles, packages, booking flow, and payment structure are designed around companies that need a production partner before the first invoice.
                     </p>
                   </div>
                 </div>
@@ -1511,11 +1511,11 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                   Production lanes
                 </p>
                 <h2 className={`${dark ? 'text-white' : 'text-gray-950'} font-display text-2xl font-bold`}>
-                  Media categories built around real booking needs.
+                  Production coverage without building a full in-house team.
                 </h2>
               </div>
               <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} max-w-md text-xs leading-5`}>
-                Categories stay focused so clients choose the type of production work first, then compare creators by proof, package, and fit.
+                Choose the type of production work first, then compare creators by proof, package, availability, and fit.
               </p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 2xl:grid-cols-8 gap-3">
@@ -1558,7 +1558,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
               Project signals
             </p>
             <h2 className={`${dark ? 'text-white' : 'text-gray-950'} font-display text-xl font-bold`}>
-              The page should teach clients what to book.
+              Guide clients toward the right production path.
             </h2>
             <div className="mt-4 space-y-3">
               {PROJECT_SIGNALS.map(({ label, detail, range }) => (
@@ -1822,11 +1822,30 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
               className={`${dark ? 'text-white' : 'text-gray-950'} max-w-xl leading-tight`}
               style={{ fontFamily: "'Georgia','Times New Roman',serif", fontWeight: 400, fontSize: 'clamp(30px, 4vw, 58px)' }}
             >
-              A more disciplined way to find creative production talent.
+              A production bench you can activate when the work matters.
             </h2>
             <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} mt-5 max-w-lg text-sm leading-7`}>
-              CreatorBridge gives clients a cleaner path to vetted media specialists while giving creators a platform that respects professional standards and protected payment structure.
+              CreatorBridge gives clients a cleaner path to vetted media specialists while giving creators a platform built around professional standards and protected payment structure.
             </p>
+            <div className={`mt-8 max-w-lg overflow-hidden rounded-lg border ${dark ? 'border-gold-500/20 bg-charcoal-950/70' : 'border-gray-200 bg-white'}`}>
+              <div className="relative aspect-[16/10]">
+                <img
+                  src={CREATORBRIDGE_IMAGES.lens}
+                  alt="Camera lens reflecting a professional event"
+                  className="absolute inset-0 h-full w-full object-cover"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950/92 via-charcoal-950/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-5">
+                  <p className="text-gold-300 mb-2" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
+                    Risk control
+                  </p>
+                  <p className="max-w-sm text-sm font-bold leading-6 text-white">
+                    Stop guessing who can deliver. Start with creators built for production work.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-5">

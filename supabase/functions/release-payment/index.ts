@@ -18,11 +18,11 @@ const corsHeaders = {
  *   1. Client clicks "Approve Delivery"
  *   2. Auto-approve triggers after PLATFORM_FEES.autoApproveDays days
  *
- * Body: { transactionId, actorId, autoApprove?: boolean }
+ * Body: { transactionId, autoApprove?: boolean }
  *
  * Logic:
- *   - Creates a Stripe Transfer of the final net amount to the creator's connected account
- *   - Deducts 10% creator fee (already factored into the transfer amount)
+ *   - Creates one Stripe Transfer for the creator's net project payout
+ *   - Requires both retainer and final payments to be paid first
  *   - Updates transaction final_status to 'released'
  *   - Logs a payment_event
  */
@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
   if (rateLimited) return rateLimited;
 
   try {
-    const { transactionId, actorId, autoApprove = false } = await req.json();
+    const { transactionId, autoApprove = false } = await req.json();
 
     if (!transactionId) {
       return new Response(
@@ -48,6 +48,23 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    const authHeader = req.headers.get('Authorization') ?? '';
+    const token = authHeader.replace('Bearer ', '');
+    const { data: authData, error: authError } = token
+      ? await supabaseAdmin.auth.getUser(token)
+      : { data: { user: null }, error: new Error('Missing authorization token') };
+
+    const jobSecret = Deno.env.get('PLATFORM_JOB_SECRET') ?? '';
+    const suppliedJobSecret = req.headers.get('x-creatorbridge-job-secret') ?? '';
+    const isTrustedJob = Boolean(autoApprove && jobSecret && suppliedJobSecret === jobSecret);
+
+    if (!isTrustedJob && (authError || !authData.user)) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication is required to release payment' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Fetch transaction, then fetch creator Stripe account separately. The schema stores
     // creator_id as text for compatibility with local/demo ids, so do not rely on an FK join.
@@ -64,7 +81,21 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (txn.final_status === 'released') {
+    if (!isTrustedJob && authData.user?.id !== txn.client_id) {
+      return new Response(
+        JSON.stringify({ error: 'Only the paying client can release this payment' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (txn.retainer_status !== 'paid' || txn.final_status !== 'paid') {
+      return new Response(
+        JSON.stringify({ error: 'Both retainer and final payment must be paid before creator payout release' }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (txn.final_status === 'released' || txn.final_transfer_id) {
       return new Response(
         JSON.stringify({ error: 'Payment already released' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -85,8 +116,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Net to creator: final_amount minus creator_fee_amount (both in cents)
-    const netToCreator = txn.final_amount - (txn.creator_fee_amount ?? 0);
+    // Net to creator: full project amount minus the creator platform fee.
+    const netToCreator = Number(txn.project_amount || 0) - Number(txn.creator_fee_amount || 0);
+
+    if (!netToCreator || netToCreator <= 0) {
+      return new Response(
+        JSON.stringify({ error: 'Creator payout amount could not be verified' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Create Stripe Transfer to creator
     const transfer = await stripe.transfers.create({
@@ -97,7 +135,10 @@ Deno.serve(async (req) => {
         transactionId,
         paymentType: 'final_release',
         autoApprove: String(autoApprove),
+        paymentFlow: 'platform_charge_then_transfer',
       },
+    }, {
+      idempotencyKey: `cb_release_${transactionId}`,
     });
 
     // Update transaction
@@ -115,7 +156,7 @@ Deno.serve(async (req) => {
     await supabaseAdmin.from('payment_events').insert({
       transaction_id: transactionId,
       event_type:     autoApprove ? 'auto_approved_and_released' : 'client_approved_and_released',
-      actor_id:       actorId ?? null,
+      actor_id:       isTrustedJob ? null : authData.user?.id ?? null,
       metadata: {
         transferId:    transfer.id,
         amount:        netToCreator,

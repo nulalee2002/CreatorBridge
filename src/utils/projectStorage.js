@@ -1,3 +1,5 @@
+import { clampNumber, sanitizeLongText, sanitizePlainText, sanitizeTagList, sanitizeUrl } from './inputSecurity.js';
+
 export const PROJECTS_KEY = 'cm-projects';
 
 export function loadLocalProjects(clientId = null) {
@@ -68,23 +70,42 @@ export function fromSupabaseProject(row) {
 export function toSupabaseProject(project, userId) {
   return {
     client_id: userId || project.clientId,
-    title: project.title,
-    service_id: project.serviceId || project.service_id || null,
-    description: project.description,
-    budget_min: project.budgetMin ?? project.budget_min ?? null,
-    budget_max: project.budgetMax ?? project.budget_max ?? null,
+    title: sanitizePlainText(project.title, 120),
+    service_id: sanitizePlainText(project.serviceId || project.service_id || '', 80) || null,
+    description: sanitizeLongText(project.description, 4000),
+    budget_min: clampNumber(project.budgetMin ?? project.budget_min, { min: 0, max: 1000000, fallback: null }),
+    budget_max: clampNumber(project.budgetMax ?? project.budget_max, { min: 0, max: 1000000, fallback: null }),
     location: typeof project.location === 'string'
-      ? project.location
-      : [project.location?.city, project.location?.state].filter(Boolean).join(', '),
-    timeline: project.deadline || project.projectDate || project.timeline || null,
-    status: project.status || 'open',
+      ? sanitizePlainText(project.location, 160)
+      : sanitizePlainText([project.location?.city, project.location?.state].filter(Boolean).join(', '), 160),
+    timeline: sanitizePlainText(project.deadline || project.projectDate || project.timeline || '', 80) || null,
+    status: sanitizePlainText(project.status || 'open', 40),
     accepted_creator_id: project.acceptedCreatorId || project.accepted_creator_id || null,
     accepted_application_id: project.acceptedApplicationId || project.accepted_application_id || null,
     delivered_at: project.deliveredAt || project.delivered_at || null,
     approved_at: project.approvedAt || project.approved_at || null,
-    delivery_link: project.deliveryLink || project.delivery_link || null,
-    delivery_notes: project.deliveryNotes || project.delivery_notes || null,
-    revision_count: project.revision_count || 0,
-    applications: project.applications || 0,
+    delivery_link: sanitizeUrl(project.deliveryLink || project.delivery_link || '', 500) || null,
+    delivery_notes: sanitizeLongText(project.deliveryNotes || project.delivery_notes || '', 2000) || null,
+    revision_count: clampNumber(project.revision_count, { min: 0, max: 50, fallback: 0 }),
+    applications: clampNumber(project.applications, { min: 0, max: 100000, fallback: 0 }),
+  };
+}
+
+export function sanitizeProjectDraft(project) {
+  return {
+    ...project,
+    title: sanitizePlainText(project.title, 120),
+    description: sanitizeLongText(project.description, 4000),
+    serviceId: sanitizePlainText(project.serviceId || project.service_id || '', 80),
+    budgetMin: clampNumber(project.budgetMin ?? project.budget_min, { min: 0, max: 1000000, fallback: null }),
+    budgetMax: clampNumber(project.budgetMax ?? project.budget_max, { min: 0, max: 1000000, fallback: null }),
+    projectDuration: sanitizePlainText(project.projectDuration || project.project_duration || '', 80),
+    deadline: sanitizePlainText(project.deadline || project.projectDate || project.timeline || '', 80) || null,
+    location: sanitizePlainText(typeof project.location === 'string'
+      ? project.location
+      : [project.location?.city, project.location?.state].filter(Boolean).join(', '), 160),
+    skills: Array.isArray(project.skills)
+      ? project.skills.map(skill => sanitizePlainText(skill, 36)).filter(Boolean).slice(0, 12)
+      : sanitizeTagList(project.skills, 12, 36),
   };
 }

@@ -107,6 +107,65 @@ async function markProjectCompleted(supabaseAdmin: ReturnType<typeof createClien
   await issueReferralRewards(supabaseAdmin, txn);
 }
 
+async function releaseCreatorPayout(supabaseAdmin: ReturnType<typeof createClient>, txn: Record<string, any>) {
+  if (txn.final_transfer_id || txn.final_status === 'released') return;
+  if (txn.retainer_status !== 'paid' || txn.final_status !== 'paid') return;
+
+  const { data: creatorListing } = await supabaseAdmin
+    .from('creator_listings')
+    .select('stripe_account_id')
+    .eq('id', txn.creator_id)
+    .single();
+
+  const creatorStripeAccountId = creatorListing?.stripe_account_id;
+  if (!creatorStripeAccountId) {
+    throw new Error('Creator has no connected Stripe account for payout release');
+  }
+
+  const projectAmount = Math.max(0, Number(txn.project_amount || 0));
+  const creatorFee = Math.max(0, Number(txn.creator_fee_amount || 0));
+  const netToCreator = projectAmount - creatorFee;
+
+  if (!netToCreator || netToCreator <= 0) {
+    throw new Error('Creator payout amount could not be verified');
+  }
+
+  const transfer = await stripe.transfers.create({
+    amount: netToCreator,
+    currency: 'usd',
+    destination: creatorStripeAccountId,
+    metadata: {
+      transactionId: txn.id,
+      projectId: txn.project_id,
+      paymentFlow: 'platform_charge_then_transfer',
+      paymentType: 'full_creator_release',
+    },
+  }, {
+    idempotencyKey: `cb_release_${txn.id}`,
+  });
+
+  await supabaseAdmin
+    .from('transactions')
+    .update({
+      final_status: 'released',
+      final_transfer_id: transfer.id,
+      final_released_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', txn.id)
+    .is('final_transfer_id', null);
+
+  await supabaseAdmin.from('payment_events').insert({
+    transaction_id: txn.id,
+    event_type: 'creator_payout_released',
+    metadata: {
+      transferId: transfer.id,
+      amount: netToCreator,
+      paymentFlow: 'platform_charge_then_transfer',
+    },
+  });
+}
+
 async function consumeClientFeeWaiver(supabaseAdmin: ReturnType<typeof createClient>, txn: Record<string, any>) {
   if (Number(txn.client_fee_pct ?? 5) !== 0 || !txn.client_id) return;
 
@@ -142,6 +201,18 @@ Deno.serve(async (req) => {
   );
 
   try {
+    const { data: processedEvent } = await supabaseAdmin
+      .from('payment_events')
+      .select('id')
+      .eq('stripe_event_id', event.id)
+      .maybeSingle();
+
+    if (processedEvent) {
+      return new Response(JSON.stringify({ received: true, duplicate: true }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     switch (event.type) {
 
       case 'payment_intent.succeeded': {
@@ -180,11 +251,17 @@ Deno.serve(async (req) => {
           await supabaseAdmin.from('payment_events').insert({
             transaction_id: txn.id,
             event_type:     `${paymentType}_payment_succeeded`,
+            stripe_event_id: event.id,
             metadata:       { paymentIntentId: pi.id, amount: pi.amount },
           });
 
           if (paymentType === 'final') {
             await markProjectCompleted(supabaseAdmin, txn);
+            await releaseCreatorPayout(supabaseAdmin, {
+              ...txn,
+              final_status: 'paid',
+              final_paid_at: new Date().toISOString(),
+            });
           }
 
           if (paymentType === 'retainer') {
@@ -209,6 +286,7 @@ Deno.serve(async (req) => {
           await supabaseAdmin.from('payment_events').insert({
             transaction_id: txn.id,
             event_type:     `${paymentType}_payment_failed`,
+            stripe_event_id: event.id,
             metadata:       {
               paymentIntentId:  pi.id,
               failureReason:    pi.last_payment_error?.message ?? 'Unknown',
@@ -243,6 +321,7 @@ Deno.serve(async (req) => {
           await supabaseAdmin.from('payment_events').insert({
             transaction_id: txn.id,
             event_type:     'transfer_created',
+            stripe_event_id: event.id,
             metadata:       {
               transferId:   transfer.id,
               amount:       transfer.amount,

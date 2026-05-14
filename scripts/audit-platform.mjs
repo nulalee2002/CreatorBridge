@@ -67,20 +67,77 @@ check('Checkout fee display', 'src/pages/CheckoutPage.jsx', [
   { label: 'sends payment type for retainer and final payments', test: includes('paymentType') },
 ]);
 
+check('Auth route protection', 'src/App.jsx', [
+  { label: 'protected route wrapper exists', test: includes('function AuthRequired') },
+  { label: 'creator dashboard requires auth', test: includes('Sign in to manage your creator account') },
+  { label: 'client profile requires auth', test: includes('Sign in to manage your client profile') },
+  { label: 'messages require auth', test: includes('Sign in to view messages') },
+  { label: 'checkout requires auth', test: includes('Sign in before payment') },
+]);
+
+checks.push(
+  { name: 'Shared input sanitizer exists', pass: fileExists('src/utils/inputSecurity.js')(), path: 'src/utils/inputSecurity.js' },
+);
+
+check('Message abuse prevention', 'src/pages/MessagesPage.jsx', [
+  { label: 'sanitizes typed message text before storage', test: includes('sanitizeLongText(text, 1500)') },
+  { label: 'filters new conversation starter text', test: includes('checkMessage(cleanMessage)') },
+  { label: 'stores cleaned initial conversation text', test: matches(/text:\s*cleanText/) },
+]);
+
+check('Project board input hardening', 'src/pages/ProjectBoard.jsx', [
+  { label: 'sanitizes posted project title', test: includes('sanitizePlainText(form.title, 120)') },
+  { label: 'sanitizes posted project description', test: includes('sanitizeLongText(form.description, 4000)') },
+  { label: 'blocks contact info in creator proposals', test: includes('checkMessage(cleanProposal)') },
+]);
+
+check('Network input hardening', 'src/pages/NetworkingPage.jsx', [
+  { label: 'sanitizes network post content', test: includes('sanitizeLongText(postContent, 500)') },
+  { label: 'uses shared contact filter for posts', test: includes('checkMessage(cleanContent)') },
+  { label: 'sanitizes live chat messages', test: includes('sanitizeLongText(chatInput, 300)') },
+]);
+
+check('Quote and chatbot input hardening', 'src/components/RequestQuoteModal.jsx', [
+  { label: 'sanitizes quote project title', test: includes('sanitizePlainText(form.projectTitle, 120)') },
+  { label: 'sanitizes quote description', test: includes('sanitizeLongText(form.description, 4000)') },
+  { label: 'sanitizes quote request before local and remote storage', test: includes('const cleanForm = buildCleanQuoteForm()') },
+]);
+
+check('Chatbot input hardening', 'src/components/SupportChatbot.jsx', [
+  { label: 'sanitizes booking records before storage', test: includes('const cleanBookingData = sanitizeBookingData(bookingData)') },
+  { label: 'sanitizes free text chat input', test: includes('sanitizeLongText(input, 1500)') },
+  { label: 'keeps AI prompt input bounded and cleaned', test: includes('content: sanitizeLongText(m.content, 1500)') },
+  { label: 'injects system prompt into future assistant calls', test: includes("{ role: 'system', content: SYSTEM_PROMPT }") },
+  { label: 'limits assistant history sent to future AI calls', test: includes('ASSISTANT_HISTORY_LIMIT') },
+  { label: 'blocks prompt injection requests', test: includes('isPromptInjectionAttempt(text)') },
+  { label: 'blocks contact info in chatbot booking and quote text', test: includes('blockUnsafeText(text, `chatbot_booking_${def.field}`)') },
+]);
+
 check('Payment function hardening', 'supabase/functions/create-payment-intent/index.ts', [
   { label: 'verifies authenticated client owns the payment request', test: includes('authData.user.id !== clientId') },
   { label: 'verifies project ownership from Supabase', test: includes('Project ownership could not be verified') },
-  { label: 'verifies accepted creator before payment', test: includes('Creator is not accepted for this project') },
+  { label: 'requires an accepted creator before payment', test: includes('A creator must be accepted for this project before payment') },
   { label: 'uses creator Stripe account from listing only', test: includes('const trustedCreatorStripeAccountId = listing?.stripe_account_id') },
   { label: 'does not trust browser supplied creatorStripeAccountId', test: notIncludes('creatorStripeAccountId,') },
+  { label: 'does not use Stripe destination charges for protected payments', test: notIncludes('transfer_data') },
+  { label: 'uses Stripe idempotency keys for payment creation', test: includes('idempotencyKey') },
   { label: 'calculates trusted Stripe charge and platform fee server side', test: includes('calculateTrustedFees') },
 ]);
 
 check('Stripe webhook completion path', 'supabase/functions/stripe-webhook/index.ts', [
   { label: 'marks final-paid projects complete after Stripe success', test: includes('markProjectCompleted') },
+  { label: 'releases creator payout after confirmed final payment', test: includes('releaseCreatorPayout') },
+  { label: 'records Stripe event ids to prevent replay processing', test: includes('stripe_event_id') },
   { label: 'issues referral rewards after completed paid work', test: includes('issueReferralRewards') },
   { label: 'consumes client fee waiver after retainer payment', test: includes('consumeClientFeeWaiver') },
   { label: 'supports creator one-project fee reduction reward', test: includes("referral.reward_type === 'fee_reduction'") },
+]);
+
+check('Payment release hardening', 'supabase/functions/release-payment/index.ts', [
+  { label: 'requires authenticated client or trusted job secret', test: includes('PLATFORM_JOB_SECRET') },
+  { label: 'verifies the paying client before release', test: includes('Only the paying client can release this payment') },
+  { label: 'requires both payments before payout release', test: includes('Both retainer and final payment must be paid') },
+  { label: 'uses Stripe idempotency key for payout transfer', test: includes('idempotencyKey') },
 ]);
 
 check('Supabase schema source', 'supabase/schema.sql', [
@@ -89,6 +146,31 @@ check('Supabase schema source', 'supabase/schema.sql', [
   { label: 'creator one-project fee reduction column exists', test: includes('next_project_fee_pct numeric') },
   { label: 'referral reward completion transaction is tracked', test: includes('completed_transaction_id uuid') },
   { label: 'policies are idempotent with drop and create pattern', test: includes('DROP POLICY IF EXISTS') },
+  { label: 'public listing browse is limited to approved listings', test: includes('Approved listings are viewable by everyone') },
+  { label: 'public project browse is limited to open projects', test: includes('Open projects viewable by everyone') },
+  { label: 'project participants retain private project access', test: includes('Project participants can view projects') },
+  { label: 'transactions are not client-insertable', test: source => !/CREATE POLICY "Users can insert transactions"/.test(source) },
+]);
+
+check('Marketplace RLS tightening', 'supabase/migrations/20260514094138_tighten_marketplace_rls.sql', [
+  { label: 'limits public creator listing browse to approved listings', test: includes('Approved listings are viewable by everyone') },
+  { label: 'allows creators to view their own listings', test: includes('Creators can view own listings') },
+  { label: 'limits public project browse to open projects', test: includes('Open projects viewable by everyone') },
+  { label: 'allows project participants to view private project records', test: includes('Project participants can view projects') },
+  { label: 'drops direct client transaction insert policy', test: includes('drop policy if exists "Users can insert transactions"') },
+]);
+
+check('Supabase storage hardening', 'supabase/migrations/20260514115348_secure_storage_foundation.sql', [
+  { label: 'keeps creator portfolio uploads private', test: matches(/'creator-portfolio'[\s\S]*false/) },
+  { label: 'keeps project delivery uploads private', test: matches(/'project-deliveries'[\s\S]*false/) },
+  { label: 'requires user id folder ownership for uploads', test: includes('(storage.foldername(name))[1] = (select auth.uid())::text') },
+  { label: 'allows upsert only with own-object update policy', test: includes('Users can update own CreatorBridge storage objects') },
+  { label: 'prevents cross-account object deletion', test: includes('Users can delete own CreatorBridge storage objects') },
+]);
+
+check('Storage readiness docs', 'docs/ENVIRONMENT_READINESS.md', [
+  { label: 'documents private user upload buckets', test: includes('CreatorBridge user uploads must stay private by default') },
+  { label: 'documents signed URL requirement before broad file access', test: includes('signed URLs or a server function') },
 ]);
 
 check('Supabase migration package', 'supabase/migrations/20260508130000_prelaunch_platform_hardening.sql', [

@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import { TurnstileWidget, turnstileConfigured } from './TurnstileWidget.jsx';
 import { normalizeServiceId, SERVICE_TYPE_OPTIONS } from '../data/rates.js';
 import { fromSupabaseProject, toSupabaseProject, upsertLocalProject } from '../utils/projectStorage.js';
+import { sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
 import { parseBudgetRange } from '../utils/matchingAlgorithm.js';
 
 // ── Static option sets ───────────────────────────────────────
@@ -174,7 +175,9 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
   function validate() {
     const e = {};
     const isRemoteProject = form.venueType === 'Remote/Virtual';
-    if (!form.projectTitle.trim())       e.projectTitle       = 'Give your project a clear title so creators understand what this is.';
+    const cleanTitle = sanitizePlainText(form.projectTitle, 120);
+    const cleanDescription = sanitizeLongText(form.description, 4000);
+    if (!cleanTitle)                     e.projectTitle       = 'Give your project a clear title so creators understand what this is.';
     if (!form.serviceType)               e.serviceType        = 'Select the type of production service you need.';
     if (!form.projectType)               e.projectType        = 'Select the specific type of project within your chosen service.';
     if (form.projectType === 'Other' && !form.otherProjectType.trim()) e.otherProjectType = 'Please describe your specific project type.';
@@ -187,10 +190,30 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
     if (!isRemoteProject && !form.venueState.trim())   e.venueState   = 'Please enter the state.';
     if (!form.hoursNeeded)               e.hoursNeeded        = 'How long do you need the creator on site or working on your project?';
     if (!form.deliverables)              e.deliverables       = 'This helps creators estimate the editing time and scope.';
-    if (descLen < 100)                   e.description        = 'Please provide at least 100 characters so creators understand your vision.';
+    if (cleanDescription.length < 100)   e.description        = 'Please provide at least 100 characters so creators understand your vision.';
     if (!form.budgetRange)               e.budgetRange        = 'Selecting a budget range helps match you with creators who fit your project.';
     if (!form.locationPreference)        e.locationPreference = 'Let creators know if they need to be in your area.';
     return e;
+  }
+
+  function buildCleanQuoteForm() {
+    return {
+      projectTitle: sanitizePlainText(form.projectTitle, 120),
+      serviceType: sanitizePlainText(form.serviceType, 80),
+      projectType: sanitizePlainText(form.projectType, 120),
+      otherProjectType: sanitizePlainText(form.otherProjectType, 120),
+      projectDate: sanitizePlainText(form.projectDate, 40),
+      projectTime: sanitizePlainText(form.projectTime, 80),
+      venueAddress: sanitizePlainText(form.venueAddress, 180),
+      venueCity: sanitizePlainText(form.venueCity, 80),
+      venueState: sanitizePlainText(form.venueState, 80),
+      venueType: sanitizePlainText(form.venueType, 80),
+      hoursNeeded: sanitizePlainText(form.hoursNeeded, 80),
+      deliverables: sanitizePlainText(form.deliverables, 80),
+      description: sanitizeLongText(form.description, 4000),
+      budgetRange: sanitizePlainText(form.budgetRange, 80),
+      locationPreference: sanitizePlainText(form.locationPreference, 80),
+    };
   }
 
   async function handleSubmit(e) {
@@ -211,34 +234,36 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
     }
 
     setLoading(true);
-    const serviceId = normalizeServiceId(form.serviceType);
-    const budget = parseBudgetRange(form.budgetRange);
-    const isRemoteProject = form.venueType === 'Remote/Virtual' || form.locationPreference === 'Remote OK';
+    const cleanForm = buildCleanQuoteForm();
+    const serviceId = normalizeServiceId(cleanForm.serviceType);
+    const budget = parseBudgetRange(cleanForm.budgetRange);
+    const isRemoteProject = cleanForm.venueType === 'Remote/Virtual' || cleanForm.locationPreference === 'Remote OK';
     const createdAt = new Date().toISOString();
+    const projectType = cleanForm.projectType === 'Other' ? (cleanForm.otherProjectType || 'Other') : cleanForm.projectType;
 
     const project = {
       id:                 Date.now().toString() + Math.random(),
-      title:              form.projectTitle.trim(),
+      title:              cleanForm.projectTitle,
       serviceId,
-      serviceType:        form.serviceType,
-      projectType:        form.projectType === 'Other' ? (form.otherProjectType.trim() || 'Other') : form.projectType,
-      projectDate:        form.projectDate,
-      projectTime:        form.projectTime,
+      serviceType:        cleanForm.serviceType,
+      projectType,
+      projectDate:        cleanForm.projectDate,
+      projectTime:        cleanForm.projectTime,
       location: {
-        address:          form.venueAddress.trim(),
-        city:             form.venueCity.trim(),
-        state:            form.venueState.trim(),
+        address:          cleanForm.venueAddress,
+        city:             cleanForm.venueCity,
+        state:            cleanForm.venueState,
         country:          'US',
-        venueType:        form.venueType,
+        venueType:        cleanForm.venueType,
       },
       remote:             isRemoteProject,
-      hoursNeeded:        form.hoursNeeded,
-      deliverables:       form.deliverables,
-      description:        form.description.trim(),
-      budgetRange:        form.budgetRange,
+      hoursNeeded:        cleanForm.hoursNeeded,
+      deliverables:       cleanForm.deliverables,
+      description:        cleanForm.description,
+      budgetRange:        cleanForm.budgetRange,
       budgetMin:          budget.budgetMin,
       budgetMax:          budget.budgetMax,
-      locationPreference: form.locationPreference,
+      locationPreference: cleanForm.locationPreference,
       creatorId:          creator?.id || null,
       creatorName:        creator ? (creator.businessName || creator.name) : null,
       clientId:           user?.id || 'guest-' + Date.now(),
@@ -263,28 +288,28 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
       serviceId,
       service_id: serviceId,
       description: project.description,
-      timeline: form.projectDate,
-      projectDate: form.projectDate,
+      timeline: cleanForm.projectDate,
+      projectDate: cleanForm.projectDate,
       projectType: project.projectType,
       project_type: project.projectType,
-      projectTime: form.projectTime,
-      project_time: form.projectTime,
-      venueAddress: form.venueAddress.trim(),
-      venue_address: form.venueAddress.trim(),
-      venueCity: form.venueCity.trim(),
-      venue_city: form.venueCity.trim(),
-      venueState: form.venueState.trim(),
-      venue_state: form.venueState.trim(),
-      venueType: form.venueType,
-      venue_type: form.venueType,
-      hoursNeeded: form.hoursNeeded,
-      hours_needed: form.hoursNeeded,
-      deliverables: form.deliverables,
-      budgetRange: form.budgetRange,
-      budget_range: form.budgetRange,
+      projectTime: cleanForm.projectTime,
+      project_time: cleanForm.projectTime,
+      venueAddress: cleanForm.venueAddress,
+      venue_address: cleanForm.venueAddress,
+      venueCity: cleanForm.venueCity,
+      venue_city: cleanForm.venueCity,
+      venueState: cleanForm.venueState,
+      venue_state: cleanForm.venueState,
+      venueType: cleanForm.venueType,
+      venue_type: cleanForm.venueType,
+      hoursNeeded: cleanForm.hoursNeeded,
+      hours_needed: cleanForm.hoursNeeded,
+      deliverables: cleanForm.deliverables,
+      budgetRange: cleanForm.budgetRange,
+      budget_range: cleanForm.budgetRange,
       budget: budget.budgetMax === 999999 ? budget.budgetMin : budget.budgetMax,
-      locationPreference: form.locationPreference,
-      location_preference: form.locationPreference,
+      locationPreference: cleanForm.locationPreference,
+      location_preference: cleanForm.locationPreference,
       status: 'pending',
       read: false,
       createdAt,
@@ -308,21 +333,21 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
           client_id:           user.id,
           client_name:         project.clientName,
           client_email:        user.email || '',
-          service_id:          serviceId || form.serviceType,
-          description:         form.description.trim(),
-          timeline:            form.projectDate,
+          service_id:          serviceId || cleanForm.serviceType,
+          description:         cleanForm.description,
+          timeline:            cleanForm.projectDate,
           budget:              savedQuote.budget,
-          project_title:       form.projectTitle.trim(),
+          project_title:       cleanForm.projectTitle,
           project_type:        project.projectType,
-          project_time:        form.projectTime,
-          venue_address:       form.venueAddress.trim(),
-          venue_city:          form.venueCity.trim(),
-          venue_state:         form.venueState.trim(),
-          venue_type:          form.venueType,
-          hours_needed:        form.hoursNeeded,
-          deliverables:        form.deliverables,
-          budget_range:        form.budgetRange,
-          location_preference: form.locationPreference,
+          project_time:        cleanForm.projectTime,
+          venue_address:       cleanForm.venueAddress,
+          venue_city:          cleanForm.venueCity,
+          venue_state:         cleanForm.venueState,
+          venue_type:          cleanForm.venueType,
+          hours_needed:        cleanForm.hoursNeeded,
+          deliverables:        cleanForm.deliverables,
+          budget_range:        cleanForm.budgetRange,
+          location_preference: cleanForm.locationPreference,
         }).select().single();
         if (quoteError) throw quoteError;
         if (quoteRow) savedQuote = { ...savedQuote, ...quoteRow, id: quoteRow.id };

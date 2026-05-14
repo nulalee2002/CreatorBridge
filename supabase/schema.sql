@@ -108,6 +108,8 @@ create table if not exists creator_listings (
   tags text[] default '{}',
   availability text default 'available', -- 'available' | 'busy' | 'unavailable'
   verified boolean default false,
+  verification_status text default 'unverified',
+  review_status text default 'pending_review',
   plan text default 'free', -- 'free' | 'pro' | 'studio'
   -- Location
   city text,
@@ -318,12 +320,23 @@ CREATE POLICY "Users can update own profile"
   USING ((select auth.uid()) = id)
   WITH CHECK ((select auth.uid()) = id);
 
--- Listings: public read, creators manage their own
+-- Listings: public browsing is limited to approved marketplace supply;
+-- creators can still read and manage their own draft/pending listing.
 DROP POLICY IF EXISTS "Listings are viewable by everyone" ON creator_listings;
-CREATE POLICY "Listings are viewable by everyone"
+DROP POLICY IF EXISTS "Approved listings are viewable by everyone" ON creator_listings;
+CREATE POLICY "Approved listings are viewable by everyone"
   ON creator_listings FOR SELECT
   TO anon, authenticated
-  USING (true);
+  USING (
+    verified = true
+    OR verification_status IN ('verified', 'pro_verified')
+  );
+
+DROP POLICY IF EXISTS "Creators can view own listings" ON creator_listings;
+CREATE POLICY "Creators can view own listings"
+  ON creator_listings FOR SELECT
+  TO authenticated
+  USING (user_id = (select auth.uid()));
 
 DROP POLICY IF EXISTS "Creators can insert own listings" ON creator_listings;
 CREATE POLICY "Creators can insert own listings"
@@ -461,12 +474,32 @@ CREATE POLICY "Authenticated users can send messages"
   TO authenticated
   WITH CHECK ((select auth.uid()) = sender_id);
 
--- Projects: public read, clients manage their own, accepted creators can update workflow delivery state
+-- Projects: public visitors only see open briefs. Clients, accepted creators,
+-- and creators who applied can still read private workflow records.
 DROP POLICY IF EXISTS "Projects viewable by everyone" ON projects;
-CREATE POLICY "Projects viewable by everyone"
+DROP POLICY IF EXISTS "Open projects viewable by everyone" ON projects;
+CREATE POLICY "Open projects viewable by everyone"
   ON projects FOR SELECT
   TO anon, authenticated
-  USING (true);
+  USING (status = 'open');
+
+DROP POLICY IF EXISTS "Project participants can view projects" ON projects;
+CREATE POLICY "Project participants can view projects"
+  ON projects FOR SELECT
+  TO authenticated
+  USING (
+    client_id = (select auth.uid())
+    OR accepted_creator_id IN (
+      SELECT id::text FROM creator_listings WHERE user_id = (select auth.uid())
+    )
+    OR EXISTS (
+      SELECT 1
+      FROM project_applications pa
+      JOIN creator_listings cl ON cl.id = pa.listing_id
+      WHERE pa.project_id = projects.id
+        AND cl.user_id = (select auth.uid())
+    )
+  );
 
 DROP POLICY IF EXISTS "Clients can manage own projects" ON projects;
 CREATE POLICY "Clients can manage own projects"
@@ -521,9 +554,122 @@ CREATE POLICY "Creators can view own subscriptions"
   USING (exists (select 1 from creator_listings where id = listing_id and user_id = (select auth.uid())));
 
 -- ── STORAGE BUCKETS ──────────────────────────────────────────
--- Run these separately in Supabase Storage settings:
--- Create bucket: "portfolio-images" (public)
--- Create bucket: "avatars" (public)
+-- User uploaded files are private by default. Public marketing imagery belongs in /public,
+-- not in user storage buckets.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values
+  (
+    'creator-portfolio',
+    'creator-portfolio',
+    false,
+    52428800,
+    array['image/jpeg', 'image/png', 'image/webp', 'application/pdf']::text[]
+  ),
+  (
+    'creator-intros',
+    'creator-intros',
+    false,
+    314572800,
+    array['video/mp4', 'video/webm', 'video/quicktime']::text[]
+  ),
+  (
+    'client-assets',
+    'client-assets',
+    false,
+    52428800,
+    array['image/jpeg', 'image/png', 'image/webp', 'application/pdf']::text[]
+  ),
+  (
+    'project-attachments',
+    'project-attachments',
+    false,
+    209715200,
+    array[
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'application/pdf',
+      'audio/mpeg',
+      'audio/wav',
+      'audio/aac',
+      'video/mp4',
+      'video/webm',
+      'video/quicktime'
+    ]::text[]
+  ),
+  (
+    'project-deliveries',
+    'project-deliveries',
+    false,
+    524288000,
+    array[
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'application/pdf',
+      'audio/mpeg',
+      'audio/wav',
+      'audio/aac',
+      'video/mp4',
+      'video/webm',
+      'video/quicktime',
+      'application/zip'
+    ]::text[]
+  )
+on conflict (id) do update
+set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+DROP POLICY IF EXISTS "Users can read own CreatorBridge storage objects" ON storage.objects;
+CREATE POLICY "Users can read own CreatorBridge storage objects"
+  ON storage.objects FOR SELECT
+  TO authenticated
+  USING (
+    bucket_id in ('creator-portfolio', 'creator-intros', 'client-assets', 'project-attachments', 'project-deliveries')
+    AND (
+      owner_id = (select auth.uid())::text
+      OR (storage.foldername(name))[1] = (select auth.uid())::text
+    )
+  );
+
+DROP POLICY IF EXISTS "Users can upload to own CreatorBridge storage folder" ON storage.objects;
+CREATE POLICY "Users can upload to own CreatorBridge storage folder"
+  ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    bucket_id in ('creator-portfolio', 'creator-intros', 'client-assets', 'project-attachments', 'project-deliveries')
+    AND (storage.foldername(name))[1] = (select auth.uid())::text
+  );
+
+DROP POLICY IF EXISTS "Users can update own CreatorBridge storage objects" ON storage.objects;
+CREATE POLICY "Users can update own CreatorBridge storage objects"
+  ON storage.objects FOR UPDATE
+  TO authenticated
+  USING (
+    bucket_id in ('creator-portfolio', 'creator-intros', 'client-assets', 'project-attachments', 'project-deliveries')
+    AND (
+      owner_id = (select auth.uid())::text
+      OR (storage.foldername(name))[1] = (select auth.uid())::text
+    )
+  )
+  WITH CHECK (
+    bucket_id in ('creator-portfolio', 'creator-intros', 'client-assets', 'project-attachments', 'project-deliveries')
+    AND (storage.foldername(name))[1] = (select auth.uid())::text
+  );
+
+DROP POLICY IF EXISTS "Users can delete own CreatorBridge storage objects" ON storage.objects;
+CREATE POLICY "Users can delete own CreatorBridge storage objects"
+  ON storage.objects FOR DELETE
+  TO authenticated
+  USING (
+    bucket_id in ('creator-portfolio', 'creator-intros', 'client-assets', 'project-attachments', 'project-deliveries')
+    AND (
+      owner_id = (select auth.uid())::text
+      OR (storage.foldername(name))[1] = (select auth.uid())::text
+    )
+  );
 
 -- ── INDEXES ──────────────────────────────────────────────────
 create index if not exists idx_listings_region on creator_listings(region_key);
@@ -562,6 +708,7 @@ CREATE TABLE IF NOT EXISTS transactions (
   creator_fee_amount     integer NOT NULL,  -- platform take from creator in cents
   client_fee_amount      integer NOT NULL,  -- platform take from client in cents
   platform_revenue       integer NOT NULL,  -- total platform revenue in cents
+  payment_flow           text NOT NULL DEFAULT 'platform_charge_then_transfer',
 
   retainer_status        text DEFAULT 'pending',   -- pending | paid | released | refunded
   final_status           text DEFAULT 'pending',   -- pending | paid | released | refunded
@@ -587,6 +734,7 @@ CREATE TABLE IF NOT EXISTS payment_events (
   event_type     text NOT NULL,  -- e.g. retainer_paid, final_released, disputed
   actor_id       uuid,
   metadata       jsonb DEFAULT '{}',
+  stripe_event_id text,
   created_at     timestamptz DEFAULT now()
 );
 
@@ -619,10 +767,12 @@ CREATE POLICY "Users can view own transactions"
   );
 
 DROP POLICY IF EXISTS "Users can insert transactions" ON transactions;
-CREATE POLICY "Users can insert transactions"
-  ON transactions FOR INSERT
-  TO authenticated
-  WITH CHECK (client_id = (select auth.uid()));
+
+COMMENT ON TABLE transactions IS
+  'Payment ledger records are server-owned. Authenticated users may read participant rows through RLS, but inserts and updates must go through trusted Edge Functions using the service role.';
+
+COMMENT ON TABLE payment_events IS
+  'Payment event records are server-owned. Participants may read related events, but client applications must not insert payment events directly.';
 
 DROP POLICY IF EXISTS "Participants can view payment events" ON payment_events;
 CREATE POLICY "Participants can view payment events"

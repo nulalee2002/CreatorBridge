@@ -15,14 +15,14 @@ export function BrandMark({ className = '', title = 'CreatorBridge' }) {
 
 export function BrandLogo({ compact = false, className = '' }) {
   if (compact) {
-    return <BrandMark className={`h-10 w-10 rounded-xl ${className}`} />;
+    return <BrandMark className={`h-11 w-11 sm:h-12 sm:w-12 ${className}`} />;
   }
 
   return (
     <img
       src={BRAND_LOCKUP}
       alt="CreatorBridge, verified media marketplace"
-      className={`block h-12 w-auto max-w-[260px] object-contain sm:h-14 sm:max-w-[320px] ${className}`}
+      className={`block h-12 w-auto max-w-[280px] object-contain sm:h-14 sm:max-w-[360px] ${className}`}
       loading="eager"
       decoding="async"
     />

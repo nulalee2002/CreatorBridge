@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { MapPin, Send, Flag, Heart, MessageSquare, ChevronDown, Users, Lock } from 'lucide-react';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
+import { checkMessage, logFilterEvent } from '../utils/messageFilter.js';
 
 const US_STATES = [
   { code: 'AL', name: 'Alabama' }, { code: 'AK', name: 'Alaska' },
@@ -39,6 +41,8 @@ const POST_TYPES = [
   { id: 'industry_news', label: 'Industry News', color: 'bg-gold-500/15 text-gold-400 ring-1 ring-gold-500/20' },
   { id: 'portfolio', label: 'Portfolio Share', color: 'bg-gold-500/15 text-gold-400 ring-1 ring-gold-500/20' },
 ];
+
+const NETWORK_IMAGE = '/images/creatorbridge/event-crew-stage.png';
 
 const SEED_NETWORK_POSTS = [
   {
@@ -139,7 +143,7 @@ function formatTime(iso) {
 }
 
 function getInitials(name) {
-  return (name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  return sanitizePlainText(name || '?', 80).split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 }
 
 function linkifyText(text) {
@@ -220,9 +224,11 @@ function PostCard({ post, dark, isVerified, onLike, onReport }) {
 
   function handleReplySubmit(e) {
     e.preventDefault();
-    const trimmed = replyText.trim();
-    if (!trimmed || !isVerified) return;
-    if (containsBlockedContent(trimmed) || containsContactInfo(trimmed)) {
+    const cleanReply = sanitizeLongText(replyText, 280);
+    if (!cleanReply || !isVerified) return;
+    const { blocked, patternType } = checkMessage(cleanReply);
+    if (containsBlockedContent(cleanReply) || containsContactInfo(cleanReply) || blocked) {
+      logFilterEvent(post.user_id || post.id || 'network-reply', patternType || 'blocked_network_reply', supabase, supabaseConfigured);
       alert('Your reply contains disallowed content. Please keep all communication professional and avoid contact info or job board references.');
       return;
     }
@@ -230,7 +236,7 @@ function PostCard({ post, dark, isVerified, onLike, onReport }) {
       id: `reply-${Date.now()}`,
       post_id: post.id,
       user_display_name: 'You',
-      content: trimmed,
+      content: cleanReply,
       created_at: new Date().toISOString(),
     };
     setReplies(prev => [...prev, newReply]);
@@ -413,13 +419,15 @@ export function NetworkingPage({ dark, user }) {
 
   async function handleSubmitPost(e) {
     e.preventDefault();
-    const trimmed = postContent.trim();
-    if (!trimmed || !isVerified) return;
-    if (containsBlockedContent(trimmed)) {
+    const cleanContent = sanitizeLongText(postContent, 500);
+    if (!cleanContent || !isVerified) return;
+    if (containsBlockedContent(cleanContent)) {
       setPostError('Your post mentions job board content which is not allowed in state networks. Please keep posts professional and relevant to media production.');
       return;
     }
-    if (containsContactInfo(trimmed)) {
+    const { blocked, patternType } = checkMessage(cleanContent);
+    if (containsContactInfo(cleanContent) || blocked) {
+      logFilterEvent(user?.id || 'network-post', patternType || 'contact_info', supabase, supabaseConfigured);
       setPostError('Please do not include contact information such as email, phone, or social handles in posts.');
       return;
     }
@@ -433,7 +441,7 @@ export function NetworkingPage({ dark, user }) {
       user_verification_status: user?.verification_status || 'verified',
       user_primary_service: user?.user_metadata?.primary_service || '',
       post_type: postType,
-      content: trimmed,
+      content: cleanContent,
       likes_count: 0,
       reply_count: 0,
       is_flagged: false,
@@ -445,7 +453,7 @@ export function NetworkingPage({ dark, user }) {
       const { data, error } = await supabase.from('network_posts').insert({
         state_code: selectedState,
         user_id: user.id,
-        content: trimmed,
+        content: cleanContent,
         post_type: postType,
       }).select().single();
       if (!error && data) {
@@ -460,9 +468,11 @@ export function NetworkingPage({ dark, user }) {
 
   async function handleSendMessage(e) {
     e.preventDefault();
-    const trimmed = chatInput.trim();
-    if (!trimmed || !isVerified) return;
-    if (containsBlockedContent(trimmed) || containsContactInfo(trimmed)) {
+    const cleanMessage = sanitizeLongText(chatInput, 300);
+    if (!cleanMessage || !isVerified) return;
+    const { blocked, patternType } = checkMessage(cleanMessage);
+    if (containsBlockedContent(cleanMessage) || containsContactInfo(cleanMessage) || blocked) {
+      logFilterEvent(user?.id || 'network-chat', patternType || 'blocked_network_chat', supabase, supabaseConfigured);
       setChatError('Message contains disallowed content. Keep chat professional and avoid contact info or job board references.');
       return;
     }
@@ -475,7 +485,7 @@ export function NetworkingPage({ dark, user }) {
       user_display_name: user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Member',
       user_verification_status: user?.verification_status || 'verified',
       user_primary_service: user?.user_metadata?.primary_service || '',
-      message: trimmed,
+      message: cleanMessage,
       created_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     };
@@ -484,7 +494,7 @@ export function NetworkingPage({ dark, user }) {
       await supabase.from('state_chat_messages').insert({
         state_code: selectedState,
         user_id: user.id,
-        message: trimmed,
+        message: cleanMessage,
         user_display_name: msg.user_display_name,
         user_verification_status: msg.user_verification_status,
         user_primary_service: msg.user_primary_service,
@@ -514,22 +524,50 @@ export function NetworkingPage({ dark, user }) {
 
   return (
     <div className={`min-h-screen ${bg}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+      <div className="cb-home-wide mx-auto w-full px-5 sm:px-8 lg:px-14 2xl:px-16 py-10">
 
         {/* Page header */}
         <div className={`relative overflow-hidden rounded-[28px] border p-6 md:p-8 mb-6 ${
           dark ? 'bg-charcoal-900/72 border-white/[0.08] shadow-[0_28px_90px_rgba(0,0,0,0.28)]' : 'bg-white border-gray-200'
         }`}>
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/60 to-transparent" />
-          <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
-            State Creator Network
-          </p>
-          <h1 className={`font-display font-bold text-4xl md:text-5xl mb-4 ${dark ? 'text-white' : 'text-gray-900'}`}>
-            Creator Network
-          </h1>
-          <p className={`text-sm md:text-base leading-7 max-w-2xl ${textSub}`}>
-            Connect with verified media professionals in your area while keeping opportunities, referrals, and production conversations inside CreatorBridge.
-          </p>
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px] gap-6 items-stretch">
+            <div>
+              <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+                State Creator Network
+              </p>
+              <h1 className={`font-display font-bold text-4xl md:text-5xl mb-4 ${dark ? 'text-white' : 'text-gray-900'}`}>
+                Creator Network
+              </h1>
+              <p className={`text-sm md:text-base leading-7 max-w-2xl ${textSub}`}>
+                Connect with verified media professionals in your area while keeping referrals, production questions, and peer conversations inside CreatorBridge.
+              </p>
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl">
+                {[
+                  ['Verified circles', 'Creators and clients stay tied to real accounts.'],
+                  ['State context', 'Local production needs stay easier to scan.'],
+                  ['No poaching', 'Contact and job-board abuse are filtered.'],
+                ].map(([title, copy]) => (
+                  <div key={title} className={`rounded-xl border p-3 ${dark ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-gray-50 border-gray-200'}`}>
+                    <p className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{title}</p>
+                    <p className={`mt-1 text-xs leading-5 ${textSub}`}>{copy}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className={`relative hidden overflow-hidden rounded-2xl border lg:block ${dark ? 'border-gold-500/18 bg-charcoal-950/70' : 'border-gray-200 bg-gray-50'}`}>
+              <img src={NETWORK_IMAGE} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+              <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950/92 via-charcoal-950/42 to-charcoal-950/12" />
+              <div className="absolute bottom-0 left-0 right-0 p-5">
+                <p className="text-gold-300 mb-2" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
+                  Local production layer
+                </p>
+                <p className="max-w-sm text-sm font-bold leading-6 text-white">
+                  Build trusted media relationships before the next shoot needs a crew.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* State selector */}

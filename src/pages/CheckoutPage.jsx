@@ -204,7 +204,6 @@ function CardForm({ fees, project, creator, dark, paymentType, creatorFeePct, cl
   const isFinal = paymentType === 'final';
   const amountDue = isFinal ? fees.finalClientOwes : fees.retainerClientOwes;
   const amountDueCents = isFinal ? fees.finalClientOwesCents : fees.retainerClientOwesCents;
-  const appFeeCents = isFinal ? fees.finalAppFeeCents : fees.retainerAppFeeCents;
 
   async function handlePay() {
     if (!stripe || !elements) return;
@@ -215,30 +214,15 @@ function CardForm({ fees, project, creator, dark, paymentType, creatorFeePct, cl
       if (supabaseConfigured && !user?.id) {
         throw new Error('Please sign in as the client before making a payment.');
       }
-      if (supabaseConfigured && !creator?.stripe_account_id) {
-        throw new Error('This creator has not finished Stripe onboarding yet. Choose another creator or ask them to finish payment setup.');
-      }
-
       let clientSecret = null;
 
       if (supabaseConfigured) {
         // Call edge function to create PaymentIntent
         const { data, error: fnErr } = await supabase.functions.invoke('create-payment-intent', {
           body: {
-            projectId:              project.id,
-            creatorStripeAccountId: creator?.stripe_account_id,
-            amountCents:            amountDueCents,
-            appFeeCents,
-            projectAmountCents:     Math.round(fees.projectTotal * 100),
-            retainerAmountCents:    fees.retainerAmountCents,
-            finalAmountCents:       fees.finalAmountCents,
-            creatorFeeAmountCents:  fees.creatorFeeRetainerCents,
-            clientFeeAmountCents:   fees.clientFeeRetainerCents,
-            platformRevenueCents:   fees.retainerAppFeeCents,
-            creatorFeePct,
-            clientFeePct,
-            creatorId:              creator?.id,
-            clientId:               user?.id,
+            projectId: project.id,
+            creatorId: creator?.id,
+            clientId: user?.id,
             paymentType,
           },
         });
