@@ -268,6 +268,8 @@ export function ClientProfilePage({ dark }) {
   const clientName = form.companyName || form.displayName || 'Client Account';
   const clientAvatar = normalizeUrl(form.avatarUrl);
   const clientWebsite = normalizeUrl(form.website);
+  const clientHeroImage = '/images/creatorbridge/event-crew-stage.png';
+  const clientSupportImage = '/images/creatorbridge/post-production-suite.png';
 
   if (loading) {
     return (
@@ -295,19 +297,42 @@ export function ClientProfilePage({ dark }) {
     <main className="mx-auto w-full max-w-[1520px] px-5 py-8 sm:px-8 lg:px-12">
       <section className={`relative overflow-hidden rounded-[28px] border p-6 md:p-8 mb-6 ${dark ? 'bg-charcoal-900/72 border-gold-500/18 shadow-[0_32px_110px_rgba(0,0,0,0.28)]' : 'bg-white border-gray-200'}`}>
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-400/70 to-transparent" />
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_440px] xl:items-stretch">
           <div>
             <p className="mb-3 text-gold-400" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
               Client Command Center
             </p>
             <h1 className={`font-display text-4xl font-bold leading-tight md:text-5xl ${dark ? 'text-white' : 'text-gray-900'}`}>
-              Manage bookings without losing the thread.
+              Run production without building a full in-house team.
             </h1>
             <p className={`mt-4 max-w-2xl text-sm leading-7 md:text-base ${textSub}`}>
-              Keep your creative searches, quote requests, active projects, and account trust signals in one place before you book production work.
+              Keep creator discovery, quote requests, active projects, booking identity, and trust signals in one production hub before you hire.
             </p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              {[
+                ['Source', 'Verified talent'],
+                ['Brief', 'Clear project needs'],
+                ['Book', 'Protected payment path'],
+              ].map(([label, value]) => (
+                <div key={label} className={`rounded-2xl border px-4 py-3 ${dark ? 'border-white/[0.07] bg-charcoal-950/44' : 'border-gray-200 bg-gray-50'}`}>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-gold-400">{label}</p>
+                  <p className={`mt-1 text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{value}</p>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className={`rounded-2xl border p-4 ${dark ? 'bg-gold-500/10 border-gold-500/20' : 'bg-gold-50 border-gold-200'}`}>
+          <div className="relative min-h-[280px] overflow-hidden rounded-2xl border border-gold-500/18 bg-charcoal-950/75">
+            <img src={clientHeroImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-76" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/28 to-black/12" />
+            <div className="absolute bottom-0 left-0 right-0 p-4">
+              <p className="mb-2 text-gold-400" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
+                Production Desk
+              </p>
+              <h2 className="font-display text-2xl font-bold text-white">Your outside production department.</h2>
+              <p className="mt-2 max-w-sm text-sm leading-6 text-charcoal-200">Find the right crew, compare proof, and keep the booking path accountable.</p>
+            </div>
+          </div>
+          <div className={`xl:col-start-2 rounded-2xl border p-4 ${dark ? 'bg-gold-500/10 border-gold-500/20' : 'bg-gold-50 border-gold-200'}`}>
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
                 <div className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border text-sm font-black ${dark ? 'border-gold-500/25 bg-charcoal-950/65 text-gold-300' : 'border-gold-200 bg-white text-gold-700'}`}>
@@ -420,6 +445,17 @@ export function ClientProfilePage({ dark }) {
         </div>
 
         <aside className="space-y-6">
+          <div className="relative min-h-[260px] overflow-hidden rounded-2xl border border-gold-500/18 bg-charcoal-950/70">
+            <img src={clientSupportImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/22 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-5">
+              <p className="mb-2 text-gold-400" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
+                Review Before Booking
+              </p>
+              <h2 className="font-display text-xl font-bold text-white">Creator proof stays visible before money moves.</h2>
+            </div>
+          </div>
+
           <ClientVerification user={user} dark={dark} requireLevel="basic" onComplete={loadClientData} />
 
           <form onSubmit={saveProfile} className={`${panelCls} p-5`}>

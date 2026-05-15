@@ -328,6 +328,28 @@ export function CreatorProfilePage({ dark }) {
   }
   const region = REGIONS[location.regionKey];
   const expLabel = { entry: '2-3 yrs', mid: '4-6 yrs', senior: '7+ yrs' }[creator.experience] || '';
+  const creatorVisuals = {
+    video: '/images/creatorbridge/post-production-suite.png',
+    video_production: '/images/creatorbridge/post-production-suite.png',
+    photography: '/images/creatorbridge/commercial-photographer.png',
+    drone: '/images/creatorbridge/drone-operator-golden-hour.png',
+    drone_aerial: '/images/creatorbridge/drone-operator-golden-hour.png',
+    podcast: '/images/creatorbridge/podcast-producer-studio.png',
+    events: '/images/creatorbridge/event-crew-stage.png',
+    live_events: '/images/creatorbridge/event-crew-stage.png',
+    social: '/images/creatorbridge/commercial-photographer.png',
+    social_media: '/images/creatorbridge/commercial-photographer.png',
+    post: '/images/creatorbridge/post-production-suite.png',
+    post_production: '/images/creatorbridge/post-production-suite.png',
+  };
+  const primaryServiceId = services[0]?.serviceId || services[0]?.service_id || 'video';
+  const profileVisual = creatorVisuals[primaryServiceId] || '/images/creatorbridge/camera-lens-event-reflection.png';
+  const proofTiles = [
+    { label: 'Brand Film', image: '/images/creatorbridge/post-production-suite.png' },
+    { label: 'Event Coverage', image: '/images/creatorbridge/event-crew-stage.png' },
+    { label: 'Commercial Photo', image: '/images/creatorbridge/commercial-photographer.png' },
+    { label: 'Protected Booking', image: '/images/creatorbridge/camera-lens-event-reflection.png' },
+  ];
 
   const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
   const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.08]' : 'bg-white border-gray-200 shadow-sm'}`;
@@ -354,6 +376,21 @@ export function CreatorProfilePage({ dark }) {
               style={{ background: 'linear-gradient(90deg, transparent, rgba(212,169,65,0.85), transparent)' }}
             />
             <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-gold-500/10 blur-3xl" />
+            <div className="relative grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
+              <div className="group relative min-h-[380px] overflow-hidden rounded-[1.35rem] border border-gold-500/18 bg-charcoal-950/70 shadow-[0_24px_90px_rgba(0,0,0,0.28)]">
+                <img src={profileVisual} alt="" className="absolute inset-0 h-full w-full object-cover opacity-72 transition-transform duration-700 group-hover:scale-[1.03]" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/86 via-black/22 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-5">
+                  <p className="mb-2 text-gold-400" style={{ fontSize: '10px', letterSpacing: '2.6px', textTransform: 'uppercase' }}>
+                    Verified specialist profile
+                  </p>
+                  <h2 className="font-display text-2xl font-bold text-white">Focused proof, not creator clutter.</h2>
+                  <p className="mt-2 text-sm leading-6 text-charcoal-200">
+                    Clients review service fit, packages, samples, availability, and protected booking context before requesting work.
+                  </p>
+                </div>
+              </div>
+              <div className="min-w-0">
             <div className="relative flex flex-col gap-6 md:flex-row md:items-start">
               <div className="relative shrink-0">
                 <div
@@ -465,6 +502,16 @@ export function CreatorProfilePage({ dark }) {
               ))}
             </div>
 
+            <div className="relative mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {proofTiles.map(tile => (
+                <div key={tile.label} className="relative min-h-[118px] overflow-hidden rounded-2xl border border-white/[0.07] bg-charcoal-950/60">
+                  <img src={tile.image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/86 via-black/18 to-transparent" />
+                  <p className="absolute bottom-3 left-3 right-3 text-sm font-bold leading-tight text-white">{tile.label}</p>
+                </div>
+              ))}
+            </div>
+
             {/* Tags */}
             {creator.tags?.length > 0 && (
               <div className={`relative mt-5 border-t pt-4 ${dark ? 'border-white/[0.06]' : 'border-gray-200'}`}>
@@ -480,6 +527,8 @@ export function CreatorProfilePage({ dark }) {
                 </div>
               </div>
             )}
+              </div>
+            </div>
           </div>
 
           {/* Video intro */}

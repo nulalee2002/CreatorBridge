@@ -292,6 +292,8 @@ export function CreatorDashboard({ dark }) {
   ];
 
   const serviceIds = (creator.services || []).map(s => s.serviceId || s.service_id).filter(Boolean);
+  const dashboardVisual = '/images/creatorbridge/commercial-photographer.png';
+  const productionMathVisual = '/images/creatorbridge/post-production-suite.png';
 
   return (
     <div className={`min-h-screen ${dark ? 'bg-transparent' : 'bg-gray-50'}`}>
@@ -339,6 +341,44 @@ export function CreatorDashboard({ dark }) {
           </div>
           </div>
         </div>
+
+        <section className="mb-6 grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)_360px]">
+          <div className="relative min-h-[260px] overflow-hidden rounded-2xl border border-gold-500/18 bg-charcoal-950/72">
+            <img src={dashboardVisual} alt="" className="absolute inset-0 h-full w-full object-cover opacity-72" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/22 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-5">
+              <h2 className="font-display text-2xl font-bold text-white">Creator identity</h2>
+              <p className="mt-2 text-sm leading-6 text-charcoal-200">Profile, proof, packages, availability, and intro video stay tied to one professional listing.</p>
+            </div>
+          </div>
+          <div className={`rounded-2xl border p-5 ${dark ? 'border-white/[0.08] bg-charcoal-900/72' : 'border-gray-200 bg-white'}`}>
+            <p className="mb-3 text-gold-400" style={{ fontSize: '10px', letterSpacing: '2.6px', textTransform: 'uppercase' }}>
+              Studio Desk OS
+            </p>
+            <h2 className={`font-display text-3xl font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>Build rates with professional confidence.</h2>
+            <div className="mt-5 grid gap-3 sm:grid-cols-4">
+              {[
+                ['Profile', `${creator.portfolio?.length || 0} samples`],
+                ['Requests', `${quotes.length} total`],
+                ['Views', viewCount || 0],
+                ['Tier', getCreatorTier(creator.completedProjects || creator.completed_projects || 0).label],
+              ].map(([label, value]) => (
+                <div key={label} className={`rounded-2xl border p-4 ${dark ? 'border-white/[0.07] bg-charcoal-950/54' : 'border-gray-200 bg-gray-50'}`}>
+                  <p className={`text-[10px] font-bold uppercase tracking-[0.2em] ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>{label}</p>
+                  <p className="mt-2 text-xl font-black text-gold-400">{value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="relative min-h-[260px] overflow-hidden rounded-2xl border border-gold-500/18 bg-charcoal-950/72">
+            <img src={productionMathVisual} alt="" className="absolute inset-0 h-full w-full object-cover opacity-68" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/22 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-5">
+              <h2 className="font-display text-2xl font-bold text-white">Production math</h2>
+              <p className="mt-2 text-sm leading-6 text-charcoal-200">Rates, costs, margins, quote requests, and delivery terms stay visible.</p>
+            </div>
+          </div>
+        </section>
 
         {/* Tab bar */}
         <div className={`flex gap-1.5 p-1.5 rounded-2xl border mb-6 w-full overflow-x-auto no-scrollbar ${dark ? 'bg-charcoal-950/72 border-gold-500/14' : 'bg-gray-100 border-gray-200'}`}>
