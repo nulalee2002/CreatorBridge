@@ -381,31 +381,32 @@ export function CreatorProfilePage({ dark }) {
             />
             <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-gold-500/10 blur-3xl" />
             <div className="relative grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-              <div className="group relative min-h-[220px] overflow-hidden rounded-[1.35rem] border border-gold-500/18 bg-charcoal-950/70 shadow-[0_24px_90px_rgba(0,0,0,0.28)] sm:min-h-[260px] xl:min-h-[340px]">
+              <div className="group relative aspect-[16/10] overflow-hidden rounded-[1.35rem] border border-gold-500/18 bg-charcoal-950/70 shadow-[0_24px_90px_rgba(0,0,0,0.28)] sm:aspect-video xl:aspect-[9/16]">
                 {introEmbedUrl ? (
                   <iframe
                     src={introEmbedUrl}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
-                    className="absolute inset-0 h-full w-full"
+                    className="absolute inset-0 h-full w-full bg-black"
                     title={`${creator.businessName || creator.name} intro video`}
                   />
                 ) : (
                   <>
-                    <img src={profileVisual} alt="" className="absolute inset-0 h-full w-full object-cover opacity-72 transition-transform duration-700 group-hover:scale-[1.03]" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/26 to-transparent" />
+                    <img src={profileVisual} alt="" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-35 blur-xl" />
+                    <img src={profileVisual} alt="" className="absolute inset-0 h-full w-full object-contain p-2 opacity-90 transition-transform duration-700 group-hover:scale-[1.01]" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/20 to-transparent" />
                   </>
                 )}
                 <div className={`pointer-events-none absolute inset-x-0 bottom-0 p-4 ${introEmbedUrl ? 'bg-gradient-to-t from-black/82 via-black/20 to-transparent' : ''}`}>
                   <p className="mb-2 text-gold-400" style={{ fontSize: '10px', letterSpacing: '2.6px', textTransform: 'uppercase' }}>
-                    {introEmbedUrl ? 'Creator intro video' : 'Default cover image'}
+                    {introEmbedUrl ? 'Required creator intro' : 'Intro video fallback'}
                   </p>
                   <h2 className="font-display text-xl font-bold text-white">
-                    {introEmbedUrl ? 'Meet the creator before booking.' : 'Creator-customizable cover slot.'}
+                    {introEmbedUrl ? 'Meet the creator before booking.' : 'Creator intro video slot.'}
                   </h2>
                   {!introEmbedUrl && (
                     <p className="mt-2 text-xs leading-5 text-charcoal-200">
-                      This fallback can later be replaced with the creator's own production image.
+                      Once approved, this area should show the required 60 to 90 second intro video.
                     </p>
                   )}
                 </div>
@@ -807,7 +808,7 @@ export function CreatorProfilePage({ dark }) {
                     <div key={i} className={`rounded-2xl border p-4 ${dark ? 'border-white/[0.07] bg-charcoal-950/42' : 'border-gray-200 bg-gray-50'}`}>
                       {item.image_url && (
                         <img src={item.image_url} alt={item.title}
-                          className="w-full h-36 object-cover rounded-2xl mb-3" />
+                          className="mb-3 aspect-video w-full rounded-2xl bg-charcoal-950/70 object-contain" />
                       )}
                       <div className="flex items-center gap-2 mb-1">
                         <span className={`flex h-7 w-7 items-center justify-center rounded-xl ${dark ? 'bg-gold-500/10 ring-1 ring-gold-500/18' : 'bg-white ring-1 ring-gray-200'}`}>{def?.icon || '🎬'}</span>
