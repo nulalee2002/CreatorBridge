@@ -335,24 +335,24 @@ export function CreatorProfilePage({ dark }) {
   const region = REGIONS[location.regionKey];
   const expLabel = { entry: '2-3 yrs', mid: '4-6 yrs', senior: '7+ yrs' }[creator.experience] || '';
   const creatorVisuals = {
-    video: '/images/creatorbridge/post-production-suite.png',
-    video_production: '/images/creatorbridge/post-production-suite.png',
-    photography: '/images/creatorbridge/commercial-photographer.png',
+    video: '/images/creatorbridge/creator-profile-cover-suite.jpg',
+    video_production: '/images/creatorbridge/creator-profile-cover-suite.jpg',
+    photography: '/images/creatorbridge/creator-intro-video-alt-1.jpg',
     drone: '/images/creatorbridge/drone-operator-golden-hour.png',
     drone_aerial: '/images/creatorbridge/drone-operator-golden-hour.png',
-    podcast: '/images/creatorbridge/podcast-producer-studio.png',
-    events: '/images/creatorbridge/event-crew-stage.png',
-    live_events: '/images/creatorbridge/event-crew-stage.png',
-    social: '/images/creatorbridge/commercial-photographer.png',
-    social_media: '/images/creatorbridge/commercial-photographer.png',
-    post: '/images/creatorbridge/post-production-suite.png',
-    post_production: '/images/creatorbridge/post-production-suite.png',
+    podcast: '/images/creatorbridge/creator-intro-video-alt-2.jpg',
+    events: '/images/creatorbridge/network-media-community-alt.jpg',
+    live_events: '/images/creatorbridge/network-media-community-alt.jpg',
+    social: '/images/creatorbridge/creator-profile-cover-studio.jpg',
+    social_media: '/images/creatorbridge/creator-profile-cover-studio.jpg',
+    post: '/images/creatorbridge/creator-profile-cover-suite.jpg',
+    post_production: '/images/creatorbridge/creator-profile-cover-suite.jpg',
   };
   const primaryServiceId = services[0]?.serviceId || services[0]?.service_id || 'video';
   const customCoverImage = normalizeMediaUrl(
     creator.cover_image_url || creator.coverImageUrl || creator.banner_url || creator.bannerUrl
   );
-  const profileVisual = customCoverImage || creatorVisuals[primaryServiceId] || '/images/creatorbridge/camera-lens-event-reflection.png';
+  const profileVisual = customCoverImage || creatorVisuals[primaryServiceId] || '/images/creatorbridge/creator-profile-cover-studio.jpg';
   const introEmbedUrl = toEmbedUrl(creator.video_intro_url);
 
   const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';

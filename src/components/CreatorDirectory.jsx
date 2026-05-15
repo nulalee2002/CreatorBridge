@@ -1316,6 +1316,8 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
   ];
 
   const CREATORBRIDGE_IMAGES = {
+    hub: '/images/creatorbridge/homepage-production-hub.jpg',
+    hubSecondary: '/images/creatorbridge/homepage-production-hub-secondary.jpg',
     post: '/images/creatorbridge/post-production-suite.png',
     drone: '/images/creatorbridge/drone-operator-golden-hour.png',
     podcast: '/images/creatorbridge/podcast-producer-studio.png',
@@ -1331,7 +1333,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
     podcast: CREATORBRIDGE_IMAGES.podcast,
     aerial: CREATORBRIDGE_IMAGES.drone,
     events: CREATORBRIDGE_IMAGES.event,
-    brand_content: CREATORBRIDGE_IMAGES.photo,
+    brand_content: CREATORBRIDGE_IMAGES.hubSecondary,
     editing: CREATORBRIDGE_IMAGES.post,
   };
 
@@ -1459,8 +1461,8 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                 />
                 <div className="relative min-h-[270px] overflow-hidden">
                   <img
-                    src={CREATORBRIDGE_IMAGES.post}
-                    alt="Professional post-production suite with editing monitors"
+                    src={CREATORBRIDGE_IMAGES.hub}
+                    alt="Production hub studio with camera and media equipment"
                     className="absolute inset-0 h-full w-full object-cover"
                     loading="eager"
                   />

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'creatorbridge-v2026-05-08';
+const CACHE_NAME = 'creatorbridge-v2026-05-15-assets';
 
 const APP_SHELL = [
   '/',

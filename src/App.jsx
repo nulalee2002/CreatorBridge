@@ -660,7 +660,7 @@ export default function App() {
               </div>
               <div className={`relative hidden min-h-[230px] overflow-hidden rounded-2xl border lg:block ${dark ? 'border-gold-500/18 bg-charcoal-950/70' : 'border-gray-200 bg-gray-50'}`}>
                 <img
-                  src="/images/creatorbridge/post-production-suite.png"
+                  src="/images/creatorbridge/rate-calculator-desk.jpg"
                   alt=""
                   className="absolute inset-0 h-full w-full object-cover"
                   loading="lazy"

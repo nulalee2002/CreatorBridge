@@ -292,8 +292,8 @@ export function CreatorDashboard({ dark }) {
   ];
 
   const serviceIds = (creator.services || []).map(s => s.serviceId || s.service_id).filter(Boolean);
-  const dashboardVisual = '/images/creatorbridge/commercial-photographer.png';
-  const productionMathVisual = '/images/creatorbridge/post-production-suite.png';
+  const dashboardVisual = '/images/creatorbridge/creator-intro-video-default.jpg';
+  const productionMathVisual = '/images/creatorbridge/rate-calculator-desk.jpg';
 
   return (
     <div className={`min-h-screen ${dark ? 'bg-transparent' : 'bg-gray-50'}`}>

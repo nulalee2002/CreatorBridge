@@ -1303,6 +1303,7 @@ export function ProjectBoard({ dark }) {
       ...(isCreator ? [{ id: 'my_applications', label: `Applied (${myApplications.length})` }] : []),
     ] : []),
   ];
+  const projectBoardImage = '/images/creatorbridge/project-board-planning.jpg';
 
   return (
     <div className={`min-h-screen ${dark ? 'bg-transparent' : 'bg-gray-50'}`}>
@@ -1313,24 +1314,38 @@ export function ProjectBoard({ dark }) {
           dark ? 'bg-charcoal-900/70 border-white/[0.08] shadow-[0_28px_90px_rgba(0,0,0,0.28)]' : 'bg-white border-gray-200'
         }`}>
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/60 to-transparent" />
-          <div className="flex items-center justify-between gap-5 flex-wrap">
-          <div>
-            <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
-              Curated production work
-            </p>
-            <h1 className={`font-display font-bold text-4xl md:text-5xl ${dark ? 'text-white' : 'text-gray-900'}`}>
-              Project Board
-            </h1>
-            <p className={`text-sm md:text-base leading-7 mt-3 max-w-2xl ${textSub}`}>
-              {isCreator ? 'Browse projects and submit proposals' : 'Post a project and find the right creator'}
-            </p>
-          </div>
-          {user && (
-            <button type="button" onClick={() => setShowPost(true)}
-              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold transition-all">
-              <Plus size={14} /> Post a Project
-            </button>
-          )}
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-6 items-stretch">
+            <div className="flex flex-col justify-between gap-6">
+              <div>
+                <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+                  Curated production work
+                </p>
+                <h1 className={`font-display font-bold text-4xl md:text-5xl ${dark ? 'text-white' : 'text-gray-900'}`}>
+                  Project Board
+                </h1>
+                <p className={`text-sm md:text-base leading-7 mt-3 max-w-2xl ${textSub}`}>
+                  {isCreator ? 'Browse production briefs and submit proposals.' : 'Post a production brief, compare fit, and keep project context organized before money moves.'}
+                </p>
+              </div>
+              {user && (
+                <button type="button" onClick={() => setShowPost(true)}
+                  className="flex w-fit items-center gap-2 px-5 py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold transition-all">
+                  <Plus size={14} /> Post a Project
+                </button>
+              )}
+            </div>
+            <div className={`relative hidden min-h-[230px] overflow-hidden rounded-2xl border lg:block ${dark ? 'border-gold-500/18 bg-charcoal-950/70' : 'border-gray-200 bg-gray-50'}`}>
+              <img src={projectBoardImage} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+              <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950/92 via-charcoal-950/38 to-charcoal-950/12" />
+              <div className="absolute bottom-0 left-0 right-0 p-5">
+                <p className="text-gold-300 mb-2" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
+                  Production brief
+                </p>
+                <p className="max-w-sm text-sm font-bold leading-6 text-white">
+                  Scope the work before creators apply.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 

@@ -42,7 +42,7 @@ const POST_TYPES = [
   { id: 'portfolio', label: 'Portfolio Share', color: 'bg-gold-500/15 text-gold-400 ring-1 ring-gold-500/20' },
 ];
 
-const NETWORK_IMAGE = '/images/creatorbridge/event-crew-stage.png';
+const NETWORK_IMAGE = '/images/creatorbridge/network-media-community.jpg';
 
 const SEED_NETWORK_POSTS = [
   {
