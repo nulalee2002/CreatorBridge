@@ -569,6 +569,33 @@ export default function App() {
         </div>
       </header>
 
+      <nav className={`md:hidden sticky top-16 z-20 border-b backdrop-blur-xl ${dark ? 'bg-charcoal-950/90 border-gold-500/12' : 'bg-white/94 border-gray-200'}`}>
+        <div className="flex gap-2 overflow-x-auto px-5 py-2">
+          {[
+            { path: '/',           id: 'directory',  icon: Search,   label: 'Find' },
+            { path: '/projects',   id: 'projects',   icon: Briefcase, label: 'Projects' },
+            { path: '/network',    id: 'network',    icon: Users,     label: 'Network' },
+            { path: '/calculator', id: 'calculator', icon: Zap,      label: 'Rates' },
+          ].map(({ path, id, icon: Icon, label }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => navigate(path)}
+              className={`flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-2 text-[11px] font-bold transition-colors ${
+                activeTab === id
+                  ? 'border-gold-500 bg-gold-500 text-charcoal-900'
+                  : dark
+                    ? 'border-white/[0.08] bg-white/[0.025] text-charcoal-300 hover:border-gold-500/28 hover:text-white'
+                    : 'border-gray-200 bg-white text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Icon size={13} />
+              {label}
+            </button>
+          ))}
+        </div>
+      </nav>
+
       {/* ── Routes ── */}
       <Routes>
         <Route path="/" element={<CreatorDirectory dark={dark} mode="search" onSwitchToRegister={() => navigate('/register')} />} />

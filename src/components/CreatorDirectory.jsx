@@ -1409,7 +1409,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                 </span>
                 <span className="hidden sm:block h-px w-20 bg-gold-500/35" />
                 <span className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} text-[11px] font-semibold uppercase tracking-[0.18em]`}>
-                  Phoenix built, national reach
+                  National production reach
                 </span>
               </div>
               <h1

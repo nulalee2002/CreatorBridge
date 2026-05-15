@@ -461,6 +461,12 @@ function makeInitialMessages(draft) {
   ];
 }
 
+function isMobileViewport() {
+  return typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(max-width: 640px)').matches;
+}
+
 // ── Main component ───────────────────────────────────────────────
 export function SupportChatbot({ dark = true }) {
   const { user, profile } = useAuth();
@@ -468,6 +474,7 @@ export function SupportChatbot({ dark = true }) {
 
   const [open, setOpen]         = useState(false);
   const [autoOpened, setAutoOpened] = useState(false);
+  const [mobileNudge, setMobileNudge] = useState(false);
   const [hasDraft, setHasDraft] = useState(() => !!loadDraft());
 
   // bookingMode: false | 'active' | 'summary' | 'submitted'
@@ -502,7 +509,11 @@ export function SupportChatbot({ dark = true }) {
     const alreadyShown = sessionStorage.getItem('cb-chat-shown');
     if (!alreadyShown && !autoOpened) {
       const timer = setTimeout(() => {
-        setOpen(true);
+        if (isMobileViewport()) {
+          setMobileNudge(true);
+        } else {
+          setOpen(true);
+        }
         setAutoOpened(true);
         sessionStorage.setItem('cb-chat-shown', 'true');
       }, 9000);
@@ -1116,9 +1127,29 @@ export function SupportChatbot({ dark = true }) {
       )}
 
       {/* ── Floating bubble with draft badge ───────────────────── */}
+      {!open && mobileNudge && (
+        <button
+          type="button"
+          onClick={() => {
+            setMobileNudge(false);
+            setOpen(true);
+          }}
+          className={`sm:hidden rounded-2xl border px-3 py-2 text-left text-[11px] font-bold shadow-[0_18px_48px_rgba(0,0,0,0.34)] backdrop-blur-xl ${
+            dark
+              ? 'border-gold-500/22 bg-charcoal-950/88 text-charcoal-100'
+              : 'border-gold-200 bg-white/92 text-gray-900'
+          }`}
+          style={{ position: 'fixed', bottom: '5.2rem', right: '1rem', zIndex: 9999 }}
+        >
+          Need help booking?
+        </button>
+      )}
       <button
         type="button"
-        onClick={() => setOpen(o => !o)}
+        onClick={() => {
+          setMobileNudge(false);
+          setOpen(o => !o);
+        }}
         className="z-50 w-14 h-14 rounded-2xl bg-gold-500 hover:bg-gold-600 shadow-[0_20px_52px_rgba(0,0,0,0.38)] ring-1 ring-gold-300/45 flex items-center justify-center transition-all hover:scale-105 active:scale-95 relative"
         style={{ position: 'fixed', bottom: '1.25rem', right: '1rem', zIndex: 9999 }}
         aria-label="Open support chat"

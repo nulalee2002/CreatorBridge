@@ -269,7 +269,7 @@ export function ClientProfilePage({ dark }) {
   const clientAvatar = normalizeUrl(form.avatarUrl);
   const clientWebsite = normalizeUrl(form.website);
   const clientHeroImage = '/images/creatorbridge/event-crew-stage.png';
-  const clientSupportImage = '/images/creatorbridge/post-production-suite.png';
+  const clientSupportImage = '/images/creatorbridge/camera-lens-event-reflection.png';
 
   if (loading) {
     return (

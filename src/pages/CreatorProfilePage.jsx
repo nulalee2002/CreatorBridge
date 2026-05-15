@@ -82,6 +82,13 @@ function toEmbedUrl(url) {
   return url;
 }
 
+function normalizeMediaUrl(url = '') {
+  const trimmed = String(url || '').trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed) || trimmed.startsWith('/')) return trimmed;
+  return `https://${trimmed}`;
+}
+
 export function CreatorProfilePage({ dark }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -343,12 +350,15 @@ export function CreatorProfilePage({ dark }) {
     post_production: '/images/creatorbridge/post-production-suite.png',
   };
   const primaryServiceId = services[0]?.serviceId || services[0]?.service_id || 'video';
-  const profileVisual = creatorVisuals[primaryServiceId] || '/images/creatorbridge/camera-lens-event-reflection.png';
-  const proofTiles = [
-    { label: 'Brand Film', image: '/images/creatorbridge/post-production-suite.png' },
-    { label: 'Event Coverage', image: '/images/creatorbridge/event-crew-stage.png' },
-    { label: 'Commercial Photo', image: '/images/creatorbridge/commercial-photographer.png' },
-    { label: 'Protected Booking', image: '/images/creatorbridge/camera-lens-event-reflection.png' },
+  const customCoverImage = normalizeMediaUrl(
+    creator.cover_image_url || creator.coverImageUrl || creator.banner_url || creator.bannerUrl
+  );
+  const profileVisual = customCoverImage || creatorVisuals[primaryServiceId] || '/images/creatorbridge/camera-lens-event-reflection.png';
+  const proofFacts = [
+    { label: 'Primary lane', value: getServiceDisplayName(primaryServiceId) },
+    { label: 'Portfolio', value: `${portfolio.length || 0} samples` },
+    { label: 'Contact', value: 'Protected until booking' },
+    { label: 'Quote path', value: 'Request first, pay after hire' },
   ];
 
   const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
@@ -376,17 +386,17 @@ export function CreatorProfilePage({ dark }) {
               style={{ background: 'linear-gradient(90deg, transparent, rgba(212,169,65,0.85), transparent)' }}
             />
             <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-gold-500/10 blur-3xl" />
-            <div className="relative grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
-              <div className="group relative min-h-[380px] overflow-hidden rounded-[1.35rem] border border-gold-500/18 bg-charcoal-950/70 shadow-[0_24px_90px_rgba(0,0,0,0.28)]">
+            <div className="relative grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
+              <div className="group relative min-h-[220px] overflow-hidden rounded-[1.35rem] border border-gold-500/18 bg-charcoal-950/70 shadow-[0_24px_90px_rgba(0,0,0,0.28)] sm:min-h-[260px]">
                 <img src={profileVisual} alt="" className="absolute inset-0 h-full w-full object-cover opacity-72 transition-transform duration-700 group-hover:scale-[1.03]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/86 via-black/22 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-5">
+                <div className="absolute bottom-0 left-0 right-0 p-4">
                   <p className="mb-2 text-gold-400" style={{ fontSize: '10px', letterSpacing: '2.6px', textTransform: 'uppercase' }}>
                     Verified specialist profile
                   </p>
-                  <h2 className="font-display text-2xl font-bold text-white">Focused proof, not creator clutter.</h2>
-                  <p className="mt-2 text-sm leading-6 text-charcoal-200">
-                    Clients review service fit, packages, samples, availability, and protected booking context before requesting work.
+                  <h2 className="font-display text-xl font-bold text-white">Profile image and service context.</h2>
+                  <p className="mt-2 text-xs leading-5 text-charcoal-200">
+                    Creators can later replace this default cover with their own production image.
                   </p>
                 </div>
               </div>
@@ -502,12 +512,15 @@ export function CreatorProfilePage({ dark }) {
               ))}
             </div>
 
-            <div className="relative mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {proofTiles.map(tile => (
-                <div key={tile.label} className="relative min-h-[118px] overflow-hidden rounded-2xl border border-white/[0.07] bg-charcoal-950/60">
-                  <img src={tile.image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/86 via-black/18 to-transparent" />
-                  <p className="absolute bottom-3 left-3 right-3 text-sm font-bold leading-tight text-white">{tile.label}</p>
+            <div className="relative mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {proofFacts.map(item => (
+                <div key={item.label} className={`rounded-2xl border px-4 py-3 ${dark ? 'border-white/[0.07] bg-charcoal-950/44' : 'border-gray-200 bg-gray-50'}`}>
+                  <p className={`text-[10px] font-bold uppercase tracking-[0.18em] ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
+                    {item.label}
+                  </p>
+                  <p className={`mt-1 text-xs font-bold leading-5 ${dark ? 'text-charcoal-200' : 'text-gray-800'}`}>
+                    {item.value}
+                  </p>
                 </div>
               ))}
             </div>
@@ -603,9 +616,9 @@ export function CreatorProfilePage({ dark }) {
 
                 if (pkgs.length > 0) {
                   return (
-                    <div className="space-y-4">
+                    <div className="grid gap-3 lg:grid-cols-3">
                       {(serviceDef.description || activeSvc.description || activeSvc.subtypes?.length > 0) && (
-                        <div className={`rounded-2xl border p-4 ${dark ? 'border-gold-500/18 bg-gold-500/[0.055]' : 'border-gold-200 bg-gold-50'}`}>
+                        <div className={`rounded-2xl border p-4 lg:col-span-3 ${dark ? 'border-gold-500/18 bg-gold-500/[0.055]' : 'border-gold-200 bg-gold-50'}`}>
                           <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase' }}>
                             Active service lane
                           </p>
@@ -628,7 +641,7 @@ export function CreatorProfilePage({ dark }) {
                           || pkg.name?.toLowerCase().includes('standard')
                           || pi === 1;
                         return (
-                          <div key={pi} className={`rounded-2xl border p-5
+                          <div key={pi} className={`rounded-2xl border p-4
                             ${isStandard
                               ? 'border-gold-500/38 '
                                 + (dark
@@ -661,7 +674,7 @@ export function CreatorProfilePage({ dark }) {
                             </p>
                             {(pkg.features || pkg.deliverables || []).length > 0 && (
                               <ul className="space-y-1.5 mb-4">
-                                {(pkg.features || pkg.deliverables || [])
+                                {(pkg.features || pkg.deliverables || []).slice(0, 3)
                                   .map((f, fi) => (
                                   <li key={fi} className={`flex items-start
                                     gap-2 text-xs
@@ -676,6 +689,11 @@ export function CreatorProfilePage({ dark }) {
                                   </li>
                                 ))}
                               </ul>
+                            )}
+                            {(pkg.features || pkg.deliverables || []).length > 3 && (
+                              <p className={`mb-4 text-[11px] ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
+                                +{(pkg.features || pkg.deliverables || []).length - 3} more included
+                              </p>
                             )}
                             {pkg.description && (
                               <p className={`text-xs italic mb-4
@@ -728,14 +746,14 @@ export function CreatorProfilePage({ dark }) {
                 ].filter(t => t.rates.length > 0);
 
                 return (
-                  <div className="space-y-4">
+                  <div className="grid gap-3 lg:grid-cols-3">
                     {tiers.map((tier) => {
                       const minPrice = Math.min(
                         ...tier.rates.map(([,v]) => Number(v))
                       );
                       return (
                         <div key={tier.name}
-                          className={`rounded-2xl border p-5
+                          className={`rounded-2xl border p-4
                           ${tier.isStandard
                             ? 'border-gold-500/38 '
                               + (dark
@@ -761,7 +779,7 @@ export function CreatorProfilePage({ dark }) {
                             from ${minPrice.toLocaleString()}
                           </p>
                           <ul className="space-y-1.5 mb-4">
-                            {tier.rates.map(([key, val]) => {
+                            {tier.rates.slice(0, 4).map(([key, val]) => {
                               const meta = RATES[sid]?.[key];
                               return (
                                 <li key={key}
@@ -789,6 +807,11 @@ export function CreatorProfilePage({ dark }) {
                               );
                             })}
                           </ul>
+                          {tier.rates.length > 4 && (
+                            <p className={`mb-4 text-[11px] ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
+                              +{tier.rates.length - 4} more rate options
+                            </p>
+                          )}
                           <button
                             type="button"
                             onClick={handleQuoteClick}
