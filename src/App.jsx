@@ -856,23 +856,24 @@ export default function App() {
         {/* ── RIGHT: Quote panel ── */}
         <div className="space-y-4">
           <div className="lg:sticky lg:top-20 space-y-4">
-            <div className={`${cardCls} overflow-hidden`}>
-              <div className="relative aspect-[16/10]">
-                <img
-                  src="/images/creatorbridge/commercial-photographer.png"
-                  alt=""
-                  className="absolute inset-0 h-full w-full object-cover"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950/90 via-charcoal-950/25 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <p className="text-gold-300 mb-1" style={{ fontSize: '10px', letterSpacing: '2.2px', textTransform: 'uppercase' }}>
-                    Rate clarity
-                  </p>
-                  <p className="text-sm font-bold leading-5 text-white">
-                    Price the shoot, edit, deliverables, and revisions before work starts.
-                  </p>
-                </div>
+            <div className={`${cardCls} p-5`}>
+              <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
+                Pricing guardrails
+              </p>
+              <h2 className={`font-display text-xl font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>
+                Keep the quote tied to real production work.
+              </h2>
+              <div className="mt-5 space-y-3">
+                {[
+                  ['Scope first', 'Define the shoot, edit, delivery, and revision needs before pricing.'],
+                  ['Cost visibility', 'Track crew, rental, travel, and post-production costs before margin.'],
+                  ['Package fit', 'Compare basic, standard, and premium lanes without guessing.'],
+                ].map(([label, copy]) => (
+                  <div key={label} className={`rounded-2xl border p-3 ${dark ? 'border-white/[0.07] bg-charcoal-950/48' : 'border-gray-200 bg-gray-50'}`}>
+                    <p className={`text-xs font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{label}</p>
+                    <p className={`mt-1 text-xs leading-5 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>{copy}</p>
+                  </div>
+                ))}
               </div>
             </div>
 

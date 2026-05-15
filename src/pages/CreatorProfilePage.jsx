@@ -102,7 +102,6 @@ export function CreatorProfilePage({ dark }) {
   const [activeNiche, setActiveNiche] = useState(0);
   const [quoteDate, setQuoteDate]       = useState('');
   const [contactUnlocked, setContactUnlocked] = useState(false);
-  const [showVideoModal, setShowVideoModal]   = useState(false);
   const [showContactGate, setShowContactGate] = useState(false);
   const [guestLimitReached, setGuestLimitReached] = useState(false);
 
@@ -354,12 +353,7 @@ export function CreatorProfilePage({ dark }) {
     creator.cover_image_url || creator.coverImageUrl || creator.banner_url || creator.bannerUrl
   );
   const profileVisual = customCoverImage || creatorVisuals[primaryServiceId] || '/images/creatorbridge/camera-lens-event-reflection.png';
-  const proofFacts = [
-    { label: 'Primary lane', value: getServiceDisplayName(primaryServiceId) },
-    { label: 'Portfolio', value: `${portfolio.length || 0} samples` },
-    { label: 'Contact', value: 'Protected until booking' },
-    { label: 'Quote path', value: 'Request first, pay after hire' },
-  ];
+  const introEmbedUrl = toEmbedUrl(creator.video_intro_url);
 
   const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
   const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.08]' : 'bg-white border-gray-200 shadow-sm'}`;
@@ -386,41 +380,45 @@ export function CreatorProfilePage({ dark }) {
               style={{ background: 'linear-gradient(90deg, transparent, rgba(212,169,65,0.85), transparent)' }}
             />
             <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-gold-500/10 blur-3xl" />
-            <div className="relative grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
-              <div className="group relative min-h-[220px] overflow-hidden rounded-[1.35rem] border border-gold-500/18 bg-charcoal-950/70 shadow-[0_24px_90px_rgba(0,0,0,0.28)] sm:min-h-[260px]">
-                <img src={profileVisual} alt="" className="absolute inset-0 h-full w-full object-cover opacity-72 transition-transform duration-700 group-hover:scale-[1.03]" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/86 via-black/22 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4">
+            <div className="relative grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+              <div className="group relative min-h-[220px] overflow-hidden rounded-[1.35rem] border border-gold-500/18 bg-charcoal-950/70 shadow-[0_24px_90px_rgba(0,0,0,0.28)] sm:min-h-[260px] xl:min-h-[340px]">
+                {introEmbedUrl ? (
+                  <iframe
+                    src={introEmbedUrl}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="absolute inset-0 h-full w-full"
+                    title={`${creator.businessName || creator.name} intro video`}
+                  />
+                ) : (
+                  <>
+                    <img src={profileVisual} alt="" className="absolute inset-0 h-full w-full object-cover opacity-72 transition-transform duration-700 group-hover:scale-[1.03]" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/26 to-transparent" />
+                  </>
+                )}
+                <div className={`pointer-events-none absolute inset-x-0 bottom-0 p-4 ${introEmbedUrl ? 'bg-gradient-to-t from-black/82 via-black/20 to-transparent' : ''}`}>
                   <p className="mb-2 text-gold-400" style={{ fontSize: '10px', letterSpacing: '2.6px', textTransform: 'uppercase' }}>
-                    Verified specialist profile
+                    {introEmbedUrl ? 'Creator intro video' : 'Default cover image'}
                   </p>
-                  <h2 className="font-display text-xl font-bold text-white">Profile image and service context.</h2>
-                  <p className="mt-2 text-xs leading-5 text-charcoal-200">
-                    Creators can later replace this default cover with their own production image.
-                  </p>
+                  <h2 className="font-display text-xl font-bold text-white">
+                    {introEmbedUrl ? 'Meet the creator before booking.' : 'Creator-customizable cover slot.'}
+                  </h2>
+                  {!introEmbedUrl && (
+                    <p className="mt-2 text-xs leading-5 text-charcoal-200">
+                      This fallback can later be replaced with the creator's own production image.
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="min-w-0">
             <div className="relative flex flex-col gap-6 md:flex-row md:items-start">
               <div className="relative shrink-0">
                 <div
-                  className={`w-24 h-24 rounded-[1.35rem] border flex items-center justify-center text-5xl shadow-[0_20px_60px_rgba(0,0,0,0.22)] ${dark ? 'bg-white/[0.04] border-gold-500/22' : 'bg-gray-100 border-gray-200'} ${creator.video_intro_url ? 'cursor-pointer' : ''}`}
-                  onClick={() => creator.video_intro_url && setShowVideoModal(true)}
+                  className={`w-24 h-24 rounded-[1.35rem] border flex items-center justify-center text-5xl shadow-[0_20px_60px_rgba(0,0,0,0.22)] ${dark ? 'bg-white/[0.04] border-gold-500/22' : 'bg-gray-100 border-gray-200'}`}
+                  title="Creator logo or profile mark"
                 >
                   {creator.avatar || '🎬'}
                 </div>
-                {creator.video_intro_url && (
-                  <button
-                    type="button"
-                    onClick={() => setShowVideoModal(true)}
-                    className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gold-500 hover:bg-gold-600 flex items-center justify-center shadow-lg transition-colors"
-                    title="Watch intro video"
-                  >
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" className="text-charcoal-900 ml-0.5">
-                      <polygon points="2,1 9,5 2,9" />
-                    </svg>
-                  </button>
-                )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2 flex-wrap">
@@ -512,19 +510,6 @@ export function CreatorProfilePage({ dark }) {
               ))}
             </div>
 
-            <div className="relative mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {proofFacts.map(item => (
-                <div key={item.label} className={`rounded-2xl border px-4 py-3 ${dark ? 'border-white/[0.07] bg-charcoal-950/44' : 'border-gray-200 bg-gray-50'}`}>
-                  <p className={`text-[10px] font-bold uppercase tracking-[0.18em] ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
-                    {item.label}
-                  </p>
-                  <p className={`mt-1 text-xs font-bold leading-5 ${dark ? 'text-charcoal-200' : 'text-gray-800'}`}>
-                    {item.value}
-                  </p>
-                </div>
-              ))}
-            </div>
-
             {/* Tags */}
             {creator.tags?.length > 0 && (
               <div className={`relative mt-5 border-t pt-4 ${dark ? 'border-white/[0.06]' : 'border-gray-200'}`}>
@@ -543,25 +528,6 @@ export function CreatorProfilePage({ dark }) {
               </div>
             </div>
           </div>
-
-          {/* Video intro */}
-          {creator.video_intro_url && (
-            <div className={`${cardCls} p-5 sm:p-6`}>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-base">🎬</span>
-              <h2 className={`font-display font-bold text-base ${dark ? 'text-white' : 'text-gray-900'}`}>Video Introduction</h2>
-              </div>
-              <div className="rounded-2xl overflow-hidden aspect-video bg-black ring-1 ring-gold-500/18">
-                <iframe
-                  src={creator.video_intro_url}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="w-full h-full"
-                  title={`${creator.businessName || creator.name} intro video`}
-                />
-              </div>
-            </div>
-          )}
 
           {/* Services and Packages */}
           {(creator.services || []).length > 0 && (
@@ -1037,34 +1003,6 @@ export function CreatorProfilePage({ dark }) {
         </div>
       )}
 
-      {/* Video intro modal */}
-      {showVideoModal && creator.video_intro_url && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="cb-modal-backdrop" onClick={() => setShowVideoModal(false)} />
-          <div className={`relative w-full max-w-2xl rounded-2xl border shadow-2xl overflow-hidden ${dark ? 'bg-charcoal-900 border-charcoal-700' : 'bg-white border-gray-200'}`}>
-            <div className={`flex items-center justify-between px-5 py-3 border-b ${dark ? 'border-charcoal-700' : 'border-gray-200'}`}>
-              <p className={`text-sm font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>
-                Meet {creator.businessName || creator.name} - 1 to 2 minute intro
-              </p>
-              <button type="button" onClick={() => setShowVideoModal(false)}
-                className={`p-1.5 rounded-lg transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <line x1="2" y1="2" x2="14" y2="14" /><line x1="14" y1="2" x2="2" y2="14" />
-                </svg>
-              </button>
-            </div>
-            <div className="aspect-video bg-black">
-              <iframe
-                src={toEmbedUrl(creator.video_intro_url)}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full"
-                title={`Meet ${creator.businessName || creator.name}`}
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

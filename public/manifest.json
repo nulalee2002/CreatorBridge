@@ -11,22 +11,22 @@
   "categories": ["business", "productivity"],
   "icons": [
     {
-      "src": "/images/brand/creatorbridge-mark.png",
-      "sizes": "256x256",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-192.svg",
+      "src": "/icons/icon-192.svg?v=4",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.svg",
+      "src": "/icons/icon-512.svg?v=4",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any"
+    },
+    {
+      "src": "/images/brand/creatorbridge-mark.png?v=4",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
   "shortcuts": [
@@ -35,14 +35,14 @@
       "short_name": "Find",
       "description": "Browse the creator directory",
       "url": "/",
-      "icons": [{ "src": "/images/brand/creatorbridge-mark.png", "sizes": "256x256", "type": "image/png" }]
+      "icons": [{ "src": "/images/brand/creatorbridge-mark.png?v=4", "sizes": "256x256", "type": "image/png" }]
     },
     {
       "name": "Project Board",
       "short_name": "Projects",
       "description": "Post a project or find work",
       "url": "/projects",
-      "icons": [{ "src": "/images/brand/creatorbridge-mark.png", "sizes": "256x256", "type": "image/png" }]
+      "icons": [{ "src": "/images/brand/creatorbridge-mark.png?v=4", "sizes": "256x256", "type": "image/png" }]
     }
   ],
   "screenshots": [],
