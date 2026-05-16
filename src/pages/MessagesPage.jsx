@@ -12,52 +12,126 @@ import { checkMessage, logFilterEvent } from '../utils/messageFilter.js';
 import { ClientReputationBadge, loadClientReputation } from '../components/ClientReputationBadge.jsx';
 
 // ── localStorage helpers ────────────────────────────────────────
-function loadThreads(userId) {
+const LOCAL_MESSAGE_KEY = 'cm-messages';
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isUuid(value) {
+  return UUID_RE.test(String(value || ''));
+}
+
+function makeLocalMessageId() {
+  return `local-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function makeConversationId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  return `${Date.now()}-${Math.random()}`.replace('.', '-');
+}
+
+function buildThreads(messages, userId) {
+  const map = {};
+  messages.forEach(msg => {
+    if (msg.senderId !== userId && msg.recipientId !== userId) return;
+    const tid = msg.threadId || msg.remoteConversationId || [msg.senderId, msg.recipientId].sort().join('_');
+    if (!map[tid]) map[tid] = { threadId: tid, remoteConversationId: msg.remoteConversationId || null, messages: [], otherUserId: null, otherName: null, otherAvatar: null };
+    map[tid].messages.push(msg);
+    if (msg.remoteConversationId && !map[tid].remoteConversationId) map[tid].remoteConversationId = msg.remoteConversationId;
+    if (msg.senderId === userId) {
+      map[tid].otherUserId   = msg.recipientId;
+      map[tid].otherName     = msg.recipientName || 'Unknown';
+      map[tid].otherAvatar   = msg.recipientAvatar || null;
+      map[tid].otherIsCreator = msg.recipientIsCreator || false;
+    } else {
+      map[tid].otherUserId   = msg.senderId;
+      map[tid].otherName     = msg.senderName || 'Unknown';
+      map[tid].otherAvatar   = msg.senderAvatar || null;
+      map[tid].otherIsCreator = msg.senderIsCreator || false;
+    }
+  });
+  return Object.values(map).map(t => {
+    const messagesByTime = [...t.messages].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    const lastMessage = messagesByTime.at(-1);
+    return { ...t, messages: messagesByTime, lastMessage };
+  }).sort((a, b) => new Date(b.lastMessage?.createdAt || 0) - new Date(a.lastMessage?.createdAt || 0));
+}
+
+function loadLocalMessages(userId) {
   try {
-    const all = JSON.parse(localStorage.getItem('cm-messages') || '[]');
-    // Group messages by thread (threadId = sorted pair of userIds)
-    const map = {};
-    all.forEach(msg => {
-      if (msg.senderId !== userId && msg.recipientId !== userId) return;
-      const tid = msg.threadId || [msg.senderId, msg.recipientId].sort().join('_');
-      if (!map[tid]) map[tid] = { threadId: tid, messages: [], otherUserId: null, otherName: null, otherAvatar: null };
-      map[tid].messages.push(msg);
-      if (msg.senderId === userId) {
-        map[tid].otherUserId   = msg.recipientId;
-        map[tid].otherName     = msg.recipientName || 'Unknown';
-        map[tid].otherAvatar   = msg.recipientAvatar || null;
-        map[tid].otherIsCreator = msg.recipientIsCreator || false;
-      } else {
-        map[tid].otherUserId   = msg.senderId;
-        map[tid].otherName     = msg.senderName || 'Unknown';
-        map[tid].otherAvatar   = msg.senderAvatar || null;
-        map[tid].otherIsCreator = msg.senderIsCreator || false;
-      }
-    });
-    return Object.values(map).map(t => ({
-      ...t,
-      messages: t.messages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)),
-      lastMessage: t.messages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0],
-    })).sort((a, b) => new Date(b.lastMessage?.createdAt || 0) - new Date(a.lastMessage?.createdAt || 0));
+    return JSON.parse(localStorage.getItem(LOCAL_MESSAGE_KEY) || '[]')
+      .filter(msg => msg.senderId === userId || msg.recipientId === userId);
   } catch { return []; }
+}
+
+function loadThreads(userId) {
+  return buildThreads(loadLocalMessages(userId), userId);
 }
 
 function saveMessage(msg) {
   try {
-    const all = JSON.parse(localStorage.getItem('cm-messages') || '[]');
+    const all = JSON.parse(localStorage.getItem(LOCAL_MESSAGE_KEY) || '[]');
+    if (all.some(existing => existing.id === msg.id || (msg.remoteId && existing.remoteId === msg.remoteId))) return;
     all.push(msg);
-    localStorage.setItem('cm-messages', JSON.stringify(all));
+    localStorage.setItem(LOCAL_MESSAGE_KEY, JSON.stringify(all));
   } catch {}
 }
 
 function markMessagesRead(threadId, userId) {
   try {
-    const all = JSON.parse(localStorage.getItem('cm-messages') || '[]');
+    const all = JSON.parse(localStorage.getItem(LOCAL_MESSAGE_KEY) || '[]');
     const updated = all.map(m =>
-      m.threadId === threadId && m.recipientId === userId ? { ...m, read: true } : m
+      (m.threadId === threadId || m.remoteConversationId === threadId) && m.recipientId === userId ? { ...m, read: true } : m
     );
-    localStorage.setItem('cm-messages', JSON.stringify(updated));
+    localStorage.setItem(LOCAL_MESSAGE_KEY, JSON.stringify(updated));
   } catch {}
+}
+
+async function markRemoteMessagesRead(thread, userId) {
+  const conversationId = thread?.remoteConversationId || (isUuid(thread?.threadId) ? thread.threadId : null);
+  if (!conversationId || !supabaseConfigured || !supabase || !isUuid(userId)) return;
+  try {
+    const { error } = await supabase.rpc('mark_conversation_messages_read', {
+      p_conversation_id: conversationId,
+    });
+    if (error) throw error;
+  } catch (error) {
+    console.warn('CreatorBridge message read receipt update failed:', error?.message || error);
+  }
+}
+
+function mergeMessages(localMessages, remoteMessages) {
+  const map = new Map();
+  [...localMessages, ...remoteMessages].forEach(msg => {
+    const key = msg.remoteId || `${msg.senderId}-${msg.recipientId}-${msg.createdAt}-${msg.text}`;
+    const existing = map.get(key);
+    map.set(key, { ...existing, ...msg, read: !!(existing?.read || msg.read) });
+  });
+  return [...map.values()];
+}
+
+function profileName(profile, fallback = 'Unknown') {
+  return profile?.full_name || profile?.display_name || profile?.email || fallback;
+}
+
+function remoteMessageToLocal(row, currentUserId, profilesById = {}) {
+  const senderProfile = profilesById[row.sender_id];
+  const recipientProfile = profilesById[row.recipient_id];
+  const otherId = row.sender_id === currentUserId ? row.recipient_id : row.sender_id;
+  return {
+    id: `remote-${row.id}`,
+    remoteId: row.id,
+    remoteConversationId: row.conversation_id,
+    threadId: row.conversation_id,
+    senderId: row.sender_id,
+    senderName: profileName(senderProfile, row.sender_id === currentUserId ? 'Me' : 'CreatorBridge user'),
+    senderAvatar: senderProfile?.avatar_url || null,
+    recipientId: row.recipient_id,
+    recipientName: profileName(recipientProfile, row.recipient_id === currentUserId ? 'Me' : 'CreatorBridge user'),
+    recipientAvatar: recipientProfile?.avatar_url || null,
+    text: row.body,
+    read: !!row.read,
+    createdAt: row.created_at,
+    otherUserId: otherId,
+  };
 }
 
 function isApprovedCreator(creator) {
@@ -165,7 +239,7 @@ function NewConversationModal({ dark, onClose, onStart, myUser, myProfile }) {
   }
 
   function selectCreator(c) {
-    setRecipientId(c.id);
+    setRecipientId(c.user_id || c.id);
     setRecipientName(c.businessName || c.name);
     setResults([]);
     setError('');
@@ -280,19 +354,91 @@ export function MessagesPage({ dark }) {
   const myName   = authProfile?.full_name || user?.email?.split('@')[0] || 'Me';
   const myAvatar = authProfile?.avatar_url || null;
 
+  async function refreshThreads() {
+    if (!user) return [];
+
+    const localMessages = loadLocalMessages(user.id);
+    let remoteMessages = [];
+
+    if (supabaseConfigured && supabase && isUuid(user.id)) {
+      try {
+        const { data, error } = await supabase
+          .from('messages')
+          .select('id, conversation_id, sender_id, recipient_id, listing_id, body, read, created_at')
+          .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        const participantIds = [...new Set((data || []).flatMap(row => [row.sender_id, row.recipient_id]).filter(isUuid))];
+        let profilesById = {};
+        if (participantIds.length) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, full_name, role')
+            .in('id', participantIds);
+          profilesById = Object.fromEntries((profiles || []).map(profile => [profile.id, profile]));
+        }
+
+        remoteMessages = (data || []).map(row => remoteMessageToLocal(row, user.id, profilesById));
+      } catch (error) {
+        console.warn('CreatorBridge messages Supabase load failed, using local fallback:', error?.message || error);
+      }
+    }
+
+    const loaded = buildThreads(mergeMessages(localMessages, remoteMessages), user.id)
+      .map(t => ({ ...t, myId: user.id }));
+
+    setThreads(loaded);
+    setActiveThread(current => {
+      if (!current) return current;
+      return loaded.find(t => t.threadId === current.threadId || t.remoteConversationId === current.remoteConversationId) || current;
+    });
+    return loaded;
+  }
+
+  async function persistRemoteMessage(message) {
+    if (!supabaseConfigured || !supabase || !isUuid(user?.id) || !isUuid(message.recipientId)) return null;
+
+    const conversationId = message.remoteConversationId || (isUuid(message.threadId) ? message.threadId : makeConversationId());
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: conversationId,
+          sender_id: user.id,
+          recipient_id: message.recipientId,
+          body: message.text,
+          read: false,
+        })
+        .select('id, conversation_id, sender_id, recipient_id, listing_id, body, read, created_at')
+        .single();
+
+      if (error) throw error;
+      return remoteMessageToLocal(data, user.id, {
+        [user.id]: { id: user.id, full_name: myName },
+        [message.recipientId]: { id: message.recipientId, full_name: message.recipientName },
+      });
+    } catch (error) {
+      console.warn('CreatorBridge messages Supabase save failed, using local fallback:', error?.message || error);
+      return null;
+    }
+  }
+
   useEffect(() => {
     if (!user) return;
-    const loaded = loadThreads(user.id).map(t => ({ ...t, myId: user.id }));
-    setThreads(loaded);
-
-    // Check if coming from a specific creator
-    const with_ = searchParams.get('with');
-    if (with_) {
-      const existing = loaded.find(t => t.otherUserId === with_);
-      if (existing) { setActiveThread(existing); setMobileView('thread'); }
-      else { setShowNew(true); }
-    }
-  }, [user]);
+    let cancelled = false;
+    refreshThreads().then(loaded => {
+      if (cancelled) return;
+      const with_ = searchParams.get('with');
+      if (with_) {
+        const existing = loaded.find(t => t.otherUserId === with_);
+        if (existing) { setActiveThread(existing); setMobileView('thread'); }
+        else { setShowNew(true); }
+      }
+    });
+    return () => { cancelled = true; };
+  }, [user, searchParams]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -306,6 +452,7 @@ export function MessagesPage({ dark }) {
       loadClientReputation(thread.otherUserId).then(setOtherMetrics);
     }
     markMessagesRead(thread.threadId, user.id);
+    markRemoteMessagesRead(thread, user.id);
     setThreads(prev => prev.map(t =>
       t.threadId === thread.threadId
         ? { ...t, messages: t.messages.map(m => m.recipientId === user.id ? { ...m, read: true } : m) }
@@ -313,7 +460,7 @@ export function MessagesPage({ dark }) {
     ));
   }
 
-  function sendMessage() {
+  async function sendMessage() {
     const cleanText = sanitizeLongText(text, 1500);
     if (!cleanText || !activeThread) return;
 
@@ -327,8 +474,9 @@ export function MessagesPage({ dark }) {
     setFilterWarning(false);
 
     const msg = {
-      id:             Date.now().toString() + Math.random(),
+      id:             makeLocalMessageId(),
       threadId:       activeThread.threadId,
+      remoteConversationId: activeThread.remoteConversationId || (isUuid(activeThread.threadId) ? activeThread.threadId : null),
       senderId:       user.id,
       senderName:     myName,
       senderAvatar:   myAvatar,
@@ -339,8 +487,22 @@ export function MessagesPage({ dark }) {
       read:           false,
       createdAt:      new Date().toISOString(),
     };
-    saveMessage(msg);
-    const updated = { ...activeThread, messages: [...activeThread.messages, msg], lastMessage: msg };
+    const remoteMessage = await persistRemoteMessage(msg);
+    const finalMessage = remoteMessage ? {
+      ...msg,
+      ...remoteMessage,
+      recipientName: activeThread.otherName,
+      recipientAvatar: activeThread.otherAvatar,
+    } : msg;
+
+    saveMessage(finalMessage);
+    const updated = {
+      ...activeThread,
+      threadId: finalMessage.threadId,
+      remoteConversationId: finalMessage.remoteConversationId || activeThread.remoteConversationId,
+      messages: [...activeThread.messages, finalMessage],
+      lastMessage: finalMessage,
+    };
     setActiveThread(updated);
     setThreads(prev => {
       const existing = prev.find(t => t.threadId === activeThread.threadId);
@@ -351,7 +513,7 @@ export function MessagesPage({ dark }) {
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
   }
 
-  function startNewConversation({ recipientId, recipientName, text: initText }) {
+  async function startNewConversation({ recipientId, recipientName, text: initText }) {
     const cleanText = sanitizeLongText(initText, 1500);
     const cleanRecipientName = sanitizePlainText(recipientName, 80) || 'Creator';
     if (!recipientId || !cleanText) return;
@@ -364,10 +526,11 @@ export function MessagesPage({ dark }) {
     }
     setFilterWarning(false);
 
-    const threadId = [user.id, recipientId].sort().join('_');
+    const threadId = isUuid(user.id) && isUuid(recipientId) ? makeConversationId() : [user.id, recipientId].sort().join('_');
     const msg = {
-      id:            Date.now().toString() + Math.random(),
+      id:            makeLocalMessageId(),
       threadId,
+      remoteConversationId: isUuid(threadId) ? threadId : null,
       senderId:      user.id,
       senderName:    myName,
       senderAvatar:  myAvatar,
@@ -377,11 +540,20 @@ export function MessagesPage({ dark }) {
       read:          false,
       createdAt:     new Date().toISOString(),
     };
-    saveMessage(msg);
+    const remoteMessage = await persistRemoteMessage(msg);
+    const finalMessage = remoteMessage ? {
+      ...msg,
+      ...remoteMessage,
+      recipientName: cleanRecipientName,
+    } : msg;
+
+    saveMessage(finalMessage);
     const newThread = {
-      threadId, myId: user.id,
+      threadId: finalMessage.threadId,
+      remoteConversationId: finalMessage.remoteConversationId || (isUuid(threadId) ? threadId : null),
+      myId: user.id,
       otherUserId: recipientId, otherName: cleanRecipientName, otherAvatar: null,
-      messages: [msg], lastMessage: msg,
+      messages: [finalMessage], lastMessage: finalMessage,
     };
     setThreads(prev => [newThread, ...prev]);
     setActiveThread(newThread);

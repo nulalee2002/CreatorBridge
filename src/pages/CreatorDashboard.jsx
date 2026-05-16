@@ -268,10 +268,7 @@ export function CreatorDashboard({ dark }) {
     const updated = quotes.map(q => q.id === quoteId ? { ...q, read: true } : q);
     setQuotes(updated);
     if (supabaseConfigured && quoteId) {
-      const { error } = await supabase
-        .from('quote_requests')
-        .update({ read: true })
-        .eq('id', quoteId);
+      const { error } = await supabase.rpc('mark_quote_request_read', { p_quote_id: quoteId });
       if (error) {
         setQuotes(quotes);
         return;
