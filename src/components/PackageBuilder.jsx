@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Check, Package, Save } from 'lucide-react';
 import { SERVICES } from '../data/rates.js';
+import { supabase, supabaseConfigured } from '../lib/supabase.js';
 
 const PACKAGE_TEMPLATES = {
   Basic:    { color: 'text-charcoal-300', bg: 'bg-white/[0.035]',    border: 'border-white/[0.08]', label: 'Basic' },
@@ -10,11 +11,126 @@ const PACKAGE_TEMPLATES = {
 
 const TIER_NAMES = ['Basic', 'Standard', 'Premium'];
 
+function canUseSupabasePackages(creatorId) {
+  return Boolean(
+    supabaseConfigured &&
+    supabase &&
+    creatorId &&
+    !String(creatorId).startsWith('seed-')
+  );
+}
+
 function loadPackages(creatorId) {
   try { return JSON.parse(localStorage.getItem(`creator-packages-${creatorId}`) || 'null'); } catch { return null; }
 }
 function savePackages(creatorId, pkgs) {
   localStorage.setItem(`creator-packages-${creatorId}`, JSON.stringify(pkgs));
+}
+
+function toNumberOrNull(value) {
+  if (value === '' || value === null || value === undefined) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function normalizePackageRow(row) {
+  return {
+    id: row.id,
+    name: row.name || 'Package',
+    serviceId: row.service_id || 'photography',
+    price: row.price === null || row.price === undefined ? '' : String(row.price),
+    description: row.description || '',
+    turnaroundDays: row.turnaround_days || '',
+    revisions: row.revisions ?? 1,
+    deliverables: row.deliverables?.length ? row.deliverables : [''],
+  };
+}
+
+function buildDeliverables(pkg) {
+  const written = (pkg.deliverables || []).map(item => item.trim()).filter(Boolean);
+  if (written.length > 0) return written;
+
+  const generated = [];
+  if (pkg.hoursCoverage) generated.push(`${pkg.hoursCoverage} hour${Number(pkg.hoursCoverage) === 1 ? '' : 's'} of coverage`);
+  if (pkg.numVideos) generated.push(`${pkg.numVideos} video deliverable${Number(pkg.numVideos) === 1 ? '' : 's'}`);
+  if (pkg.videoLength) generated.push(`${pkg.videoLength} final runtime`);
+  if (pkg.editedImages) generated.push(`${pkg.editedImages} edited image${Number(pkg.editedImages) === 1 ? '' : 's'}`);
+  if (pkg.colorGrading) generated.push('Color grading included');
+  if (pkg.droneFootage) generated.push('Drone footage included');
+  if (pkg.rawFootage) generated.push('Raw footage included');
+  if (pkg.onlineGallery) generated.push('Online gallery included');
+  if (pkg.printRights) generated.push('Print rights included');
+  if (pkg.secondShooter) generated.push('Second shooter included');
+  if (pkg.travelIncluded) generated.push(`Travel included${pkg.travelRadius ? ` within ${pkg.travelRadius} miles` : ''}`);
+
+  return generated;
+}
+
+function packageToRow(pkg, creatorId, index) {
+  return {
+    listing_id: creatorId,
+    service_id: pkg.serviceId || 'photography',
+    name: pkg.name || `Package ${index + 1}`,
+    price: toNumberOrNull(pkg.price) || 0,
+    description: pkg.description || '',
+    deliverables: buildDeliverables(pkg),
+    turnaround_days: toNumberOrNull(pkg.turnaroundDays),
+    revisions: toNumberOrNull(pkg.revisions) ?? 1,
+    display_order: index,
+  };
+}
+
+async function fetchPackages(creatorId, primaryServiceId) {
+  const fallback = loadPackages(creatorId);
+  if (!canUseSupabasePackages(creatorId)) {
+    return fallback?.length ? fallback : TIER_NAMES.map(name => defaultPackage(name, primaryServiceId));
+  }
+
+  const { data, error } = await supabase
+    .from('packages')
+    .select('*')
+    .eq('listing_id', creatorId)
+    .order('display_order', { ascending: true });
+
+  if (error) {
+    console.warn('Package load failed, using local fallback:', error.message);
+    return fallback?.length ? fallback : TIER_NAMES.map(name => defaultPackage(name, primaryServiceId));
+  }
+
+  if (data?.length) {
+    const normalized = data.map(normalizePackageRow);
+    savePackages(creatorId, normalized);
+    return normalized;
+  }
+
+  return fallback?.length ? fallback : TIER_NAMES.map(name => defaultPackage(name, primaryServiceId));
+}
+
+async function persistPackages(creatorId, pkgs) {
+  savePackages(creatorId, pkgs);
+  if (!canUseSupabasePackages(creatorId)) return pkgs;
+
+  const rows = pkgs.map((pkg, index) => packageToRow(pkg, creatorId, index));
+  const { error: deleteError } = await supabase
+    .from('packages')
+    .delete()
+    .eq('listing_id', creatorId);
+
+  if (deleteError) throw deleteError;
+  if (rows.length === 0) return [];
+
+  const { data, error: insertError } = await supabase
+    .from('packages')
+    .insert(rows)
+    .select('*');
+
+  if (insertError) throw insertError;
+
+  const normalized = data
+    ?.sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+    .map(normalizePackageRow) || pkgs;
+  savePackages(creatorId, normalized);
+  return normalized;
 }
 
 function defaultPackage(name, serviceId) {
@@ -218,6 +334,28 @@ export function PackageBuilder({ creatorId, dark, serviceIds = [] }) {
     return TIER_NAMES.map(name => defaultPackage(name, primaryServiceId));
   });
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+
+    setLoading(true);
+    fetchPackages(creatorId, primaryServiceId)
+      .then(nextPackages => {
+        if (active) setPackages(nextPackages);
+      })
+      .catch(error => {
+        console.warn('Package load failed:', error?.message || error);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [creatorId, primaryServiceId]);
 
   const inputCls = `w-full px-3 py-2 text-xs rounded-xl border outline-none transition-all ${
     dark
@@ -232,15 +370,21 @@ export function PackageBuilder({ creatorId, dark, serviceIds = [] }) {
     setSaved(false);
   }
 
-  function handleSave() {
-    savePackages(creatorId, packages);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  async function handleSave() {
+    setSaveError('');
+    setLoading(true);
+    try {
+      const persisted = await persistPackages(creatorId, packages);
+      setPackages(persisted);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (error) {
+      console.error('Package save failed:', error);
+      setSaveError('Packages could not be saved. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   }
-
-  const serviceId = primaryServiceId;
-  const isVideo = serviceId === 'video';
-  const isPhotography = serviceId === 'photography';
 
   return (
     <div className={`rounded-2xl border p-5 shadow-[0_24px_80px_rgba(0,0,0,0.18)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`}>
@@ -250,14 +394,15 @@ export function PackageBuilder({ creatorId, dark, serviceIds = [] }) {
             <Package size={15} className="text-gold-400" /> Package Builder
           </h3>
           <p className={`text-[11px] mt-0.5 ${textSub}`}>
-            Create tiered packages clients can choose from
+            {loading ? 'Syncing package data...' : 'Create tiered packages clients can choose from'}
           </p>
+          {saveError && <p className="text-[11px] mt-1 text-red-400">{saveError}</p>}
         </div>
-        <button type="button" onClick={handleSave}
+        <button type="button" onClick={handleSave} disabled={loading}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
             saved ? 'bg-gold-500 text-charcoal-900' : 'bg-gold-500 hover:bg-gold-600 text-charcoal-900'
-          }`}>
-          {saved ? <><Check size={12} /> Saved</> : <><Save size={12} /> Save Packages</>}
+          } ${loading ? 'opacity-70 cursor-wait' : ''}`}>
+          {saved ? <><Check size={12} /> Saved</> : <><Save size={12} /> {loading ? 'Saving...' : 'Save Packages'}</>}
         </button>
       </div>
 
@@ -265,6 +410,9 @@ export function PackageBuilder({ creatorId, dark, serviceIds = [] }) {
         {packages.map((pkg) => {
           const template = PACKAGE_TEMPLATES[pkg.name] || PACKAGE_TEMPLATES.Basic;
           const onUpdate = (field, val) => updatePkg(pkg.id, field, val);
+          const packageServiceId = pkg.serviceId || primaryServiceId;
+          const isVideo = packageServiceId === 'video';
+          const isPhotography = packageServiceId === 'photography';
 
           return (
             <div key={pkg.id} className={`rounded-2xl border p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${template.border} ${template.bg}`}>

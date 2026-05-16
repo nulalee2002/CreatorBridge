@@ -635,8 +635,8 @@ export function CreatorProfilePage({ dark }) {
                             </p>
                             <p className={`text-xs mb-3
                               ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
-                              {pkg.deliveryDays && `${pkg.deliveryDays} day delivery`}
-                              {pkg.revisions && ` · ${pkg.revisions} revision${
+                              {(pkg.deliveryDays || pkg.turnaroundDays || pkg.turnaround_days) && `${pkg.deliveryDays || pkg.turnaroundDays || pkg.turnaround_days} day delivery`}
+                              {pkg.revisions && `${(pkg.deliveryDays || pkg.turnaroundDays || pkg.turnaround_days) ? ' · ' : ''}${pkg.revisions} revision${
                                 pkg.revisions !== 1 ? 's' : ''} included`}
                             </p>
                             {(pkg.features || pkg.deliverables || []).length > 0 && (
