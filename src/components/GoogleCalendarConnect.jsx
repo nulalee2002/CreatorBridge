@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Check, AlertCircle, RefreshCw, Unlink } from 'lucide-react';
-import { saveAvailability, loadAvailability } from './AvailabilityCalendar.jsx';
+import { mergeAvailability } from './AvailabilityCalendar.jsx';
 
 const CLIENT_ID      = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const SCOPES         = 'https://www.googleapis.com/auth/calendar.readonly';
@@ -71,7 +71,7 @@ export function parseGCalOAuthRedirect(creatorId) {
 
 /**
  * Fetch busy periods from Google Calendar and mark those days as 'booked'
- * in the creator's local availability calendar.
+ * in the creator's CreatorBridge availability calendar.
  */
 async function syncFromGCal(creatorId, accessToken) {
   const now      = new Date();
@@ -96,7 +96,7 @@ async function syncFromGCal(creatorId, accessToken) {
 
   const data    = await res.json();
   const busy    = data.calendars?.primary?.busy || [];
-  const avail   = loadAvailability(creatorId);
+  const updates = {};
 
   for (const period of busy) {
     const start = new Date(period.start);
@@ -106,12 +106,12 @@ async function syncFromGCal(creatorId, accessToken) {
     d.setHours(0, 0, 0, 0);
     while (d <= end) {
       const key    = d.toISOString().split('T')[0];
-      avail[key]   = 'booked';
+      updates[key] = 'booked';
       d.setDate(d.getDate() + 1);
     }
   }
 
-  saveAvailability(creatorId, avail);
+  await mergeAvailability(creatorId, updates);
   return busy.length;
 }
 
@@ -119,7 +119,7 @@ async function syncFromGCal(creatorId, accessToken) {
 /**
  * GoogleCalendarConnect
  * Shows a button to connect Google Calendar.
- * When connected, syncs busy times to the local availability calendar.
+ * When connected, syncs busy times to the CreatorBridge availability calendar.
  *
  * Props:
  *   creatorId - string
@@ -210,7 +210,7 @@ export function GoogleCalendarConnect({ creatorId, dark, onSync }) {
         <div>
           <p className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>Google Calendar</p>
           <p className={`text-xs ${textSub}`}>
-            {connected ? 'Connected - busy times are synced to your availability' : 'Auto-import your busy days from Google Calendar'}
+            {connected ? 'Connected - busy times sync to CreatorBridge availability' : 'Auto-import your busy days from Google Calendar'}
           </p>
         </div>
         {connected && <Check size={14} className="text-gold-400 ml-auto shrink-0" />}

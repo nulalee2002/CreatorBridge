@@ -174,6 +174,7 @@ export function CreatorDashboard({ dark }) {
   const [activeTab, setActiveTab]   = useState('overview');
   const [violations, setViolations] = useState([]);
   const [tierUpBanner, setTierUpBanner] = useState(null);
+  const [availabilityRefreshKey, setAvailabilityRefreshKey] = useState(0);
 
   const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
   const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`;
@@ -625,9 +626,9 @@ export function CreatorDashboard({ dark }) {
             <GoogleCalendarConnect
               creatorId={creator.id}
               dark={dark}
-              onSync={() => { /* AvailabilityEditor reads localStorage directly on render */ }}
+              onSync={() => setAvailabilityRefreshKey(key => key + 1)}
             />
-            <AvailabilityEditor creatorId={creator.id} dark={dark} />
+            <AvailabilityEditor key={`${creator.id}-${availabilityRefreshKey}`} creatorId={creator.id} dark={dark} />
           </div>
         )}
 

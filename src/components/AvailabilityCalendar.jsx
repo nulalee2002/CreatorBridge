@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, CalendarDays, Check } from 'lucide-react';
+import { supabase, supabaseConfigured } from '../lib/supabase.js';
 
 // ── localStorage helpers ──────────────────────────────────────
 export function availabilityKey(creatorId) {
@@ -16,6 +17,77 @@ export function loadAvailability(creatorId) {
 
 export function saveAvailability(creatorId, data) {
   localStorage.setItem(availabilityKey(creatorId), JSON.stringify(data));
+}
+
+function canUseSupabaseAvailability(creatorId) {
+  return Boolean(
+    supabaseConfigured &&
+    supabase &&
+    creatorId &&
+    !String(creatorId).startsWith('seed-')
+  );
+}
+
+function rowsToAvailability(rows = []) {
+  return rows.reduce((acc, row) => {
+    if (row.date && row.status) acc[row.date] = row.status;
+    return acc;
+  }, {});
+}
+
+export async function fetchAvailability(creatorId) {
+  if (!canUseSupabaseAvailability(creatorId)) return loadAvailability(creatorId);
+
+  const { data, error } = await supabase
+    .from('availability')
+    .select('date,status')
+    .eq('listing_id', creatorId);
+
+  if (error) {
+    console.warn('CreatorBridge availability fetch failed, using local fallback:', error.message);
+    return loadAvailability(creatorId);
+  }
+
+  const availability = rowsToAvailability(data || []);
+  saveAvailability(creatorId, availability);
+  return availability;
+}
+
+export async function persistAvailability(creatorId, data) {
+  if (!canUseSupabaseAvailability(creatorId)) {
+    saveAvailability(creatorId, data);
+    return data;
+  }
+
+  const rows = Object.entries(data || {}).map(([date, status]) => ({
+    listing_id: creatorId,
+    date,
+    status,
+  }));
+
+  const { error: deleteError } = await supabase
+    .from('availability')
+    .delete()
+    .eq('listing_id', creatorId);
+
+  if (deleteError) throw deleteError;
+
+  if (rows.length > 0) {
+    const { error: insertError } = await supabase
+      .from('availability')
+      .insert(rows);
+
+    if (insertError) throw insertError;
+  }
+
+  saveAvailability(creatorId, data);
+  return data;
+}
+
+export async function mergeAvailability(creatorId, updates) {
+  const current = await fetchAvailability(creatorId);
+  const merged = { ...current, ...updates };
+  return persistAvailability(creatorId, merged);
 }
 
 // ── Date helpers ──────────────────────────────────────────────
@@ -45,8 +117,15 @@ export function AvailabilityMini({ creatorId, dark, onSelectDate, selectedDate }
   const today = new Date();
   const [viewYear,  setViewYear]  = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
+  const [availability, setAvailability] = useState(() => loadAvailability(creatorId));
 
-  const availability = useMemo(() => loadAvailability(creatorId), [creatorId]);
+  useEffect(() => {
+    let mounted = true;
+    fetchAvailability(creatorId).then(data => {
+      if (mounted) setAvailability(data);
+    });
+    return () => { mounted = false; };
+  }, [creatorId]);
 
   const numDays  = daysInMonth(viewYear, viewMonth);
   const startDay = firstDayOfMonth(viewYear, viewMonth);
@@ -165,6 +244,24 @@ export function AvailabilityEditor({ creatorId, dark }) {
   const [availability, setAvailability] = useState(() => loadAvailability(creatorId));
   const [paintStatus, setPaintStatus] = useState('available');
   const [saved, setSaved]             = useState(false);
+  const [loading, setLoading]         = useState(false);
+  const [saveError, setSaveError]     = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetchAvailability(creatorId)
+      .then(data => {
+        if (mounted) setAvailability(data);
+      })
+      .catch(() => {
+        if (mounted) setSaveError('Could not load saved availability. Local fallback is shown.');
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => { mounted = false; };
+  }, [creatorId]);
 
   const numDays  = daysInMonth(viewYear, viewMonth);
   const startDay = firstDayOfMonth(viewYear, viewMonth);
@@ -193,10 +290,16 @@ export function AvailabilityEditor({ creatorId, dark }) {
     setSaved(false);
   }
 
-  function handleSave() {
-    saveAvailability(creatorId, availability);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  async function handleSave() {
+    setSaveError('');
+    try {
+      await persistAvailability(creatorId, availability);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (error) {
+      setSaveError('Availability did not save. Please try again.');
+      console.warn('CreatorBridge availability save failed:', error.message);
+    }
   }
 
   function clearMonth() {
@@ -224,7 +327,7 @@ export function AvailabilityEditor({ creatorId, dark }) {
             <CalendarDays size={15} className="text-gold-400" /> Availability
           </h3>
           <p className={`text-[10px] mt-0.5 ${textSub}`}>
-            {openDaysThisMonth} open day{openDaysThisMonth !== 1 ? 's' : ''} this month
+            {loading ? 'Loading saved availability...' : `${openDaysThisMonth} open day${openDaysThisMonth !== 1 ? 's' : ''} this month`}
           </p>
         </div>
         <div className="flex gap-2">
@@ -232,7 +335,7 @@ export function AvailabilityEditor({ creatorId, dark }) {
             className={`text-[10px] px-2 py-1 rounded-lg border transition-all ${dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/35 hover:text-white' : 'border-gray-200 text-gray-500 hover:text-gray-900'}`}>
             Clear month
           </button>
-          <button type="button" onClick={handleSave}
+          <button type="button" onClick={handleSave} disabled={loading}
             className={`text-[10px] px-3 py-1 rounded-lg font-bold transition-all flex items-center gap-1 ${
               saved ? 'bg-gold-500 text-charcoal-900' : 'bg-gold-500 hover:bg-gold-600 text-charcoal-900'
             }`}>
@@ -315,24 +418,7 @@ export function AvailabilityEditor({ creatorId, dark }) {
       <p className={`text-[10px] mt-3 ${textSub}`}>
         Click a day to mark it. Click again to clear.
       </p>
-
-      {/* Google Calendar connect */}
-      <div className={`mt-4 pt-4 border-t ${dark ? 'border-white/[0.07]' : 'border-gray-200'}`}>
-        <button type="button"
-          onClick={() => alert('Google Calendar sync will be available once your account is connected to Supabase. This will automatically sync your booked dates.')}
-          className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-semibold transition-all ${
-            dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/50 hover:text-gold-400' : 'border-gray-200 text-gray-600 hover:border-gold-500/50 hover:text-gold-500'
-          }`}>
-          <CalendarDays size={14} className="text-gold-400" />
-          Sync with Google Calendar
-          <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${dark ? 'bg-white/[0.08] text-charcoal-300' : 'bg-gray-100 text-gray-400'}`}>
-            Coming soon
-          </span>
-        </button>
-        <p className={`text-[10px] text-center mt-1.5 ${textSub}`}>
-          Automatically block booked dates from your Google Calendar
-        </p>
-      </div>
+      {saveError && <p className="text-[10px] mt-2 text-red-400">{saveError}</p>}
     </div>
   );
 }
