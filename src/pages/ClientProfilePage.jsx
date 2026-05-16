@@ -10,6 +10,7 @@ import { ClientVerification } from '../components/ClientVerification.jsx';
 import { ClientReputationBadge, loadClientReputation } from '../components/ClientReputationBadge.jsx';
 import { SERVICES, normalizeServiceId } from '../data/rates.js';
 import { fromSupabaseProject, mergeProjects } from '../utils/projectStorage.js';
+import { getStorageDisplayUrl, isStorageReference, normalizeExternalUrl, uploadUserAsset } from '../utils/storage.js';
 
 function loadLocalClientProfile(userId) {
   try {
@@ -96,12 +97,6 @@ function serviceName(project) {
   return SERVICES[id]?.name || project.serviceType || 'Production';
 }
 
-function normalizeUrl(url = '') {
-  const trimmed = url.trim();
-  if (!trimmed) return '';
-  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-}
-
 function clientInitials(name = '') {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   const first = parts[0]?.[0] || 'C';
@@ -118,6 +113,9 @@ export function ClientProfilePage({ dark }) {
   const [reputation, setReputation] = useState(null);
   const [savedCreatorCount, setSavedCreatorCount] = useState(0);
   const [form, setForm] = useState({ displayName: '', companyName: '', phone: '', avatarUrl: '', website: '', bio: '' });
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState('');
+  const [assetUploading, setAssetUploading] = useState(false);
+  const [assetError, setAssetError] = useState('');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -134,6 +132,14 @@ export function ClientProfilePage({ dark }) {
     }
     loadClientData();
   }, [user]);
+
+  useEffect(() => {
+    let active = true;
+    getStorageDisplayUrl(form.avatarUrl).then(url => {
+      if (active) setAvatarPreviewUrl(url || '');
+    });
+    return () => { active = false; };
+  }, [form.avatarUrl]);
 
   async function loadClientData() {
     setLoading(true);
@@ -252,6 +258,27 @@ export function ClientProfilePage({ dark }) {
     setSaving(false);
   }
 
+  async function uploadClientAsset(file) {
+    if (!file || !user) return;
+    setAssetError('');
+    setAssetUploading(true);
+    try {
+      const reference = await uploadUserAsset({
+        bucket: 'client-assets',
+        userId: user.id,
+        folder: 'profile',
+        file,
+      });
+      setForm(f => ({ ...f, avatarUrl: reference }));
+      const signedUrl = await getStorageDisplayUrl(reference);
+      setAvatarPreviewUrl(signedUrl || '');
+    } catch (error) {
+      setAssetError(error?.message || 'Could not upload that file.');
+    } finally {
+      setAssetUploading(false);
+    }
+  }
+
   const stats = useMemo(() => {
     const completedStatuses = ['completed', 'final_paid'];
     const inactiveStatuses = ['cancelled', ...completedStatuses];
@@ -266,8 +293,8 @@ export function ClientProfilePage({ dark }) {
     .sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0))
     .slice(0, 4);
   const clientName = form.companyName || form.displayName || 'Client Account';
-  const clientAvatar = normalizeUrl(form.avatarUrl);
-  const clientWebsite = normalizeUrl(form.website);
+  const clientAvatar = avatarPreviewUrl || normalizeExternalUrl(form.avatarUrl);
+  const clientWebsite = normalizeExternalUrl(form.website);
   const clientHeroImage = '/images/creatorbridge/client-command-center.jpg';
   const clientSupportImage = '/images/creatorbridge/project-board-planning-alt.jpg';
 
@@ -486,11 +513,37 @@ export function ClientProfilePage({ dark }) {
                 </div>
               </label>
               <label className="block">
-                <span className={`mb-1.5 block text-xs font-medium ${textSub}`}>Logo or headshot URL</span>
+                <span className={`mb-1.5 block text-xs font-medium ${textSub}`}>Logo or headshot</span>
+                <div className={`mb-2 flex items-center gap-3 rounded-2xl border p-3 ${dark ? 'border-white/[0.07] bg-charcoal-950/45' : 'border-gray-200 bg-gray-50'}`}>
+                  <div className={`flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border text-xs font-black ${dark ? 'border-gold-500/25 bg-charcoal-950/70 text-gold-300' : 'border-gold-200 bg-white text-gold-700'}`}>
+                    {clientAvatar ? (
+                      <img src={clientAvatar} alt="" className="h-full w-full object-cover" />
+                    ) : clientInitials(clientName)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      disabled={assetUploading || !supabaseConfigured}
+                      onChange={e => uploadClientAsset(e.target.files?.[0])}
+                      className={`block w-full text-xs ${textSub} file:mr-3 file:rounded-lg file:border-0 file:bg-gold-500 file:px-3 file:py-2 file:text-xs file:font-bold file:text-charcoal-900 disabled:opacity-50`}
+                    />
+                    <p className={`mt-1 text-[11px] ${textSub}`}>
+                      {supabaseConfigured ? 'Upload a company logo or booking contact headshot.' : 'Uploads need Supabase. Paste a URL below for local testing.'}
+                    </p>
+                  </div>
+                </div>
                 <div className="relative">
                   <Image size={14} className={`pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 ${textSub}`} />
-                  <input className={`${inputCls} pl-9`} value={form.avatarUrl} onChange={e => setForm(f => ({ ...f, avatarUrl: e.target.value }))} placeholder="https://..." />
+                  <input
+                    className={`${inputCls} pl-9`}
+                    value={isStorageReference(form.avatarUrl) ? '' : form.avatarUrl}
+                    onChange={e => setForm(f => ({ ...f, avatarUrl: e.target.value }))}
+                    placeholder="Or paste an image URL"
+                  />
                 </div>
+                {assetUploading && <p className="mt-1 text-[11px] text-gold-400">Uploading...</p>}
+                {assetError && <p className="mt-1 text-[11px] text-red-300">{assetError}</p>}
               </label>
               <label className="block">
                 <span className={`mb-1.5 block text-xs font-medium ${textSub}`}>Website or brand link</span>
