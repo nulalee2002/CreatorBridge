@@ -605,19 +605,18 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
 
     if (supabaseConfigured && creatorListing?.id && isUuid(project.id) && isUuid(creatorListing.id)) {
       try {
-        const { data } = await supabase
-          .from('project_applications')
-          .insert({
-            project_id: project.id,
-            listing_id: creatorListing.id,
-            message: cleanProposal,
-            proposed_rate: cleanRate,
-            status: 'pending',
-          })
-          .select()
-          .single();
+        const { data, error: applyError } = await supabase.rpc('apply_to_project', {
+          p_project_id: project.id,
+          p_listing_id: creatorListing.id,
+          p_message: cleanProposal,
+          p_proposed_rate: cleanRate,
+        });
+        if (applyError) throw applyError;
         if (data?.id) app.id = data.id;
-      } catch {}
+      } catch (err) {
+        setError(err?.message || 'Unable to submit this proposal right now. Please try again.');
+        return;
+      }
     }
 
     const all = loadApplications();
@@ -626,14 +625,6 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
     const projs = loadProjects();
     const nextProjects = projs.map(p => p.id === project.id ? { ...p, applications: (p.applications || 0) + 1 } : p);
     saveProjects(nextProjects);
-    if (supabaseConfigured && isUuid(project.id)) {
-      try {
-        await supabase
-          .from('projects')
-          .update({ applications: (project.applications || 0) + 1 })
-          .eq('id', project.id);
-      } catch {}
-    }
     setSubmitted(true);
     setTimeout(() => { onApply(app); }, 1500);
   }
@@ -946,27 +937,25 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
       acceptedApplicationId: app.id,
       acceptedAt: now,
     };
+
+    if (supabaseConfigured && isUuid(localProject.id) && isUuid(app.id)) {
+      try {
+        const { error: acceptError } = await supabase.rpc('accept_project_application', {
+          p_project_id: localProject.id,
+          p_application_id: app.id,
+        });
+        if (acceptError) throw acceptError;
+      } catch (err) {
+        console.error('Unable to accept application:', err);
+        return;
+      }
+    }
+
     updateApplicationStatus(app.id, 'accepted');
     const updatedProjects = updateProject(localProject.id, { status: 'accepted', ...patch });
     const updatedProject = updatedProjects.find(p => p.id === localProject.id);
     setLocalProject(updatedProject || { ...localProject, status: 'accepted', ...patch });
     onStatusChange?.(localProject.id, 'accepted', patch);
-
-    if (supabaseConfigured && isUuid(localProject.id)) {
-      try {
-        await supabase
-          .from('projects')
-          .update({
-            status: 'accepted',
-            accepted_creator_id: app.creatorId,
-            accepted_application_id: app.id,
-          })
-          .eq('id', localProject.id);
-        if (isUuid(app.id)) {
-          await supabase.from('project_applications').update({ status: 'accepted' }).eq('id', app.id);
-        }
-      } catch {}
-    }
   }
 
   return (

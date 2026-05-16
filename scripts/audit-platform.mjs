@@ -89,6 +89,8 @@ check('Project board input hardening', 'src/pages/ProjectBoard.jsx', [
   { label: 'sanitizes posted project title', test: includes('sanitizePlainText(form.title, 120)') },
   { label: 'sanitizes posted project description', test: includes('sanitizeLongText(form.description, 4000)') },
   { label: 'blocks contact info in creator proposals', test: includes('checkMessage(cleanProposal)') },
+  { label: 'submits creator applications through Supabase RPC', test: includes("supabase.rpc('apply_to_project'") },
+  { label: 'accepts project applications through Supabase RPC', test: includes("supabase.rpc('accept_project_application'") },
 ]);
 
 check('Network input hardening', 'src/pages/NetworkingPage.jsx', [
@@ -160,6 +162,17 @@ check('Marketplace RLS tightening', 'supabase/migrations/20260514094138_tighten_
   { label: 'drops direct client transaction insert policy', test: includes('drop policy if exists "Users can insert transactions"') },
 ]);
 
+check('Project application flow hardening', 'supabase/migrations/20260516113000_secure_project_application_flow.sql', [
+  { label: 'creates guarded project application RPC', test: includes('create or replace function public.apply_to_project') },
+  { label: 'requires authenticated creator before applying', test: includes('v_user_id uuid := auth.uid()') },
+  { label: 'verifies project is open before accepting applications', test: includes("This project is no longer accepting applications") },
+  { label: 'verifies listing belongs to the active user', test: includes('and user_id = v_user_id') },
+  { label: 'creates guarded application acceptance RPC', test: includes('create or replace function public.accept_project_application') },
+  { label: 'verifies project owner before accepting application', test: includes('Only the project owner can accept an application') },
+  { label: 'declines sibling pending applications after acceptance', test: includes("when status = 'pending' then 'declined'") },
+  { label: 'grants project application RPC only to authenticated users', test: includes('grant execute on function public.apply_to_project') },
+]);
+
 check('Supabase storage hardening', 'supabase/migrations/20260514115348_secure_storage_foundation.sql', [
   { label: 'keeps creator portfolio uploads private', test: matches(/'creator-portfolio'[\s\S]*false/) },
   { label: 'keeps project delivery uploads private', test: matches(/'project-deliveries'[\s\S]*false/) },
@@ -203,20 +216,21 @@ check('Deployment cache safety', 'vercel.json', [
 ]);
 
 check('Service worker update safety', 'public/sw.js', [
-  { label: 'uses a date-versioned cache name', test: includes('creatorbridge-v2026-05-08') },
+  { label: 'uses a date-versioned cache name', test: matches(/creatorbridge-v\d{4}-\d{2}-\d{2}/) },
   { label: 'supports immediate activation message', test: includes('SKIP_WAITING') },
   { label: 'refreshes navigations from network first', test: includes("fetch(request, { cache: 'reload' })") },
 ]);
 
 check('PWA manifest integrity', 'public/manifest.json', [
-  { label: 'does not reference missing PNG icons', test: notIncludes('.png') },
-  { label: 'references existing 192 SVG icon', test: includes('/icons/icon-192.svg') },
-  { label: 'references existing 512 SVG icon', test: includes('/icons/icon-512.svg') },
+  { label: 'references existing 192 PNG app icon', test: includes('/icons/icon-192.png') },
+  { label: 'references existing 512 PNG app icon', test: includes('/icons/icon-512.png') },
+  { label: 'keeps maskable icon for saved website installs', test: includes('"purpose": "maskable"') },
 ]);
 
 checks.push(
-  { name: 'PWA icon file exists: 192 SVG', pass: fileExists('public/icons/icon-192.svg')(), path: 'public/icons/icon-192.svg' },
-  { name: 'PWA icon file exists: 512 SVG', pass: fileExists('public/icons/icon-512.svg')(), path: 'public/icons/icon-512.svg' },
+  { name: 'PWA icon file exists: 192 PNG', pass: fileExists('public/icons/icon-192.png')(), path: 'public/icons/icon-192.png' },
+  { name: 'PWA icon file exists: 512 PNG', pass: fileExists('public/icons/icon-512.png')(), path: 'public/icons/icon-512.png' },
+  { name: 'PWA icon file exists: Apple touch PNG', pass: fileExists('public/icons/apple-touch-icon.png')(), path: 'public/icons/apple-touch-icon.png' },
 );
 
 const failed = checks.filter(check => !check.pass);
