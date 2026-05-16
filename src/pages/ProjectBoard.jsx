@@ -41,6 +41,36 @@ function saveApplications(apps) {
   localStorage.setItem('cm-applications', JSON.stringify(apps));
 }
 
+function fromSupabaseApplication(row, listing = null) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    creatorId: row.listing_id,
+    creatorName: listing?.business_name || listing?.name || 'Creator',
+    creatorAvatar: listing?.avatar || '🎬',
+    proposal: row.message || '',
+    rate: row.proposed_rate,
+    status: row.status || 'pending',
+    createdAt: row.created_at,
+    source: 'supabase',
+  };
+}
+
+function mergeApplications(...lists) {
+  const byId = new Map();
+  lists.flat().filter(Boolean).forEach(app => {
+    if (!app?.id) return;
+    const current = byId.get(app.id) || {};
+    byId.set(app.id, { ...app, ...current });
+  });
+  return Array.from(byId.values()).sort((a, b) => {
+    const aTime = new Date(a.createdAt || a.created_at || 0).getTime();
+    const bTime = new Date(b.createdAt || b.created_at || 0).getTime();
+    return bTime - aTime;
+  });
+}
+
 function loadMyListing(userId) {
   try {
     const all = JSON.parse(localStorage.getItem('creator-directory') || '[]');
@@ -1211,7 +1241,34 @@ export function ProjectBoard({ dark }) {
       if (cancelled || !data) return;
       setProjects(current => mergeProjects(current, data.map(fromSupabaseProject)));
     }
+
+    async function loadRemoteApplications() {
+      if (!supabaseConfigured || !user) return;
+      const { data } = await supabase
+        .from('project_applications')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (cancelled || !data) return;
+
+      const listingIds = [...new Set(data.map(app => app.listing_id).filter(Boolean))];
+      let listingsById = {};
+      if (listingIds.length) {
+        const { data: listingRows } = await supabase
+          .from('creator_listings')
+          .select('id,business_name,name,avatar')
+          .in('id', listingIds);
+        listingsById = (listingRows || []).reduce((map, listing) => {
+          map[listing.id] = listing;
+          return map;
+        }, {});
+      }
+
+      const remoteApps = data.map(row => fromSupabaseApplication(row, listingsById[row.listing_id]));
+      setApplications(current => mergeApplications(current, remoteApps));
+    }
+
     loadRemoteProjects();
+    loadRemoteApplications();
     return () => { cancelled = true; };
   }, [user]);
 

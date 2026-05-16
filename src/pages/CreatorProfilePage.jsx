@@ -12,6 +12,7 @@ import { RequestQuoteModal } from '../components/RequestQuoteModal.jsx';
 import { ReviewsSection } from '../components/ReviewsSection.jsx';
 import { AvailabilityMini, AvailabilityEditor } from '../components/AvailabilityCalendar.jsx';
 import { SimilarCreators } from '../components/SimilarCreators.jsx';
+import { getStorageDisplayUrl, normalizeExternalUrl } from '../utils/storage.js';
 
 function loadAllListings() {
   try { return JSON.parse(localStorage.getItem('creator-directory') || '[]'); } catch { return []; }
@@ -83,10 +84,7 @@ function toEmbedUrl(url) {
 }
 
 function normalizeMediaUrl(url = '') {
-  const trimmed = String(url || '').trim();
-  if (!trimmed) return '';
-  if (/^https?:\/\//i.test(trimmed) || trimmed.startsWith('/')) return trimmed;
-  return `https://${trimmed}`;
+  return normalizeExternalUrl(url);
 }
 
 export function CreatorProfilePage({ dark }) {
@@ -104,6 +102,8 @@ export function CreatorProfilePage({ dark }) {
   const [contactUnlocked, setContactUnlocked] = useState(false);
   const [showContactGate, setShowContactGate] = useState(false);
   const [guestLimitReached, setGuestLimitReached] = useState(false);
+  const [resolvedCoverImage, setResolvedCoverImage] = useState('');
+  const [resolvedPortfolio, setResolvedPortfolio] = useState([]);
 
   const isOwnProfile = user && creator && creator.user_id === user.id;
 
@@ -111,6 +111,42 @@ export function CreatorProfilePage({ dark }) {
     loadCreator();
     checkFavorite();
   }, [id]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function resolveProfileMedia() {
+      if (!creator) {
+        setResolvedCoverImage('');
+        setResolvedPortfolio([]);
+        return;
+      }
+
+      const coverSource = creator.cover_image_url || creator.coverImageUrl || creator.banner_url || creator.bannerUrl || '';
+      const nextCover = await getStorageDisplayUrl(coverSource);
+      const nextPortfolio = await Promise.all((creator.portfolio || []).map(async (item) => {
+        const rawImage = item.image_url || item.imageUrl || '';
+        const rawLink = item.link || item.url || '';
+        const [displayImageUrl, displayLink] = await Promise.all([
+          getStorageDisplayUrl(rawImage),
+          getStorageDisplayUrl(rawLink),
+        ]);
+
+        return {
+          ...item,
+          displayImageUrl,
+          displayLink: displayLink || normalizeExternalUrl(rawLink),
+        };
+      }));
+
+      if (!active) return;
+      setResolvedCoverImage(nextCover || normalizeExternalUrl(coverSource));
+      setResolvedPortfolio(nextPortfolio);
+    }
+
+    resolveProfileMedia();
+    return () => { active = false; };
+  }, [creator]);
 
   async function loadCreator() {
     setLoading(true);
@@ -352,7 +388,7 @@ export function CreatorProfilePage({ dark }) {
   const customCoverImage = normalizeMediaUrl(
     creator.cover_image_url || creator.coverImageUrl || creator.banner_url || creator.bannerUrl
   );
-  const profileVisual = customCoverImage || creatorVisuals[primaryServiceId] || '/images/creatorbridge/creator-profile-cover-studio.jpg';
+  const profileVisual = resolvedCoverImage || customCoverImage || creatorVisuals[primaryServiceId] || '/images/creatorbridge/creator-profile-cover-studio.jpg';
   const introEmbedUrl = toEmbedUrl(creator.video_intro_url);
 
   const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
@@ -802,12 +838,14 @@ export function CreatorProfilePage({ dark }) {
               <h2 className={`font-display font-bold text-xl mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>Proof of Work</h2>
               <p className={`text-sm mb-5 ${textSub}`}>Selected samples clients can review before opening a project.</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {portfolio.map((item, i) => {
+                {(resolvedPortfolio.length ? resolvedPortfolio : portfolio).map((item, i) => {
                   const def = SERVICES[item.serviceId || item.service_id];
+                  const previewImage = item.displayImageUrl || normalizeExternalUrl(item.image_url || item.imageUrl || '');
+                  const projectLink = item.displayLink || normalizeExternalUrl(item.link || item.url || '');
                   return (
                     <div key={i} className={`rounded-2xl border p-4 ${dark ? 'border-white/[0.07] bg-charcoal-950/42' : 'border-gray-200 bg-gray-50'}`}>
-                      {item.image_url && (
-                        <img src={item.image_url} alt={item.title}
+                      {previewImage && (
+                        <img src={previewImage} alt={item.title}
                           className="mb-3 aspect-video w-full rounded-2xl bg-charcoal-950/70 object-contain" />
                       )}
                       <div className="flex items-center gap-2 mb-1">
@@ -818,8 +856,8 @@ export function CreatorProfilePage({ dark }) {
                         <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-gold-400">{def.name}</p>
                       )}
                       <p className={`text-xs ${textSub}`}>{item.description}</p>
-                      {item.link && (
-                        <a href={item.link} target="_blank" rel="noreferrer"
+                      {projectLink && (
+                        <a href={projectLink} target="_blank" rel="noreferrer"
                           className={`mt-3 inline-flex items-center gap-1 text-xs font-semibold text-gold-400 hover:text-gold-300 transition-colors`}>
                           <ExternalLink size={10} /> View project
                         </a>

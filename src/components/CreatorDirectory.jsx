@@ -12,6 +12,7 @@ import { TierBadge } from './TierBadge.jsx';
 import { FastMatch } from './FastMatch.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
+import { uploadUserAsset } from '../utils/storage.js';
 
 // Initialize seed data (version-gated — replaces stale seeds automatically)
 initSeedData();
@@ -242,6 +243,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
     aiToolsDisclosure: [],
   });
   const [step, setStep] = useState(1);
+  const [portfolioUploadState, setPortfolioUploadState] = useState({});
 
   const TOTAL_STEPS = 5;
   const BLOCKED_EXPERIENCE = ['Less than 1 year', '1 year'];
@@ -298,6 +300,30 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
   };
   const removePortfolio = (idx) => {
     setForm(f => ({ ...f, portfolio: f.portfolio.filter((_, i) => i !== idx) }));
+  };
+  const uploadPortfolioPreview = async (idx, file) => {
+    if (!file) return;
+    if (!supabaseConfigured || !user?.id) {
+      setPortfolioUploadState(s => ({ ...s, [idx]: 'Sign in before uploading portfolio images.' }));
+      return;
+    }
+
+    setPortfolioUploadState(s => ({ ...s, [idx]: 'Uploading preview image...' }));
+    try {
+      const imageRef = await uploadUserAsset({
+        bucket: 'creator-portfolio',
+        userId: user.id,
+        folder: 'portfolio',
+        file,
+      });
+      updatePortfolio(idx, 'imageUrl', imageRef);
+      setPortfolioUploadState(s => ({ ...s, [idx]: 'Preview image uploaded.' }));
+    } catch (error) {
+      setPortfolioUploadState(s => ({
+        ...s,
+        [idx]: error?.message || 'Portfolio image could not be uploaded.',
+      }));
+    }
   };
 
   const inputCls = dark
@@ -811,6 +837,28 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	              <input type="url" value={item.link || ''} onChange={e => updatePortfolio(i, 'link', e.target.value)}
 	                placeholder="Portfolio link, e.g. YouTube, Vimeo, website, Drive, or published project URL"
 	                className={`mt-3 w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
+	              <input type="url" value={item.imageUrl || ''} onChange={e => updatePortfolio(i, 'imageUrl', e.target.value)}
+	                placeholder="Optional preview image URL, e.g. approved project still, thumbnail, or portfolio image"
+	                className={`mt-3 w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
+	              <div className={`mt-3 rounded-xl border border-dashed p-3 ${dark ? 'border-white/[0.08] bg-charcoal-950/35' : 'border-gray-300 bg-gray-50'}`}>
+	                <label className={`block text-[10px] font-bold uppercase tracking-[0.16em] ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
+	                  Upload preview image
+	                </label>
+	                <p className={`mt-1 text-xs ${dark ? 'text-charcoal-500' : 'text-gray-500'}`}>
+	                  Optional. Use a real project still or approved client-safe thumbnail. JPG, PNG, or WEBP under 8 MB.
+	                </p>
+	                <input
+	                  type="file"
+	                  accept="image/png,image/jpeg,image/webp"
+	                  onChange={e => uploadPortfolioPreview(i, e.target.files?.[0])}
+	                  className={`mt-3 block w-full text-xs file:mr-3 file:rounded-lg file:border-0 file:px-3 file:py-2 file:text-xs file:font-bold file:bg-gold-500 file:text-charcoal-900 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}
+	                />
+	                {portfolioUploadState[i] && (
+	                  <p className={`mt-2 text-xs ${portfolioUploadState[i].includes('uploaded') ? 'text-gold-400' : 'text-red-400'}`}>
+	                    {portfolioUploadState[i]}
+	                  </p>
+	                )}
+	              </div>
 	            </div>
 	          ))}
           <button type="button" onClick={addPortfolio}
@@ -1230,6 +1278,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
           title: item.title,
           description: item.description,
           link: item.link,
+          image_url: item.imageUrl || item.image_url || null,
           display_order: index,
         }));
         if (portfolioRows.length) await supabase.from('portfolio_items').insert(portfolioRows);

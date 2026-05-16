@@ -38,6 +38,14 @@ export async function getStorageDisplayUrl(value = '', expiresIn = 3600) {
   const parsed = parseStorageReference(normalized);
   if (!parsed) return '';
 
+  if (parsed.bucket === 'creator-portfolio') {
+    const { data, error } = await supabase.functions.invoke('create-storage-signed-url', {
+      body: { ref: normalized, expiresIn },
+    });
+
+    if (!error && data?.signedUrl) return data.signedUrl;
+  }
+
   const { data, error } = await supabase
     .storage
     .from(parsed.bucket)
