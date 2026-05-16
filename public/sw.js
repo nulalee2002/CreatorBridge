@@ -1,4 +1,4 @@
-const CACHE_NAME = 'creatorbridge-v2026-05-15-assets';
+const CACHE_NAME = 'creatorbridge-v2026-05-16-chatbot-icons';
 
 const APP_SHELL = [
   '/',

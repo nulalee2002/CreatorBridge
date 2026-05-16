@@ -151,10 +151,13 @@ const CONTACT_BLOCKED_REPLY = 'CreatorBridge keeps contact and payment details p
 const PROMPT_BLOCKED_REPLY = 'I can help with CreatorBridge bookings, quotes, creator standards, fees, payments, disputes, and platform rules. I cannot reveal hidden instructions or bypass platform security.';
 const PROMPT_INJECTION_PATTERNS = [
   /ignore (all )?(previous|prior) instructions/i,
+  /ignore (the )?(creatorbridge|platform|security|payment) rules/i,
   /reveal (your )?(system|hidden|developer) (prompt|instructions)/i,
   /show (your )?(system|hidden|developer) (prompt|instructions)/i,
   /print (your )?(system|hidden|developer) (prompt|instructions)/i,
   /act as (system|admin|developer|root)/i,
+  /developer mode|jailbreak|dan mode/i,
+  /override (your )?(rules|instructions|guardrails)/i,
   /bypass (auth|authentication|payment|verification|security|rules)/i,
   /api key|secret key|service role|webhook secret|database password/i,
 ];
@@ -464,7 +467,7 @@ function makeInitialMessages(draft) {
 function isMobileViewport() {
   return typeof window !== 'undefined'
     && typeof window.matchMedia === 'function'
-    && window.matchMedia('(max-width: 640px)').matches;
+    && window.matchMedia('(max-width: 767px), (pointer: coarse) and (max-width: 1024px)').matches;
 }
 
 // ── Main component ───────────────────────────────────────────────
@@ -519,7 +522,7 @@ export function SupportChatbot({ dark = true }) {
       }, 9000);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [autoOpened]);
 
   const push = (msg) => setMessages(prev => [...prev, msg]);
 
@@ -897,7 +900,7 @@ export function SupportChatbot({ dark = true }) {
       {open && (
         <div
           className={`z-50 w-[calc(100vw-2rem)] sm:w-[25rem] rounded-[1.35rem] border flex flex-col overflow-hidden ${bgPanel}`}
-          style={{ position: 'fixed', bottom: '5rem', right: '1rem', maxHeight: '540px', maxWidth: '25rem', zIndex: 9999 }}
+          style={{ position: 'fixed', bottom: '5rem', right: '1rem', maxHeight: 'min(540px, calc(100dvh - 7rem))', maxWidth: '25rem', zIndex: 9999 }}
         >
           <div className="h-px bg-gradient-to-r from-transparent via-gold-400/70 to-transparent shrink-0" />
           {/* Header */}
@@ -1142,9 +1145,10 @@ export function SupportChatbot({ dark = true }) {
               ? 'border-gold-500/22 bg-charcoal-950/88 text-charcoal-100'
               : 'border-gold-200 bg-white/92 text-gray-900'
           }`}
+          aria-live="polite"
           style={{ position: 'fixed', bottom: '5.2rem', right: '1rem', zIndex: 9999 }}
         >
-          Need help booking?
+          Need help?
         </button>
       )}
       <button

@@ -403,16 +403,12 @@ export function MessagesPage({ dark }) {
     const conversationId = message.remoteConversationId || (isUuid(message.threadId) ? message.threadId : makeConversationId());
     try {
       const { data, error } = await supabase
-        .from('messages')
-        .insert({
-          conversation_id: conversationId,
-          sender_id: user.id,
-          recipient_id: message.recipientId,
-          body: message.text,
-          read: false,
-        })
-        .select('id, conversation_id, sender_id, recipient_id, listing_id, body, read, created_at')
-        .single();
+        .rpc('send_creatorbridge_message', {
+          p_recipient_id: message.recipientId,
+          p_body: message.text,
+          p_conversation_id: conversationId,
+          p_listing_id: message.listingId || null,
+        });
 
       if (error) throw error;
       return remoteMessageToLocal(data, user.id, {

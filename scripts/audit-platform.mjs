@@ -83,6 +83,8 @@ check('Message abuse prevention', 'src/pages/MessagesPage.jsx', [
   { label: 'sanitizes typed message text before storage', test: includes('sanitizeLongText(text, 1500)') },
   { label: 'filters new conversation starter text', test: includes('checkMessage(cleanMessage)') },
   { label: 'stores cleaned initial conversation text', test: matches(/text:\s*cleanText/) },
+  { label: 'sends messages through Supabase RPC', test: includes(".rpc('send_creatorbridge_message'") },
+  { label: 'does not directly insert messages from browser code', test: notIncludes(".from('messages')\n        .insert") },
 ]);
 
 check('Project board input hardening', 'src/pages/ProjectBoard.jsx', [
@@ -114,6 +116,7 @@ check('Chatbot input hardening', 'src/components/SupportChatbot.jsx', [
   { label: 'injects system prompt into future assistant calls', test: includes("{ role: 'system', content: SYSTEM_PROMPT }") },
   { label: 'limits assistant history sent to future AI calls', test: includes('ASSISTANT_HISTORY_LIMIT') },
   { label: 'blocks prompt injection requests', test: includes('isPromptInjectionAttempt(text)') },
+  { label: 'never auto-opens the chatbot on mobile or coarse touch screens', test: includes('setMobileNudge(true)') && includes('(pointer: coarse) and (max-width: 1024px)') },
   { label: 'blocks contact info in chatbot booking and quote text', test: includes('blockUnsafeText(text, `chatbot_booking_${def.field}`)') },
   { label: 'submits chatbot bookings through Supabase RPC', test: includes("supabase.rpc('submit_quote_request'") },
 ]);
@@ -125,6 +128,15 @@ check('Quote and booking database hardening', 'supabase/migrations/2026051614320
   { label: 'removes direct quote request insert policy', test: includes('drop policy if exists "Authenticated clients can send quote requests"') },
   { label: 'removes broad project manage policy', test: includes('drop policy if exists "Clients can manage own projects"') },
   { label: 'grants creation RPCs only to authenticated users', test: includes('grant execute on function public.submit_quote_request') },
+]);
+
+check('Message database hardening', 'supabase/migrations/20260516170242_secure_message_send_flow.sql', [
+  { label: 'creates authenticated message send RPC', test: includes('create or replace function public.send_creatorbridge_message') },
+  { label: 'removes direct browser message insert policy', test: includes('drop policy if exists "Authenticated users can send messages"') },
+  { label: 'requires authenticated sender before inserting messages', test: includes('v_user_id is null') },
+  { label: 'blocks contact details in database layer', test: includes('Contact details must stay inside CreatorBridge until a booking is active') },
+  { label: 'blocks written phone-number workarounds', test: includes('zero|one|two|three|four|five|six|seven|eight|nine') },
+  { label: 'grants message send RPC only to authenticated users', test: includes('grant execute on function public.send_creatorbridge_message') },
 ]);
 
 check('Payment function hardening', 'supabase/functions/create-payment-intent/index.ts', [
@@ -234,15 +246,15 @@ check('Service worker update safety', 'public/sw.js', [
 ]);
 
 check('PWA manifest integrity', 'public/manifest.json', [
-  { label: 'references existing 192 PNG app icon', test: includes('/icons/icon-192.png') },
-  { label: 'references existing 512 PNG app icon', test: includes('/icons/icon-512.png') },
+  { label: 'references cache-busted 192 PNG app icon', test: includes('/icons/icon-192-v8.png') },
+  { label: 'references cache-busted 512 PNG app icon', test: includes('/icons/icon-512-v8.png') },
   { label: 'keeps maskable icon for saved website installs', test: includes('"purpose": "maskable"') },
 ]);
 
 checks.push(
-  { name: 'PWA icon file exists: 192 PNG', pass: fileExists('public/icons/icon-192.png')(), path: 'public/icons/icon-192.png' },
-  { name: 'PWA icon file exists: 512 PNG', pass: fileExists('public/icons/icon-512.png')(), path: 'public/icons/icon-512.png' },
-  { name: 'PWA icon file exists: Apple touch PNG', pass: fileExists('public/icons/apple-touch-icon.png')(), path: 'public/icons/apple-touch-icon.png' },
+  { name: 'PWA icon file exists: 192 v8 PNG', pass: fileExists('public/icons/icon-192-v8.png')(), path: 'public/icons/icon-192-v8.png' },
+  { name: 'PWA icon file exists: 512 v8 PNG', pass: fileExists('public/icons/icon-512-v8.png')(), path: 'public/icons/icon-512-v8.png' },
+  { name: 'PWA icon file exists: Apple touch v8 PNG', pass: fileExists('public/icons/apple-touch-icon-v8.png')(), path: 'public/icons/apple-touch-icon-v8.png' },
 );
 
 const failed = checks.filter(check => !check.pass);
