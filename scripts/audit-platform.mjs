@@ -89,6 +89,7 @@ check('Project board input hardening', 'src/pages/ProjectBoard.jsx', [
   { label: 'sanitizes posted project title', test: includes('sanitizePlainText(form.title, 120)') },
   { label: 'sanitizes posted project description', test: includes('sanitizeLongText(form.description, 4000)') },
   { label: 'blocks contact info in creator proposals', test: includes('checkMessage(cleanProposal)') },
+  { label: 'submits client project briefs through Supabase RPC', test: includes("supabase.rpc('create_project_brief'") },
   { label: 'submits creator applications through Supabase RPC', test: includes("supabase.rpc('apply_to_project'") },
   { label: 'accepts project applications through Supabase RPC', test: includes("supabase.rpc('accept_project_application'") },
 ]);
@@ -103,6 +104,7 @@ check('Quote and chatbot input hardening', 'src/components/RequestQuoteModal.jsx
   { label: 'sanitizes quote project title', test: includes('sanitizePlainText(form.projectTitle, 120)') },
   { label: 'sanitizes quote description', test: includes('sanitizeLongText(form.description, 4000)') },
   { label: 'sanitizes quote request before local and remote storage', test: includes('const cleanForm = buildCleanQuoteForm()') },
+  { label: 'submits quote requests through Supabase RPC', test: includes("supabase.rpc('submit_quote_request'") },
 ]);
 
 check('Chatbot input hardening', 'src/components/SupportChatbot.jsx', [
@@ -113,6 +115,16 @@ check('Chatbot input hardening', 'src/components/SupportChatbot.jsx', [
   { label: 'limits assistant history sent to future AI calls', test: includes('ASSISTANT_HISTORY_LIMIT') },
   { label: 'blocks prompt injection requests', test: includes('isPromptInjectionAttempt(text)') },
   { label: 'blocks contact info in chatbot booking and quote text', test: includes('blockUnsafeText(text, `chatbot_booking_${def.field}`)') },
+  { label: 'submits chatbot bookings through Supabase RPC', test: includes("supabase.rpc('submit_quote_request'") },
+]);
+
+check('Quote and booking database hardening', 'supabase/migrations/20260516143200_secure_quote_booking_flow.sql', [
+  { label: 'creates authenticated project brief RPC', test: includes('create or replace function public.create_project_brief') },
+  { label: 'creates authenticated quote request RPC', test: includes('create or replace function public.submit_quote_request') },
+  { label: 'requires authenticated user before creating booking records', test: includes('v_user_id is null') },
+  { label: 'removes direct quote request insert policy', test: includes('drop policy if exists "Authenticated clients can send quote requests"') },
+  { label: 'removes broad project manage policy', test: includes('drop policy if exists "Clients can manage own projects"') },
+  { label: 'grants creation RPCs only to authenticated users', test: includes('grant execute on function public.submit_quote_request') },
 ]);
 
 check('Payment function hardening', 'supabase/functions/create-payment-intent/index.ts', [

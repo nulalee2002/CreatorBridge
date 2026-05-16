@@ -23,7 +23,6 @@ import {
   mergeProjects,
   sanitizeProjectDraft,
   saveLocalProjects,
-  toSupabaseProject,
   upsertLocalProject,
 } from '../utils/projectStorage.js';
 
@@ -410,11 +409,16 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
     let saved = project;
     if (supabaseConfigured && user) {
       try {
-        const { data, error } = await supabase
-          .from('projects')
-          .insert(toSupabaseProject(project, user.id))
-          .select()
-          .single();
+        const { data, error } = await supabase.rpc('create_project_brief', {
+          p_title:            project.title,
+          p_service_id:       project.serviceId,
+          p_description:      project.description,
+          p_budget_min:       project.budgetMin,
+          p_budget_max:       project.budgetMax,
+          p_project_duration: project.projectDuration,
+          p_timeline:         project.deadline,
+          p_location:         project.location,
+        });
         if (error) throw error;
         saved = { ...project, ...fromSupabaseProject(data), clientName: project.clientName };
       } catch {

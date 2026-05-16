@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { normalizeServiceId } from '../data/rates.js';
 import { parseBudgetRange } from '../utils/matchingAlgorithm.js';
-import { fromSupabaseProject, toSupabaseProject, upsertLocalProject } from '../utils/projectStorage.js';
+import { fromSupabaseProject, upsertLocalProject } from '../utils/projectStorage.js';
 import { clampNumber, sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
 import { checkMessage, logFilterEvent } from '../utils/messageFilter.js';
 
@@ -717,31 +717,34 @@ export function SupportChatbot({ dark = true }) {
 
     if (supabaseConfigured && supabase && user) {
       try {
-        const { data: projectRow } = await supabase
-          .from('projects')
-          .insert(toSupabaseProject(project, user.id))
-          .select()
-          .single();
+        const { data, error } = await supabase.rpc('submit_quote_request', {
+          p_listing_id:          null,
+          p_project_title:       quote.projectTitle,
+          p_service_id:          quote.serviceId,
+          p_description:         quote.description,
+          p_timeline:            quote.timeline,
+          p_budget:              quote.budget,
+          p_project_type:        quote.projectType,
+          p_project_time:        null,
+          p_venue_address:       null,
+          p_venue_city:          quote.venueCity,
+          p_venue_state:         null,
+          p_venue_type:          null,
+          p_hours_needed:        null,
+          p_deliverables:        quote.deliverables,
+          p_budget_range:        quote.budgetRange,
+          p_location_preference: quote.locationPreference,
+          p_budget_min:          project.budgetMin,
+          p_budget_max:          project.budgetMax,
+          p_location:            project.location,
+        });
+        if (error) throw error;
+        const projectRow = data?.project;
         if (projectRow) {
           savedProject = { ...project, ...fromSupabaseProject(projectRow), clientName: project.clientName, source: 'chatbot' };
         }
 
-        const { data: quoteRow } = await supabase.from('quote_requests').insert({
-          listing_id:          null,
-          client_id:           user.id,
-          client_name:         quote.clientName,
-          client_email:        user.email || '',
-          service_id:          quote.serviceId,
-          description:         quote.description,
-          timeline:            quote.timeline,
-          budget:              quote.budget,
-          project_title:       quote.projectTitle,
-          project_type:        quote.projectType,
-          venue_city:          quote.venueCity,
-          deliverables:        quote.deliverables,
-          budget_range:        quote.budgetRange,
-          location_preference: quote.locationPreference,
-        }).select().single();
+        const quoteRow = data?.quote;
         if (quoteRow) savedQuote = { ...quote, ...quoteRow, id: quoteRow.id };
       } catch (err) {
         console.warn('Chatbot booking Supabase save failed. Local fallback preserved.', err);

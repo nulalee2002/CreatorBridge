@@ -5,7 +5,7 @@ import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { TurnstileWidget, turnstileConfigured } from './TurnstileWidget.jsx';
 import { normalizeServiceId, SERVICE_TYPE_OPTIONS } from '../data/rates.js';
-import { fromSupabaseProject, toSupabaseProject, upsertLocalProject } from '../utils/projectStorage.js';
+import { fromSupabaseProject, upsertLocalProject } from '../utils/projectStorage.js';
 import { sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
 import { parseBudgetRange } from '../utils/matchingAlgorithm.js';
 
@@ -319,37 +319,35 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
     // Save to Supabase if configured
     if (supabaseConfigured && user) {
       try {
-        const { data: projectRow } = await supabase
-          .from('projects')
-          .insert(toSupabaseProject(project, user.id))
-          .select()
-          .single();
+        const quoteLocation = [cleanForm.venueCity, cleanForm.venueState].filter(Boolean).join(', ');
+        const { data, error } = await supabase.rpc('submit_quote_request', {
+          p_listing_id:          creator?.id || null,
+          p_project_title:       cleanForm.projectTitle,
+          p_service_id:          serviceId || cleanForm.serviceType,
+          p_description:         cleanForm.description,
+          p_timeline:            cleanForm.projectDate,
+          p_budget:              savedQuote.budget,
+          p_project_type:        project.projectType,
+          p_project_time:        cleanForm.projectTime,
+          p_venue_address:       cleanForm.venueAddress,
+          p_venue_city:          cleanForm.venueCity,
+          p_venue_state:         cleanForm.venueState,
+          p_venue_type:          cleanForm.venueType,
+          p_hours_needed:        cleanForm.hoursNeeded,
+          p_deliverables:        cleanForm.deliverables,
+          p_budget_range:        cleanForm.budgetRange,
+          p_location_preference: cleanForm.locationPreference,
+          p_budget_min:          budget.budgetMin,
+          p_budget_max:          budget.budgetMax,
+          p_location:            quoteLocation,
+        });
+        if (error) throw error;
+        const projectRow = data?.project;
         if (projectRow) {
           savedProject = { ...project, ...fromSupabaseProject(projectRow), clientName: project.clientName };
         }
 
-        const { data: quoteRow, error: quoteError } = await supabase.from('quote_requests').insert({
-          listing_id:          creator?.id || null,
-          client_id:           user.id,
-          client_name:         project.clientName,
-          client_email:        user.email || '',
-          service_id:          serviceId || cleanForm.serviceType,
-          description:         cleanForm.description,
-          timeline:            cleanForm.projectDate,
-          budget:              savedQuote.budget,
-          project_title:       cleanForm.projectTitle,
-          project_type:        project.projectType,
-          project_time:        cleanForm.projectTime,
-          venue_address:       cleanForm.venueAddress,
-          venue_city:          cleanForm.venueCity,
-          venue_state:         cleanForm.venueState,
-          venue_type:          cleanForm.venueType,
-          hours_needed:        cleanForm.hoursNeeded,
-          deliverables:        cleanForm.deliverables,
-          budget_range:        cleanForm.budgetRange,
-          location_preference: cleanForm.locationPreference,
-        }).select().single();
-        if (quoteError) throw quoteError;
+        const quoteRow = data?.quote;
         if (quoteRow) savedQuote = { ...savedQuote, ...quoteRow, id: quoteRow.id };
       } catch (err) {
         console.warn('Quote request Supabase save failed. Local fallback preserved.', err);

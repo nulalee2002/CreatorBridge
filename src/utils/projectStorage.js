@@ -75,6 +75,7 @@ export function toSupabaseProject(project, userId) {
     description: sanitizeLongText(project.description, 4000),
     budget_min: clampNumber(project.budgetMin ?? project.budget_min, { min: 0, max: 1000000, fallback: null }),
     budget_max: clampNumber(project.budgetMax ?? project.budget_max, { min: 0, max: 1000000, fallback: null }),
+    project_duration: sanitizePlainText(project.projectDuration || project.project_duration || '', 80) || null,
     location: typeof project.location === 'string'
       ? sanitizePlainText(project.location, 160)
       : sanitizePlainText([project.location?.city, project.location?.state].filter(Boolean).join(', '), 160),
