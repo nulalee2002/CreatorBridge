@@ -59,6 +59,47 @@ function normalizeQuoteRequest(quote) {
   };
 }
 
+function normalizeCreatorListing(listing) {
+  if (!listing) return listing;
+
+  const services = Array.isArray(listing.creator_services)
+    ? listing.creator_services.map(service => ({
+        ...service,
+        serviceId: service.serviceId || service.service_id,
+        service_id: service.service_id || service.serviceId,
+        subtypes: service.subtypes || [],
+        description: service.description || '',
+        rates: service.rates || {},
+      }))
+    : (listing.services || []);
+
+  const portfolio = Array.isArray(listing.portfolio_items)
+    ? [...listing.portfolio_items]
+        .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+        .map(item => ({
+          ...item,
+          serviceId: item.serviceId || item.service_id,
+          service_id: item.service_id || item.serviceId,
+          imageUrl: item.imageUrl || item.image_url || '',
+          image_url: item.image_url || item.imageUrl || '',
+          link: item.link || item.url || '',
+          url: item.url || item.link || '',
+        }))
+    : (listing.portfolio || []);
+
+  const packages = Array.isArray(listing.packages)
+    ? [...listing.packages].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+    : [];
+
+  return {
+    ...listing,
+    services,
+    portfolio,
+    packages,
+    video_intro_url: listing.video_intro_url || listing.videoIntroUrl || '',
+  };
+}
+
 // ── Creator fee tiers ────────────────────────────────────────────
 const CREATOR_TIERS = [
   {
@@ -196,11 +237,12 @@ export function CreatorDashboard({ dark }) {
     if (supabaseConfigured) {
       const { data } = await supabase
         .from('creator_listings')
-        .select('*')
+        .select('*, creator_services(*), portfolio_items(*), packages(*)')
         .eq('user_id', user.id)
         .single();
       if (data) {
-        setCreator(data);
+        const normalizedCreator = normalizeCreatorListing(data);
+        setCreator(normalizedCreator);
         const { data: qData } = await supabase
           .from('quote_requests')
           .select('*')
@@ -209,12 +251,12 @@ export function CreatorDashboard({ dark }) {
         setQuotes((qData || []).map(normalizeQuoteRequest));
       } else {
         const found = loadMyListing(user.id);
-        setCreator(found);
+        setCreator(normalizeCreatorListing(found));
         if (found) setQuotes(loadQuoteRequests(found.id));
       }
     } else {
       const found = loadMyListing(user.id);
-      setCreator(found);
+      setCreator(normalizeCreatorListing(found));
       if (found) setQuotes(loadQuoteRequests(found.id));
     }
     // Load violation status
@@ -222,9 +264,19 @@ export function CreatorDashboard({ dark }) {
     setLoading(false);
   }
 
-  function markRead(quoteId) {
+  async function markRead(quoteId) {
     const updated = quotes.map(q => q.id === quoteId ? { ...q, read: true } : q);
     setQuotes(updated);
+    if (supabaseConfigured && quoteId) {
+      const { error } = await supabase
+        .from('quote_requests')
+        .update({ read: true })
+        .eq('id', quoteId);
+      if (error) {
+        setQuotes(quotes);
+        return;
+      }
+    }
     // Persist to localStorage
     try {
       const all = JSON.parse(localStorage.getItem('quote-requests') || '[]');
@@ -718,6 +770,7 @@ function ProfileCompletion({ creator, dark, navigate }) {
 function VideoIntroTab({ creator, dark, onUpdate }) {
   const [url, setUrl]       = useState(creator.video_intro_url || '');
   const [saved, setSaved]   = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError]   = useState('');
   const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
   const cardCls  = `rounded-2xl border p-5 ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`;
@@ -751,12 +804,24 @@ function VideoIntroTab({ creator, dark, onUpdate }) {
     embedUrl.includes('loom.com/embed')
   );
 
-  function handleSave() {
+  async function handleSave() {
     setError('');
     const finalUrl = url.trim() ? embedUrl : '';
     if (url.trim() && !isValidEmbed) {
       setError('Please enter a valid YouTube, Vimeo, or Loom URL.');
       return;
+    }
+    setSaving(true);
+    if (supabaseConfigured && creator?.id) {
+      const { error: saveError } = await supabase
+        .from('creator_listings')
+        .update({ video_intro_url: finalUrl })
+        .eq('id', creator.id);
+      if (saveError) {
+        setSaving(false);
+        setError('Could not save this video intro. Try again.');
+        return;
+      }
     }
     // Persist to localStorage
     try {
@@ -770,6 +835,7 @@ function VideoIntroTab({ creator, dark, onUpdate }) {
     } catch {}
     onUpdate?.({ video_intro_url: finalUrl });
     setSaved(true);
+    setSaving(false);
     setTimeout(() => setSaved(false), 2000);
   }
 
@@ -817,11 +883,11 @@ function VideoIntroTab({ creator, dark, onUpdate }) {
           </div>
         )}
 
-        <button type="button" onClick={handleSave}
+        <button type="button" onClick={handleSave} disabled={saving}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
-            saved ? 'bg-gold-500 text-charcoal-900' : 'bg-gold-500 hover:bg-gold-600 text-charcoal-900'
+            saved ? 'bg-gold-500 text-charcoal-900' : 'bg-gold-500 hover:bg-gold-600 text-charcoal-900 disabled:opacity-60 disabled:cursor-not-allowed'
           }`}>
-          <Save size={14} /> {saved ? 'Saved!' : 'Save Video Intro'}
+          <Save size={14} /> {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Video Intro'}
         </button>
       </div>
 
