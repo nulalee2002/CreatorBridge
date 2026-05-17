@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { MapPin, Send, Flag, Heart, MessageSquare, ChevronDown, Users, Lock } from 'lucide-react';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
-import { useAuth } from '../contexts/AuthContext.jsx';
 import { sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
 import { checkMessage, logFilterEvent } from '../utils/messageFilter.js';
 
@@ -164,11 +163,64 @@ function getPostTypeLabel(type) {
   return POST_TYPES.find(t => t.id === type)?.label || 'General';
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i;
+
+function isUuid(value) {
+  return UUID_PATTERN.test(String(value || ''));
+}
+
+function dedupeById(items) {
+  const seen = new Map();
+  for (const item of items || []) {
+    if (item?.id && !seen.has(item.id)) seen.set(item.id, item);
+  }
+  return [...seen.values()];
+}
+
+function getUserDisplayName(user) {
+  return sanitizePlainText(
+    user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Member',
+    80
+  );
+}
+
+function getUserVerificationStatus(user) {
+  return sanitizePlainText(
+    user?.verification_status || user?.user_metadata?.verification_status || (user?.id ? 'verified' : 'unverified'),
+    40
+  );
+}
+
+function getUserPrimaryService(user) {
+  return sanitizePlainText(
+    user?.primary_service || user?.user_metadata?.primary_service || user?.user_metadata?.service || '',
+    80
+  );
+}
+
+function mapReply(row) {
+  return {
+    ...row,
+    content: sanitizeLongText(row?.content || '', 280),
+    user_display_name: sanitizePlainText(row?.user_display_name || 'Member', 80),
+    user_verification_status: sanitizePlainText(row?.user_verification_status || 'verified', 40),
+    user_primary_service: sanitizePlainText(row?.user_primary_service || '', 80),
+    created_at: row?.created_at || new Date().toISOString(),
+  };
+}
+
+function withSafeReplies(post) {
+  return {
+    ...post,
+    replies: Array.isArray(post?.replies) ? post.replies.map(mapReply) : [],
+  };
+}
+
 function loadLocalPosts(stateCode) {
   try {
     const all = JSON.parse(localStorage.getItem('cm-network-posts') || '[]');
-    const seeds = SEED_NETWORK_POSTS.filter(p => p.state_code === stateCode);
-    const local = all.filter(p => p.state_code === stateCode);
+    const seeds = SEED_NETWORK_POSTS.filter(p => p.state_code === stateCode).map(withSafeReplies);
+    const local = all.filter(p => p.state_code === stateCode).map(withSafeReplies);
     const seedIds = seeds.map(s => s.id);
     const merged = [...seeds, ...local.filter(p => !seedIds.includes(p.id))];
     return merged.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -180,6 +232,18 @@ function saveLocalPost(post) {
     const all = JSON.parse(localStorage.getItem('cm-network-posts') || '[]');
     all.unshift(post);
     localStorage.setItem('cm-network-posts', JSON.stringify(all));
+  } catch {}
+}
+
+function saveLocalReply(stateCode, postId, reply) {
+  try {
+    const all = JSON.parse(localStorage.getItem('cm-network-posts') || '[]');
+    const next = all.map(post => {
+      if (post.id !== postId || post.state_code !== stateCode) return post;
+      const replies = dedupeById([...(post.replies || []), reply]);
+      return { ...post, replies, reply_count: Math.max(post.reply_count || 0, replies.length) };
+    });
+    localStorage.setItem('cm-network-posts', JSON.stringify(next));
   } catch {}
 }
 
@@ -206,14 +270,21 @@ function VerificationDot({ status }) {
   );
 }
 
-function PostCard({ post, dark, isVerified, onLike, onReport }) {
+function PostCard({ post, dark, isVerified, onLike, onReport, onReply }) {
   const [showReplies, setShowReplies] = useState(false);
-  const [replies, setReplies] = useState([]);
+  const [replies, setReplies] = useState(post.replies || []);
   const [replyText, setReplyText] = useState('');
   const [liked, setLiked] = useState(false);
   const [localLikes, setLocalLikes] = useState(post.likes_count || 0);
 
   const cardBg = dark ? 'bg-charcoal-900/72 border-white/[0.07] shadow-[0_22px_70px_rgba(0,0,0,0.18)]' : 'bg-white border-gray-200';
+  const visibleReplyCount = Math.max(post.reply_count || 0, replies.length || 0);
+
+  useEffect(() => {
+    setReplies(post.replies || []);
+    setLocalLikes(post.likes_count || 0);
+    setLiked(false);
+  }, [post.id, post.likes_count, post.replies]);
 
   function handleLike() {
     if (liked) return;
@@ -222,7 +293,7 @@ function PostCard({ post, dark, isVerified, onLike, onReport }) {
     onLike && onLike(post.id);
   }
 
-  function handleReplySubmit(e) {
+  async function handleReplySubmit(e) {
     e.preventDefault();
     const cleanReply = sanitizeLongText(replyText, 280);
     if (!cleanReply || !isVerified) return;
@@ -232,14 +303,9 @@ function PostCard({ post, dark, isVerified, onLike, onReport }) {
       alert('Your reply contains disallowed content. Please keep all communication professional and avoid contact info or job board references.');
       return;
     }
-    const newReply = {
-      id: `reply-${Date.now()}`,
-      post_id: post.id,
-      user_display_name: 'You',
-      content: cleanReply,
-      created_at: new Date().toISOString(),
-    };
-    setReplies(prev => [...prev, newReply]);
+    const savedReply = await onReply?.(post.id, cleanReply);
+    if (!savedReply) return;
+    setReplies(prev => dedupeById([...prev, savedReply]));
     setReplyText('');
   }
 
@@ -285,7 +351,7 @@ function PostCard({ post, dark, isVerified, onLike, onReport }) {
               onClick={() => setShowReplies(v => !v)}
               className={`flex items-center gap-1.5 text-xs transition-colors ${dark ? 'text-charcoal-500 hover:text-charcoal-300' : 'text-gray-400 hover:text-gray-600'}`}
             >
-              <MessageSquare size={13} /> {post.reply_count || replies.length || 0} {showReplies ? 'Hide' : 'Reply'}
+              <MessageSquare size={13} /> {visibleReplyCount} {showReplies ? 'Hide' : 'Reply'}
             </button>
             <span className={`text-xs ml-auto ${dark ? 'text-charcoal-600' : 'text-gray-400'}`}>
               {timeAgo(post.created_at)}
@@ -305,7 +371,7 @@ function PostCard({ post, dark, isVerified, onLike, onReport }) {
               {replies.map(r => (
                 <div key={r.id} className="text-xs">
                   <span className={`font-semibold ${dark ? 'text-charcoal-300' : 'text-gray-700'}`}>{r.user_display_name}</span>
-                  <span className={`ml-2 ${dark ? 'text-charcoal-400' : 'text-gray-600'}`}>{r.content}</span>
+                  <span className={`ml-2 ${dark ? 'text-charcoal-400' : 'text-gray-600'}`}>{linkifyText(r.content)}</span>
                   <span className={`ml-2 ${dark ? 'text-charcoal-600' : 'text-gray-400'}`}>{timeAgo(r.created_at)}</span>
                 </div>
               ))}
@@ -347,7 +413,12 @@ export function NetworkingPage({ dark, user }) {
   const chatBottomRef = useRef(null);
   const channelRef = useRef(null);
 
-  const isVerified = !!(user?.verification_status && user.verification_status !== 'unverified') || !!(user?.verified);
+  const isVerified = !!user?.id && (
+    (user?.verification_status && user.verification_status !== 'unverified') ||
+    !!user?.verified ||
+    !!user?.email_confirmed_at ||
+    user?.aud === 'authenticated'
+  );
   const stateName = US_STATES.find(s => s.code === selectedState)?.name || selectedState;
 
   const activePosts = [
@@ -371,8 +442,9 @@ export function NetworkingPage({ dark, user }) {
 
   async function loadPosts() {
     setLoadingPosts(true);
+    setPostError('');
     if (supabaseConfigured) {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('network_posts')
         .select('*')
         .eq('state_code', selectedState)
@@ -380,7 +452,31 @@ export function NetworkingPage({ dark, user }) {
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false })
         .limit(20);
-      setPosts(data || loadLocalPosts(selectedState));
+      if (error) {
+        setPostError('Network posts could not be loaded. Showing local fallback content.');
+        setPosts(loadLocalPosts(selectedState));
+      } else {
+        const remotePostIds = (data || []).map(p => p.id).filter(isUuid);
+        const repliesByPost = new Map();
+        if (remotePostIds.length > 0) {
+          const { data: replyRows, error: replyError } = await supabase
+            .from('network_replies')
+            .select('*')
+            .in('post_id', remotePostIds)
+            .eq('is_flagged', false)
+            .gt('expires_at', new Date().toISOString())
+            .order('created_at', { ascending: true });
+          if (!replyError) {
+            for (const reply of replyRows || []) {
+              const group = repliesByPost.get(reply.post_id) || [];
+              group.push(mapReply(reply));
+              repliesByPost.set(reply.post_id, group);
+            }
+          }
+        }
+        const remotePosts = (data || []).map(post => withSafeReplies({ ...post, replies: repliesByPost.get(post.id) || [] }));
+        setPosts(remotePosts.length ? remotePosts : loadLocalPosts(selectedState));
+      }
     } else {
       setPosts(loadLocalPosts(selectedState));
     }
@@ -388,16 +484,22 @@ export function NetworkingPage({ dark, user }) {
   }
 
   async function loadChat() {
+    setChatError('');
     let msgs = [];
     if (supabaseConfigured) {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('state_chat_messages')
         .select('*')
         .eq('state_code', selectedState)
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: true })
         .limit(50);
-      msgs = data || loadLocalChat(selectedState);
+      if (error) {
+        setChatError('Live chat could not be loaded. Showing local fallback content.');
+        msgs = loadLocalChat(selectedState);
+      } else {
+        msgs = data || loadLocalChat(selectedState);
+      }
 
       channelRef.current?.unsubscribe();
       channelRef.current = supabase
@@ -408,7 +510,7 @@ export function NetworkingPage({ dark, user }) {
           table: 'state_chat_messages',
           filter: `state_code=eq.${selectedState}`,
         }, (payload) => {
-          setMessages(prev => [...prev, payload.new]);
+          setMessages(prev => dedupeById([...prev, payload.new]));
         })
         .subscribe();
     } else {
@@ -437,9 +539,9 @@ export function NetworkingPage({ dark, user }) {
       id: `post-${Date.now()}`,
       state_code: selectedState,
       user_id: user?.id,
-      user_display_name: user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Member',
-      user_verification_status: user?.verification_status || 'verified',
-      user_primary_service: user?.user_metadata?.primary_service || '',
+      user_display_name: getUserDisplayName(user),
+      user_verification_status: getUserVerificationStatus(user),
+      user_primary_service: getUserPrimaryService(user),
       post_type: postType,
       content: cleanContent,
       likes_count: 0,
@@ -455,13 +557,18 @@ export function NetworkingPage({ dark, user }) {
         user_id: user.id,
         content: cleanContent,
         post_type: postType,
+        user_display_name: newPost.user_display_name,
+        user_verification_status: newPost.user_verification_status,
+        user_primary_service: newPost.user_primary_service,
       }).select().single();
-      if (!error && data) {
-        setPosts(prev => [{ ...newPost, ...data }, ...prev]);
+      if (error || !data) {
+        setPostError('Network post could not be saved. Please try again.');
+        return;
       }
+      setPosts(prev => [withSafeReplies({ ...newPost, ...data, replies: [] }), ...prev]);
     } else {
       saveLocalPost(newPost);
-      setPosts(prev => [newPost, ...prev]);
+      setPosts(prev => [withSafeReplies(newPost), ...prev]);
     }
     setPostContent('');
   }
@@ -482,34 +589,83 @@ export function NetworkingPage({ dark, user }) {
       id: `msg-${Date.now()}`,
       state_code: selectedState,
       user_id: user?.id,
-      user_display_name: user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Member',
-      user_verification_status: user?.verification_status || 'verified',
-      user_primary_service: user?.user_metadata?.primary_service || '',
+      user_display_name: getUserDisplayName(user),
+      user_verification_status: getUserVerificationStatus(user),
+      user_primary_service: getUserPrimaryService(user),
       message: cleanMessage,
       created_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     };
 
     if (supabaseConfigured) {
-      await supabase.from('state_chat_messages').insert({
+      const { data, error } = await supabase.from('state_chat_messages').insert({
         state_code: selectedState,
         user_id: user.id,
         message: cleanMessage,
         user_display_name: msg.user_display_name,
         user_verification_status: msg.user_verification_status,
         user_primary_service: msg.user_primary_service,
-      });
+      }).select().single();
+      if (error || !data) {
+        setChatError('Message could not be saved. Please try again.');
+        return;
+      }
+      setMessages(prev => dedupeById([...prev, data]));
     } else {
       saveLocalMessage(selectedState, msg);
-      setMessages(prev => [...prev, msg]);
+      setMessages(prev => dedupeById([...prev, msg]));
     }
     setChatInput('');
   }
 
   function handleLike(postId) {
-    if (supabaseConfigured && user) {
-      supabase.from('network_post_likes').insert({ post_id: postId, user_id: user.id }).catch(() => {});
+    if (supabaseConfigured && user?.id && isUuid(postId)) {
+      supabase
+        .from('network_post_likes')
+        .upsert({ post_id: postId, user_id: user.id }, { onConflict: 'post_id,user_id', ignoreDuplicates: true })
+        .then(() => {});
     }
+  }
+
+  async function handleReply(postId, cleanReply) {
+    if (!isVerified || !user?.id) return null;
+    const savedReply = {
+      id: `reply-${Date.now()}`,
+      post_id: postId,
+      user_id: user.id,
+      user_display_name: getUserDisplayName(user),
+      user_verification_status: getUserVerificationStatus(user),
+      user_primary_service: getUserPrimaryService(user),
+      content: cleanReply,
+      created_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    };
+    let finalReply = savedReply;
+
+    if (supabaseConfigured && isUuid(postId)) {
+      const { data, error } = await supabase.from('network_replies').insert({
+        post_id: postId,
+        user_id: user.id,
+        content: cleanReply,
+        user_display_name: savedReply.user_display_name,
+        user_verification_status: savedReply.user_verification_status,
+        user_primary_service: savedReply.user_primary_service,
+      }).select().single();
+      if (error || !data) {
+        setPostError('Network reply could not be saved. Please try again.');
+        return null;
+      }
+      finalReply = mapReply(data);
+    } else {
+      saveLocalReply(selectedState, postId, finalReply);
+    }
+
+    setPosts(prev => prev.map(post => {
+      if (post.id !== postId) return post;
+      const replies = dedupeById([...(post.replies || []), finalReply]);
+      return { ...post, replies, reply_count: Math.max((post.reply_count || 0) + 1, replies.length) };
+    }));
+    return finalReply;
   }
 
   function handleReport(postId) {
@@ -710,6 +866,7 @@ export function NetworkingPage({ dark, user }) {
                       isVerified={isVerified}
                       onLike={handleLike}
                       onReport={handleReport}
+                      onReply={handleReply}
                     />
                   ))}
                 </div>

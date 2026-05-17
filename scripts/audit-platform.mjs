@@ -159,6 +159,10 @@ check('Network input hardening', 'src/pages/NetworkingPage.jsx', [
   { label: 'sanitizes network post content', test: includes('sanitizeLongText(postContent, 500)') },
   { label: 'uses shared contact filter for posts', test: includes('checkMessage(cleanContent)') },
   { label: 'sanitizes live chat messages', test: includes('sanitizeLongText(chatInput, 300)') },
+  { label: 'persists network replies through parent handler', test: includes('onReply?.(post.id, cleanReply)') },
+  { label: 'loads stored network replies from Supabase', test: includes(".from('network_replies')") },
+  { label: 'dedupes realtime chat inserts', test: includes('dedupeById([...prev, payload.new])') },
+  { label: 'reports failed network post writes', test: includes('Network post could not be saved') },
 ]);
 
 check('Quote and chatbot input hardening', 'src/components/RequestQuoteModal.jsx', [
@@ -196,6 +200,18 @@ check('Message database hardening', 'supabase/migrations/20260516170242_secure_m
   { label: 'blocks contact details in database layer', test: includes('Contact details must stay inside CreatorBridge until a booking is active') },
   { label: 'blocks written phone-number workarounds', test: includes('zero|one|two|three|four|five|six|seven|eight|nine') },
   { label: 'grants message send RPC only to authenticated users', test: includes('grant execute on function public.send_creatorbridge_message') },
+]);
+
+check('Network database hardening', 'supabase/migrations/20260517112238_harden_network_page_flow.sql', [
+  { label: 'creates persisted network replies', test: includes('create table if not exists public.network_replies') },
+  { label: 'enables RLS on network posts', test: includes('alter table public.network_posts enable row level security') },
+  { label: 'enables RLS on network replies', test: includes('alter table public.network_replies enable row level security') },
+  { label: 'keeps network posts publicly readable but filtered', test: includes('Anyone can view network posts') },
+  { label: 'keeps network replies tied to visible posts', test: includes('Anyone can view replies') },
+  { label: 'keeps likes unique per user and post', test: includes('unique(post_id, user_id)') },
+  { label: 'refreshes like counts with trigger', test: includes('refresh_network_post_like_count') },
+  { label: 'refreshes reply counts with trigger', test: includes('refresh_network_post_reply_count') },
+  { label: 'hardens state chat messages with RLS', test: includes('alter table public.state_chat_messages enable row level security') },
 ]);
 
 check('Payment function hardening', 'supabase/functions/create-payment-intent/index.ts', [
@@ -302,11 +318,13 @@ check('Service worker update safety', 'public/sw.js', [
   { label: 'uses a date-versioned cache name', test: matches(/creatorbridge-v\d{4}-\d{2}-\d{2}/) },
   { label: 'supports immediate activation message', test: includes('SKIP_WAITING') },
   { label: 'refreshes navigations from network first', test: includes("fetch(request, { cache: 'reload' })") },
+  { label: 'uses fresh cache after mobile icon refresh', test: includes('network-icons-v9') },
+  { label: 'bypasses manifest and icon caching', test: includes("url.pathname === '/manifest.json'") && includes("url.pathname.startsWith('/icons/')") },
 ]);
 
 check('PWA manifest integrity', 'public/manifest.json', [
-  { label: 'references cache-busted 192 PNG app icon', test: includes('/icons/icon-192-v8.png') },
-  { label: 'references cache-busted 512 PNG app icon', test: includes('/icons/icon-512-v8.png') },
+  { label: 'references cache-busted 192 PNG app icon', test: includes('/icons/icon-192-v9.png') },
+  { label: 'references cache-busted 512 PNG app icon', test: includes('/icons/icon-512-v9.png') },
   { label: 'keeps maskable icon for saved website installs', test: includes('"purpose": "maskable"') },
 ]);
 
@@ -314,6 +332,9 @@ checks.push(
   { name: 'PWA icon file exists: 192 v8 PNG', pass: fileExists('public/icons/icon-192-v8.png')(), path: 'public/icons/icon-192-v8.png' },
   { name: 'PWA icon file exists: 512 v8 PNG', pass: fileExists('public/icons/icon-512-v8.png')(), path: 'public/icons/icon-512-v8.png' },
   { name: 'PWA icon file exists: Apple touch v8 PNG', pass: fileExists('public/icons/apple-touch-icon-v8.png')(), path: 'public/icons/apple-touch-icon-v8.png' },
+  { name: 'PWA icon file exists: 192 v9 PNG', pass: fileExists('public/icons/icon-192-v9.png')(), path: 'public/icons/icon-192-v9.png' },
+  { name: 'PWA icon file exists: 512 v9 PNG', pass: fileExists('public/icons/icon-512-v9.png')(), path: 'public/icons/icon-512-v9.png' },
+  { name: 'PWA icon file exists: Apple touch v9 PNG', pass: fileExists('public/icons/apple-touch-icon-v9.png')(), path: 'public/icons/apple-touch-icon-v9.png' },
 );
 
 const failed = checks.filter(check => !check.pass);

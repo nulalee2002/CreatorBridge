@@ -1,4 +1,4 @@
-const CACHE_NAME = 'creatorbridge-v2026-05-16-chatbot-icons';
+const CACHE_NAME = 'creatorbridge-v2026-05-17-network-icons-v9';
 
 const APP_SHELL = [
   '/',
@@ -37,6 +37,11 @@ self.addEventListener('fetch', (event) => {
 
   // Skip non-GET and cross-origin requests (Supabase, Stripe, fonts, etc.)
   if (request.method !== 'GET' || url.origin !== self.location.origin) {
+    return;
+  }
+
+  if (url.pathname === '/manifest.json' || url.pathname.startsWith('/icons/')) {
+    event.respondWith(fetch(request, { cache: 'reload' }));
     return;
   }
 
