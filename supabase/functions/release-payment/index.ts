@@ -88,17 +88,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (txn.retainer_status !== 'paid' || txn.final_status !== 'paid') {
-      return new Response(
-        JSON.stringify({ error: 'Both retainer and final payment must be paid before creator payout release' }),
-        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     if (txn.final_status === 'released' || txn.final_transfer_id) {
       return new Response(
         JSON.stringify({ error: 'Payment already released' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (txn.retainer_status !== 'paid' || txn.final_status !== 'paid') {
+      return new Response(
+        JSON.stringify({ error: 'Both retainer and final payment must be paid before creator payout release' }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

@@ -67,12 +67,51 @@ check('Checkout fee display', 'src/pages/CheckoutPage.jsx', [
   { label: 'sends payment type for retainer and final payments', test: includes('paymentType') },
 ]);
 
+check('Checkout production lock', 'src/pages/CheckoutPage.jsx', [
+  { label: 'blocks checkout when Stripe or Supabase is unavailable', test: includes('Secure checkout is temporarily unavailable') },
+  { label: 'does not simulate payment success', test: notIncludes('Simulate Payment') },
+  { label: 'does not create demo payment intent ids', test: notIncludes('demo_') },
+  { label: 'does not write local payment transactions', test: notIncludes('cm-transactions') },
+  { label: 'does not save browser-only payment records', test: notIncludes('saveLocalPaymentRecord') },
+  { label: 'requires Supabase and Stripe before rendering card entry', test: includes('!stripeConfigured || !supabaseConfigured') },
+]);
+
 check('Auth route protection', 'src/App.jsx', [
   { label: 'protected route wrapper exists', test: includes('function AuthRequired') },
   { label: 'creator dashboard requires auth', test: includes('Sign in to manage your creator account') },
   { label: 'client profile requires auth', test: includes('Sign in to manage your client profile') },
   { label: 'messages require auth', test: includes('Sign in to view messages') },
   { label: 'checkout requires auth', test: includes('Sign in before payment') },
+]);
+
+checks.push(
+  { name: 'Admin control hub page exists', pass: fileExists('src/pages/AdminDashboard.jsx')(), path: 'src/pages/AdminDashboard.jsx' },
+);
+
+check('Admin route protection', 'src/App.jsx', [
+  { label: 'lazy loads admin dashboard', test: includes('AdminDashboard') },
+  { label: 'registers protected admin route', test: includes('path="/admin"') },
+  { label: 'uses owner-facing admin auth copy', test: includes('CreatorBridge admin visibility requires an authenticated owner account') },
+]);
+
+check('Admin dashboard access control', 'src/pages/AdminDashboard.jsx', [
+  { label: 'checks database admin status before loading admin data', test: includes(".rpc('is_platform_admin'") },
+  { label: 'loads admin platform summary through RPC', test: includes(".rpc('get_admin_platform_summary'") },
+  { label: 'loads creator review queue through RPC', test: includes(".rpc('get_admin_creator_review_queue'") },
+  { label: 'keeps the first admin pass read only', test: includes('Read-only operations visibility') },
+  { label: 'does not expose approval action controls yet', test: notIncludes('Approve Creator') },
+  { label: 'does not expose payment release action controls yet', test: notIncludes('releasePayment') },
+]);
+
+check('Admin database foundation', 'supabase/migrations/20260516235356_admin_control_hub_foundation.sql', [
+  { label: 'creates separate admin roster instead of profile metadata authz', test: includes('create table if not exists public.platform_admins') },
+  { label: 'seeds the CreatorBridge owner email as first admin', test: includes('drl33@creatorbridge.studio') },
+  { label: 'creates admin check function', test: includes('create or replace function public.is_platform_admin') },
+  { label: 'creates admin summary RPC', test: includes('create or replace function public.get_admin_platform_summary') },
+  { label: 'creates creator review queue RPC', test: includes('create or replace function public.get_admin_creator_review_queue') },
+  { label: 'grants admin RPCs only to authenticated users', test: includes('grant execute on function public.get_admin_platform_summary') },
+  { label: 'adds admin read policy for creator listings', test: includes('Platform admins can read creator_listings') },
+  { label: 'adds admin read policy for payment events', test: includes('Platform admins can read payment_events') },
 ]);
 
 checks.push(

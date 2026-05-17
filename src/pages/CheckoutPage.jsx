@@ -30,57 +30,6 @@ function loadCreatorForProject(project) {
   } catch { return null; }
 }
 
-function saveLocalPaymentRecord({ project, creator, fees, userId, paymentType, paymentIntentId }) {
-  const all = JSON.parse(localStorage.getItem('cm-transactions') || '[]');
-  const existing = all.find(t => t.projectId === project.id && (t.creatorId === creator?.id || !t.creatorId));
-  const now = new Date().toISOString();
-  const base = existing || {
-    id: Date.now().toString(),
-    projectId:    project.id,
-    projectTitle: project.title,
-    creatorId:    creator?.id,
-    creatorName:  creator?.businessName || creator?.name,
-    clientId:     userId,
-    projectAmount: fees.projectTotal * 100,
-    retainerAmount: fees.retainerAmountCents,
-    finalAmount:   fees.finalAmountCents,
-    creatorFeeAmount: fees.creatorFeeRetainerCents,
-    clientFeeAmount:  fees.clientFeeRetainerCents,
-    platformRevenue:  fees.retainerAppFeeCents,
-    retainerStatus: 'pending',
-    finalStatus:    'pending',
-    createdAt:      now,
-  };
-
-  const updated = {
-    ...base,
-    ...(paymentType === 'final'
-      ? { finalStatus: 'paid', finalPaidAt: now, finalPaymentIntent: paymentIntentId }
-      : { retainerStatus: 'paid', retainerPaidAt: now, retainerPaymentIntent: paymentIntentId }),
-  };
-
-  const next = existing
-    ? all.map(t => t === existing ? updated : t)
-    : [updated, ...all];
-  localStorage.setItem('cm-transactions', JSON.stringify(next));
-
-  const nextStatus = paymentType === 'final' ? 'final_paid' : 'retainer_paid';
-  const projs = JSON.parse(localStorage.getItem('cm-projects') || '[]');
-  localStorage.setItem('cm-projects', JSON.stringify(
-    projs.map(p => p.id === project.id ? { ...p, status: nextStatus } : p)
-  ));
-
-  if (paymentType === 'retainer' && userId && fees.clientFeeRetainerCents === 0) {
-    const key = `cm-profile-${userId}`;
-    const profile = JSON.parse(localStorage.getItem(key) || '{}');
-    localStorage.setItem(key, JSON.stringify({
-      ...profile,
-      first_booking_fee_waived: false,
-      next_booking_fee_waived: false,
-    }));
-  }
-}
-
 // ── Step indicator ────────────────────────────────────────────────
 function StepBar({ step, dark }) {
   const steps = ['Review', 'Payment', 'Confirmed'];
@@ -203,7 +152,6 @@ function CardForm({ fees, project, creator, dark, paymentType, creatorFeePct, cl
   const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
   const isFinal = paymentType === 'final';
   const amountDue = isFinal ? fees.finalClientOwes : fees.retainerClientOwes;
-  const amountDueCents = isFinal ? fees.finalClientOwesCents : fees.retainerClientOwesCents;
 
   async function handlePay() {
     if (!stripe || !elements) return;
@@ -211,31 +159,25 @@ function CardForm({ fees, project, creator, dark, paymentType, creatorFeePct, cl
     setError('');
 
     try {
-      if (supabaseConfigured && !user?.id) {
+      if (!supabaseConfigured || !stripeConfigured) {
+        throw new Error('Secure checkout is temporarily unavailable. Please contact CreatorBridge support before paying.');
+      }
+
+      if (!user?.id) {
         throw new Error('Please sign in as the client before making a payment.');
       }
-      let clientSecret = null;
 
-      if (supabaseConfigured) {
-        // Call edge function to create PaymentIntent
-        const { data, error: fnErr } = await supabase.functions.invoke('create-payment-intent', {
-          body: {
-            projectId: project.id,
-            creatorId: creator?.id,
-            clientId: user?.id,
-            paymentType,
-          },
-        });
-        if (fnErr) throw fnErr;
-        clientSecret = data?.clientSecret;
-      } else {
-        // In test/demo mode (no Supabase), simulate success
-        await new Promise(r => setTimeout(r, 1500));
-        const paymentIntentId = 'demo_' + Date.now();
-        saveLocalPaymentRecord({ project, creator, fees, userId: user?.id, paymentType, paymentIntentId });
-        onSuccess({ paymentIntentId, amount: amountDueCents });
-        return;
-      }
+      const { data, error: fnErr } = await supabase.functions.invoke('create-payment-intent', {
+        body: {
+          projectId: project.id,
+          creatorId: creator?.id,
+          clientId: user.id,
+          paymentType,
+        },
+      });
+      if (fnErr) throw fnErr;
+      const clientSecret = data?.clientSecret;
+      if (!clientSecret) throw new Error('Secure checkout could not be prepared. Please try again.');
 
       const cardElement = elements.getElement(CardElement);
       const { error: stripeErr, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
@@ -244,7 +186,6 @@ function CardForm({ fees, project, creator, dark, paymentType, creatorFeePct, cl
 
       if (stripeErr) throw new Error(stripeErr.message);
       if (paymentIntent.status === 'succeeded') {
-        saveLocalPaymentRecord({ project, creator, fees, userId: user?.id, paymentType, paymentIntentId: paymentIntent.id });
         onSuccess({ paymentIntentId: paymentIntent.id, amount: paymentIntent.amount });
       }
     } catch (e) {
@@ -314,11 +255,8 @@ function CardForm({ fees, project, creator, dark, paymentType, creatorFeePct, cl
 function PaymentStep({ fees, project, creator, dark, paymentType, creatorFeePct, clientFeePct, onSuccess }) {
   const stripePromise = getStripe();
 
-  if (!stripeConfigured) {
-    // Demo mode — show mock form that simulates success
-    return (
-      <DemoPaymentStep fees={fees} project={project} creator={creator} dark={dark} paymentType={paymentType} onSuccess={onSuccess} />
-    );
+  if (!stripeConfigured || !supabaseConfigured) {
+    return <CheckoutUnavailable dark={dark} />;
   }
 
   return (
@@ -337,50 +275,21 @@ function PaymentStep({ fees, project, creator, dark, paymentType, creatorFeePct,
   );
 }
 
-// Demo payment step for when Stripe keys are not configured
-function DemoPaymentStep({ fees, project, creator, dark, paymentType, onSuccess }) {
-  const [loading, setLoading] = useState(false);
+function CheckoutUnavailable({ dark }) {
   const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
-  const isFinal = paymentType === 'final';
-  const amountDue = isFinal ? fees.finalClientOwes : fees.retainerClientOwes;
-  const amountDueCents = isFinal ? fees.finalClientOwesCents : fees.retainerClientOwesCents;
-
-  async function handleDemo() {
-    setLoading(true);
-    await new Promise(r => setTimeout(r, 1500));
-    const paymentIntentId = 'demo_' + Date.now();
-    saveLocalPaymentRecord({ project, creator, fees, paymentType, paymentIntentId });
-    onSuccess({ paymentIntentId, amount: amountDueCents });
-    setLoading(false);
-  }
-
   return (
-    <div className="space-y-4">
-      <div className={`rounded-2xl border p-5 flex items-center justify-between ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`}>
+    <div className={`rounded-2xl border p-5 space-y-3 ${
+      dark ? 'bg-charcoal-900/72 border-gold-500/25' : 'bg-gold-50 border-gold-200'
+    }`}>
+      <div className="flex items-start gap-3">
+        <Shield size={18} className="text-gold-400 shrink-0 mt-0.5" />
         <div>
-          <p className={`text-xs ${textSub}`}>{isFinal ? 'Final balance due now' : 'Retainer due now'}</p>
-          <p className={`font-display font-bold text-2xl ${dark ? 'text-white' : 'text-gray-900'}`}>
-            {dollarsToDisplay(amountDue)}
+          <p className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>Secure checkout is temporarily unavailable.</p>
+          <p className={`text-xs leading-relaxed mt-1 ${textSub}`}>
+            CreatorBridge payments must run through authenticated Supabase and Stripe checkout. Please contact support before paying this booking.
           </p>
         </div>
       </div>
-
-      <div className={`rounded-2xl border p-5 space-y-3 ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`}>
-        <div className={`flex items-center gap-2 p-3 rounded-xl ${dark ? 'bg-gold-500/10 border border-gold-500/25' : 'bg-gold-50 border border-gold-200'}`}>
-          <AlertCircle size={14} className="text-gold-400 shrink-0" />
-          <p className="text-xs text-gold-400">Demo mode: Add VITE_STRIPE_PUBLISHABLE_KEY to .env to enable real payments.</p>
-        </div>
-        <p className={`text-xs ${textSub}`}>Simulated card: 4242 4242 4242 4242 | Any future date | Any CVC</p>
-        <div className={`p-3 rounded-xl border ${dark ? 'bg-charcoal-950/75 border-white/[0.09]' : 'bg-gray-50 border-gray-300'}`}>
-          <p className={`text-sm font-mono ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>4242 4242 4242 4242</p>
-        </div>
-      </div>
-
-      <button type="button" onClick={handleDemo} disabled={loading}
-        className="w-full py-3.5 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-50 text-charcoal-900 font-bold text-sm transition-all flex items-center justify-center gap-2">
-        {loading ? <Loader size={15} className="animate-spin" /> : <CreditCard size={15} />}
-        {loading ? 'Processing...' : `Simulate Payment of ${dollarsToDisplay(amountDue)}`}
-      </button>
     </div>
   );
 }

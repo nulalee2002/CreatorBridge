@@ -2,7 +2,6 @@ import { loadStripe } from '@stripe/stripe-js';
 
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
-// Graceful fallback when key is not configured (matches pattern in supabase.js)
 export const stripeConfigured = !!(stripePublishableKey && stripePublishableKey !== 'pk_test_PASTE_YOUR_FULL_KEY_HERE');
 
 let stripePromise = null;
