@@ -102,6 +102,15 @@ function loadCreatorAvailability(creatorId) {
   }
 }
 
+function getCreatorAvailabilityMap(creator) {
+  return (
+    creator?.availabilityMap ||
+    creator?.availability_map ||
+    creator?.availability_calendar ||
+    loadCreatorAvailability(creator?.id)
+  );
+}
+
 /**
  * Extract the minimum and maximum rates from a creator's matching service.
  * Returns { min, max } in dollars, or null if service not found.
@@ -192,7 +201,7 @@ function scoreAvailability(creator, brief) {
   const projectDate = brief.projectDate || brief.project_date || brief.deadline || brief.timeline;
   if (projectDate) {
     // Check creator's availability calendar for that specific date
-    const avail = loadCreatorAvailability(creator.id);
+    const avail = getCreatorAvailabilityMap(creator);
     const dateStatus = avail[projectDate];
     if (dateStatus === 'booked') return -Infinity; // Hard exclude if booked on that date
     if (dateStatus === 'available') return 20;       // Explicitly available — top score

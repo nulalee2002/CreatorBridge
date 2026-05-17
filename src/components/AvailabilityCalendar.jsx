@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, CalendarDays, Check } from 'lucide-react';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 
+const VALID_AVAILABILITY_STATUSES = new Set(['available', 'booked', 'tentative']);
+const VALID_AVAILABILITY_SOURCES = new Set(['manual', 'google_busy', 'booking', 'system']);
+
 // ── localStorage helpers ──────────────────────────────────────
 export function availabilityKey(creatorId) {
   return `creator-availability-${creatorId}`;
@@ -30,9 +33,22 @@ function canUseSupabaseAvailability(creatorId) {
 
 function rowsToAvailability(rows = []) {
   return rows.reduce((acc, row) => {
-    if (row.date && row.status) acc[row.date] = row.status;
+    if (row.date && VALID_AVAILABILITY_STATUSES.has(row.status)) acc[row.date] = row.status;
     return acc;
   }, {});
+}
+
+function sanitizeAvailabilityMap(data = {}) {
+  return Object.entries(data || {}).reduce((acc, [date, status]) => {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date) && VALID_AVAILABILITY_STATUSES.has(status)) {
+      acc[date] = status;
+    }
+    return acc;
+  }, {});
+}
+
+function sanitizeAvailabilitySource(source) {
+  return VALID_AVAILABILITY_SOURCES.has(source) ? source : 'manual';
 }
 
 export async function fetchAvailability(creatorId) {
@@ -40,7 +56,7 @@ export async function fetchAvailability(creatorId) {
 
   const { data, error } = await supabase
     .from('availability')
-    .select('date,status')
+    .select('date,status,source,updated_at')
     .eq('listing_id', creatorId);
 
   if (error) {
@@ -54,40 +70,63 @@ export async function fetchAvailability(creatorId) {
 }
 
 export async function persistAvailability(creatorId, data) {
+  return persistAvailabilityWithOptions(creatorId, data);
+}
+
+export async function persistAvailabilityWithOptions(creatorId, data, options = {}) {
+  const cleaned = sanitizeAvailabilityMap(data);
+
   if (!canUseSupabaseAvailability(creatorId)) {
-    saveAvailability(creatorId, data);
-    return data;
+    saveAvailability(creatorId, cleaned);
+    return cleaned;
   }
 
-  const rows = Object.entries(data || {}).map(([date, status]) => ({
+  const source = sanitizeAvailabilitySource(options.source);
+  const rows = Object.entries(cleaned).map(([date, status]) => ({
     listing_id: creatorId,
     date,
     status,
+    source,
   }));
 
-  const { error: deleteError } = await supabase
+  const { data: existingRows, error: existingError } = await supabase
     .from('availability')
-    .delete()
+    .select('date')
     .eq('listing_id', creatorId);
 
-  if (deleteError) throw deleteError;
+  if (existingError) throw existingError;
 
   if (rows.length > 0) {
-    const { error: insertError } = await supabase
+    const { error: upsertError } = await supabase
       .from('availability')
-      .insert(rows);
+      .upsert(rows, { onConflict: 'listing_id,date' });
 
-    if (insertError) throw insertError;
+    if (upsertError) throw upsertError;
   }
 
-  saveAvailability(creatorId, data);
-  return data;
+  const currentDates = new Set(Object.keys(cleaned));
+  const staleDates = (existingRows || [])
+    .map(row => row.date)
+    .filter(date => date && !currentDates.has(date));
+
+  if (staleDates.length > 0) {
+    const { error: deleteError } = await supabase
+      .from('availability')
+      .delete()
+      .eq('listing_id', creatorId)
+      .in('date', staleDates);
+
+    if (deleteError) throw deleteError;
+  }
+
+  saveAvailability(creatorId, cleaned);
+  return cleaned;
 }
 
-export async function mergeAvailability(creatorId, updates) {
+export async function mergeAvailability(creatorId, updates, options = {}) {
   const current = await fetchAvailability(creatorId);
-  const merged = { ...current, ...updates };
-  return persistAvailability(creatorId, merged);
+  const merged = sanitizeAvailabilityMap({ ...current, ...updates });
+  return persistAvailabilityWithOptions(creatorId, merged, options);
 }
 
 // ── Date helpers ──────────────────────────────────────────────

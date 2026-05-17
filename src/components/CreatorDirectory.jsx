@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { getNewCreatorSpotlight } from '../utils/matchingAlgorithm.js';
 import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Star, X, Plus, Trash2, ArrowRight, Filter, UserPlus, Heart, ExternalLink, BadgeCheck, AlertCircle } from 'lucide-react';
@@ -1091,6 +1091,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegister, onSwitchToSearch }) {
   const { user } = useAuth();
   const [listings, setListings] = useState(loadListings);
+  const availabilityLoadedFor = useRef('');
   const [searchQuery, setSearchQuery] = useState('');
   const [serviceFilter, setServiceFilter] = useState('all');
   const [budget, setBudget] = useState('');
@@ -1100,6 +1101,41 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
   const [showGuestGate, setShowGuestGate] = useState(false);
 
   const isGuest = !user;
+
+  useEffect(() => {
+    if (!supabaseConfigured || !supabase || listings.length === 0) return;
+
+    const listingIds = listings
+      .map(item => item.id)
+      .filter(id => id && !String(id).startsWith('seed-'))
+      .sort();
+    const loadKey = listingIds.join('|');
+
+    if (!loadKey || availabilityLoadedFor.current === loadKey) return;
+    availabilityLoadedFor.current = loadKey;
+
+    let active = true;
+    supabase
+      .from('availability')
+      .select('listing_id,date,status')
+      .in('listing_id', listingIds)
+      .then(({ data, error }) => {
+        if (!active || error) return;
+
+        const byListing = (data || []).reduce((acc, row) => {
+          if (!row.listing_id || !row.date || !row.status) return acc;
+          acc[row.listing_id] = acc[row.listing_id] || {};
+          acc[row.listing_id][row.date] = row.status;
+          return acc;
+        }, {});
+
+        setListings(prev => prev.map(item => (
+          byListing[item.id] ? { ...item, availabilityMap: byListing[item.id] } : item
+        )));
+      });
+
+    return () => { active = false; };
+  }, [listings]);
 
   const budgetNum = parseFloat(budget) || 0;
   const zipRegion = zip.length >= 3 ? zipToRegion(zip) : null;

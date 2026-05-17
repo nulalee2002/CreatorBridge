@@ -58,6 +58,26 @@ check('Smart Match reliability', 'src/utils/matchingAlgorithm.js', [
   { label: 'normalizes services before matching', test: includes('normalizeServiceId') },
   { label: 'excludes pending or unapproved creators', test: includes('isApprovedCreator') },
   { label: 'caps match percentages', test: includes('Math.min(99') },
+  { label: 'can score Supabase-fetched creator availability maps', test: includes('availabilityMap') },
+]);
+
+check('Availability calendar hardening', 'src/components/AvailabilityCalendar.jsx', [
+  { label: 'uses targeted availability upsert instead of broad replace', test: includes(".upsert(rows, { onConflict: 'listing_id,date' })") },
+  { label: 'only deletes stale availability dates after successful save', test: includes('const staleDates') },
+  { label: 'records availability source for synced data', test: includes('source,') },
+]);
+
+check('Google Calendar session sync', 'src/components/GoogleCalendarConnect.jsx', [
+  { label: 'stores Google token in browser session storage', test: includes('sessionStorage.setItem') },
+  { label: 'clears legacy local Google token on disconnect', test: includes('localStorage.removeItem(`gcal-token-${creatorId}`)') },
+  { label: 'marks imported busy days as Google sourced', test: includes("source: 'google_busy'") },
+]);
+
+check('Availability database hardening', 'supabase/migrations/20260517101522_harden_availability_calendar_flow.sql', [
+  { label: 'adds source tracking to availability rows', test: includes("source text not null default 'manual'") },
+  { label: 'constrains allowed availability statuses', test: includes('availability_status_allowed') },
+  { label: 'constrains allowed availability sources', test: includes('availability_source_allowed') },
+  { label: 'keeps updated_at fresh on calendar edits', test: includes('set_availability_updated_at') },
 ]);
 
 check('Checkout fee display', 'src/pages/CheckoutPage.jsx', [

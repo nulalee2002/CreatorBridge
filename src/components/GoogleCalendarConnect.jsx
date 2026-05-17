@@ -6,10 +6,10 @@ const CLIENT_ID      = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const SCOPES         = 'https://www.googleapis.com/auth/calendar.readonly';
 const REDIRECT_ORIGIN = window.location.origin;
 
-// ── localStorage helpers ─────────────────────────────────────
+// ── session helpers ──────────────────────────────────────────
 function saveGCalToken(creatorId, token) {
   try {
-    localStorage.setItem(`gcal-token-${creatorId}`, JSON.stringify({
+    sessionStorage.setItem(`gcal-token-${creatorId}`, JSON.stringify({
       access_token: token.access_token,
       expires_at:   Date.now() + (token.expires_in || 3600) * 1000,
     }));
@@ -18,10 +18,11 @@ function saveGCalToken(creatorId, token) {
 
 function loadGCalToken(creatorId) {
   try {
-    const raw = localStorage.getItem(`gcal-token-${creatorId}`);
+    const raw = sessionStorage.getItem(`gcal-token-${creatorId}`) || localStorage.getItem(`gcal-token-${creatorId}`);
     if (!raw) return null;
     const t = JSON.parse(raw);
     if (t.expires_at < Date.now()) {
+      sessionStorage.removeItem(`gcal-token-${creatorId}`);
       localStorage.removeItem(`gcal-token-${creatorId}`);
       return null;
     }
@@ -30,6 +31,7 @@ function loadGCalToken(creatorId) {
 }
 
 function disconnectGCal(creatorId) {
+  sessionStorage.removeItem(`gcal-token-${creatorId}`);
   localStorage.removeItem(`gcal-token-${creatorId}`);
 }
 
@@ -111,7 +113,7 @@ async function syncFromGCal(creatorId, accessToken) {
     }
   }
 
-  await mergeAvailability(creatorId, updates);
+  await mergeAvailability(creatorId, updates, { source: 'google_busy' });
   return busy.length;
 }
 
@@ -210,7 +212,7 @@ export function GoogleCalendarConnect({ creatorId, dark, onSync }) {
         <div>
           <p className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>Google Calendar</p>
           <p className={`text-xs ${textSub}`}>
-            {connected ? 'Connected - busy times sync to CreatorBridge availability' : 'Auto-import your busy days from Google Calendar'}
+            {connected ? 'Connected for this browser session - busy times sync to CreatorBridge availability' : 'Auto-import your busy days from Google Calendar'}
           </p>
         </div>
         {connected && <Check size={14} className="text-gold-400 ml-auto shrink-0" />}
@@ -251,7 +253,7 @@ export function GoogleCalendarConnect({ creatorId, dark, onSync }) {
         )}
       </div>
       <p className={`text-[10px] mt-2 ${textSub}`}>
-        Only your free/busy status is imported. Event details are never stored.
+        Only your free/busy status is imported. Event details are never stored. Reconnect after the browser session expires.
       </p>
     </div>
   );
