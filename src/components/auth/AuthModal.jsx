@@ -17,6 +17,10 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
   // SMS verification state (creator signup only, when Supabase configured)
   const [smsStep, setSmsStep]   = useState(false); // true = show code entry
   const [smsCode, setSmsCode]   = useState('');
+  // Forgot password state
+  const [forgotMode, setForgotMode]     = useState(false);
+  const [forgotEmail, setForgotEmail]   = useState('');
+  const [forgotSent, setForgotSent]     = useState(false);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -129,6 +133,18 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
     if (error) setError(error.message);
   }
 
+  async function handleForgotPassword(e) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    if (error) { setError(error.message); return; }
+    setForgotSent(true);
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
@@ -211,6 +227,46 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
             </div>
           ) : (
           <>
+          {/* Forgot password screen */}
+          {forgotMode ? (
+            <div className="space-y-4 py-2">
+              {forgotSent ? (
+                <div className="text-center py-4">
+                  <div className="text-3xl mb-3">📬</div>
+                  <p className={`text-sm font-bold mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>Check your inbox</p>
+                  <p className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
+                    We sent a password reset link to <span className="text-gold-400">{forgotEmail}</span>.
+                  </p>
+                  <button type="button" onClick={() => { setForgotMode(false); setForgotSent(false); setError(''); }}
+                    className="mt-5 text-xs text-gold-400 hover:text-gold-300 transition-colors">
+                    Back to sign in
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleForgotPassword} className="space-y-3">
+                  <p className={`text-xs mb-1 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
+                    Enter your email and we'll send you a reset link.
+                  </p>
+                  <div className="relative">
+                    <Mail size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${dark ? 'text-charcoal-300' : 'text-gray-400'}`} />
+                    <input type="email" placeholder="Email address" required value={forgotEmail}
+                      onChange={e => setForgotEmail(e.target.value)}
+                      className={`${inputCls} pl-10`} autoFocus />
+                  </div>
+                  {error && <p className="text-xs text-red-400 bg-red-400/10 rounded-lg px-3 py-2">{error}</p>}
+                  <button type="submit" disabled={loading}
+                    className="w-full py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold disabled:opacity-50 transition-all">
+                    {loading ? 'Sending...' : 'Send Reset Link'}
+                  </button>
+                  <button type="button" onClick={() => { setForgotMode(false); setError(''); }}
+                    className={`w-full py-2 text-xs ${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-400 hover:text-gray-900'} transition-colors`}>
+                    Back to sign in
+                  </button>
+                </form>
+              )}
+            </div>
+          ) : (
+          <>
           {/* SMS code entry screen */}
           {smsStep ? (
             <form onSubmit={handleVerifyCode} className="space-y-4">
@@ -285,6 +341,16 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
               </button>
             </div>
 
+            {/* Forgot password link — login tab only */}
+            {tab === 'login' && (
+              <div className="text-right -mt-1">
+                <button type="button" onClick={() => { setForgotMode(true); setError(''); setForgotEmail(form.email); }}
+                  className={`text-[11px] ${dark ? 'text-charcoal-300 hover:text-gold-400' : 'text-gray-400 hover:text-gold-500'} transition-colors`}>
+                  Forgot password?
+                </button>
+              </div>
+            )}
+
             {/* Phone number for creator signup */}
             {tab === 'signup' && role === 'creator' && (
               <div className="relative">
@@ -358,6 +424,8 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
               {tab === 'login' ? 'Sign up free' : 'Sign in'}
             </button>
           </p>
+          </>
+          )}
           </>
           )}
           </>
