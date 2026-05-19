@@ -22,6 +22,16 @@ export function StripeOnboarding({ creator, dark, onStatusChange }) {
   const cardCls = `rounded-2xl border p-5 shadow-[0_24px_80px_rgba(0,0,0,0.18)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`;
   const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
 
+async function functionErrorMessage(fnErr, fallback) {
+  if (!fnErr) return fallback;
+  try {
+    const payload = await fnErr.context?.json?.();
+    if (payload?.error) return payload.error;
+    if (payload?.message) return payload.message;
+  } catch {}
+  return fnErr.message || fallback;
+}
+
   // On mount, if creator has a stripe_account_id but not yet marked onboarded, re-check
   useEffect(() => {
     if (creator?.stripe_account_id && !creator?.stripe_onboarded && supabaseConfigured) {
@@ -35,7 +45,7 @@ export function StripeOnboarding({ creator, dark, onStatusChange }) {
       const { data, error: fnErr } = await supabase.functions.invoke('check-connect-status', {
         body: { stripeAccountId: accountId, listingId: creator.id },
       });
-      if (fnErr) throw fnErr;
+      if (fnErr) throw new Error(await functionErrorMessage(fnErr, 'Could not check Stripe account status.'));
       setStatus(data);
       if (data.connected && data.chargesEnabled) {
         onStatusChange?.({ stripe_onboarded: true, payouts_enabled: data.payoutsEnabled });
@@ -89,9 +99,10 @@ export function StripeOnboarding({ creator, dark, onStatusChange }) {
           listingId: creator.id,
         },
       });
-      if (fnErr) throw fnErr;
-      if (data?.stripeAccountId) {
-        const isUnique = await checkStripeUniqueness(data.stripeAccountId);
+      if (fnErr) throw new Error(await functionErrorMessage(fnErr, 'Could not start Stripe onboarding.'));
+      const stripeAccountId = data?.stripeAccountId || data?.accountId;
+      if (stripeAccountId) {
+        const isUnique = await checkStripeUniqueness(stripeAccountId);
         if (!isUnique) { setLoading(false); return; }
       }
       if (data?.url) {
