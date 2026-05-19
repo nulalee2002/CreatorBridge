@@ -10,6 +10,7 @@ import { FeeBreakdown } from '../components/FeeBreakdown.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { SERVICES, normalizeServiceId } from '../data/rates.js';
+import { fromSupabaseProject, upsertLocalProject } from '../utils/projectStorage.js';
 
 // ── Helpers ──────────────────────────────────────────────────────
 function loadProject(projectId) {
@@ -21,13 +22,26 @@ function loadProject(projectId) {
 function loadCreatorForProject(project) {
   try {
     const all = JSON.parse(localStorage.getItem('creator-directory') || '[]');
+    const acceptedCreatorId = project.acceptedCreatorId || project.accepted_creator_id;
+    if (acceptedCreatorId) {
+      return all.find(c => c.id === acceptedCreatorId) || null;
+    }
     const projectServiceId = normalizeServiceId(project.serviceId || project.service || project.serviceType);
-    // Match by application acceptance or just return first matching service
+    // Demo fallback only before a project has an accepted creator.
     return all.find(c =>
-      c.id === project.acceptedCreatorId ||
       (c.services || []).some(s => normalizeServiceId(s.serviceId || s.service_id || s.name) === projectServiceId)
     ) || null;
   } catch { return null; }
+}
+
+function fromCreatorListingRow(row) {
+  if (!row) return null;
+  return {
+    ...row,
+    businessName: row.business_name || row.businessName || row.name || '',
+    name: row.name || row.business_name || row.businessName || 'Creator',
+    avatar: row.avatar || '🎬',
+  };
 }
 
 // ── Step indicator ────────────────────────────────────────────────
@@ -74,6 +88,8 @@ function ReviewStep({ project, creator, fees, dark, paymentType, creatorFeePct, 
   const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
   const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`;
   const isFinal = paymentType === 'final';
+  const projectAmount = Number(project?.budgetMax || project?.budgetMin || 0);
+  const hasPayableAmount = Number.isFinite(projectAmount) && projectAmount > 0;
 
   return (
     <div className="space-y-4">
@@ -98,12 +114,21 @@ function ReviewStep({ project, creator, fees, dark, paymentType, creatorFeePct, 
 
       {/* Fee breakdown */}
       <FeeBreakdown
-        projectAmount={(project?.budgetMax || project?.budgetMin || 0)}
+        projectAmount={projectAmount}
         viewMode="client"
         dark={dark}
         creatorFeePct={creatorFeePct}
         clientFeePct={clientFeePct}
       />
+
+      {!hasPayableAmount && (
+        <div className="flex items-start gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/30">
+          <AlertCircle size={14} className="text-red-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-red-400">
+            This project does not have a payable budget. Return to the project brief and add a real budget before checkout.
+          </p>
+        </div>
+      )}
 
       {clientFeePct === 0 && (
         <div className={`${cardCls} p-4 flex items-start gap-3`}>
@@ -133,8 +158,8 @@ function ReviewStep({ project, creator, fees, dark, paymentType, creatorFeePct, 
         </p>
       </div>
 
-      <button type="button" onClick={onNext}
-        className="w-full py-3.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 font-bold text-sm transition-all flex items-center justify-center gap-2">
+      <button type="button" onClick={onNext} disabled={!hasPayableAmount}
+        className="w-full py-3.5 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-45 text-charcoal-900 font-bold text-sm transition-all flex items-center justify-center gap-2">
         <CreditCard size={15} /> Continue to {isFinal ? 'Final Payment' : 'Payment'}
       </button>
     </div>
@@ -142,6 +167,24 @@ function ReviewStep({ project, creator, fees, dark, paymentType, creatorFeePct, 
 }
 
 // ── Card form (inner, needs stripe context) ───────────────────────
+async function getFunctionErrorMessage(fnErr) {
+  const fallback = fnErr?.message || 'Secure checkout could not be prepared. Please try again.';
+  const response = fnErr?.context;
+  if (!response || typeof response.clone !== 'function') return fallback;
+
+  try {
+    const payload = await response.clone().json();
+    return payload?.error || payload?.message || fallback;
+  } catch {
+    try {
+      const text = await response.clone().text();
+      return text || fallback;
+    } catch {
+      return fallback;
+    }
+  }
+}
+
 function CardForm({ fees, project, creator, dark, paymentType, creatorFeePct, clientFeePct, onSuccess }) {
   const stripe   = useStripe();
   const elements = useElements();
@@ -167,15 +210,29 @@ function CardForm({ fees, project, creator, dark, paymentType, creatorFeePct, cl
         throw new Error('Please sign in as the client before making a payment.');
       }
 
+      const projectAmount = Number(project?.budgetMax || project?.budgetMin || 0);
+      if (!Number.isFinite(projectAmount) || projectAmount <= 0) {
+        throw new Error('This project does not have a payable budget. Add a real budget before checkout.');
+      }
+
+      const acceptedCreatorId = creator?.id || project.acceptedCreatorId || project.accepted_creator_id;
+      if (!acceptedCreatorId) {
+        throw new Error('This project does not have an accepted creator yet. Accept a creator proposal before checkout.');
+      }
+
+      if (creator && 'stripe_account_id' in creator && !creator.stripe_account_id) {
+        throw new Error('This creator has not connected a Stripe payout account yet. Ask the creator to finish payment setup before you pay the retainer.');
+      }
+
       const { data, error: fnErr } = await supabase.functions.invoke('create-payment-intent', {
         body: {
           projectId: project.id,
-          creatorId: creator?.id,
+          creatorId: acceptedCreatorId,
           clientId: user.id,
           paymentType,
         },
       });
-      if (fnErr) throw fnErr;
+      if (fnErr) throw new Error(await getFunctionErrorMessage(fnErr));
       const clientSecret = data?.clientSecret;
       if (!clientSecret) throw new Error('Secure checkout could not be prepared. Please try again.');
 
@@ -369,12 +426,37 @@ export function CheckoutPage({ dark }) {
   const paymentType = searchParams.get('payment') === 'final' ? 'final' : 'retainer';
 
   useEffect(() => {
-    const p = loadProject(projectId);
-    if (p) {
-      setProject(p);
-      setCreator(loadCreatorForProject(p));
+    let cancelled = false;
+    async function loadCheckoutProject() {
+      setLoading(true);
+      let p = loadProject(projectId);
+      if (!p && supabaseConfigured) {
+        const { data } = await supabase
+          .from('projects')
+          .select('*')
+          .eq('id', projectId)
+          .maybeSingle();
+        p = fromSupabaseProject(data);
+        if (p) upsertLocalProject(p);
+      }
+      if (cancelled) return;
+      if (p) {
+        setProject(p);
+        setCreator(loadCreatorForProject(p));
+      }
+      setLoading(false);
+
+      const acceptedCreatorId = p?.acceptedCreatorId || p?.accepted_creator_id;
+      if (!acceptedCreatorId || !supabaseConfigured) return;
+      const { data } = await supabase
+        .from('creator_listings')
+        .select('*')
+        .eq('id', acceptedCreatorId)
+        .maybeSingle();
+      if (!cancelled && data) setCreator(fromCreatorListingRow(data));
     }
-    setLoading(false);
+    loadCheckoutProject();
+    return () => { cancelled = true; };
   }, [projectId]);
 
   const projectAmount = project?.budgetMax || project?.budgetMin || 0;

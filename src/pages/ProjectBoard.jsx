@@ -51,6 +51,7 @@ function fromSupabaseApplication(row, listing = null) {
     proposal: row.message || '',
     rate: row.proposed_rate,
     status: row.status || 'pending',
+    payoutReady: listing?.stripe_account_id ? true : listing?.stripe_account_id === null ? false : undefined,
     createdAt: row.created_at,
     source: 'supabase',
   };
@@ -75,6 +76,17 @@ function loadMyListing(userId) {
     const all = JSON.parse(localStorage.getItem('creator-directory') || '[]');
     return all.find(c => c.user_id === userId) || null;
   } catch { return null; }
+}
+
+function fromCreatorListingRow(row) {
+  if (!row) return null;
+  return {
+    ...row,
+    businessName: row.business_name || row.businessName || row.name || '',
+    name: row.name || row.business_name || row.businessName || 'Creator',
+    avatar: row.avatar || '🎬',
+    user_id: row.user_id,
+  };
 }
 
 function locationStr(loc) {
@@ -377,8 +389,8 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
     if (!form.serviceId) next.serviceId = 'Choose the production service you need.';
     if (cleanDescription.length < 80) next.description = 'Add at least 80 characters so creators understand the scope.';
     if (!form.projectDuration) next.projectDuration = 'Select how long you need the creator or crew.';
-    if (form.budgetMin && minBudget < 0) next.budgetMin = 'Budget cannot be negative.';
-    if (form.budgetMax && maxBudget < 0) next.budgetMax = 'Budget cannot be negative.';
+    if (!form.budgetMin || !Number.isFinite(minBudget) || minBudget <= 0) next.budgetMin = 'Add a minimum budget above $0.';
+    if (!form.budgetMax || !Number.isFinite(maxBudget) || maxBudget <= 0) next.budgetMax = 'Add a maximum budget above $0.';
     if (form.budgetMin && form.budgetMax && minBudget > maxBudget) next.budgetMax = 'Max budget should be higher than min budget.';
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -492,15 +504,15 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Min Budget ($)</p>
+                <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Min Budget ($) *</p>
                 <input type="number" min={0} value={form.budgetMin} onChange={e => set('budgetMin', e.target.value)}
-                  placeholder="500" className={inputCls('budgetMin')} />
+                  placeholder="Enter minimum" className={inputCls('budgetMin')} />
                 {errors.budgetMin && <p className="mt-1 text-xs text-red-400">{errors.budgetMin}</p>}
               </div>
               <div>
-                <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Max Budget ($)</p>
+                <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Max Budget ($) *</p>
                 <input type="number" min={0} value={form.budgetMax} onChange={e => set('budgetMax', e.target.value)}
-                  placeholder="2000" className={inputCls('budgetMax')} />
+                  placeholder="Enter maximum" className={inputCls('budgetMax')} />
                 {errors.budgetMax && <p className="mt-1 text-xs text-red-400">{errors.budgetMax}</p>}
               </div>
             </div>
@@ -555,7 +567,7 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
               Cancel
             </button>
             <button type="button" onClick={handlePost}
-              disabled={!form.title.trim() || !form.description.trim() || !form.serviceId || !form.projectDuration}
+              disabled={!form.title.trim() || !form.description.trim() || !form.serviceId || !form.projectDuration || !form.budgetMin || !form.budgetMax}
               className="flex-1 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 text-charcoal-900 text-sm font-bold transition-all flex items-center justify-center gap-2">
               <Briefcase size={14} /> Post Project
             </button>
@@ -927,6 +939,7 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
   const [showDelivery, setShowDelivery]     = useState(false);
   const [showRevision, setShowRevision]     = useState(false);
   const [localProject, setLocalProject]    = useState(project);
+  const [acceptError, setAcceptError]      = useState('');
 
   const budgetStr = project.budgetMin && project.budgetMax
     ? `$${Number(project.budgetMin).toLocaleString()} – $${Number(project.budgetMax).toLocaleString()}`
@@ -935,6 +948,11 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
     : 'Budget TBD';
 
   async function acceptApplication(app) {
+    if (app.payoutReady === false) {
+      setAcceptError('This creator has not finished Stripe payout setup yet. Ask them to connect payments before accepting the proposal.');
+      return;
+    }
+    setAcceptError('');
     const now = new Date().toISOString();
     const patch = {
       acceptedCreatorId: app.creatorId,
@@ -951,6 +969,7 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
         if (acceptError) throw acceptError;
       } catch (err) {
         console.error('Unable to accept application:', err);
+        setAcceptError(err.message || 'Unable to accept this proposal. Please try again.');
         return;
       }
     }
@@ -1030,6 +1049,12 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
           {isClient && projectApps.length > 0 && (
             <div className="mb-4">
               <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Proposals Received ({projectApps.length})</p>
+              {acceptError && (
+                <div className="mb-2 flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2">
+                  <AlertCircle size={13} className="mt-0.5 shrink-0 text-red-400" />
+                  <p className="text-xs text-red-300">{acceptError}</p>
+                </div>
+              )}
               <div className="space-y-2">
                 {projectApps.map(app => (
                   <div key={app.id} className={`p-3 rounded-xl border ${dark ? 'border-white/[0.07] bg-charcoal-900/72' : 'border-gray-200 bg-gray-50'}`}>
@@ -1040,9 +1065,9 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
                         {app.rate && <span className="text-xs font-bold text-gold-400">${Number(app.rate).toLocaleString()}</span>}
                       </div>
                       {localProject.status === 'open' && app.status !== 'accepted' && (
-                        <button type="button" onClick={() => acceptApplication(app)}
-                          className="shrink-0 rounded-lg bg-gold-500 px-2.5 py-1 text-[10px] font-bold text-charcoal-900 hover:bg-gold-600">
-                          Accept
+                        <button type="button" onClick={() => acceptApplication(app)} disabled={app.payoutReady === false}
+                          className="shrink-0 rounded-lg bg-gold-500 px-2.5 py-1 text-[10px] font-bold text-charcoal-900 hover:bg-gold-600 disabled:cursor-not-allowed disabled:opacity-45">
+                          {app.payoutReady === false ? 'Payment setup needed' : 'Accept'}
                         </button>
                       )}
                       {app.status === 'accepted' && (
@@ -1225,6 +1250,19 @@ export function ProjectBoard({ dark }) {
       setCreatorListing(loadMyListing(user.id));
     }
 
+    async function loadRemoteCreatorListing() {
+      if (!supabaseConfigured || !user) return;
+      const localListing = loadMyListing(user.id);
+      if (localListing) return;
+      const { data } = await supabase
+        .from('creator_listings')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      setCreatorListing(fromCreatorListingRow(data));
+    }
+
     async function loadRemoteProjects() {
       if (!supabaseConfigured || !user) return;
       const { data } = await supabase
@@ -1248,7 +1286,7 @@ export function ProjectBoard({ dark }) {
       if (listingIds.length) {
         const { data: listingRows } = await supabase
           .from('creator_listings')
-          .select('id,business_name,name,avatar')
+          .select('id,business_name,name,avatar,stripe_account_id')
           .in('id', listingIds);
         listingsById = (listingRows || []).reduce((map, listing) => {
           map[listing.id] = listing;
@@ -1260,6 +1298,7 @@ export function ProjectBoard({ dark }) {
       setApplications(current => mergeApplications(current, remoteApps));
     }
 
+    loadRemoteCreatorListing();
     loadRemoteProjects();
     loadRemoteApplications();
     return () => { cancelled = true; };
