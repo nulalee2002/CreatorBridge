@@ -62,7 +62,7 @@ function mergeApplications(...lists) {
   lists.flat().filter(Boolean).forEach(app => {
     if (!app?.id) return;
     const current = byId.get(app.id) || {};
-    byId.set(app.id, { ...app, ...current });
+    byId.set(app.id, { ...current, ...app });
   });
   return Array.from(byId.values()).sort((a, b) => {
     const aTime = new Date(a.createdAt || a.created_at || 0).getTime();
@@ -1286,7 +1286,11 @@ export function ProjectBoard({ dark }) {
         .select('*')
         .order('created_at', { ascending: false });
       if (cancelled || !data) return;
-      setProjects(current => mergeProjects(current, data.map(fromSupabaseProject)));
+      setProjects(current => {
+        const merged = mergeProjects(current, data.map(fromSupabaseProject));
+        saveProjects(merged);
+        return merged;
+      });
     }
 
     async function loadRemoteApplications() {
@@ -1311,7 +1315,11 @@ export function ProjectBoard({ dark }) {
       }
 
       const remoteApps = data.map(row => fromSupabaseApplication(row, listingsById[row.listing_id]));
-      setApplications(current => mergeApplications(current, remoteApps));
+      setApplications(current => {
+        const merged = mergeApplications(current, remoteApps);
+        saveApplications(merged);
+        return merged;
+      });
     }
 
     loadRemoteCreatorListing();

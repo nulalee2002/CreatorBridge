@@ -30,7 +30,7 @@ export function mergeProjects(...lists) {
   lists.flat().filter(Boolean).forEach(project => {
     if (!project?.id) return;
     const current = byId.get(project.id) || {};
-    byId.set(project.id, { ...project, ...current });
+    byId.set(project.id, { ...current, ...project });
   });
   return Array.from(byId.values()).sort((a, b) => {
     const aTime = new Date(a.createdAt || a.created_at || 0).getTime();
