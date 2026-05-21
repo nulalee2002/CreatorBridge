@@ -848,6 +848,9 @@ function InlineClientRep({ clientId, dark }) {
 // ── Project Card ─────────────────────────────────────────────────
 function ProjectCard({ project, dark, onApply, myApplications, isClient, canApply, onView, onStatusChange }) {
   const navigate = useNavigate();
+  const [showDelivery, setShowDelivery] = useState(false);
+  const [showRevision, setShowRevision] = useState(false);
+  const [showDispute, setShowDispute] = useState(false);
   const serviceId = normalizeServiceId(project.serviceId || project.service_id || project.serviceType);
   const svc      = SERVICES[serviceId];
   const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
@@ -936,7 +939,42 @@ function ProjectCard({ project, dark, onApply, myApplications, isClient, canAppl
         onApply={e => { e.stopPropagation(); onApply(project); }}
         onStatusChange={onStatusChange}
         navigate={navigate}
+        onOpenDelivery={() => setShowDelivery(true)}
+        onOpenRevision={(mode) => mode === 'dispute' ? setShowDispute(true) : setShowRevision(true)}
       />
+      {showDelivery && (
+        <DeliverySubmitModal
+          project={project}
+          dark={dark}
+          onClose={() => setShowDelivery(false)}
+          onDelivered={(updatedProject) => {
+            setShowDelivery(false);
+            onStatusChange?.(project.id, 'delivered', updatedProject);
+          }}
+        />
+      )}
+      {showRevision && (
+        <RevisionRequestModal
+          project={project}
+          dark={dark}
+          onClose={() => setShowRevision(false)}
+          onRevisionSubmitted={(updatedProject) => {
+            setShowRevision(false);
+            onStatusChange?.(project.id, 'in_progress', updatedProject);
+          }}
+        />
+      )}
+      {showDispute && (
+        <DisputeModal
+          project={project}
+          dark={dark}
+          onClose={() => setShowDispute(false)}
+          onSubmitted={() => {
+            setShowDispute(false);
+            onStatusChange?.(project.id, 'disputed');
+          }}
+        />
+      )}
     </div>
   );
 }

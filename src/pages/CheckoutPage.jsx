@@ -185,6 +185,16 @@ async function getFunctionErrorMessage(fnErr) {
   }
 }
 
+async function createPaymentIntentWithRetry(body) {
+  let lastResult = null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    lastResult = await supabase.functions.invoke('create-payment-intent', { body });
+    if (!lastResult.error || lastResult.error?.context) return lastResult;
+    await new Promise(resolve => setTimeout(resolve, 900));
+  }
+  return lastResult;
+}
+
 function CardForm({ fees, project, creator, dark, paymentType, creatorFeePct, clientFeePct, onSuccess }) {
   const stripe   = useStripe();
   const elements = useElements();
@@ -224,13 +234,11 @@ function CardForm({ fees, project, creator, dark, paymentType, creatorFeePct, cl
         throw new Error('This creator has not connected a Stripe payout account yet. Ask the creator to finish payment setup before you pay the retainer.');
       }
 
-      const { data, error: fnErr } = await supabase.functions.invoke('create-payment-intent', {
-        body: {
-          projectId: project.id,
-          creatorId: acceptedCreatorId,
-          clientId: user.id,
-          paymentType,
-        },
+      const { data, error: fnErr } = await createPaymentIntentWithRetry({
+        projectId: project.id,
+        creatorId: acceptedCreatorId,
+        clientId: user.id,
+        paymentType,
       });
       if (fnErr) throw new Error(await getFunctionErrorMessage(fnErr));
       const clientSecret = data?.clientSecret;
