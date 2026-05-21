@@ -528,25 +528,39 @@ export default function App() {
                 }`} title="Messages">
                 <MessageSquare size={14} />
               </button>
-              <button type="button" onClick={() => navigate('/dashboard')}
-                className={`p-2 rounded-xl transition-colors ${
-                  activeTab === 'dashboard'
-                    ? 'bg-gold-500/20 text-gold-400'
-                    : dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
-                }`} title="Dashboard">
-                <LayoutDashboard size={14} />
+              {/* Role-gated nav: creators see creator dashboard, clients see client profile */}
+              {authProfile?.role === 'creator' ? (
+                <button type="button" onClick={() => navigate('/dashboard')}
+                  className={`p-2 rounded-xl transition-colors ${
+                    activeTab === 'dashboard'
+                      ? 'bg-gold-500/20 text-gold-400'
+                      : dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
+                  }`} title="Creator Dashboard">
+                  <LayoutDashboard size={14} />
+                </button>
+              ) : (
+                <button type="button" onClick={() => navigate('/client')}
+                  className={`p-2 rounded-xl transition-colors ${
+                    activeTab === 'client'
+                      ? 'bg-gold-500/20 text-gold-400'
+                      : dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
+                  }`} title="My Profile">
+                  <User size={14} />
+                </button>
+              )}
+              {/* Avatar — clickable, shows photo if available */}
+              <button
+                type="button"
+                onClick={() => navigate(authProfile?.role === 'creator' ? '/dashboard' : '/client')}
+                className={`w-7 h-7 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold transition-opacity hover:opacity-80 ${dark ? 'bg-gold-500/20 text-gold-400' : 'bg-gold-100 text-gold-600'}`}
+                title="Go to my profile"
+              >
+                {authProfile?.avatar_url ? (
+                  <img src={authProfile.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                ) : (
+                  (authProfile?.full_name || user.email || 'U')[0].toUpperCase()
+                )}
               </button>
-              <button type="button" onClick={() => navigate('/client')}
-                className={`p-2 rounded-xl transition-colors ${
-                  activeTab === 'client'
-                    ? 'bg-gold-500/20 text-gold-400'
-                    : dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
-                }`} title="Client profile">
-                <User size={14} />
-              </button>
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${dark ? 'bg-gold-500/20 text-gold-400' : 'bg-gold-100 text-gold-600'}`}>
-                {(authProfile?.full_name || user.email || 'U')[0].toUpperCase()}
-              </div>
               <button type="button" onClick={signOut}
                 className={`p-2 rounded-xl transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}
                 title="Sign out">

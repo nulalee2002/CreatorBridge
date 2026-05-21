@@ -183,20 +183,23 @@ function buildSafeAssistantMessages(messages) {
 }
 
 async function sendToAnthropic(messages) {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const anonKey    = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !anonKey) {
+    console.error('[Chatbot] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY env vars');
+    return null;
+  }
+
+  // Get auth token if user is logged in
+  let authHeader = {};
   try {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const anonKey    = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    if (!supabaseUrl || !anonKey) throw new Error('env not set');
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      authHeader = { 'Authorization': `Bearer ${session.access_token}` };
+    }
+  } catch {}
 
-    // Get auth token if user is logged in
-    let authHeader = {};
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.access_token) {
-        authHeader = { 'Authorization': `Bearer ${session.access_token}` };
-      }
-    } catch {}
-
+  try {
     const res = await fetch(`${supabaseUrl}/functions/v1/chatbot`, {
       method: 'POST',
       headers: {
@@ -207,14 +210,20 @@ async function sendToAnthropic(messages) {
       body: JSON.stringify({ messages }),
     });
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      console.error(`[Chatbot] Edge function returned ${res.status}:`, errText);
+      return null; // signal caller to use fallback
+    }
+
     const data = await res.json();
     if (data.reply) return data.reply;
-    throw new Error('empty reply');
-  } catch {
-    // Fall back to local keyword responses if edge function unavailable
-    const lastUserMessage = messages.filter(m => m.role === 'user').at(-1);
-    return getDemoResponse(lastUserMessage?.content || '');
+
+    console.error('[Chatbot] Edge function returned empty reply:', data);
+    return null;
+  } catch (err) {
+    console.error('[Chatbot] Network error calling edge function:', err);
+    return null;
   }
 }
 
@@ -888,7 +897,15 @@ export function SupportChatbot({ dark = true }) {
       const apiMessages = buildSafeAssistantMessages(nextMsgs);
 
       const reply = await sendToAnthropic(apiMessages);
-      setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+      if (reply) {
+        setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+      } else {
+        // AI edge function unavailable — use keyword fallback and note it in console
+        const lastUserContent = nextMsgs.filter(m => m.role === 'user').at(-1)?.content || '';
+        const fallback = getDemoResponse(lastUserContent);
+        console.warn('[Chatbot] Using keyword fallback — AI edge function unreachable');
+        setMessages(prev => [...prev, { role: 'assistant', content: fallback }]);
+      }
     } catch {
       setError('Could not reach support. Try emailing drl33@creatorbridge.studio');
     } finally {
