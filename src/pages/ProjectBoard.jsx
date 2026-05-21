@@ -716,7 +716,19 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
 function ProjectActionButtons({ project, isClient, canApply, applied, dark, onApply, onStatusChange, navigate, onOpenDelivery, onOpenRevision }) {
   const { status } = project;
 
-  function changeStatus(newStatus, patch = {}) {
+  async function changeStatus(newStatus, patch = {}) {
+    if (supabaseConfigured && isUuid(project.id)) {
+      const remotePatch = {
+        status: newStatus,
+        ...(patch.approvedAt ? { approved_at: patch.approvedAt } : {}),
+      };
+      const { error } = await supabase
+        .from('projects')
+        .update(remotePatch)
+        .eq('id', project.id);
+      if (error) throw error;
+    }
+
     const all = JSON.parse(localStorage.getItem('cm-projects') || '[]');
     const updated = all.map(p => p.id === project.id ? { ...p, status: newStatus, ...patch } : p);
     localStorage.setItem('cm-projects', JSON.stringify(updated));
@@ -754,10 +766,14 @@ function ProjectActionButtons({ project, isClient, canApply, applied, dark, onAp
           )}
           <div className="flex gap-2">
             <button type="button"
-              onClick={e => {
+              onClick={async e => {
                 e.stopPropagation();
-                changeStatus('approved', { approvedAt: new Date().toISOString() });
-                navigate(`/checkout/${project.id}?payment=final`);
+                try {
+                  await changeStatus('approved', { approvedAt: new Date().toISOString() });
+                  navigate(`/checkout/${project.id}?payment=final`);
+                } catch {
+                  window.alert('Could not approve delivery. Please try again before paying the final balance.');
+                }
               }}
               className="flex-1 py-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-1">
               <ThumbsUp size={11} /> Approve &amp; Pay Final Balance

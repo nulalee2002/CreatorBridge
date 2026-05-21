@@ -182,6 +182,12 @@ function buildSafeAssistantMessages(messages) {
   ];
 }
 
+function isMobileViewport() {
+  return typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(max-width: 767px), (pointer: coarse) and (max-width: 1024px)').matches;
+}
+
 async function sendToAnthropic(messages) {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const anonKey    = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -190,12 +196,12 @@ async function sendToAnthropic(messages) {
     return null;
   }
 
-  // Get auth token if user is logged in
-  let authHeader = {};
+  // Supabase Edge Functions with JWT verification still need a bearer token for guests.
+  let authHeader = { Authorization: `Bearer ${anonKey}` };
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.access_token) {
-      authHeader = { 'Authorization': `Bearer ${session.access_token}` };
+      authHeader = { Authorization: `Bearer ${session.access_token}` };
     }
   } catch {}
 
@@ -532,6 +538,7 @@ export function SupportChatbot({ dark = true }) {
   const [open, setOpen]         = useState(false);
   const [autoOpened, setAutoOpened] = useState(false);
   const [showNudge, setShowNudge]   = useState(false);
+  const [mobileNudge, setMobileNudge] = useState(false);
   const [hasDraft, setHasDraft] = useState(() => !!loadDraft());
 
   // bookingMode: false | 'active' | 'summary' | 'submitted'
@@ -566,7 +573,8 @@ export function SupportChatbot({ dark = true }) {
     const alreadyShown = sessionStorage.getItem('cb-chat-shown');
     if (!alreadyShown && !autoOpened) {
       const showTimer = setTimeout(() => {
-        setShowNudge(true);
+        if (isMobileViewport()) setMobileNudge(true);
+        else setShowNudge(true);
         setAutoOpened(true);
         sessionStorage.setItem('cb-chat-shown', 'true');
       }, 9000);
@@ -1198,7 +1206,7 @@ export function SupportChatbot({ dark = true }) {
       )}
 
       {/* ── Nudge bubble — appears briefly, auto-dismisses ─────── */}
-      {!open && showNudge && (
+      {!open && (showNudge || mobileNudge) && (
         <div
           className={`flex items-center gap-2 rounded-2xl border px-3.5 py-2.5 shadow-[0_18px_48px_rgba(0,0,0,0.38)] backdrop-blur-xl ${
             dark
@@ -1210,14 +1218,14 @@ export function SupportChatbot({ dark = true }) {
           <ChatAvatar size={22} animate={false} />
           <button
             type="button"
-            onClick={() => { setShowNudge(false); setOpen(true); }}
+            onClick={() => { setShowNudge(false); setMobileNudge(false); setOpen(true); }}
             className="text-[11px] font-semibold text-left flex-1 leading-snug"
           >
             Hey! I'm here if you need me.
           </button>
           <button
             type="button"
-            onClick={() => setShowNudge(false)}
+            onClick={() => { setShowNudge(false); setMobileNudge(false); }}
             className={`ml-1 shrink-0 ${dark ? 'text-charcoal-400 hover:text-white' : 'text-gray-400 hover:text-gray-700'}`}
             aria-label="Dismiss"
           >
@@ -1230,6 +1238,7 @@ export function SupportChatbot({ dark = true }) {
         type="button"
         onClick={() => {
           setShowNudge(false);
+          setMobileNudge(false);
           setOpen(o => !o);
         }}
         className="z-50 w-14 h-14 rounded-2xl bg-gold-500 hover:bg-gold-600 shadow-[0_20px_52px_rgba(0,0,0,0.38)] ring-1 ring-gold-300/45 flex items-center justify-center transition-all hover:scale-105 active:scale-95 relative"

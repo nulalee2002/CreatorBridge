@@ -639,7 +639,7 @@ export default function App() {
           </AuthRequired>
         } />
         <Route path="/matches/:projectId" element={<LazyRoute dark={dark}><MatchResultsPage dark={dark} /></LazyRoute>} />
-        <Route path="/network" element={<LazyRoute dark={dark}><NetworkingPage dark={dark} user={user} /></LazyRoute>} />
+        <Route path="/network" element={<LazyRoute dark={dark}><NetworkingPage dark={dark} user={user} profile={authProfile} /></LazyRoute>} />
         <Route path="/admin" element={
           <AuthRequired dark={dark} user={user} loading={authLoading} role="client" title="Sign in to view admin controls." copy="CreatorBridge admin visibility requires an authenticated owner account.">
             <LazyRoute dark={dark}><AdminDashboard dark={dark} /></LazyRoute>

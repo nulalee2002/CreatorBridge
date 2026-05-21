@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
         paymentFlow: 'platform_charge_then_transfer',
       },
     }, {
-      idempotencyKey: `cb_release_${transactionId}`,
+      idempotencyKey: `cb_client_release_${transactionId}`,
     });
 
     // Update transaction
@@ -150,7 +150,8 @@ Deno.serve(async (req) => {
         final_released_at:  new Date().toISOString(),
         updated_at:         new Date().toISOString(),
       })
-      .eq('id', transactionId);
+      .eq('id', transactionId)
+      .is('final_transfer_id', null);
 
     // Log payment event
     await supabaseAdmin.from('payment_events').insert({

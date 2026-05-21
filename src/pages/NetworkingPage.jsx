@@ -177,23 +177,23 @@ function dedupeById(items) {
   return [...seen.values()];
 }
 
-function getUserDisplayName(user) {
+function getUserDisplayName(user, profile = null) {
   return sanitizePlainText(
-    user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Member',
+    profile?.full_name || user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Member',
     80
   );
 }
 
-function getUserVerificationStatus(user) {
+function getUserVerificationStatus(user, profile = null) {
   return sanitizePlainText(
-    user?.verification_status || user?.user_metadata?.verification_status || (user?.id ? 'verified' : 'unverified'),
+    profile?.verification_status || user?.verification_status || user?.user_metadata?.verification_status || (user?.email_confirmed_at ? 'verified' : 'unverified'),
     40
   );
 }
 
-function getUserPrimaryService(user) {
+function getUserPrimaryService(user, profile = null) {
   return sanitizePlainText(
-    user?.primary_service || user?.user_metadata?.primary_service || user?.user_metadata?.service || '',
+    profile?.primary_service || user?.primary_service || user?.user_metadata?.primary_service || user?.user_metadata?.service || '',
     80
   );
 }
@@ -400,7 +400,7 @@ function PostCard({ post, dark, isVerified, onLike, onReport, onReply }) {
   );
 }
 
-export function NetworkingPage({ dark, user }) {
+export function NetworkingPage({ dark, user, profile }) {
   const [selectedState, setSelectedState] = useState('');
   const [posts, setPosts] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -414,10 +414,11 @@ export function NetworkingPage({ dark, user }) {
   const channelRef = useRef(null);
 
   const isVerified = !!user?.id && (
+    profile?.role === 'client' ||
+    ['verified', 'pro_verified', 'approved'].includes(profile?.verification_status) ||
     (user?.verification_status && user.verification_status !== 'unverified') ||
     !!user?.verified ||
-    !!user?.email_confirmed_at ||
-    user?.aud === 'authenticated'
+    !!user?.email_confirmed_at
   );
   const stateName = US_STATES.find(s => s.code === selectedState)?.name || selectedState;
 
@@ -539,9 +540,9 @@ export function NetworkingPage({ dark, user }) {
       id: `post-${Date.now()}`,
       state_code: selectedState,
       user_id: user?.id,
-      user_display_name: getUserDisplayName(user),
-      user_verification_status: getUserVerificationStatus(user),
-      user_primary_service: getUserPrimaryService(user),
+      user_display_name: getUserDisplayName(user, profile),
+      user_verification_status: getUserVerificationStatus(user, profile),
+      user_primary_service: getUserPrimaryService(user, profile),
       post_type: postType,
       content: cleanContent,
       likes_count: 0,
@@ -589,9 +590,9 @@ export function NetworkingPage({ dark, user }) {
       id: `msg-${Date.now()}`,
       state_code: selectedState,
       user_id: user?.id,
-      user_display_name: getUserDisplayName(user),
-      user_verification_status: getUserVerificationStatus(user),
-      user_primary_service: getUserPrimaryService(user),
+        user_display_name: getUserDisplayName(user, profile),
+        user_verification_status: getUserVerificationStatus(user, profile),
+        user_primary_service: getUserPrimaryService(user, profile),
       message: cleanMessage,
       created_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -633,9 +634,9 @@ export function NetworkingPage({ dark, user }) {
       id: `reply-${Date.now()}`,
       post_id: postId,
       user_id: user.id,
-      user_display_name: getUserDisplayName(user),
-      user_verification_status: getUserVerificationStatus(user),
-      user_primary_service: getUserPrimaryService(user),
+      user_display_name: getUserDisplayName(user, profile),
+      user_verification_status: getUserVerificationStatus(user, profile),
+      user_primary_service: getUserPrimaryService(user, profile),
       content: cleanReply,
       created_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),

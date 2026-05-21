@@ -102,6 +102,8 @@ Deno.serve(async (req) => {
       );
     }
 
+    const projectStatus = String(project.status || '').toLowerCase();
+
     const { data: listing, error: listingError } = await supabaseAdmin
       .from('creator_listings')
       .select('id, stripe_account_id, completed_projects, next_project_fee_pct')
@@ -130,6 +132,29 @@ Deno.serve(async (req) => {
     const existingPaymentStatus = normalizedPaymentType === 'final'
       ? existingTxn?.final_status
       : existingTxn?.retainer_status;
+
+    if (normalizedPaymentType === 'retainer' && !['accepted'].includes(projectStatus)) {
+      return new Response(
+        JSON.stringify({ error: 'Retainer payment is only available after a project application is accepted' }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (normalizedPaymentType === 'final') {
+      if (!['paid', 'released'].includes(existingTxn?.retainer_status || '')) {
+        return new Response(
+          JSON.stringify({ error: 'The retainer must be paid before final payment can be created' }),
+          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!['delivered', 'approved'].includes(projectStatus)) {
+        return new Response(
+          JSON.stringify({ error: 'Final payment is only available after the creator has delivered the project' }),
+          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
     if (['paid', 'released'].includes(existingPaymentStatus || '')) {
       return new Response(

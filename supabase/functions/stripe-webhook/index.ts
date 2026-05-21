@@ -141,7 +141,7 @@ async function releaseCreatorPayout(supabaseAdmin: ReturnType<typeof createClien
       paymentType: 'full_creator_release',
     },
   }, {
-    idempotencyKey: `cb_release_${txn.id}`,
+    idempotencyKey: `cb_webhook_release_${txn.id}`,
   });
 
   await supabaseAdmin
@@ -265,6 +265,14 @@ Deno.serve(async (req) => {
           }
 
           if (paymentType === 'retainer') {
+            // Move project from accepted → retainer_paid now that the retainer is secured
+            if (txn.project_id) {
+              await supabaseAdmin
+                .from('projects')
+                .update({ status: 'retainer_paid' })
+                .eq('id', txn.project_id)
+                .eq('status', 'accepted');
+            }
             await consumeClientFeeWaiver(supabaseAdmin, txn);
           }
         }

@@ -30,6 +30,51 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (!listingId) {
+      return new Response(
+        JSON.stringify({ error: 'listingId is required', connected: false, chargesEnabled: false, payoutsEnabled: false, detailsSubmitted: false }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const authHeader = req.headers.get('Authorization') ?? '';
+    const token = authHeader.replace('Bearer ', '');
+    const { data: authData, error: authError } = token
+      ? await supabaseAdmin.auth.getUser(token)
+      : { data: { user: null }, error: new Error('Missing authorization token') };
+
+    if (authError || !authData.user) {
+      return new Response(
+        JSON.stringify({ error: 'Creator authentication is required to check Stripe status', connected: false, chargesEnabled: false, payoutsEnabled: false, detailsSubmitted: false }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { data: listing, error: listingError } = await supabaseAdmin
+      .from('creator_listings')
+      .select('id,user_id,stripe_account_id')
+      .eq('id', listingId)
+      .maybeSingle();
+
+    if (listingError) {
+      return new Response(
+        JSON.stringify({ error: listingError.message, connected: false, chargesEnabled: false, payoutsEnabled: false, detailsSubmitted: false }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!listing || listing.user_id !== authData.user.id || listing.stripe_account_id !== stripeAccountId) {
+      return new Response(
+        JSON.stringify({ error: 'Creator listing ownership could not be verified', connected: false, chargesEnabled: false, payoutsEnabled: false, detailsSubmitted: false }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const account = await stripe.accounts.retrieve(stripeAccountId);
 
     const result = {
@@ -41,10 +86,6 @@ Deno.serve(async (req) => {
 
     // Update creator_listings with current status
     if (listingId) {
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
       await supabaseAdmin
         .from('creator_listings')
         .update({
