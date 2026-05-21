@@ -414,11 +414,12 @@ export function CheckoutPage({ dark }) {
   const { projectId } = useParams();
   const navigate      = useNavigate();
   const [searchParams] = useSearchParams();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
 
   const [step, setStep]             = useState(1);
   const [project, setProject]       = useState(null);
   const [creator, setCreator]       = useState(null);
+  const [transaction, setTransaction] = useState(null);
   const [paymentResult, setPayment] = useState(null);
   const [loading, setLoading]       = useState(true);
 
@@ -429,35 +430,56 @@ export function CheckoutPage({ dark }) {
     let cancelled = false;
     async function loadCheckoutProject() {
       setLoading(true);
-      let p = loadProject(projectId);
-      if (!p && supabaseConfigured) {
-        const { data } = await supabase
-          .from('projects')
-          .select('*')
-          .eq('id', projectId)
-          .maybeSingle();
-        p = fromSupabaseProject(data);
-        if (p) upsertLocalProject(p);
-      }
-      if (cancelled) return;
-      if (p) {
+      setTransaction(null);
+
+      try {
+        let p = null;
+        if (supabaseConfigured) {
+          const { data } = await supabase
+            .from('projects')
+            .select('*')
+            .eq('id', projectId)
+            .maybeSingle();
+          p = fromSupabaseProject(data);
+          if (p) upsertLocalProject(p);
+        }
+        if (!p) p = loadProject(projectId);
+        if (cancelled) return;
+        if (!p) {
+          setProject(null);
+          setCreator(null);
+          return;
+        }
+
         setProject(p);
         setCreator(loadCreatorForProject(p));
-      }
-      setLoading(false);
 
-      const acceptedCreatorId = p?.acceptedCreatorId || p?.accepted_creator_id;
-      if (!acceptedCreatorId || !supabaseConfigured) return;
-      const { data } = await supabase
-        .from('creator_listings')
-        .select('*')
-        .eq('id', acceptedCreatorId)
-        .maybeSingle();
-      if (!cancelled && data) setCreator(fromCreatorListingRow(data));
+        const acceptedCreatorId = p?.acceptedCreatorId || p?.accepted_creator_id;
+        if (!acceptedCreatorId || !supabaseConfigured) return;
+
+        const { data: listing } = await supabase
+          .from('creator_listings')
+          .select('*')
+          .eq('id', acceptedCreatorId)
+          .maybeSingle();
+        if (!cancelled && listing) setCreator(fromCreatorListingRow(listing));
+
+        if (!user?.id) return;
+        const { data: txn } = await supabase
+          .from('transactions')
+          .select('id, retainer_status, final_status, retainer_paid_at, final_paid_at, final_payment_intent, final_transfer_id')
+          .eq('project_id', projectId)
+          .eq('creator_id', acceptedCreatorId)
+          .eq('client_id', user.id)
+          .maybeSingle();
+        if (!cancelled) setTransaction(txn || null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
     loadCheckoutProject();
     return () => { cancelled = true; };
-  }, [projectId]);
+  }, [projectId, user?.id]);
 
   const projectAmount = project?.budgetMax || project?.budgetMin || 0;
   const loyaltyFeePct = getLoyaltyTier(creator?.completed_projects || creator?.completedProjects || 0).feePct;
@@ -467,6 +489,9 @@ export function CheckoutPage({ dark }) {
     : loyaltyFeePct;
   const clientFeePct = (profile?.first_booking_fee_waived || profile?.next_booking_fee_waived) ? 0 : PLATFORM_FEES.clientFeePct;
   const fees          = calcFees(projectAmount, creatorFeePct, clientFeePct);
+  const paymentAlreadyComplete = paymentType === 'final'
+    ? ['paid', 'released'].includes(transaction?.final_status)
+    : ['paid', 'released'].includes(transaction?.retainer_status);
 
   if (loading) {
     return (
@@ -510,12 +535,23 @@ export function CheckoutPage({ dark }) {
             Secure Booking
           </p>
           <h1 className={`font-display text-3xl md:text-4xl font-bold text-center mb-6 ${dark ? 'text-white' : 'text-gray-900'}`}>
-            {paymentType === 'final' ? 'Pay the remaining project balance.' : 'Confirm your CreatorBridge booking.'}
+            {paymentAlreadyComplete
+              ? 'This CreatorBridge payment is complete.'
+              : paymentType === 'final' ? 'Pay the remaining project balance.' : 'Confirm your CreatorBridge booking.'}
           </h1>
 
-          <StepBar step={step} dark={dark} />
+          <StepBar step={paymentAlreadyComplete ? 3 : step} dark={dark} />
 
-          {step === 1 && (
+          {paymentAlreadyComplete && (
+            <ConfirmationStep
+              project={project}
+              creator={creator}
+              fees={fees}
+              dark={dark}
+              paymentResult={{ paymentType }}
+            />
+          )}
+          {!paymentAlreadyComplete && step === 1 && (
             <ReviewStep
               project={project}
               creator={creator}
@@ -527,7 +563,7 @@ export function CheckoutPage({ dark }) {
               onNext={() => setStep(2)}
             />
           )}
-          {step === 2 && (
+          {!paymentAlreadyComplete && step === 2 && (
             <PaymentStep
               fees={fees}
               project={project}
@@ -539,7 +575,7 @@ export function CheckoutPage({ dark }) {
               onSuccess={(result) => { setPayment({ ...result, paymentType }); setStep(3); }}
             />
           )}
-          {step === 3 && (
+          {!paymentAlreadyComplete && step === 3 && (
             <ConfirmationStep project={project} creator={creator} fees={fees} dark={dark} paymentResult={paymentResult} />
           )}
         </div>

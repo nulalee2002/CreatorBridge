@@ -133,6 +133,13 @@ Deno.serve(async (req) => {
       ? existingTxn?.final_status
       : existingTxn?.retainer_status;
 
+    if (['paid', 'released'].includes(existingPaymentStatus || '')) {
+      return new Response(
+        JSON.stringify({ error: `${normalizedPaymentType} payment has already been completed` }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     if (normalizedPaymentType === 'retainer' && !['accepted'].includes(projectStatus)) {
       return new Response(
         JSON.stringify({ error: 'Retainer payment is only available after a project application is accepted' }),
@@ -154,13 +161,6 @@ Deno.serve(async (req) => {
           { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-    }
-
-    if (['paid', 'released'].includes(existingPaymentStatus || '')) {
-      return new Response(
-        JSON.stringify({ error: `${normalizedPaymentType} payment has already been completed` }),
-        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
     }
 
     if (existingPaymentIntentId && existingPaymentStatus === 'pending') {
