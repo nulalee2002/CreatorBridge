@@ -72,6 +72,31 @@ function saveLocalQuoteRequest(quote) {
   } catch {}
 }
 
+const SUPABASE_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function getSupabaseListingId(creator) {
+  return SUPABASE_UUID_RE.test(String(creator?.id || '')) ? creator.id : null;
+}
+
+async function quoteSubmitErrorMessage(err) {
+  const fallback = err?.message || 'Quote request could not be saved. Please try again.';
+  const response = err?.context;
+
+  if (!response || typeof response.clone !== 'function') return fallback;
+
+  try {
+    const payload = await response.clone().json();
+    return payload?.error || payload?.message || fallback;
+  } catch {
+    try {
+      const text = await response.clone().text();
+      return text || fallback;
+    } catch {
+      return fallback;
+    }
+  }
+}
+
 // ── Client reputation ────────────────────────────────────────
 const CLIENT_REPUTATION_LEVELS = [
   { min: 90, max: 100, label: 'Excellent Client', color: 'text-gold-400',  bg: 'bg-gold-500/15',  border: 'border-gold-500/30'  },
@@ -114,6 +139,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
   const [submitted, setSubmitted] = useState(false);
   const [quoteHp, setQuoteHp]   = useState('');
   const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileAttempt, setTurnstileAttempt] = useState(0);
 
   const [showOnboarding, setShowOnboarding] = useState(
     () => localStorage.getItem('cm-client-onboarded') !== 'true'
@@ -146,7 +172,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
       if (k === 'projectType') next.otherProjectType = '';
       return next;
     });
-    setErrors(e => ({ ...e, [k]: '' }));
+    setErrors(e => ({ ...e, [k]: '', _submit: '' }));
   };
 
   const inputCls = (field) => `w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${
@@ -236,6 +262,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
     setLoading(true);
     const cleanForm = buildCleanQuoteForm();
     const serviceId = normalizeServiceId(cleanForm.serviceType);
+    const listingId = getSupabaseListingId(creator);
     const budget = parseBudgetRange(cleanForm.budgetRange);
     const isRemoteProject = cleanForm.venueType === 'Remote/Virtual' || cleanForm.locationPreference === 'Remote OK';
     const createdAt = new Date().toISOString();
@@ -275,8 +302,8 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
     let savedProject = project;
     let savedQuote = {
       id: `quote-${project.id}`,
-      creatorId: creator?.id || null,
-      listing_id: creator?.id || null,
+      creatorId: listingId || creator?.id || null,
+      listing_id: listingId,
       clientId: project.clientId,
       client_id: user?.id || null,
       clientName: project.clientName,
@@ -321,7 +348,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
       try {
         const quoteLocation = [cleanForm.venueCity, cleanForm.venueState].filter(Boolean).join(', ');
         const quotePayload = {
-          p_listing_id:          creator?.id || null,
+          p_listing_id:          listingId,
           p_project_title:       cleanForm.projectTitle,
           p_service_id:          serviceId || cleanForm.serviceType,
           p_description:         cleanForm.description,
@@ -349,14 +376,26 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
           : await supabase.rpc('submit_quote_request', quotePayload);
         if (error) throw error;
         const projectRow = data?.project;
-        if (projectRow) {
-          savedProject = { ...project, ...fromSupabaseProject(projectRow), clientName: project.clientName };
+        const quoteRow = data?.quote;
+        if (!projectRow?.id || !quoteRow?.id) {
+          throw new Error('Quote request saved without a complete project record.');
         }
 
-        const quoteRow = data?.quote;
-        if (quoteRow) savedQuote = { ...savedQuote, ...quoteRow, id: quoteRow.id };
+        savedProject = { ...project, ...fromSupabaseProject(projectRow), clientName: project.clientName };
+        savedQuote = { ...savedQuote, ...quoteRow, id: quoteRow.id };
       } catch (err) {
-        console.warn('Quote request Supabase save failed. Local fallback preserved.', err);
+        console.error('Quote request Supabase save failed.', err);
+        const message = await quoteSubmitErrorMessage(err);
+        setErrors(er => ({
+          ...er,
+          _submit: message,
+          ...(turnstileConfigured() ? { _turnstile: 'Security check may need to be refreshed before trying again.' } : {}),
+        }));
+        setTurnstileToken('');
+        setTurnstileAttempt(value => value + 1);
+        setLoading(false);
+        document.getElementById('quote-modal-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
       }
     }
 
@@ -493,6 +532,13 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
           {/* ── Quote form ── */}
           {!showOnboarding && (
           <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            {errors._submit && (
+              <div className={`rounded-xl border px-4 py-3 text-sm leading-relaxed ${
+                dark ? 'border-red-500/40 bg-red-500/10 text-red-200' : 'border-red-200 bg-red-50 text-red-700'
+              }`}>
+                {errors._submit}
+              </div>
+            )}
 
             {/* 1. Project Title */}
             <div>
@@ -738,9 +784,16 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
           ) : (
             <>
               <TurnstileWidget
+                key={turnstileAttempt}
                 dark={dark}
-                onVerify={token => setTurnstileToken(token)}
-                onExpire={() => setTurnstileToken('')}
+                onVerify={token => {
+                  setTurnstileToken(token);
+                  setErrors(e => ({ ...e, _turnstile: '', _submit: '' }));
+                }}
+                onExpire={() => {
+                  setTurnstileToken('');
+                  setErrors(e => ({ ...e, _turnstile: 'Please complete the security check again.' }));
+                }}
               />
               {errors._turnstile && (
                 <p className="text-xs text-red-400 mt-1 mb-2">{errors._turnstile}</p>

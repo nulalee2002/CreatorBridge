@@ -6,6 +6,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+function jsonResponse(body: Record<string, unknown>, status = 200) {
+  return new Response(
+    JSON.stringify(body),
+    { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+  );
+}
+
 function clientIp(req: Request) {
   return (
     req.headers.get('cf-connecting-ip') ||
@@ -62,42 +69,38 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get('Authorization') ?? '';
     const token = authHeader.replace('Bearer ', '');
     if (!token) {
-      return new Response(
-        JSON.stringify({ error: 'Authentication required' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
+      return jsonResponse({ error: 'Authentication required', stage: 'auth' }, 401);
     }
 
     const verification = await verifyTurnstile(req, String(turnstileToken || ''));
     if (!verification.ok) {
-      return new Response(
-        JSON.stringify({ error: verification.error }),
-        { status: verification.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
+      return jsonResponse({ error: verification.error, stage: 'turnstile' }, verification.status);
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    if (!supabaseUrl || !serviceRoleKey) {
+      return jsonResponse({ error: 'Quote service is not configured', stage: 'config' }, 500);
     }
 
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      supabaseUrl,
+      serviceRoleKey,
       { global: { headers: { Authorization: authHeader } } },
     );
 
     const { data, error } = await supabase.rpc('submit_quote_request', quotePayload);
     if (error) {
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
+      return jsonResponse({ error: error.message, stage: 'database' }, 400);
     }
 
-    return new Response(
-      JSON.stringify(data),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    );
-  } catch {
-    return new Response(
-      JSON.stringify({ error: 'Invalid quote request' }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    );
+    if (!data?.project?.id || !data?.quote?.id) {
+      return jsonResponse({ error: 'Quote request saved without a complete project record', stage: 'database' }, 500);
+    }
+
+    return jsonResponse(data);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Invalid quote request';
+    return jsonResponse({ error: message, stage: 'request' }, 400);
   }
 });
