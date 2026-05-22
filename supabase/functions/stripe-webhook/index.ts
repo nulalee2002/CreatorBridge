@@ -130,25 +130,51 @@ async function releaseCreatorPayout(supabaseAdmin: ReturnType<typeof createClien
     throw new Error('Creator payout amount could not be verified');
   }
 
-  const transfer = await stripe.transfers.create({
-    amount: netToCreator,
+  const retainerChargeId = await paymentIntentChargeId(txn.retainer_payment_intent);
+  const finalChargeId = await paymentIntentChargeId(txn.final_payment_intent);
+  const retainerTransferAmount = Math.min(netToCreator, Math.max(0, Number(txn.retainer_amount || 0)));
+  const finalTransferAmount = netToCreator - retainerTransferAmount;
+
+  if (!retainerChargeId || !finalChargeId || retainerTransferAmount <= 0 || finalTransferAmount <= 0) {
+    throw new Error('Creator payout source charges could not be verified');
+  }
+
+  const retainerTransfer = await stripe.transfers.create({
+    amount: retainerTransferAmount,
     currency: 'usd',
     destination: creatorStripeAccountId,
+    source_transaction: retainerChargeId,
     metadata: {
       transactionId: txn.id,
       projectId: txn.project_id,
       paymentFlow: 'platform_charge_then_transfer',
-      paymentType: 'full_creator_release',
+      paymentType: 'creator_release_retainer_source',
     },
   }, {
-    idempotencyKey: `cb_webhook_release_${txn.id}`,
+    idempotencyKey: `cb_webhook_release_${txn.id}_retainer`,
+  });
+
+  const finalTransfer = await stripe.transfers.create({
+    amount: finalTransferAmount,
+    currency: 'usd',
+    destination: creatorStripeAccountId,
+    source_transaction: finalChargeId,
+    metadata: {
+      transactionId: txn.id,
+      projectId: txn.project_id,
+      paymentFlow: 'platform_charge_then_transfer',
+      paymentType: 'creator_release_final_source',
+    },
+  }, {
+    idempotencyKey: `cb_webhook_release_${txn.id}_final`,
   });
 
   await supabaseAdmin
     .from('transactions')
     .update({
       final_status: 'released',
-      final_transfer_id: transfer.id,
+      retainer_transfer_id: retainerTransfer.id,
+      final_transfer_id: finalTransfer.id,
       final_released_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
@@ -159,11 +185,24 @@ async function releaseCreatorPayout(supabaseAdmin: ReturnType<typeof createClien
     transaction_id: txn.id,
     event_type: 'creator_payout_released',
     metadata: {
-      transferId: transfer.id,
+      retainerTransferId: retainerTransfer.id,
+      finalTransferId: finalTransfer.id,
       amount: netToCreator,
       paymentFlow: 'platform_charge_then_transfer',
     },
   });
+}
+
+async function paymentIntentChargeId(paymentIntentId?: string | null) {
+  if (!paymentIntentId) return null;
+
+  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
+    expand: ['latest_charge'],
+  });
+  const latestCharge = paymentIntent.latest_charge;
+
+  if (typeof latestCharge === 'string') return latestCharge;
+  return latestCharge?.id ?? null;
 }
 
 async function consumeClientFeeWaiver(supabaseAdmin: ReturnType<typeof createClient>, txn: Record<string, any>) {
@@ -208,6 +247,21 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (processedEvent) {
+      if (event.type === 'payment_intent.succeeded') {
+        const pi = event.data.object as Stripe.PaymentIntent;
+        if (pi.metadata?.paymentType === 'final') {
+          const { data: txn } = await supabaseAdmin
+            .from('transactions')
+            .select('*')
+            .eq('final_payment_intent', pi.id)
+            .maybeSingle();
+
+          if (txn && txn.retainer_status === 'paid' && txn.final_status === 'paid' && !txn.final_transfer_id) {
+            await releaseCreatorPayout(supabaseAdmin, txn);
+          }
+        }
+      }
+
       return new Response(JSON.stringify({ received: true, duplicate: true }), {
         headers: { 'Content-Type': 'application/json' },
       });
@@ -248,13 +302,6 @@ Deno.serve(async (req) => {
           .single();
 
         if (txn) {
-          await supabaseAdmin.from('payment_events').insert({
-            transaction_id: txn.id,
-            event_type:     `${paymentType}_payment_succeeded`,
-            stripe_event_id: event.id,
-            metadata:       { paymentIntentId: pi.id, amount: pi.amount },
-          });
-
           if (paymentType === 'final') {
             await markProjectCompleted(supabaseAdmin, txn);
             await releaseCreatorPayout(supabaseAdmin, {
@@ -263,6 +310,13 @@ Deno.serve(async (req) => {
               final_paid_at: new Date().toISOString(),
             });
           }
+
+          await supabaseAdmin.from('payment_events').insert({
+            transaction_id: txn.id,
+            event_type:     `${paymentType}_payment_succeeded`,
+            stripe_event_id: event.id,
+            metadata:       { paymentIntentId: pi.id, amount: pi.amount },
+          });
 
           if (paymentType === 'retainer') {
             // Move project from accepted → retainer_paid now that the retainer is secured

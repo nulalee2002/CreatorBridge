@@ -12,6 +12,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function paymentIntentChargeId(paymentIntentId?: string | null) {
+  if (!paymentIntentId) return null;
+
+  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
+    expand: ['latest_charge'],
+  });
+  const latestCharge = paymentIntent.latest_charge;
+
+  if (typeof latestCharge === 'string') return latestCharge;
+  return latestCharge?.id ?? null;
+}
+
 /**
  * release-payment
  * Called when:
@@ -126,19 +138,48 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create Stripe Transfer to creator
-    const transfer = await stripe.transfers.create({
-      amount:      netToCreator,
+    const retainerChargeId = await paymentIntentChargeId(txn.retainer_payment_intent);
+    const finalChargeId = await paymentIntentChargeId(txn.final_payment_intent);
+    const retainerTransferAmount = Math.min(netToCreator, Math.max(0, Number(txn.retainer_amount || 0)));
+    const finalTransferAmount = netToCreator - retainerTransferAmount;
+
+    if (!retainerChargeId || !finalChargeId || retainerTransferAmount <= 0 || finalTransferAmount <= 0) {
+      return new Response(
+        JSON.stringify({ error: 'Creator payout source charges could not be verified' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Create Stripe Transfers from the actual successful charge sources. This avoids
+    // a false release failure when the platform balance has not become available yet.
+    const retainerTransfer = await stripe.transfers.create({
+      amount:      retainerTransferAmount,
       currency:    'usd',
       destination: creatorStripeAccountId,
+      source_transaction: retainerChargeId,
       metadata: {
         transactionId,
-        paymentType: 'final_release',
+        paymentType: 'retainer_source_release',
         autoApprove: String(autoApprove),
         paymentFlow: 'platform_charge_then_transfer',
       },
     }, {
-      idempotencyKey: `cb_client_release_${transactionId}`,
+      idempotencyKey: `cb_client_release_${transactionId}_retainer`,
+    });
+
+    const finalTransfer = await stripe.transfers.create({
+      amount:      finalTransferAmount,
+      currency:    'usd',
+      destination: creatorStripeAccountId,
+      source_transaction: finalChargeId,
+      metadata: {
+        transactionId,
+        paymentType: 'final_source_release',
+        autoApprove: String(autoApprove),
+        paymentFlow: 'platform_charge_then_transfer',
+      },
+    }, {
+      idempotencyKey: `cb_client_release_${transactionId}_final`,
     });
 
     // Update transaction
@@ -146,7 +187,8 @@ Deno.serve(async (req) => {
       .from('transactions')
       .update({
         final_status:       'released',
-        final_transfer_id:  transfer.id,
+        retainer_transfer_id: retainerTransfer.id,
+        final_transfer_id:  finalTransfer.id,
         final_released_at:  new Date().toISOString(),
         updated_at:         new Date().toISOString(),
       })
@@ -159,14 +201,20 @@ Deno.serve(async (req) => {
       event_type:     autoApprove ? 'auto_approved_and_released' : 'client_approved_and_released',
       actor_id:       isTrustedJob ? null : authData.user?.id ?? null,
       metadata: {
-        transferId:    transfer.id,
+        retainerTransferId: retainerTransfer.id,
+        finalTransferId:    finalTransfer.id,
         amount:        netToCreator,
         autoApprove,
       },
     });
 
     return new Response(
-      JSON.stringify({ success: true, transferId: transfer.id, netToCreator }),
+      JSON.stringify({
+        success: true,
+        retainerTransferId: retainerTransfer.id,
+        finalTransferId: finalTransfer.id,
+        netToCreator,
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (err) {
