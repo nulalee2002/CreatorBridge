@@ -380,6 +380,7 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
     projectDuration: '', deadline: '', location: '', remote: true, skills: '',
   });
   const [errors, setErrors] = useState({});
+  const [isPosting, setIsPosting] = useState(false);
   const set = (k, v) => {
     setForm(f => ({ ...f, [k]: v }));
     setErrors(e => ({ ...e, [k]: '' }));
@@ -412,6 +413,7 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
   async function handlePost() {
     if (!validate()) return;
     setErrors({});
+    setIsPosting(true);
     const cleanProject = sanitizeProjectDraft({
       id:          Date.now().toString() + Math.random(),
       title:       sanitizePlainText(form.title, 120),
@@ -446,12 +448,17 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
         });
         if (error) throw error;
         saved = { ...project, ...fromSupabaseProject(data), clientName: project.clientName };
-      } catch {
-        saved = project;
+      } catch (err) {
+        setErrors({
+          submit: err?.message || 'Project could not be posted. Please try again.',
+        });
+        setIsPosting(false);
+        return;
       }
     }
     upsertLocalProject(saved);
     onPost(saved);
+    setIsPosting(false);
   }
 
   return (
@@ -580,11 +587,16 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
               Cancel
             </button>
             <button type="button" onClick={handlePost}
-              disabled={!form.title.trim() || !form.description.trim() || !form.serviceId || !form.projectDuration || !form.budgetMin || !form.budgetMax}
+              disabled={isPosting || !form.title.trim() || !form.description.trim() || !form.serviceId || !form.projectDuration || !form.budgetMin || !form.budgetMax}
               className="flex-1 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 text-charcoal-900 text-sm font-bold transition-all flex items-center justify-center gap-2">
-              <Briefcase size={14} /> Post Project
+              <Briefcase size={14} /> {isPosting ? 'Posting...' : 'Post Project'}
             </button>
           </div>
+          {errors.submit && (
+            <p className="mt-3 text-xs text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl px-3 py-2">
+              {errors.submit}
+            </p>
+          )}
         </div>
       </div>
     </div>
