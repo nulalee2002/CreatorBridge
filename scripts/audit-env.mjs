@@ -21,6 +21,7 @@ const REQUIRED_SUPABASE_SECRETS = [
   'SUPABASE_URL',
   'SUPABASE_SERVICE_ROLE_KEY',
   'PLATFORM_JOB_SECRET',
+  'TURNSTILE_SECRET_KEY',
 ];
 
 const PUBLIC_SECRET_RISKS = [
@@ -58,6 +59,7 @@ function findUsedEnvNames() {
     'supabase/functions/stripe-webhook/index.ts',
     'supabase/functions/release-payment/index.ts',
     'supabase/functions/check-connect-status/index.ts',
+    'supabase/functions/submit-quote-request/index.ts',
   ];
   const names = new Set();
   for (const file of files) {

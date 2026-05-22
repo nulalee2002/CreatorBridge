@@ -320,7 +320,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
     if (supabaseConfigured && user) {
       try {
         const quoteLocation = [cleanForm.venueCity, cleanForm.venueState].filter(Boolean).join(', ');
-        const { data, error } = await supabase.rpc('submit_quote_request', {
+        const quotePayload = {
           p_listing_id:          creator?.id || null,
           p_project_title:       cleanForm.projectTitle,
           p_service_id:          serviceId || cleanForm.serviceType,
@@ -340,7 +340,13 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
           p_budget_min:          budget.budgetMin,
           p_budget_max:          budget.budgetMax,
           p_location:            quoteLocation,
-        });
+        };
+
+        const { data, error } = turnstileConfigured()
+          ? await supabase.functions.invoke('submit-quote-request', {
+              body: { ...quotePayload, turnstileToken },
+            })
+          : await supabase.rpc('submit_quote_request', quotePayload);
         if (error) throw error;
         const projectRow = data?.project;
         if (projectRow) {

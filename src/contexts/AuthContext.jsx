@@ -38,7 +38,7 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }
 
-  async function signUp({ email, password, fullName, role }) {
+  async function signUp({ email, password, fullName, role, captchaToken }) {
     let referralCode = null;
     try {
       referralCode = sessionStorage.getItem('cm-referral-code');
@@ -47,7 +47,10 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName, role, referral_code: referralCode || undefined } },
+      options: {
+        captchaToken: captchaToken || undefined,
+        data: { full_name: fullName, role, referral_code: referralCode || undefined },
+      },
     });
     if (!error && referralCode) {
       try { sessionStorage.removeItem('cm-referral-code'); } catch {}

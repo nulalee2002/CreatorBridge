@@ -93,7 +93,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
         return;
       }
 
-      const { error } = await signUp({ email: form.email, password: form.password, fullName: form.fullName, role });
+      const { error } = await signUp({ email: form.email, password: form.password, fullName: form.fullName, role, captchaToken: turnstileToken });
       if (error) setError(error.message);
       else { onClose?.(); }
     } else {
@@ -120,7 +120,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
       return;
     }
     // Phone verified, now create account
-    const { error } = await signUp({ email: form.email, password: form.password, fullName: form.fullName, role });
+    const { error } = await signUp({ email: form.email, password: form.password, fullName: form.fullName, role, captchaToken: turnstileToken });
     if (error) setError(error.message);
     else { onClose?.(); }
     setLoading(false);
