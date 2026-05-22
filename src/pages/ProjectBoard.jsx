@@ -154,6 +154,7 @@ function DeliverySubmitModal({ project, dark, onClose, onDelivered }) {
   const [notes, setNotes]         = useState('');
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError]         = useState('');
+  const [saving, setSaving]       = useState(false);
   const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
   const inputCls = `w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${
     dark ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
@@ -165,6 +166,8 @@ function DeliverySubmitModal({ project, dark, onClose, onDelivered }) {
     const cleanNotes = sanitizeLongText(notes, 2000);
     if (!cleanLink) { setError('Please add a valid delivery link.'); return; }
     if (!confirmed)   { setError('Please confirm that you have kept your own copy of the delivered files.'); return; }
+    setSaving(true);
+    setError('');
     const deliveredAt = new Date().toISOString();
     const patch = {
       status:      'delivered',
@@ -172,10 +175,9 @@ function DeliverySubmitModal({ project, dark, onClose, onDelivered }) {
       deliveryLink: cleanLink,
       deliveryNotes: cleanNotes,
     };
-    const updated = updateProject(project.id, patch);
-    if (supabaseConfigured && isUuid(project.id)) {
-      try {
-        await supabase
+    try {
+      if (supabaseConfigured && isUuid(project.id)) {
+        const { data, error: deliveryError } = await supabase
           .from('projects')
           .update({
             status: 'delivered',
@@ -183,11 +185,22 @@ function DeliverySubmitModal({ project, dark, onClose, onDelivered }) {
             delivery_link: cleanLink,
             delivery_notes: cleanNotes,
           })
-          .eq('id', project.id);
-      } catch {}
+          .eq('id', project.id)
+          .select('id')
+          .maybeSingle();
+
+        if (deliveryError) throw deliveryError;
+        if (!data?.id) throw new Error('Delivery could not be saved. Please refresh and try again.');
+      }
+
+      const updated = updateProject(project.id, patch);
+      onDelivered?.(updated.find(p => p.id === project.id));
+      onClose();
+    } catch (err) {
+      setError(err?.message || 'Delivery could not be saved. Please try again.');
+    } finally {
+      setSaving(false);
     }
-    onDelivered?.(updated.find(p => p.id === project.id));
-    onClose();
   }
 
   return (
@@ -232,9 +245,9 @@ function DeliverySubmitModal({ project, dark, onClose, onDelivered }) {
             {STORAGE_NOTICE}
           </div>
           {error && <p className="text-xs text-red-400 bg-red-400/10 rounded-lg px-3 py-2">{error}</p>}
-          <button type="button" onClick={handleSubmit}
-            className="w-full py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold transition-all flex items-center justify-center gap-2">
-            <Send size={14} /> Submit Delivery
+          <button type="button" onClick={handleSubmit} disabled={saving}
+            className="w-full py-3 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-50 text-charcoal-900 text-sm font-bold transition-all flex items-center justify-center gap-2">
+            <Send size={14} /> {saving ? 'Saving...' : 'Submit Delivery'}
           </button>
         </div>
       </div>
@@ -722,11 +735,14 @@ function ProjectActionButtons({ project, isClient, canApply, applied, dark, onAp
         status: newStatus,
         ...(patch.approvedAt ? { approved_at: patch.approvedAt } : {}),
       };
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('projects')
         .update(remotePatch)
-        .eq('id', project.id);
+        .eq('id', project.id)
+        .select('id')
+        .maybeSingle();
       if (error) throw error;
+      if (!data?.id) throw new Error('Project status could not be saved. Please refresh and try again.');
     }
 
     const all = JSON.parse(localStorage.getItem('cm-projects') || '[]');
