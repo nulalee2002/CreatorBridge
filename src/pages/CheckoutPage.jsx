@@ -44,6 +44,13 @@ function fromCreatorListingRow(row) {
   };
 }
 
+function acceptedProposalAmount(project) {
+  const acceptedRate = Number(project?.acceptedProposalRate ?? project?.accepted_proposal_rate);
+  if (Number.isFinite(acceptedRate) && acceptedRate > 0) return acceptedRate;
+  if (project?.acceptedApplicationId || project?.accepted_application_id) return 0;
+  return Number(project?.budgetMax || project?.budgetMin || 0);
+}
+
 // ── Step indicator ────────────────────────────────────────────────
 function StepBar({ step, dark }) {
   const steps = ['Review', 'Payment', 'Confirmed'];
@@ -88,7 +95,7 @@ function ReviewStep({ project, creator, fees, dark, paymentType, creatorFeePct, 
   const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
   const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`;
   const isFinal = paymentType === 'final';
-  const projectAmount = Number(project?.budgetMax || project?.budgetMin || 0);
+  const projectAmount = acceptedProposalAmount(project);
   const hasPayableAmount = Number.isFinite(projectAmount) && projectAmount > 0;
 
   return (
@@ -220,7 +227,7 @@ function CardForm({ fees, project, creator, dark, paymentType, creatorFeePct, cl
         throw new Error('Please sign in as the client before making a payment.');
       }
 
-      const projectAmount = Number(project?.budgetMax || project?.budgetMin || 0);
+      const projectAmount = acceptedProposalAmount(project);
       if (!Number.isFinite(projectAmount) || projectAmount <= 0) {
         throw new Error('This project does not have a payable budget. Add a real budget before checkout.');
       }
@@ -459,6 +466,24 @@ export function CheckoutPage({ dark }) {
           return;
         }
 
+        const acceptedApplicationId = p.acceptedApplicationId || p.accepted_application_id;
+        if (acceptedApplicationId && supabaseConfigured) {
+          const { data: acceptedApplication } = await supabase
+            .from('project_applications')
+            .select('id, proposed_rate, status')
+            .eq('id', acceptedApplicationId)
+            .maybeSingle();
+
+          if (acceptedApplication?.proposed_rate) {
+            p = {
+              ...p,
+              acceptedProposalRate: acceptedApplication.proposed_rate,
+              acceptedApplicationStatus: acceptedApplication.status,
+            };
+            upsertLocalProject(p);
+          }
+        }
+
         setProject(p);
         setCreator(loadCreatorForProject(p));
 
@@ -489,7 +514,7 @@ export function CheckoutPage({ dark }) {
     return () => { cancelled = true; };
   }, [projectId, user?.id]);
 
-  const projectAmount = project?.budgetMax || project?.budgetMin || 0;
+  const projectAmount = acceptedProposalAmount(project);
   const loyaltyFeePct = getLoyaltyTier(creator?.completed_projects || creator?.completedProjects || 0).feePct;
   const referralFeePct = creator?.next_project_fee_pct ?? creator?.nextProjectFeePct;
   const creatorFeePct = referralFeePct != null

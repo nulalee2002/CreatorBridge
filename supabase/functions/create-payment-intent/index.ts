@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
 
     const { data: project, error: projectError } = await supabaseAdmin
       .from('projects')
-      .select('id, client_id, budget_min, budget_max, accepted_creator_id, status')
+      .select('id, client_id, budget_min, budget_max, accepted_creator_id, accepted_application_id, status')
       .eq('id', projectId)
       .maybeSingle();
 
@@ -179,7 +179,40 @@ Deno.serve(async (req) => {
       .eq('id', clientId)
       .maybeSingle();
 
-    const trustedProjectAmountCents = Math.round(Number(project.budget_max ?? project.budget_min ?? 0) * 100);
+    let trustedProjectAmount = Number(project.budget_max ?? project.budget_min ?? 0);
+    if (project.accepted_application_id) {
+      const { data: acceptedApplication, error: acceptedApplicationError } = await supabaseAdmin
+        .from('project_applications')
+        .select('id, project_id, listing_id, status, proposed_rate')
+        .eq('id', project.accepted_application_id)
+        .eq('project_id', projectId)
+        .eq('listing_id', creatorId)
+        .maybeSingle();
+
+      if (acceptedApplicationError || !acceptedApplication) {
+        return new Response(
+          JSON.stringify({ error: 'Accepted proposal amount could not be verified' }),
+          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (acceptedApplication.status !== 'accepted') {
+        return new Response(
+          JSON.stringify({ error: 'Accepted proposal is not ready for payment' }),
+          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      trustedProjectAmount = Number(acceptedApplication.proposed_rate || 0);
+      if (!Number.isFinite(trustedProjectAmount) || trustedProjectAmount <= 0) {
+        return new Response(
+          JSON.stringify({ error: 'Accepted proposal must include a positive project rate before payment' }),
+          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    const trustedProjectAmountCents = Math.round(trustedProjectAmount * 100);
     const trustedCreatorFeePct = creatorFeePctFor(listing.completed_projects, listing.next_project_fee_pct);
     const trustedClientFeePct = profile?.first_booking_fee_waived || profile?.next_booking_fee_waived ? 0 : 5;
     const trustedFees = calculateTrustedFees(
