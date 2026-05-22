@@ -134,6 +134,48 @@ function remoteMessageToLocal(row, currentUserId, profilesById = {}) {
   };
 }
 
+async function hasActiveMessageBooking(currentUserId, otherUserId) {
+  if (!supabaseConfigured || !supabase || !isUuid(currentUserId) || !isUuid(otherUserId)) return false;
+
+  try {
+    const { data: creatorRows, error: creatorError } = await supabase
+      .from('creator_listings')
+      .select('id, user_id')
+      .in('user_id', [currentUserId, otherUserId]);
+    if (creatorError) throw creatorError;
+
+    const otherCreator = (creatorRows || []).find(row => row.user_id === otherUserId);
+    if (otherCreator) {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('id')
+        .eq('client_id', currentUserId)
+        .eq('creator_id', otherCreator.id)
+        .or('retainer_status.in.(paid,released),final_status.in.(paid,released)')
+        .limit(1);
+      if (error) throw error;
+      if (data?.length) return true;
+    }
+
+    const myCreator = (creatorRows || []).find(row => row.user_id === currentUserId);
+    if (myCreator) {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('id')
+        .eq('client_id', otherUserId)
+        .eq('creator_id', myCreator.id)
+        .or('retainer_status.in.(paid,released),final_status.in.(paid,released)')
+        .limit(1);
+      if (error) throw error;
+      if (data?.length) return true;
+    }
+  } catch (error) {
+    console.warn('CreatorBridge active booking check failed:', error?.message || error);
+  }
+
+  return false;
+}
+
 function isApprovedCreator(creator) {
   return !!(
     creator?.verified ||
@@ -245,13 +287,14 @@ function NewConversationModal({ dark, onClose, onStart, myUser, myProfile }) {
     setError('');
   }
 
-  function handleStart() {
+  async function handleStart() {
     const cleanMessage = sanitizeLongText(message, 1500);
     const cleanRecipientName = sanitizePlainText(recipientName, 80);
     if (!recipientId || !cleanMessage) return;
 
     const { blocked, patternType } = checkMessage(cleanMessage);
-    if (blocked) {
+    const contactAllowed = blocked ? await hasActiveMessageBooking(myUser.id, recipientId) : false;
+    if (blocked && !contactAllowed) {
       setError('Contact details must stay inside CreatorBridge until a booking is active.');
       logFilterEvent(myUser.id, patternType, supabase, supabaseConfigured);
       return;
@@ -346,6 +389,7 @@ export function MessagesPage({ dark }) {
   const [otherMetrics, setOtherMetrics] = useState(null);
   const [mobileView, setMobileView]   = useState('list'); // 'list' | 'thread'
   const [filterWarning, setFilterWarning] = useState(false);
+  const [sendError, setSendError] = useState('');
   const bottomRef = useRef(null);
 
   const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
@@ -416,8 +460,8 @@ export function MessagesPage({ dark }) {
         [message.recipientId]: { id: message.recipientId, full_name: message.recipientName },
       });
     } catch (error) {
-      console.warn('CreatorBridge messages Supabase save failed, using local fallback:', error?.message || error);
-      return null;
+      console.warn('CreatorBridge messages Supabase save failed:', error?.message || error);
+      throw error;
     }
   }
 
@@ -459,10 +503,12 @@ export function MessagesPage({ dark }) {
   async function sendMessage() {
     const cleanText = sanitizeLongText(text, 1500);
     if (!cleanText || !activeThread) return;
+    setSendError('');
 
     // Check for contact info violations
     const { blocked, patternType } = checkMessage(cleanText);
-    if (blocked) {
+    const contactAllowed = blocked ? await hasActiveMessageBooking(user.id, activeThread.otherUserId) : false;
+    if (blocked && !contactAllowed) {
       setFilterWarning(true);
       logFilterEvent(user.id, patternType, supabase, supabaseConfigured);
       return;
@@ -483,7 +529,13 @@ export function MessagesPage({ dark }) {
       read:           false,
       createdAt:      new Date().toISOString(),
     };
-    const remoteMessage = await persistRemoteMessage(msg);
+    let remoteMessage = null;
+    try {
+      remoteMessage = await persistRemoteMessage(msg);
+    } catch (error) {
+      setSendError(error?.message || 'Message could not be saved. Please try again.');
+      return;
+    }
     const finalMessage = remoteMessage ? {
       ...msg,
       ...remoteMessage,
@@ -513,9 +565,11 @@ export function MessagesPage({ dark }) {
     const cleanText = sanitizeLongText(initText, 1500);
     const cleanRecipientName = sanitizePlainText(recipientName, 80) || 'Creator';
     if (!recipientId || !cleanText) return;
+    setSendError('');
 
     const { blocked, patternType } = checkMessage(cleanText);
-    if (blocked) {
+    const contactAllowed = blocked ? await hasActiveMessageBooking(user.id, recipientId) : false;
+    if (blocked && !contactAllowed) {
       setFilterWarning(true);
       logFilterEvent(user.id, patternType, supabase, supabaseConfigured);
       return;
@@ -536,7 +590,13 @@ export function MessagesPage({ dark }) {
       read:          false,
       createdAt:     new Date().toISOString(),
     };
-    const remoteMessage = await persistRemoteMessage(msg);
+    let remoteMessage = null;
+    try {
+      remoteMessage = await persistRemoteMessage(msg);
+    } catch (error) {
+      setSendError(error?.message || 'Message could not be saved. Please try again.');
+      return;
+    }
     const finalMessage = remoteMessage ? {
       ...msg,
       ...remoteMessage,
@@ -687,15 +747,21 @@ export function MessagesPage({ dark }) {
                       <div className="flex items-start gap-2 mb-2 px-3 py-2 rounded-xl bg-gold-500/12 border border-gold-500/25">
                         <AlertTriangle size={13} className="text-gold-400 mt-0.5 shrink-0" />
                         <p className="text-xs text-gold-300 leading-snug">
-                          For your protection, contact information cannot be shared in messages. All bookings and payments are handled securely through CreatorBridge.
+                          Contact information stays inside CreatorBridge until a booking is active.
                         </p>
+                      </div>
+                    )}
+                    {sendError && (
+                      <div className="flex items-start gap-2 mb-2 px-3 py-2 rounded-xl bg-red-500/12 border border-red-500/25">
+                        <AlertTriangle size={13} className="text-red-300 mt-0.5 shrink-0" />
+                        <p className="text-xs text-red-200 leading-snug">{sendError}</p>
                       </div>
                     )}
                     <div className="flex gap-2">
                       <input
                         type="text"
                         value={text}
-                        onChange={e => { setText(e.target.value); if (filterWarning) setFilterWarning(false); }}
+                        onChange={e => { setText(e.target.value); if (filterWarning) setFilterWarning(false); if (sendError) setSendError(''); }}
                         onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendMessage())}
                         placeholder="Type a message..."
                         className={`flex-1 px-4 py-2.5 text-sm rounded-xl border outline-none transition-all ${
