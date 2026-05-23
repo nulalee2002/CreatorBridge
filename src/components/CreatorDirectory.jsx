@@ -13,6 +13,7 @@ import { FastMatch } from './FastMatch.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { uploadUserAsset } from '../utils/storage.js';
+import { sendNotificationEmail } from '../lib/notifications.js';
 
 // Initialize seed data (version-gated — replaces stale seeds automatically)
 initSeedData();
@@ -223,6 +224,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 
   const [serviceLimit, setServiceLimit] = useState('');
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showCreatorAgreementModal, setShowCreatorAgreementModal] = useState(false);
   const [form, setForm] = useState({
     name: '', businessName: '', bio: '', experience: 'mid',
     avatar: '', tags: '',
@@ -239,6 +241,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
     lockConfirm: false,
     reviewNoticeConfirm: false,
     tosAccepted: false,
+    creatorAgreementAccepted: false,
     aiOriginalWorkConfirm: false,
     aiToolsDisclosure: [],
   });
@@ -361,7 +364,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	    serviceOffersMet &&
 	    videoIntroMet && bioLen >= 100 && portfolioMet &&
 	    form.insuranceAck && form.lockConfirm && form.reviewNoticeConfirm &&
-	    form.tosAccepted && form.aiOriginalWorkConfirm);
+	    form.tosAccepted && form.creatorAgreementAccepted && form.aiOriginalWorkConfirm);
 
 	  const publishChecks = [
 	    { label: 'Creator identity', done: !!form.name && bioLen >= 100 },
@@ -369,7 +372,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	    { label: 'Service offers', done: serviceOffersMet },
 	    { label: 'Proof of work', done: videoIntroMet && portfolioMet },
 	    { label: 'Contact email', done: !!form.contact.email },
-	    { label: 'Final acknowledgments', done: form.insuranceAck && form.lockConfirm && form.reviewNoticeConfirm && form.tosAccepted && form.aiOriginalWorkConfirm },
+	    { label: 'Final acknowledgments', done: form.insuranceAck && form.lockConfirm && form.reviewNoticeConfirm && form.tosAccepted && form.creatorAgreementAccepted && form.aiOriginalWorkConfirm },
 	  ];
 
   const handleSubmit = () => {
@@ -971,6 +974,18 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	              </span>
 	            </label>
 	            <label className={`flex items-start gap-3 cursor-pointer rounded-xl border p-3 ${dark ? 'border-white/[0.06] bg-charcoal-950/35' : 'border-gold-200 bg-white'}`}>
+	              <input type="checkbox" checked={form.creatorAgreementAccepted} onChange={e => set('creatorAgreementAccepted', e.target.checked)} className="mt-0.5 accent-gold-500" />
+	              <span className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-700'}`}>
+	                I have read and agree to the{' '}
+                <button type="button"
+                  onClick={e => { e.preventDefault(); setShowCreatorAgreementModal(true); }}
+                  className="text-gold-400 hover:text-gold-300 underline font-medium">
+                  Creator Agreement
+                </button>
+	                {' '}governing my professional services on the platform.
+	              </span>
+	            </label>
+	            <label className={`flex items-start gap-3 cursor-pointer rounded-xl border p-3 ${dark ? 'border-white/[0.06] bg-charcoal-950/35' : 'border-gold-200 bg-white'}`}>
 	              <input type="checkbox" checked={form.aiOriginalWorkConfirm} onChange={e => set('aiOriginalWorkConfirm', e.target.checked)} className="mt-0.5 accent-gold-500" />
 	              <span className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-700'}`}>
 	                I confirm that all portfolio samples and work shown on my profile are original work created by me and do not contain AI generated content. I understand that submitting AI generated content as my own work is grounds for immediate account removal.
@@ -1076,6 +1091,70 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
             <div className={`flex items-center justify-end px-6 py-4 border-t ${dark ? 'border-charcoal-700' : 'border-gray-200'} shrink-0`}>
               <button type="button"
                 onClick={() => setShowTermsModal(false)}
+                className="px-5 py-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold transition-all">
+                I Understand
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Inline Creator Agreement modal */}
+      {showCreatorAgreementModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="cb-modal-backdrop" onClick={() => setShowCreatorAgreementModal(false)} />
+          <div className={`relative w-full max-w-lg max-h-[80vh] flex flex-col rounded-2xl border shadow-2xl ${
+            dark ? 'bg-charcoal-900 border-charcoal-700' : 'bg-white border-gray-200'
+          }`}>
+            <div className={`flex items-center justify-between px-6 py-4 border-b ${dark ? 'border-charcoal-700' : 'border-gray-200'} shrink-0`}>
+              <h2 className={`font-display font-bold text-lg ${dark ? 'text-white' : 'text-gray-900'}`}>
+                CreatorBridge Creator Agreement
+              </h2>
+              <button type="button" onClick={() => setShowCreatorAgreementModal(false)}
+                className={`p-2 rounded-xl transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-charcoal-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+              {[
+                {
+                  title: 'Section 1 — Introduction & Scope',
+                  body: 'This agreement details your rights and duties regarding payments, fees, client bookings, profile locks, and general operational standards on the CreatorBridge platform.',
+                },
+                {
+                  title: 'Section 2 — Platform Fee Structure & Tiers',
+                  body: 'Our platform fee percentage decreases as you complete more projects: Launch Tier (10%), Proven Tier (8%), Elite Tier (6%), and Signature Tier (5%).',
+                },
+                {
+                  title: 'Section 3 — Payments & Stripe Connect',
+                  body: 'You must onboard with Stripe Connect. Payments use an escrow-like structure: a 50% retainer paid upfront before work starts, and the remaining 50% final payout released upon delivery approval or 72-hour auto-approval.',
+                },
+                {
+                  title: 'Section 4 — Non-Circumvention',
+                  body: 'All communications, bookings, and payments with clients introduced on CreatorBridge must stay on the platform. Exclusivity is required for 24 months. Off-platform activity is grounds for account removal.',
+                },
+                {
+                  title: 'Section 5 — 90-Day Profile Lock',
+                  body: 'To prevent rapid changes to bypass reviews, critical identity details (business name, full name, location) are locked for 90 days after profile approval.',
+                },
+                {
+                  title: 'Section 6 — Violations (Three-Strike Rule)',
+                  body: 'Infractions result in a warning (Strike 1), visibility/bidding restrictions (Strike 2), and profile suspension (Strike 3).',
+                },
+                {
+                  title: 'Section 7 — Term and Termination',
+                  body: 'Either party may close the account, but you must complete any active bookings, and the 24-month non-circumvention rule remains active for prior introductions.',
+                },
+              ].map(({ title, body }) => (
+                <div key={title}>
+                  <h3 className={`text-sm font-bold mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>{title}</h3>
+                  <p className={`text-xs leading-relaxed ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>{body}</p>
+                </div>
+              ))}
+            </div>
+            <div className={`flex items-center justify-end px-6 py-4 border-t ${dark ? 'border-charcoal-700' : 'border-gray-200'} shrink-0`}>
+              <button type="button"
+                onClick={() => setShowCreatorAgreementModal(false)}
                 className="px-5 py-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold transition-all">
                 I Understand
               </button>
@@ -1318,7 +1397,22 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
           display_order: index,
         }));
         if (portfolioRows.length) await supabase.from('portfolio_items').insert(portfolioRows);
-      } catch {
+
+        // Record creator agreement acceptance
+        await supabase
+          .from('legal_acceptances')
+          .insert({
+            user_id: user.id,
+            document_type: 'creator_agreement',
+            document_version: '1.0'
+          });
+
+        // Trigger welcome creator email
+        sendNotificationEmail(enriched.contact?.email || user.email, 'welcome_creator', {
+          creator_name: enriched.name
+        });
+      } catch (err) {
+        console.error('Error inserting creator directory data:', err);
         savedListing = enriched;
       }
     }

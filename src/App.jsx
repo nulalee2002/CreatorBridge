@@ -40,6 +40,10 @@ const NetworkingPage = lazy(() => import('./pages/NetworkingPage.jsx').then(m =>
 const ClientProfilePage = lazy(() => import('./pages/ClientProfilePage.jsx').then(m => ({ default: m.ClientProfilePage })));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx').then(m => ({ default: m.AdminDashboard })));
 const TermsPage = lazy(() => import('./pages/TermsPage.jsx').then(m => ({ default: m.TermsPage })));
+const TermsOfService = lazy(() => import('./pages/TermsOfService.jsx').then(m => ({ default: m.TermsOfService })));
+const CreatorAgreement = lazy(() => import('./pages/CreatorAgreement.jsx').then(m => ({ default: m.CreatorAgreement })));
+const DisputePolicy = lazy(() => import('./pages/DisputePolicy.jsx').then(m => ({ default: m.DisputePolicy })));
+const JoinAsCreator = lazy(() => import('./pages/JoinAsCreator.jsx').then(m => ({ default: m.JoinAsCreator })));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage.jsx').then(m => ({ default: m.ResetPasswordPage })));
 const QuickQuoteMode = lazy(() => import('./components/QuickQuoteMode.jsx').then(m => ({ default: m.QuickQuoteMode })));
 
@@ -461,6 +465,17 @@ export default function App() {
               }`}>
                 <button
                   type="button"
+                  onClick={() => { navigate('/join-as-creator'); setShowJoinDropdown(false); }}
+                  className={`w-full flex flex-col items-start gap-0.5 px-4 py-3 transition-colors text-left ${
+                    dark ? 'hover:bg-charcoal-900/72' : 'hover:bg-gray-50'
+                  }`}
+                >
+                  <span className={`text-xs font-bold text-gold-400`}>Creator Benefits</span>
+                  <span className={`text-[11px] ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>Tiers, splits (90/10) & earnings</span>
+                </button>
+                <div className={`border-t ${dark ? 'border-white/[0.07]' : 'border-gray-100'}`} />
+                <button
+                  type="button"
                   onClick={() => { navigate('/register'); setShowJoinDropdown(false); }}
                   className={`w-full flex flex-col items-start gap-0.5 px-4 py-3 transition-colors text-left ${
                     dark ? 'hover:bg-charcoal-900/72' : 'hover:bg-gray-50'
@@ -521,7 +536,7 @@ export default function App() {
           {user ? (
             <div className="flex items-center gap-1">
               <button type="button" onClick={() => navigate('/messages')}
-                className={`p-2 rounded-xl transition-colors ${
+                className={`p-3 md:p-2 rounded-xl transition-colors ${
                   activeTab === 'messages'
                     ? 'bg-gold-500/20 text-gold-400'
                     : dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
@@ -531,7 +546,7 @@ export default function App() {
               {/* Role-gated nav: creators see creator dashboard, clients see client profile */}
               {authProfile?.role === 'creator' ? (
                 <button type="button" onClick={() => navigate('/dashboard')}
-                  className={`p-2 rounded-xl transition-colors ${
+                  className={`p-3 md:p-2 rounded-xl transition-colors ${
                     activeTab === 'dashboard'
                       ? 'bg-gold-500/20 text-gold-400'
                       : dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
@@ -540,7 +555,7 @@ export default function App() {
                 </button>
               ) : (
                 <button type="button" onClick={() => navigate('/client')}
-                  className={`p-2 rounded-xl transition-colors ${
+                  className={`p-3 md:p-2 rounded-xl transition-colors ${
                     activeTab === 'client'
                       ? 'bg-gold-500/20 text-gold-400'
                       : dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
@@ -548,11 +563,11 @@ export default function App() {
                   <User size={14} />
                 </button>
               )}
-              {/* Avatar — clickable, shows photo if available */}
+              {/* Avatar — clickable, shows photo if available. w-11 h-11 is exactly 44x44px. */}
               <button
                 type="button"
                 onClick={() => navigate(authProfile?.role === 'creator' ? '/dashboard' : '/client')}
-                className={`w-7 h-7 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold transition-opacity hover:opacity-80 ${dark ? 'bg-gold-500/20 text-gold-400' : 'bg-gold-100 text-gold-600'}`}
+                className={`w-11 h-11 md:w-7 md:h-7 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold transition-opacity hover:opacity-80 ${dark ? 'bg-gold-500/20 text-gold-400' : 'bg-gold-100 text-gold-600'}`}
                 title="Go to my profile"
               >
                 {authProfile?.avatar_url ? (
@@ -562,14 +577,14 @@ export default function App() {
                 )}
               </button>
               <button type="button" onClick={signOut}
-                className={`p-2 rounded-xl transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}
+                className={`p-3 md:p-2 rounded-xl transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}
                 title="Sign out">
                 <LogOut size={14} />
               </button>
             </div>
           ) : (
             <button type="button" onClick={() => openAuth('login')}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-4 py-3 md:px-3.5 md:py-2 rounded-xl border text-xs font-bold transition-all ${
                 dark ? 'border-gold-500/14 text-charcoal-300 hover:text-white hover:border-gold-500/32 hover:bg-white/[0.035]' : 'border-gray-200 text-gray-600 hover:text-gray-900'
               }`}>
               <LogIn size={13} /> Sign In
@@ -578,7 +593,7 @@ export default function App() {
 
           {/* Dark mode */}
           <button type="button" onClick={() => setDark(d => !d)}
-            className={`p-2.5 rounded-xl transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}
+            className={`p-3 md:p-2.5 rounded-xl transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}
           >
             {dark ? <Sun size={16} /> : <Moon size={16} />}
           </button>
@@ -586,19 +601,25 @@ export default function App() {
       </header>
 
       <nav className={`md:hidden sticky top-16 z-20 border-b backdrop-blur-xl ${dark ? 'bg-charcoal-950/90 border-gold-500/12' : 'bg-white/94 border-gray-200'}`}>
-        <div className="flex gap-2 overflow-x-auto px-5 py-2">
+        <div className="flex gap-2 overflow-x-auto px-5 py-2 no-scrollbar">
           {[
             { path: '/',           id: 'directory',  icon: Search,   label: 'Find' },
             { path: '/projects',   id: 'projects',   icon: Briefcase, label: 'Projects' },
             { path: '/network',    id: 'network',    icon: Users,     label: 'Network' },
             { path: '/calculator', id: 'calculator', icon: Zap,      label: 'Rates' },
+            { path: '/join-as-creator', id: 'join-as-creator', icon: UserPlus, label: 'Join' },
+            ...(user
+              ? authProfile?.role === 'creator'
+                ? [{ path: '/dashboard', id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' }]
+                : [{ path: '/client', id: 'client', icon: User, label: 'Dashboard' }]
+              : [])
           ].map(({ path, id, icon: Icon, label }) => (
             <button
               key={id}
               type="button"
               onClick={() => navigate(path)}
               className={`flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-2 text-[11px] font-bold transition-colors ${
-                activeTab === id
+                activeTab === id || (id === 'join-as-creator' && location.pathname === '/join-as-creator')
                   ? 'border-gold-500 bg-gold-500 text-charcoal-900'
                   : dark
                     ? 'border-white/[0.08] bg-white/[0.025] text-charcoal-300 hover:border-gold-500/28 hover:text-white'
@@ -645,7 +666,11 @@ export default function App() {
             <LazyRoute dark={dark}><AdminDashboard dark={dark} /></LazyRoute>
           </AuthRequired>
         } />
-        <Route path="/terms" element={<LazyRoute dark={dark}><TermsPage dark={dark} /></LazyRoute>} />
+        <Route path="/terms" element={<LazyRoute dark={dark}><TermsOfService dark={dark} /></LazyRoute>} />
+        <Route path="/terms-of-service" element={<LazyRoute dark={dark}><TermsOfService dark={dark} /></LazyRoute>} />
+        <Route path="/creator-agreement" element={<LazyRoute dark={dark}><CreatorAgreement dark={dark} /></LazyRoute>} />
+        <Route path="/dispute-policy" element={<LazyRoute dark={dark}><DisputePolicy dark={dark} /></LazyRoute>} />
+        <Route path="/join-as-creator" element={<LazyRoute dark={dark}><JoinAsCreator dark={dark} /></LazyRoute>} />
         <Route path="/privacy" element={<LazyRoute dark={dark}><TermsPage dark={dark} /></LazyRoute>} />
         <Route path="/reset-password" element={<LazyRoute dark={dark}><ResetPasswordPage dark={dark} /></LazyRoute>} />
         <Route path="/calculator" element={null} />

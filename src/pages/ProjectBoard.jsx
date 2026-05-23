@@ -17,6 +17,7 @@ import { ReferralSection } from '../components/ReferralSection.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { sanitizeLongText, sanitizePlainText, sanitizeTagList, clampNumber, sanitizeUrl } from '../utils/inputSecurity.js';
 import { checkMessage, logFilterEvent } from '../utils/messageFilter.js';
+import { sendNotificationEmail } from '../lib/notifications.js';
 import {
   fromSupabaseProject,
   loadLocalProjects,
@@ -149,7 +150,7 @@ function isUuid(value) {
 }
 
 // ── Delivery Submit Modal ────────────────────────────────────────
-function DeliverySubmitModal({ project, dark, onClose, onDelivered }) {
+function DeliverySubmitModal({ project, dark, onClose, onDelivered, creatorName }) {
   const [link, setLink]           = useState('');
   const [notes, setNotes]         = useState('');
   const [confirmed, setConfirmed] = useState(false);
@@ -175,8 +176,22 @@ function DeliverySubmitModal({ project, dark, onClose, onDelivered }) {
       deliveryLink: cleanLink,
       deliveryNotes: cleanNotes,
     };
+    
+    let clientEmail = 'client@example.com';
     try {
       if (supabaseConfigured && isUuid(project.id)) {
+        const clientId = project.clientId || project.client_id;
+        if (clientId) {
+          const { data: clientProfile } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('id', clientId)
+            .maybeSingle();
+          if (clientProfile?.email) {
+            clientEmail = clientProfile.email;
+          }
+        }
+
         const { data, error: deliveryError } = await supabase
           .from('projects')
           .update({
@@ -195,6 +210,14 @@ function DeliverySubmitModal({ project, dark, onClose, onDelivered }) {
 
       const updated = updateProject(project.id, patch);
       onDelivered?.(updated.find(p => p.id === project.id));
+
+      // Send delivery_submitted email
+      sendNotificationEmail(clientEmail, 'delivery_submitted', {
+        client_name: project.clientName || 'Client',
+        project_title: project.title,
+        creator_name: creatorName || 'Creator'
+      });
+
       onClose();
     } catch (err) {
       setError(err?.message || 'Delivery could not be saved. Please try again.');
@@ -666,6 +689,13 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
     const projs = loadProjects();
     const nextProjects = projs.map(p => p.id === project.id ? { ...p, applications: (p.applications || 0) + 1 } : p);
     saveProjects(nextProjects);
+
+    // Send application_received email
+    sendNotificationEmail(creatorListing?.email || 'creator@example.com', 'application_received', {
+      creator_name: app.creatorName,
+      project_title: project.title
+    });
+
     setSubmitted(true);
     setTimeout(() => { onApply(app); }, 1500);
   }
@@ -876,6 +906,7 @@ function InlineClientRep({ clientId, dark }) {
 // ── Project Card ─────────────────────────────────────────────────
 function ProjectCard({ project, dark, onApply, myApplications, isClient, canApply, onView, onStatusChange }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [showDelivery, setShowDelivery] = useState(false);
   const [showRevision, setShowRevision] = useState(false);
   const [showDispute, setShowDispute] = useState(false);
@@ -974,6 +1005,7 @@ function ProjectCard({ project, dark, onApply, myApplications, isClient, canAppl
         <DeliverySubmitModal
           project={project}
           dark={dark}
+          creatorName={user?.user_metadata?.full_name || 'Creator'}
           onClose={() => setShowDelivery(false)}
           onDelivered={(updatedProject) => {
             setShowDelivery(false);
@@ -1010,6 +1042,7 @@ function ProjectCard({ project, dark, onApply, myApplications, isClient, canAppl
 // ── Project Detail Modal ─────────────────────────────────────────
 function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, applications, isClient, canApply, onStatusChange }) {
   const navigate    = useNavigate();
+  const { user } = useAuth();
   const serviceId   = normalizeServiceId(project.serviceId || project.service_id || project.serviceType);
   const svc         = SERVICES[serviceId];
   const textSub     = dark ? 'text-charcoal-300' : 'text-gray-500';
@@ -1042,8 +1075,18 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
       acceptedAt: now,
     };
 
+    let creatorEmail = 'creator@example.com';
     if (supabaseConfigured && isUuid(localProject.id) && isUuid(app.id)) {
       try {
+        const { data: creatorData } = await supabase
+          .from('creator_listings')
+          .select('email')
+          .eq('id', app.creatorId)
+          .maybeSingle();
+        if (creatorData?.email) {
+          creatorEmail = creatorData.email;
+        }
+
         const { error: acceptError } = await supabase.rpc('accept_project_application', {
           p_project_id: localProject.id,
           p_application_id: app.id,
@@ -1060,6 +1103,16 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
     const updatedProjects = updateProject(localProject.id, { status: 'accepted', ...patch });
     const updatedProject = updatedProjects.find(p => p.id === localProject.id);
     setLocalProject(updatedProject || { ...localProject, status: 'accepted', ...patch });
+
+    // Send application_accepted email to creator
+    const proposedRate = app.rate || localProject.budgetMax || localProject.budgetMin || 0;
+    const retainer = Math.round(proposedRate * 0.5);
+    sendNotificationEmail(creatorEmail, 'application_accepted', {
+      creator_name: app.creatorName,
+      project_title: localProject.title,
+      retainer_amount: retainer
+    });
+
     onStatusChange?.(localProject.id, 'accepted', patch);
   }
 
@@ -1229,6 +1282,7 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
             <DeliverySubmitModal
               project={localProject}
               dark={dark}
+              creatorName={user?.user_metadata?.full_name || 'Creator'}
               onClose={() => setShowDelivery(false)}
               onDelivered={(updatedProject) => {
                 setLocalProject(updatedProject);

@@ -66,11 +66,11 @@
   }
 
   .input-dark {
-    @apply bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-400 focus:border-gold-500 focus:ring-1 focus:ring-gold-500 rounded-lg px-3 py-2 text-sm outline-none transition-colors;
+    @apply bg-charcoal-900 border-charcoal-600 text-white placeholder-charcoal-400 focus:border-gold-500 focus:ring-1 focus:ring-gold-500 rounded-lg px-3 py-2 text-base md:text-sm outline-none transition-colors;
   }
 
   .input-light {
-    @apply bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500 focus:ring-1 focus:ring-gold-500 rounded-lg px-3 py-2 text-sm outline-none transition-colors;
+    @apply bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500 focus:ring-1 focus:ring-gold-500 rounded-lg px-3 py-2 text-base md:text-sm outline-none transition-colors;
   }
 
   .btn-primary {
@@ -108,6 +108,42 @@
 
   .tooltip {
     @apply absolute z-50 bg-charcoal-900 text-white text-xs rounded-lg px-3 py-2 shadow-xl w-56 pointer-events-none;
+  }
+
+  .cb-chatbot-panel {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    max-width: 100vw;
+    border-radius: 0;
+    border-width: 0;
+    z-index: 9999;
+  }
+
+  @media (min-width: 768px) {
+    .cb-chatbot-panel {
+      bottom: 5rem;
+      right: 1rem;
+      width: 25rem;
+      height: auto;
+      max-height: min(540px, calc(100dvh - 7rem));
+      max-width: 25rem;
+      border-radius: 1.35rem;
+      border-width: 1px;
+    }
+  }
+
+  .cb-chatbot-messages {
+    max-height: none;
+  }
+
+  @media (min-width: 768px) {
+    .cb-chatbot-messages {
+      max-height: 400px;
+    }
   }
 }
 
@@ -275,5 +311,21 @@
 
   .cb-home-wide {
     max-width: 2140px;
+  }
+
+  @media (max-width: 767px) {
+    .cb-motion-field {
+      animation: none !important;
+    }
+    .cb-motion-field::before,
+    .cb-motion-field::after,
+    .cb-signal,
+    .cb-pulse {
+      animation: none !important;
+      display: none !important;
+    }
+    input, select, textarea {
+      font-size: 16px !important;
+    }
   }
 }

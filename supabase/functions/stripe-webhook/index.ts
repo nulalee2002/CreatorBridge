@@ -219,6 +219,79 @@ async function consumeClientFeeWaiver(supabaseAdmin: ReturnType<typeof createCli
     .eq('user_id', txn.client_id);
 }
 
+async function triggerWebhookEmail(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  txn: Record<string, any>,
+  template: 'retainer_paid' | 'final_paid'
+) {
+  try {
+    const { data: creator } = await supabaseAdmin
+      .from('creator_listings')
+      .select('email, name')
+      .eq('id', txn.creator_id)
+      .maybeSingle();
+
+    const { data: project } = await supabaseAdmin
+      .from('projects')
+      .select('title')
+      .eq('id', txn.project_id)
+      .maybeSingle();
+
+    if (!creator?.email) {
+      console.warn('Cannot send webhook email: creator email not found', txn.creator_id);
+      return;
+    }
+
+    const creatorEmail = creator.email;
+    const creatorName = creator.name || 'Creator';
+    const projectTitle = project?.title || 'your project';
+
+    const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-notification-email`;
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+
+    let emailData: Record<string, any> = {};
+    if (template === 'retainer_paid') {
+      const retainerAmt = Number(txn.retainer_amount || 0) / 100;
+      emailData = {
+        creator_name: creatorName,
+        project_title: projectTitle,
+        retainer_amount: retainerAmt,
+      };
+    } else if (template === 'final_paid') {
+      const projectAmount = Math.max(0, Number(txn.project_amount || 0));
+      const creatorFee = Math.max(0, Number(txn.creator_fee_amount || 0));
+      const netToCreator = projectAmount - creatorFee;
+      const retainerTransferAmount = Math.min(netToCreator, Math.max(0, Number(txn.retainer_amount || 0)));
+      const finalTransferAmount = netToCreator - retainerTransferAmount;
+      const payoutAmt = finalTransferAmount / 100;
+      emailData = {
+        creator_name: creatorName,
+        project_title: projectTitle,
+        payout_amount: payoutAmt,
+      };
+    }
+
+    const res = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${serviceRoleKey}`,
+      },
+      body: JSON.stringify({
+        to: creatorEmail,
+        template,
+        data: emailData,
+      }),
+    });
+
+    if (!res.ok) {
+      console.error(`Failed to send email notification inside webhook: ${res.status} ${await res.text()}`);
+    }
+  } catch (err) {
+    console.error('Error triggering webhook email:', err);
+  }
+}
+
 Deno.serve(async (req) => {
   const signature = req.headers.get('stripe-signature');
   if (!signature) {
@@ -309,6 +382,7 @@ Deno.serve(async (req) => {
               final_status: 'paid',
               final_paid_at: new Date().toISOString(),
             });
+            await triggerWebhookEmail(supabaseAdmin, txn, 'final_paid');
           }
 
           await supabaseAdmin.from('payment_events').insert({
@@ -328,6 +402,7 @@ Deno.serve(async (req) => {
                 .eq('status', 'accepted');
             }
             await consumeClientFeeWaiver(supabaseAdmin, txn);
+            await triggerWebhookEmail(supabaseAdmin, txn, 'retainer_paid');
           }
         }
         break;

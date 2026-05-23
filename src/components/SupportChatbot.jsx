@@ -972,8 +972,7 @@ export function SupportChatbot({ dark = true }) {
       {/* ── Chat panel ─────────────────────────────────────────── */}
       {open && (
         <div
-          className={`z-50 w-[calc(100vw-2rem)] sm:w-[25rem] rounded-[1.35rem] border flex flex-col overflow-hidden ${bgPanel}`}
-          style={{ position: 'fixed', bottom: '5rem', right: '1rem', maxHeight: 'min(540px, calc(100dvh - 7rem))', maxWidth: '25rem', zIndex: 9999 }}
+          className={`cb-chatbot-panel border flex flex-col overflow-hidden ${bgPanel}`}
         >
           <div className="h-px bg-gradient-to-r from-transparent via-gold-400/70 to-transparent shrink-0" />
           {/* Header */}
@@ -991,13 +990,13 @@ export function SupportChatbot({ dark = true }) {
               </div>
             </div>
             <button type="button" onClick={() => setOpen(false)}
-              className={`p-1 rounded-lg transition-colors ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.08]' : 'text-gray-400 hover:text-gray-900'}`}>
-              <ChevronDown size={16} />
+              className={`p-2.5 sm:p-1 rounded-lg transition-colors ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.08]' : 'text-gray-400 hover:text-gray-900'}`}>
+              <ChevronDown size={20} className="sm:w-4 sm:h-4" />
             </button>
           </div>
 
           {/* Messages */}
-          <div className={`flex-1 overflow-y-auto p-4 space-y-3 min-h-0 ${dark ? 'bg-[radial-gradient(circle_at_30%_0%,rgba(212,169,65,0.1),transparent_34%)]' : ''}`} style={{ maxHeight: '400px' }}>
+          <div className={`cb-chatbot-messages flex-1 overflow-y-auto p-4 space-y-3 min-h-0 ${dark ? 'bg-[radial-gradient(circle_at_30%_0%,rgba(212,169,65,0.1),transparent_34%)]' : ''}`}>
             {messages.map((msg, i) => (
               <div key={i} className="space-y-1.5">
 
@@ -1186,7 +1185,7 @@ export function SupportChatbot({ dark = true }) {
               onKeyDown={handleKey}
               disabled={isOptionsStep}
               placeholder={inputPlaceholder}
-              className={`flex-1 text-xs px-3 py-2 rounded-xl border outline-none transition-all ${
+              className={`flex-1 text-xs px-3 py-3 sm:py-2 rounded-xl border outline-none transition-all ${
                 isOptionsStep
                   ? dark
                     ? 'bg-white/[0.04] border-white/[0.06] text-charcoal-600 cursor-not-allowed'
@@ -1198,8 +1197,8 @@ export function SupportChatbot({ dark = true }) {
             />
             <button type="button" onClick={handleSend}
               disabled={!input.trim() || loading || isOptionsStep}
-              className="w-8 h-8 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 flex items-center justify-center transition-all shrink-0 shadow-[0_10px_28px_rgba(212,169,65,0.22)]">
-              <Send size={13} className="text-charcoal-900" />
+              className="w-11 h-11 sm:w-8 sm:h-8 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 flex items-center justify-center transition-all shrink-0 shadow-[0_10px_28px_rgba(212,169,65,0.22)]">
+              <Send size={16} className="text-charcoal-900" />
             </button>
           </div>
         </div>
