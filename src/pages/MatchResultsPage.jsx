@@ -264,7 +264,7 @@ export function MatchResultsPage({ dark }) {
             <Search size={34} className={`mx-auto mb-3 ${dark ? 'text-gold-400' : 'text-gold-600'}`} />
             <p className={`font-bold text-base mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>No exact matches found</p>
             <p className={`text-sm ${textSub} mb-4`}>Try expanding your budget or choosing "remote" for location.</p>
-            <Link to="/" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gold-500 text-charcoal-900 text-sm font-bold">
+            <Link to="/find" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gold-500 text-charcoal-900 text-sm font-bold">
               Browse all creators <ChevronRight size={14} />
             </Link>
           </div>
@@ -273,7 +273,7 @@ export function MatchResultsPage({ dark }) {
         {/* Browse all link */}
         {matches.length > 0 && (
           <div className="text-center">
-            <Link to="/"
+            <Link to="/find"
               className={`inline-flex items-center gap-1 text-sm transition-colors ${dark ? 'text-charcoal-400 hover:text-white' : 'text-gray-400 hover:text-gray-700'}`}>
               Browse all creators <ChevronRight size={14} />
             </Link>

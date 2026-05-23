@@ -1039,8 +1039,29 @@ function ProjectCard({ project, dark, onApply, myApplications, isClient, canAppl
   );
 }
 
-// ── Project Detail Modal ─────────────────────────────────────────
-function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, applications, isClient, canApply, onStatusChange }) {
+// ── Creator Cover Helper for Project Board ────────────────────
+function getCreatorCoverImage(creator) {
+  const serviceId = creator.services?.[0]?.serviceId || creator.services?.[0]?.service_id || '';
+  switch(serviceId) {
+    case 'video':
+      return '/images/creatorbridge/camera-lens-event-reflection.png';
+    case 'photography':
+      return '/images/creatorbridge/commercial-photographer.png';
+    case 'drone':
+      return '/images/creatorbridge/drone-operator-golden-hour.png';
+    case 'podcast':
+      return '/images/creatorbridge/podcast-producer-studio.png';
+    case 'postProduction':
+    case 'editor':
+    case 'social':
+      return '/images/creatorbridge/post-production-suite.png';
+    default:
+      return '/images/creatorbridge/creator-profile-cover-studio.jpg';
+  }
+}
+
+// ── Project Detail Pane ─────────────────────────────────────────
+function ProjectDetailPane({ project, dark, onApply, myApplications, applications, isClient, canApply, onStatusChange }) {
   const navigate    = useNavigate();
   const { user } = useAuth();
   const serviceId   = normalizeServiceId(project.serviceId || project.service_id || project.serviceType);
@@ -1055,6 +1076,11 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
   const [showRevision, setShowRevision]     = useState(false);
   const [localProject, setLocalProject]    = useState(project);
   const [acceptError, setAcceptError]      = useState('');
+
+  useEffect(() => {
+    setLocalProject(project);
+    setAcceptError('');
+  }, [project]);
 
   const budgetStr = project.budgetMin && project.budgetMax
     ? `$${Number(project.budgetMin).toLocaleString()} – $${Number(project.budgetMax).toLocaleString()}`
@@ -1104,7 +1130,6 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
     const updatedProject = updatedProjects.find(p => p.id === localProject.id);
     setLocalProject(updatedProject || { ...localProject, status: 'accepted', ...patch });
 
-    // Send application_accepted email to creator
     const proposedRate = app.rate || localProject.budgetMax || localProject.budgetMin || 0;
     const retainer = Math.round(proposedRate * 0.5);
     sendNotificationEmail(creatorEmail, 'application_accepted', {
@@ -1116,227 +1141,232 @@ function ProjectDetailModal({ project, dark, onClose, onApply, myApplications, a
     onStatusChange?.(localProject.id, 'accepted', patch);
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="cb-modal-backdrop" onClick={onClose} />
-      <div className={`relative w-full max-w-xl rounded-2xl border shadow-2xl max-h-[90vh] overflow-y-auto ${dark ? 'bg-charcoal-950/70 border-white/[0.07]' : 'bg-white border-gray-200'}`}>
-        <button type="button" onClick={onClose}
-          className={`absolute top-4 right-4 p-1.5 rounded-lg z-10 ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.06]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
-          <X size={16} />
-        </button>
-        <div className="p-6">
-          {/* Header */}
-          <div className="flex items-start gap-3 mb-4">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0 ${dark ? 'bg-white/[0.08]' : 'bg-gray-100'}`}>
-              {svc?.icon || '📋'}
-            </div>
-            <div className="flex-1">
-              <h2 className={`font-display font-bold text-lg ${dark ? 'text-white' : 'text-gray-900'}`}>{project.title}</h2>
-              <p className={`text-xs ${textSub}`}>Posted by {project.clientName} · {timeAgo(project.createdAt)}</p>
-            </div>
-          </div>
+  const coverImage = getCreatorCoverImage({ services: [{ serviceId }] });
 
-          {/* Details grid */}
-          <div className={`grid grid-cols-2 gap-3 p-4 rounded-xl mb-4 ${dark ? 'bg-charcoal-900/72' : 'bg-gray-50'}`}>
-            {[
-              { icon: DollarSign, label: 'Budget', value: budgetStr, color: 'text-gold-400' },
-              { icon: Users,      label: 'Applications', value: `${project.applications || 0} proposals`, color: textSub },
-              ...(project.projectDuration ? [{ icon: Clock, label: 'Duration', value: project.projectDuration, color: textSub }] : []),
-              ...(project.deadline ? [{ icon: Calendar, label: 'Deadline', value: new Date(project.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), color: textSub }] : []),
-              ...(locationStr(project.location) ? [{ icon: MapPin, label: 'Location', value: locationStr(project.location) + (project.remote ? ' (Remote OK)' : ''), color: textSub }] : []),
-            ].map(({ icon: Icon, label, value, color }) => (
-              <div key={label}>
-                <p className={`text-[10px] font-medium mb-0.5 ${textSub}`}>{label}</p>
-                <p className={`text-sm font-semibold flex items-center gap-1 ${color}`}><Icon size={12} /> {value}</p>
+  return (
+    <div className="w-full space-y-5 text-sans">
+      {/* Cover Banner */}
+      <div className="relative h-32 rounded-xl overflow-hidden">
+        <img src={coverImage} alt="" className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950 via-charcoal-950/40 to-transparent" />
+        <span className={`absolute bottom-3 left-3 text-[10px] font-bold px-2 py-1 rounded-full ${statusBadgeClass(localProject.status, dark)}`}>
+          {PROJECT_STATUSES[localProject.status]?.label || 'Open'}
+        </span>
+      </div>
+
+      <div>
+        <h2 className="font-display font-bold text-xl text-white leading-snug">{localProject.title}</h2>
+        <p className={`text-xs ${textSub} mt-1`}>Posted by {localProject.clientName} · {timeAgo(localProject.createdAt)}</p>
+      </div>
+
+      {/* Details list */}
+      <div className={`grid grid-cols-2 gap-3 p-4 rounded-xl ${dark ? 'bg-charcoal-900/60 border border-white/[0.04]' : 'bg-gray-50'}`}>
+        {[
+          { icon: DollarSign, label: 'Budget Range', value: budgetStr, color: 'text-gold-400' },
+          { icon: Users,      label: 'Applications', value: `${localProject.applications || 0} proposals`, color: textSub },
+          ...(localProject.projectDuration ? [{ icon: Clock, label: 'Duration', value: localProject.projectDuration, color: textSub }] : []),
+          ...(localProject.deadline ? [{ icon: Calendar, label: 'Deadline', value: new Date(localProject.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), color: textSub }] : []),
+          ...(locationStr(localProject.location) ? [{ icon: MapPin, label: 'Location', value: locationStr(localProject.location) + (localProject.remote ? ' (Remote)' : ''), color: textSub }] : []),
+        ].map(({ icon: Icon, label, value, color }) => (
+          <div key={label}>
+            <p className={`text-[10px] font-medium mb-0.5 ${textSub}`}>{label}</p>
+            <p className={`text-xs font-semibold flex items-center gap-1 ${color}`}><Icon size={11} /> {value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Timeline */}
+      <div>
+        <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Timeline status</p>
+        <div className={`p-3 rounded-xl border ${dark ? 'border-white/[0.07] bg-charcoal-900/40' : 'border-gray-200 bg-gray-50'}`}>
+          <ProjectTimeline status={localProject.status} dark={dark} />
+        </div>
+      </div>
+
+      {/* Description */}
+      <div>
+        <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Description</p>
+        <p className={`text-xs leading-relaxed ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>{localProject.description}</p>
+      </div>
+
+      {/* Skills */}
+      {localProject.skills?.length > 0 && (
+        <div>
+          <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Skills required</p>
+          <div className="flex flex-wrap gap-1">
+            {localProject.skills.map(skill => (
+              <span key={skill} className={`text-[10px] px-2 py-0.5 rounded-full ${dark ? 'bg-white/[0.06] text-charcoal-300' : 'bg-gray-100 text-gray-700'}`}>
+                {skill}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Proposals list */}
+      {isClient && projectApps.length > 0 && (
+        <div>
+          <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Proposals Received ({projectApps.length})</p>
+          {acceptError && (
+            <div className="mb-2 flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2">
+              <AlertCircle size={13} className="mt-0.5 shrink-0 text-red-400" />
+              <p className="text-xs text-red-300">{acceptError}</p>
+            </div>
+          )}
+          <div className="space-y-2">
+            {projectApps.map(app => (
+              <div key={app.id} className={`p-3 rounded-xl border ${dark ? 'border-white/[0.07] bg-charcoal-900/40' : 'border-gray-200 bg-gray-50'}`}>
+                <div className="flex items-center justify-between gap-3 mb-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-base">{app.creatorAvatar}</span>
+                    <p className={`text-xs font-semibold truncate ${dark ? 'text-white' : 'text-gray-900'}`}>{app.creatorName}</p>
+                    {app.rate && <span className="text-xs font-bold text-gold-400">${Number(app.rate).toLocaleString()}</span>}
+                  </div>
+                  {localProject.status === 'open' && app.status !== 'accepted' && (
+                    <button type="button" onClick={() => acceptApplication(app)} disabled={app.payoutReady === false}
+                      className="shrink-0 rounded-lg bg-gold-500 px-2.5 py-1 text-[9px] font-bold text-charcoal-900 hover:bg-gold-600 disabled:cursor-not-allowed disabled:opacity-45">
+                      {app.payoutReady === false ? 'No Stripe' : 'Accept'}
+                    </button>
+                  )}
+                  {app.status === 'accepted' && (
+                    <span className="shrink-0 rounded-lg bg-gold-500/15 px-2.5 py-1 text-[9px] font-bold text-gold-400 ring-1 ring-gold-500/20">
+                      Accepted
+                    </span>
+                  )}
+                </div>
+                <p className={`text-[11px] leading-relaxed ${dark ? 'text-charcoal-400' : 'text-gray-500'} line-clamp-2`}>{app.proposal}</p>
               </div>
             ))}
           </div>
-
-          {/* Timeline */}
-          <div className="mb-4">
-            <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Project Status</p>
-            <div className={`p-3 rounded-xl border overflow-x-auto ${dark ? 'border-white/[0.07] bg-charcoal-900/72' : 'border-gray-200 bg-gray-50'}`}>
-              <ProjectTimeline status={project.status} dark={dark} />
-            </div>
-          </div>
-
-          {/* Description */}
-          <div className="mb-4">
-            <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Project Description</p>
-            <p className={`text-sm leading-relaxed ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>{project.description}</p>
-          </div>
-
-          {/* Skills */}
-          {project.skills?.length > 0 && (
-            <div className="mb-4">
-              <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Required Skills</p>
-              <div className="flex flex-wrap gap-1.5">
-                {project.skills.map(skill => (
-                  <span key={skill} className={`text-xs px-2.5 py-1 rounded-full ${dark ? 'bg-white/[0.08] text-charcoal-300' : 'bg-gray-100 text-gray-700'}`}>
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Applications (client view) */}
-          {isClient && projectApps.length > 0 && (
-            <div className="mb-4">
-              <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Proposals Received ({projectApps.length})</p>
-              {acceptError && (
-                <div className="mb-2 flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2">
-                  <AlertCircle size={13} className="mt-0.5 shrink-0 text-red-400" />
-                  <p className="text-xs text-red-300">{acceptError}</p>
-                </div>
-              )}
-              <div className="space-y-2">
-                {projectApps.map(app => (
-                  <div key={app.id} className={`p-3 rounded-xl border ${dark ? 'border-white/[0.07] bg-charcoal-900/72' : 'border-gray-200 bg-gray-50'}`}>
-                    <div className="flex items-center justify-between gap-3 mb-1">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-base">{app.creatorAvatar}</span>
-                        <p className={`text-sm font-semibold truncate ${dark ? 'text-white' : 'text-gray-900'}`}>{app.creatorName}</p>
-                        {app.rate && <span className="text-xs font-bold text-gold-400">${Number(app.rate).toLocaleString()}</span>}
-                      </div>
-                      {localProject.status === 'open' && app.status !== 'accepted' && (
-                        <button type="button" onClick={() => acceptApplication(app)} disabled={app.payoutReady === false}
-                          className="shrink-0 rounded-lg bg-gold-500 px-2.5 py-1 text-[10px] font-bold text-charcoal-900 hover:bg-gold-600 disabled:cursor-not-allowed disabled:opacity-45">
-                          {app.payoutReady === false ? 'Payment setup needed' : 'Accept'}
-                        </button>
-                      )}
-                      {app.status === 'accepted' && (
-                        <span className="shrink-0 rounded-lg bg-gold-500/15 px-2.5 py-1 text-[10px] font-bold text-gold-400 ring-1 ring-gold-500/20">
-                          Accepted
-                        </span>
-                      )}
-                    </div>
-                    <p className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-500'} line-clamp-2`}>{app.proposal}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Archived project notice */}
-          {isArchived(localProject) && (
-            <div className="mb-4">
-              <ArchivedProjectNotice project={localProject} dark={dark} onStatusChange={onStatusChange} />
-            </div>
-          )}
-
-          {/* Delivery link display */}
-          {localProject.deliveryLink && localProject.status !== 'in_progress' && !isArchived(localProject) && (
-            <div className={`mb-4 p-4 rounded-xl border ${dark ? 'border-white/[0.07] bg-charcoal-900/72' : 'border-gray-200 bg-gray-50'}`}>
-              <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Delivery</p>
-              <a href={localProject.deliveryLink} target="_blank" rel="noreferrer"
-                className="text-sm text-gold-400 hover:text-gold-300 underline break-all">
-                {localProject.deliveryLink}
-              </a>
-              {localProject.deliveryNotes && (
-                <p className={`text-xs mt-2 ${textSub}`}>{localProject.deliveryNotes}</p>
-              )}
-              <p className={`text-[10px] mt-2 ${textSub}`}>{STORAGE_NOTICE}</p>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <ProjectActionButtons
-              project={localProject}
-              isClient={isClient}
-              canApply={canApply}
-              applied={applied}
-              dark={dark}
-              onApply={() => { onClose(); onApply(project); }}
-              onStatusChange={(id, st, patch = {}) => {
-                setLocalProject(p => ({ ...p, status: st, ...patch }));
-                onStatusChange?.(id, st, patch);
-              }}
-              navigate={navigate}
-              onOpenDelivery={() => setShowDelivery(true)}
-              onOpenRevision={(mode) => mode === 'dispute' ? setShowDispute(true) : setShowRevision(true)}
-            />
-            {/* Rate Client - shown for creators on completed projects */}
-            {canApply && project.status === 'completed' && (
-              <button type="button" onClick={() => setShowRateClient(true)}
-                className="w-full py-2 rounded-xl bg-gold-500/15 border border-gold-500/30 text-gold-400 text-xs font-bold transition-all hover:bg-gold-500/25">
-                ⭐ Rate This Client
-              </button>
-            )}
-            {/* Cancel button - shown for client on open/active projects */}
-            {isClient && ['open', 'accepted', 'retainer_paid', 'in_progress', 'revision'].includes(project.status) && (
-              <button type="button" onClick={() => setShowCancel(true)}
-                className={`w-full py-2 rounded-xl border text-xs font-medium transition-all text-red-400 border-red-500/30 hover:bg-red-500/10`}>
-                Cancel Project
-              </button>
-            )}
-            {/* Dispute button - shown for active projects */}
-            {isClient && ['retainer_paid', 'in_progress', 'delivered', 'revision'].includes(project.status) && (
-              <button type="button" onClick={() => setShowDispute(true)}
-                className={`w-full py-2 rounded-xl border text-xs font-medium transition-all text-red-400 border-red-500/30 hover:bg-red-500/10`}>
-                Open a Dispute
-              </button>
-            )}
-          </div>
-          {showDelivery && (
-            <DeliverySubmitModal
-              project={localProject}
-              dark={dark}
-              creatorName={user?.user_metadata?.full_name || 'Creator'}
-              onClose={() => setShowDelivery(false)}
-              onDelivered={(updatedProject) => {
-                setLocalProject(updatedProject);
-                onStatusChange?.(project.id, 'delivered', updatedProject);
-              }}
-            />
-          )}
-          {showRevision && (
-            <RevisionRequestModal
-              project={localProject}
-              dark={dark}
-              onClose={() => setShowRevision(false)}
-              onRevisionSubmitted={(updatedProject) => {
-                setLocalProject(updatedProject);
-                onStatusChange?.(project.id, 'in_progress', updatedProject);
-                setShowRevision(false);
-              }}
-            />
-          )}
-          {showDispute && (
-            <DisputeModal
-              project={localProject}
-              dark={dark}
-              onClose={() => setShowDispute(false)}
-              onSubmitted={() => { setShowDispute(false); setLocalProject(p => ({ ...p, status: 'disputed' })); onStatusChange?.(project.id, 'disputed'); onClose(); }}
-            />
-          )}
-          {showCancel && (
-            <CancellationModal
-              project={project}
-              dark={dark}
-              onClose={() => setShowCancel(false)}
-              onConfirm={(proj, reason) => {
-                setShowCancel(false);
-                onStatusChange?.(proj.id, 'cancelled');
-                onClose();
-              }}
-            />
-          )}
-          {showRateClient && (
-            <RateClientModal
-              clientId={project.clientId}
-              clientName={project.clientName}
-              projectId={project.id}
-              dark={dark}
-              onClose={() => setShowRateClient(false)}
-              onSubmitted={() => setShowRateClient(false)}
-            />
-          )}
         </div>
+      )}
+
+      {/* Archived Project Notice */}
+      {isArchived(localProject) && (
+        <div>
+          <ArchivedProjectNotice project={localProject} dark={dark} onStatusChange={onStatusChange} />
+        </div>
+      )}
+
+      {/* Delivery link */}
+      {localProject.deliveryLink && localProject.status !== 'in_progress' && !isArchived(localProject) && (
+        <div className={`p-4 rounded-xl border ${dark ? 'border-white/[0.07] bg-charcoal-900/40' : 'border-gray-200 bg-gray-50'}`}>
+          <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Delivery</p>
+          <a href={localProject.deliveryLink} target="_blank" rel="noreferrer"
+            className="text-xs text-gold-400 hover:text-gold-300 underline break-all">
+            {localProject.deliveryLink}
+          </a>
+          {localProject.deliveryNotes && (
+            <p className={`text-xs mt-2 ${textSub}`}>{localProject.deliveryNotes}</p>
+          )}
+          <p className={`text-[9px] mt-2 ${textSub}`}>{STORAGE_NOTICE}</p>
+        </div>
+      )}
+
+      {/* Actions Stack */}
+      <div className="space-y-2 pt-2">
+        <ProjectActionButtons
+          project={localProject}
+          isClient={isClient}
+          canApply={canApply}
+          applied={applied}
+          dark={dark}
+          onApply={() => onApply(project)}
+          onStatusChange={(id, st, patch = {}) => {
+            setLocalProject(p => ({ ...p, status: st, ...patch }));
+            onStatusChange?.(id, st, patch);
+          }}
+          navigate={navigate}
+          onOpenDelivery={() => setShowDelivery(true)}
+          onOpenRevision={(mode) => mode === 'dispute' ? setShowDispute(true) : setShowRevision(true)}
+        />
+        {/* Rate Client - shown for creators on completed projects */}
+        {canApply && project.status === 'completed' && (
+          <button type="button" onClick={() => setShowRateClient(true)}
+            className="w-full py-2 rounded-xl bg-gold-500/15 border border-gold-500/30 text-gold-400 text-xs font-bold transition-all hover:bg-gold-500/25">
+            ⭐ Rate This Client
+          </button>
+        )}
+        {/* Cancel button - shown for client on open/active projects */}
+        {isClient && ['open', 'accepted', 'retainer_paid', 'in_progress', 'revision'].includes(project.status) && (
+          <button type="button" onClick={() => setShowCancel(true)}
+            className="w-full py-2 rounded-xl border text-xs font-medium transition-all text-red-400 border-red-500/30 hover:bg-red-500/10">
+            Cancel Project
+          </button>
+        )}
+        {/* Dispute button - shown for active projects */}
+        {isClient && ['retainer_paid', 'in_progress', 'delivered', 'revision'].includes(project.status) && (
+          <button type="button" onClick={() => setShowDispute(true)}
+            className="w-full py-2 rounded-xl border text-xs font-medium transition-all text-red-400 border-red-500/30 hover:bg-red-500/10">
+            Open a Dispute
+          </button>
+        )}
       </div>
+
+      {showDelivery && (
+        <DeliverySubmitModal
+          project={localProject}
+          dark={dark}
+          creatorName={user?.user_metadata?.full_name || 'Creator'}
+          onClose={() => setShowDelivery(false)}
+          onDelivered={(updatedProject) => {
+            setLocalProject(updatedProject);
+            onStatusChange?.(project.id, 'delivered', updatedProject);
+          }}
+        />
+      )}
+      {showRevision && (
+        <RevisionRequestModal
+          project={localProject}
+          dark={dark}
+          onClose={() => setShowRevision(false)}
+          onRevisionSubmitted={(updatedProject) => {
+            setLocalProject(updatedProject);
+            onStatusChange?.(project.id, 'in_progress', updatedProject);
+            setShowRevision(false);
+          }}
+        />
+      )}
+      {showDispute && (
+        <DisputeModal
+          project={localProject}
+          dark={dark}
+          onClose={() => setShowDispute(false)}
+          onSubmitted={() => { setShowDispute(false); setLocalProject(p => ({ ...p, status: 'disputed' })); onStatusChange?.(project.id, 'disputed'); }}
+        />
+      )}
+      {showCancel && (
+        <CancellationModal
+          project={project}
+          dark={dark}
+          onClose={() => setShowCancel(false)}
+          onConfirm={(proj, reason) => {
+            setShowCancel(false);
+            onStatusChange?.(proj.id, 'cancelled');
+          }}
+        />
+      )}
+      {showRateClient && (
+        <RateClientModal
+          clientId={project.clientId}
+          clientName={project.clientName}
+          projectId={project.id}
+          dark={dark}
+          onClose={() => setShowRateClient(false)}
+          onSubmitted={() => setShowRateClient(false)}
+        />
+      )}
     </div>
   );
 }
+
+// Obsolete modal placeholder
+function ProjectDetailModal({ onClose }) {
+  useEffect(() => { onClose(); }, [onClose]);
+  return null;
+}
+
+// Old modal render block removed
 
 // ── Main Project Board ───────────────────────────────────────────
 export function ProjectBoard({ dark }) {
@@ -1349,6 +1379,7 @@ export function ProjectBoard({ dark }) {
   const [showPost, setShowPost]         = useState(false);
   const [applyTarget, setApplyTarget]   = useState(null);
   const [viewTarget, setViewTarget]     = useState(null);
+  const [activeProjectId, setActiveProjectId] = useState(null);
 
   function handleStatusChange(projectId, newStatus, patch = {}) {
     const cleanPatch = { ...(patch || {}) };
@@ -1468,48 +1499,29 @@ export function ProjectBoard({ dark }) {
           location: '', remote: true, skills: ['After Effects', 'motion graphics', 'logo animation'],
           clientId: 'client-2', clientName: 'TechReviewPro', status: 'open', applications: 7,
           createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
-        },
-        {
-          id: 'demo-3', title: 'Brand Content Package - Real Estate',
-          description: 'Boutique real estate agency needs a monthly brand content package: 12 Instagram posts, 4 Reels, and 8 Stories per month. Luxury properties, aspirational lifestyle aesthetic. Must have experience in real estate marketing.',
-          serviceId: 'social', budgetMin: 1200, budgetMax: 2500, deadline: null,
-          location: 'Los Angeles, CA', remote: true, skills: ['Instagram', 'Canva', 'real estate', 'copywriting'],
-          clientId: 'client-3', clientName: 'LuxRealty Group', status: 'open', applications: 12,
-          createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-        },
-        {
-          id: 'demo-4', title: 'Podcast Production & Editing (Weekly)',
-          description: 'Established weekly business podcast (200+ episodes) seeking reliable audio editor. Tasks: noise reduction, leveling, intro/outro insertion, chapter markers. ~45 min raw audio per week. Long-term contract preferred.',
-          serviceId: 'podcast', budgetMin: 150, budgetMax: 300, deadline: null,
-          location: '', remote: true, skills: ['Adobe Audition', 'podcast editing', 'Descript'],
-          clientId: 'client-4', clientName: 'The Business Pod', status: 'open', applications: 5,
-          createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-        },
+        }
       ];
       saveProjects(demos);
       setProjects(demos);
     }
   }, []);
-
-  function handleApplied(app) {
-    setApplications(prev => [...prev, app]);
-    setApplyTarget(null);
+  function handlePosted(newProject) {
+    setProjects(prev => [newProject, ...prev]);
+    setShowPost(false);
+    navigate(`/matches/${newProject.id}`);
   }
 
-  function handlePosted(project) {
-    setProjects(prev => [project, ...prev]);
-    setShowPost(false);
-    // Redirect client to smart match results
-    navigate(`/matches/${project.id}`);
+  function handleApplied(newApp) {
+    setApplications(prev => [newApp, ...prev]);
+    setApplyTarget(null);
+    setProjects(prev => prev.map(p => p.id === newApp.projectId ? { ...p, applications: (p.applications || 0) + 1 } : p));
   }
 
   const myApplications = applications.filter(a => a.creatorId === creatorListing?.id);
   const myProjects      = projects.filter(p => p.clientId === user?.id);
 
   const isCreator = !!creatorListing;
-  const isClient  = !!user; // Anyone logged in can post
 
-  // Filter browse list
   const browsed = projects.filter(p => {
     if (tab !== 'browse') return true;
     if (search && !p.title.toLowerCase().includes(search.toLowerCase()) && !p.description.toLowerCase().includes(search.toLowerCase())) return false;
@@ -1538,11 +1550,23 @@ export function ProjectBoard({ dark }) {
   ];
   const projectBoardImage = '/images/creatorbridge/project-board-planning.jpg';
 
-  return (
-    <div className={`min-h-screen ${dark ? 'bg-transparent' : 'bg-gray-50'}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+  useEffect(() => {
+    if (displayProjects.length > 0) {
+      if (!activeProjectId || !displayProjects.some(p => p.id === activeProjectId)) {
+        setActiveProjectId(displayProjects[0].id);
+      }
+    } else {
+      setActiveProjectId(null);
+    }
+  }, [displayProjects, activeProjectId]);
 
-        {/* Header */}
+  const activeProject = useMemo(() => {
+    return projects.find(p => p.id === activeProjectId) || displayProjects[0] || null;
+  }, [projects, activeProjectId, displayProjects]);
+
+  return (
+    <div className={`min-h-screen ${dark ? 'bg-transparent' : 'bg-gray-55'} text-sans`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
         <div className={`relative overflow-hidden rounded-[28px] border p-6 md:p-8 mb-6 ${
           dark ? 'bg-charcoal-900/70 border-white/[0.08] shadow-[0_28px_90px_rgba(0,0,0,0.28)]' : 'bg-white border-gray-200'
         }`}>
@@ -1553,20 +1577,28 @@ export function ProjectBoard({ dark }) {
                 <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
                   Curated production work
                 </p>
-                <h1 className={`font-display font-bold text-4xl md:text-5xl ${dark ? 'text-white' : 'text-gray-900'}`}>
+                <h1 className="font-display text-4xl md:text-5xl font-bold text-white">
                   Project Board
                 </h1>
                 <p className={`text-sm md:text-base leading-7 mt-3 max-w-2xl ${textSub}`}>
-                  {isCreator ? 'Browse production briefs and submit proposals.' : 'Post a production brief, compare fit, and keep project context organized before money moves.'}
+                  {isCreator ? 'Browse open briefs, submit proposals, and track milestone payments.' : 'Post a production brief, compare proposals, and keep project details organized.'}
                 </p>
               </div>
-              {user && (
-                <button type="button" onClick={() => setShowPost(true)}
-                  className="flex w-fit items-center gap-2 px-5 py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold transition-all">
-                  <Plus size={14} /> Post a Project
+              
+              <div className="flex items-center gap-3 flex-wrap">
+                {user && (
+                  <button type="button" onClick={() => setShowPost(true)}
+                    className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold transition-all shadow-md">
+                    <Plus size={14} /> Post a Brief
+                  </button>
+                )}
+                <button type="button" onClick={() => navigate('/find')}
+                  className="flex items-center gap-2 px-5 py-3 rounded-xl border border-white/[0.1] hover:border-white/[0.2] text-white text-sm font-bold transition-all bg-white/[0.02]">
+                  Browse Creators
                 </button>
-              )}
+              </div>
             </div>
+            
             <div className={`relative hidden min-h-[230px] overflow-hidden rounded-2xl border lg:block ${dark ? 'border-gold-500/18 bg-charcoal-950/70' : 'border-gray-200 bg-gray-50'}`}>
               <img src={projectBoardImage} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
               <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950/92 via-charcoal-950/38 to-charcoal-950/12" />
@@ -1582,95 +1614,172 @@ export function ProjectBoard({ dark }) {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className={`flex gap-1 p-1 rounded-2xl border mb-5 w-fit max-w-full overflow-x-auto ${dark ? 'bg-charcoal-950/60 border-white/[0.07]' : 'bg-gray-100 border-gray-200'}`}>
-          {tabs.map(({ id, label }) => (
-            <button key={id} type="button" onClick={() => setTab(id)}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
-                tab === id ? 'bg-gold-500 text-charcoal-900' : dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-500 hover:text-gray-900'
-              }`}>
-              {label}
-            </button>
-          ))}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div className={`flex gap-1 p-1 rounded-2xl border w-fit max-w-full overflow-x-auto ${dark ? 'bg-charcoal-950/60 border-white/[0.07]' : 'bg-gray-100 border-gray-200'}`}>
+            {tabs.map(({ id, label }) => (
+              <button key={id} type="button" onClick={() => setTab(id)}
+                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                  tab === id ? 'bg-gold-500 text-charcoal-900' : dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-500 hover:text-gray-900'
+                }`}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {tab === 'browse' && (
+            <div className="relative w-full md:w-64">
+              <Search size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${textSub}`} />
+              <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Search briefs..."
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border outline-none bg-charcoal-900 text-white placeholder-charcoal-500 border-white/[0.08] focus:border-gold-500" />
+            </div>
+          )}
         </div>
 
-        {/* Filters (browse only) */}
         {tab === 'browse' && (
-          <div className={`flex flex-wrap gap-3 mb-6 rounded-2xl border p-3 ${dark ? 'bg-charcoal-950/45 border-white/[0.06]' : 'bg-white border-gray-200'}`}>
-            <div className="relative flex-1 min-w-48">
-              <Search size={13} className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${textSub}`} />
-              <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Search projects..."
-                className={`w-full pl-9 pr-3 py-2 text-sm rounded-xl border outline-none transition-all ${
-                  dark ? 'bg-charcoal-950/70 border-white/[0.08] text-white placeholder-charcoal-500 focus:border-gold-500'
-                       : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:border-gold-500'
-                }`} />
-            </div>
-            <select value={filterService} onChange={e => setFilterService(e.target.value)}
-              className={`px-3 py-2 text-sm rounded-xl border outline-none transition-all ${
-                dark ? 'bg-charcoal-950/70 border-white/[0.08] text-white focus:border-gold-500'
-                     : 'bg-white border-gray-200 text-gray-900 focus:border-gold-500'
-              }`}>
-              <option value="">All services</option>
+          <div className="flex flex-wrap gap-4 items-center bg-charcoal-950/30 border border-white/[0.06] rounded-2xl p-4 mb-6">
+            <div className="flex flex-wrap gap-2 items-center w-full">
+              <span className={`text-[10px] uppercase tracking-wider font-bold ${textSub} mr-2`}>Specialty:</span>
+              <button 
+                type="button" 
+                onClick={() => setFilterService('')}
+                className={`filter-pill ${filterService === '' ? 'active' : ''}`}
+              >
+                All Categories
+              </button>
               {MARKETPLACE_CATEGORIES.filter(category => category.id !== 'all').map(category => (
-                <option key={category.id} value={category.id}>{category.icon} {category.name}</option>
+                <button
+                  key={category.id}
+                  type="button"
+                  onClick={() => setFilterService(category.id)}
+                  className={`filter-pill ${filterService === category.id ? 'active' : ''}`}
+                >
+                  <span>{category.icon}</span>
+                  <span>{category.name}</span>
+                </button>
               ))}
-            </select>
-            <select value={filterBudget} onChange={e => setFilterBudget(e.target.value)}
-              className={`px-3 py-2 text-sm rounded-xl border outline-none transition-all ${
-                dark ? 'bg-charcoal-950/70 border-white/[0.08] text-white focus:border-gold-500'
-                     : 'bg-white border-gray-200 text-gray-900 focus:border-gold-500'
-              }`}>
-              {BUDGET_RANGES.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
-            </select>
+            </div>
+
+            <div className="flex flex-wrap gap-2 items-center w-full border-t border-white/[0.04] pt-3 mt-1">
+              <span className={`text-[10px] uppercase tracking-wider font-bold ${textSub} mr-2`}>Budget Range:</span>
+              {BUDGET_RANGES.map(r => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => setFilterBudget(r.id)}
+                  className={`filter-pill ${filterBudget === r.id ? 'active' : ''}`}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Project grid */}
         {displayProjects.length === 0 ? (
           <div className={`rounded-2xl border px-5 py-14 text-center ${dark ? 'border-white/[0.08] bg-charcoal-900/64' : 'border-gray-200 bg-white shadow-sm'} ${textSub}`}>
             <div className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl ${dark ? 'bg-gold-500/10 text-gold-300 ring-1 ring-gold-500/20' : 'bg-gold-50 text-gold-600'}`}>
               <Briefcase size={20} />
             </div>
             <p className={`text-base font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>
-              {tab === 'my_projects' ? "You haven't posted any projects yet"
-               : tab === 'my_applications' ? "You haven't applied to any projects yet"
-               : "No projects match your filters"}
+              {tab === 'my_projects' ? "You haven't posted any briefs yet"
+               : tab === 'my_applications' ? "You haven't applied to any briefs yet"
+               : "No briefs match your filters"}
             </p>
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 opacity-80">
-              {tab === 'browse' ? 'Try widening the service, location, or budget filters.' : 'When projects move through CreatorBridge, this page becomes your operating view.'}
+              {tab === 'browse' ? 'Try widening the service or budget range filters.' : 'Your active production briefs and applications will appear here.'}
             </p>
             {tab === 'my_projects' && user && (
               <button type="button" onClick={() => setShowPost(true)}
-                className="mt-4 px-5 py-2.5 rounded-xl bg-gold-500 text-charcoal-900 font-bold text-sm">
-                Post Your First Project
+                className="mt-4 px-5 py-2.5 rounded-xl bg-gold-500 text-charcoal-900 font-bold text-sm shadow-md">
+                Post Your First Brief
               </button>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {displayProjects.map(p => (
-              <ProjectCard
-                key={p.id}
-                project={p}
-                dark={dark}
-                onApply={setApplyTarget}
-                myApplications={myApplications}
-                isClient={p.clientId === user?.id}
-                canApply={isCreator && p.clientId !== user?.id}
-                onView={setViewTarget}
-                onStatusChange={handleStatusChange}
-              />
-            ))}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-8 items-start">
+            <div className="space-y-4">
+              {displayProjects.map(p => {
+                const serviceId = normalizeServiceId(p.serviceId || p.service_id || p.serviceType);
+                const svc      = SERVICES[serviceId];
+                const budgetStr = p.budgetMin && p.budgetMax
+                  ? `$${Number(p.budgetMin).toLocaleString()} - $${Number(p.budgetMax).toLocaleString()}`
+                  : p.budgetMax ? `Up to $${Number(p.budgetMax).toLocaleString()}`
+                  : p.budgetMin ? `From $${Number(p.budgetMin).toLocaleString()}`
+                  : 'Budget TBD';
+                
+                return (
+                  <div 
+                    key={p.id}
+                    className={`brief-card ${activeProject?.id === p.id ? 'active' : ''}`}
+                    onClick={() => setActiveProjectId(p.id)}
+                  >
+                    <div className="flex justify-between items-start gap-3 mb-2">
+                      <div>
+                        <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md ${dark ? 'bg-white/[0.05] text-gold-400' : 'bg-gray-100 text-gold-600'} mr-2`}>
+                          {svc?.name || 'Media'}
+                        </span>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${statusBadgeClass(p.status, dark)}`}>
+                          {PROJECT_STATUSES[p.status]?.label || 'Open'}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-charcoal-400">{timeAgo(p.createdAt)}</span>
+                    </div>
+                    
+                    <h3 className="font-display font-bold text-base text-white mb-2 leading-snug">
+                      {p.title}
+                    </h3>
+                    
+                    <p className="text-xs text-charcoal-300 line-clamp-2 mb-3 leading-relaxed">
+                      {p.description}
+                    </p>
+
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-charcoal-400 border-t border-white/[0.04] pt-2.5">
+                      <span className="flex items-center gap-1 font-bold text-gold-400">
+                        <DollarSign size={10} /> {budgetStr}
+                      </span>
+                      {locationStr(p.location) && (
+                        <span className="flex items-center gap-1">
+                          <MapPin size={10} /> {locationStr(p.location)}
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <Users size={10} /> {p.applications || 0} applied
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <aside className="lg:sticky lg:top-24 bg-charcoal-900/50 border border-white/[0.08] p-6 rounded-2xl shadow-xl">
+              {activeProject ? (
+                <ProjectDetailPane
+                  project={activeProject}
+                  dark={dark}
+                  onApply={setApplyTarget}
+                  myApplications={myApplications}
+                  applications={applications}
+                  isClient={activeProject.clientId === user?.id}
+                  canApply={isCreator && activeProject.clientId !== user?.id}
+                  onStatusChange={handleStatusChange}
+                />
+              ) : (
+                <div className="text-center py-12 text-charcoal-400">
+                  <p className="text-3xl mb-2">📋</p>
+                  <p className="text-xs font-semibold text-white">No active project selected</p>
+                  <p className="text-[10px] mt-1">Select a brief from the list to view full specifications.</p>
+                </div>
+              )}
+            </aside>
           </div>
         )}
-      {/* Client Referral Section - shown on My Projects tab */}
-      {tab === 'my_projects' && user && (
-        <div className="mt-8">
-          <ReferralSection dark={dark} userType="client" />
-        </div>
-      )}
 
+        {tab === 'my_projects' && user && (
+          <div className="mt-8">
+            <ReferralSection dark={dark} userType="client" />
+          </div>
+        )}
       </div>
 
       {/* Modals */}

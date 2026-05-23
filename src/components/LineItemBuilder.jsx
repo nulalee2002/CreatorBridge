@@ -5,6 +5,17 @@ import { getRegionRates } from '../utils/pricing.js';
 import { CurrencyInput } from './CurrencyInput.jsx';
 import { Tooltip } from './Tooltip.jsx';
 
+const getUnitMax = (unit) => {
+  switch (unit) {
+    case 'hr': return 16;
+    case 'day': return 10;
+    case 'session': return 5;
+    case 'project': return 5;
+    default: return 100;
+  }
+};
+
+
 // Hours options for hourly rates
 const PHOTO_HOURS = [2, 4, 6, 8, 10, 12];
 const VIDEO_HOURS = [
@@ -194,13 +205,29 @@ export function LineItemBuilder({ state, dispatch, dark = true }) {
                               ))}
                             </select>
                           ) : (
-                            <input
-                              type="number"
-                              min={0}
-                              value={qty}
-                              onChange={e => dispatch({ type: 'SET_LINE_ITEM', rateKey, field: 'quantity', value: parseFloat(e.target.value) || 1, rateMeta, regionRate })}
-                              className={`w-full px-3 py-2 text-sm rounded-lg border outline-none transition-all ${inputCls}`}
-                            />
+                            <div className="flex flex-col gap-2 mt-1 w-full">
+                              <input
+                                type="range"
+                                min={1}
+                                max={getUnitMax(rateMeta.unit)}
+                                value={qty}
+                                onChange={e => dispatch({ type: 'SET_LINE_ITEM', rateKey, field: 'quantity', value: parseFloat(e.target.value) || 1, rateMeta, regionRate })}
+                                className="tweak-slider w-full"
+                                style={{
+                                  '--p': `${((qty - 1) / (getUnitMax(rateMeta.unit) - 1)) * 100}%`
+                                }}
+                              />
+                              <div className="flex items-center gap-2">
+                                <span className={`text-[10px] ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>Qty:</span>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={qty}
+                                  onChange={e => dispatch({ type: 'SET_LINE_ITEM', rateKey, field: 'quantity', value: parseFloat(e.target.value) || 1, rateMeta, regionRate })}
+                                  className={`w-16 px-2 py-0.5 text-xs rounded border outline-none transition-all ${inputCls}`}
+                                />
+                              </div>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -296,10 +323,19 @@ export function LineItemBuilder({ state, dispatch, dark = true }) {
                           onChange={e => dispatch({ type: 'SET_EQUIPMENT', id: eq.id, field: 'price', value: parseFloat(e.target.value) || 0 })}
                           className={`w-24 pl-5 pr-2 py-1.5 text-sm rounded-lg border outline-none transition-all ${inputCls}`} />
                       </div>
-                      <input type="number" min={1} value={days}
-                        onChange={e => dispatch({ type: 'SET_EQUIPMENT', id: eq.id, field: 'days', value: parseInt(e.target.value) || 1 })}
-                        className={`w-14 px-2 py-1.5 text-sm rounded-lg border outline-none transition-all text-center ${inputCls}`} />
-                      <span className={`text-xs shrink-0 ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>days</span>
+                      <div className="flex flex-col gap-1 items-end">
+                        <input type="range" min={1} max={14} value={days}
+                          onChange={e => dispatch({ type: 'SET_EQUIPMENT', id: eq.id, field: 'days', value: parseInt(e.target.value) || 1 })}
+                          className="tweak-slider w-20"
+                          style={{ '--p': `${((days - 1) / 13) * 100}%` }}
+                        />
+                        <div className="flex items-center gap-1">
+                          <input type="number" min={1} value={days}
+                            onChange={e => dispatch({ type: 'SET_EQUIPMENT', id: eq.id, field: 'days', value: parseInt(e.target.value) || 1 })}
+                            className={`w-10 px-1 py-0.5 text-xs rounded border outline-none transition-all text-center ${inputCls}`} />
+                          <span className={`text-[10px] ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>days</span>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -331,10 +367,20 @@ export function LineItemBuilder({ state, dispatch, dark = true }) {
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1">
                 <label className={labelCls}>Miles</label>
-                <input type="number" min={0} value={travelMiles || ''}
-                  onChange={e => dispatch({ type: 'SET_FIELD', field: 'travelMiles', value: parseFloat(e.target.value) || 0 })}
-                  placeholder="0"
-                  className={`w-full px-3 py-2 text-sm rounded-lg border outline-none transition-all ${inputCls}`} />
+                <div className="flex flex-col gap-2 mt-1">
+                  <input type="range" min={0} max={200} value={travelMiles || 0}
+                    onChange={e => dispatch({ type: 'SET_FIELD', field: 'travelMiles', value: parseFloat(e.target.value) || 0 })}
+                    className="tweak-slider w-full"
+                    style={{ '--p': `${(travelMiles / 200) * 100}%` }}
+                  />
+                  <div className="flex items-center gap-2">
+                    <input type="number" min={0} value={travelMiles || ''}
+                      onChange={e => dispatch({ type: 'SET_FIELD', field: 'travelMiles', value: parseFloat(e.target.value) || 0 })}
+                      placeholder="0"
+                      className={`w-20 px-2 py-0.5 text-xs rounded border outline-none transition-all ${inputCls}`} />
+                    <span className={`text-xs ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>miles</span>
+                  </div>
+                </div>
               </div>
               <CurrencyInput label="Rate per mile" value={travelMileRate || 0.67} dark={dark} currencySymbol={sym}
                 onChange={v => dispatch({ type: 'SET_FIELD', field: 'travelMileRate', value: v })} />
@@ -354,10 +400,20 @@ export function LineItemBuilder({ state, dispatch, dark = true }) {
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
               <label className={labelCls}>Assistants / 2nd Shooters</label>
-              <input type="number" min={0} value={assistants || ''}
-                onChange={e => dispatch({ type: 'SET_FIELD', field: 'assistants', value: parseInt(e.target.value) || 0 })}
-                placeholder="0"
-                className={`w-full px-3 py-2 text-sm rounded-lg border outline-none transition-all ${inputCls}`} />
+              <div className="flex flex-col gap-2 mt-1">
+                <input type="range" min={0} max={5} value={assistants || 0}
+                  onChange={e => dispatch({ type: 'SET_FIELD', field: 'assistants', value: parseInt(e.target.value) || 0 })}
+                  className="tweak-slider w-full"
+                  style={{ '--p': `${(assistants / 5) * 100}%` }}
+                />
+                <div className="flex items-center gap-2">
+                  <input type="number" min={0} value={assistants || ''}
+                    onChange={e => dispatch({ type: 'SET_FIELD', field: 'assistants', value: parseInt(e.target.value) || 0 })}
+                    placeholder="0"
+                    className={`w-16 px-2 py-0.5 text-xs rounded border outline-none transition-all ${inputCls}`} />
+                  <span className={`text-xs ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>assistants</span>
+                </div>
+              </div>
             </div>
             <CurrencyInput label="Rate per person/day" value={assistantRate || 0} dark={dark} currencySymbol={sym}
               onChange={v => dispatch({ type: 'SET_FIELD', field: 'assistantRate', value: v })} />
@@ -367,9 +423,19 @@ export function LineItemBuilder({ state, dispatch, dark = true }) {
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
               <label className={labelCls}>Revisions included</label>
-              <input type="number" min={0} value={revisions ?? 2}
-                onChange={e => dispatch({ type: 'SET_FIELD', field: 'revisions', value: parseInt(e.target.value) || 0 })}
-                className={`w-full px-3 py-2 text-sm rounded-lg border outline-none transition-all ${inputCls}`} />
+              <div className="flex flex-col gap-2 mt-1">
+                <input type="range" min={0} max={10} value={revisions ?? 2}
+                  onChange={e => dispatch({ type: 'SET_FIELD', field: 'revisions', value: parseInt(e.target.value) || 0 })}
+                  className="tweak-slider w-full"
+                  style={{ '--p': `${((revisions ?? 2) / 10) * 100}%` }}
+                />
+                <div className="flex items-center gap-2">
+                  <input type="number" min={0} value={revisions ?? 2}
+                    onChange={e => dispatch({ type: 'SET_FIELD', field: 'revisions', value: parseInt(e.target.value) || 0 })}
+                    className={`w-16 px-2 py-0.5 text-xs rounded border outline-none transition-all ${inputCls}`} />
+                  <span className={`text-xs ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>revisions</span>
+                </div>
+              </div>
             </div>
             <CurrencyInput label="Cost per extra revision" value={additionalRevisionRate || 0} dark={dark} currencySymbol={sym}
               onChange={v => dispatch({ type: 'SET_FIELD', field: 'additionalRevisionRate', value: v })} />

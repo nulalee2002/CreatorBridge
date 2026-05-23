@@ -622,7 +622,7 @@ export function MessagesPage({ dark }) {
       <div className={`min-h-screen flex flex-col items-center justify-center gap-4 ${dark ? 'bg-transparent text-white' : 'bg-gray-50 text-gray-900'}`}>
         <MessageSquare size={40} className="text-gold-400" />
         <h2 className="font-display text-xl font-bold">Sign in to view messages</h2>
-        <button type="button" onClick={() => navigate('/')}
+        <button type="button" onClick={() => navigate('/find')}
           className="px-5 py-2.5 rounded-xl bg-gold-500 text-charcoal-900 font-bold text-sm">Go Home</button>
       </div>
     );

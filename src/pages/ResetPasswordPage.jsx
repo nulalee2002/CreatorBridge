@@ -40,7 +40,7 @@ export function ResetPasswordPage({ dark }) {
     setLoading(false);
     if (updateError) { setError(updateError.message); return; }
     setDone(true);
-    setTimeout(() => navigate('/'), 3000);
+    setTimeout(() => navigate('/find'), 3000);
   }
 
   const inputCls = `w-full px-4 py-3 text-sm rounded-xl border outline-none transition-all ${

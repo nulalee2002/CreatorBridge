@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { MapPin, Send, Flag, Heart, MessageSquare, ChevronDown, Users, Lock } from 'lucide-react';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
@@ -33,15 +33,32 @@ const US_STATES = [
   { code: 'WY', name: 'Wyoming' },
 ];
 
-const POST_TYPES = [
-  { id: 'general', label: 'General', color: 'bg-white/[0.04] text-charcoal-300 ring-1 ring-white/[0.06]' },
-  { id: 'collab', label: 'Creator Looking for Collab', color: 'bg-gold-500/15 text-gold-400 ring-1 ring-gold-500/20' },
-  { id: 'looking_for_creator', label: 'Client Looking for Creator', color: 'bg-gold-500/15 text-gold-400 ring-1 ring-gold-500/20' },
-  { id: 'industry_news', label: 'Industry News', color: 'bg-gold-500/15 text-gold-400 ring-1 ring-gold-500/20' },
-  { id: 'portfolio', label: 'Portfolio Share', color: 'bg-gold-500/15 text-gold-400 ring-1 ring-gold-500/20' },
+const MOCK_STATES = [
+  { abbr: "CA", name: "California",   creators: 142, posts: 18, active: 23, hot: true },
+  { abbr: "NY", name: "New York",     creators: 118, posts: 14, active: 19, hot: true },
+  { abbr: "TX", name: "Texas",        creators: 89,  posts: 11, active: 12, hot: true },
+  { abbr: "FL", name: "Florida",      creators: 76,  posts: 9,  active: 14, hot: true },
+  { abbr: "IL", name: "Illinois",     creators: 54,  posts: 5,  active: 7,  hot: false },
+  { abbr: "GA", name: "Georgia",      creators: 47,  posts: 6,  active: 8,  hot: true },
+  { abbr: "AZ", name: "Arizona",      creators: 38,  posts: 7,  active: 9,  hot: true },
+  { abbr: "WA", name: "Washington",   creators: 41,  posts: 4,  active: 6,  hot: false },
+  { abbr: "MA", name: "Massachusetts",creators: 32,  posts: 3,  active: 4,  hot: false },
+  { abbr: "CO", name: "Colorado",     creators: 28,  posts: 4,  active: 5,  hot: false },
+  { abbr: "PA", name: "Pennsylvania", creators: 31,  posts: 2,  active: 3,  hot: false },
+  { abbr: "NC", name: "N. Carolina",  creators: 26,  posts: 3,  active: 4,  hot: false },
+  { abbr: "OR", name: "Oregon",       creators: 22,  posts: 2,  active: 3,  hot: false },
+  { abbr: "MI", name: "Michigan",     creators: 20,  posts: 1,  active: 2,  hot: false },
+  { abbr: "OH", name: "Ohio",         creators: 19,  posts: 1,  active: 2,  hot: false },
+  { abbr: "MN", name: "Minnesota",    creators: 17,  posts: 1,  active: 2,  hot: false },
+  { abbr: "NV", name: "Nevada",       creators: 21,  posts: 2,  active: 3,  hot: false },
+  { abbr: "UT", name: "Utah",         creators: 15,  posts: 1,  active: 2,  hot: false },
+  { abbr: "TN", name: "Tennessee",    creators: 23,  posts: 3,  active: 4,  hot: false },
+  { abbr: "VA", name: "Virginia",     creators: 18,  posts: 1,  active: 2,  hot: false },
+  { abbr: "OK", name: "Oklahoma",     creators: 9,   posts: 0,  active: 1,  hot: false },
+  { abbr: "WI", name: "Wisconsin",    creators: 11,  posts: 1,  active: 1,  hot: false },
+  { abbr: "MO", name: "Missouri",     creators: 13,  posts: 1,  active: 2,  hot: false },
+  { abbr: "LA", name: "Louisiana",    creators: 16,  posts: 2,  active: 3,  hot: false }
 ];
-
-const NETWORK_IMAGE = '/images/creatorbridge/network-media-community.jpg';
 
 const SEED_NETWORK_POSTS = [
   {
@@ -106,6 +123,31 @@ const SEED_NETWORK_POSTS = [
   },
 ];
 
+const MOCK_CHAT = {
+  general: [
+    { id: 'm-seed-1', name: "Naomi G.", time: "10:32", avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100&q=80", text: "Good morning ☕️ shooting a brand piece in Venice today, weather's perfect" },
+    { id: 'm-seed-2', name: "Aria V.", time: "10:35", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80", text: "Jealous. Miami's humid AF. Crew suiting up for an indoor shoot all day" },
+    { id: 'm-seed-3', name: "David P.", time: "10:38", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80", text: "Anyone tried the new Sony Burano on a real job? Considering renting for next week" },
+    { id: 'm-seed-4', name: "Mateo R.", time: "10:41", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80", text: "Cleared for Part 107 recertification today — back in the air next week" },
+    { id: 'm-seed-5', name: "Jordan M.", time: "10:44", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80", text: "Booked 4 podcast clients off the project board in May. CB scoring better than any cold outbound I've ever done" },
+    { id: 'm-seed-6', name: "Sofia P.", time: "10:48", avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=100&q=80", text: "Lighting test shots from yesterday — full client approval before we even broke for lunch" }
+  ],
+  referrals: [
+    { id: 'm-seed-7', name: "Aria V.", time: "9:14", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80", text: "Boutique hotel rebrand looking for video — anyone California-based with hospitality reel?" },
+    { id: 'm-seed-8', name: "Naomi G.", time: "9:18", avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100&q=80", text: "I'll bite — DMing now" },
+    { id: 'm-seed-9', name: "David P.", time: "9:22", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80", text: "Aria solid pick, his Standard Hotels work was 10/10" }
+  ],
+  gear: [
+    { id: 'm-seed-10', name: "David P.", time: "8:52", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80", text: "Selling FX6, see today's main feed for details" },
+    { id: 'm-seed-11', name: "Sofia P.", time: "9:01", avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=100&q=80", text: "Renting Profoto B10 Plus duo · $80/day · Manhattan" },
+    { id: 'm-seed-12', name: "Mateo R.", time: "9:11", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80", text: "Anyone got an extra ND filter set in 4×5.65? Mine fell into Lake Travis on Saturday 🪦" }
+  ],
+  leads: [
+    { id: 'm-seed-13', name: "Aria V.", time: "11:02", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80", text: "Routing 2 commercial photo briefs to FL/CA — see today's main feed" },
+    { id: 'm-seed-14', name: "Dre W.", time: "11:08", avatar: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=100&q=80", text: "Atlanta tech conf needs 2nd shooter, June 14-15. Posted to project board, applying via CB" }
+  ]
+};
+
 const BLOCKED_PHRASES = [
   'project board', 'job posting', 'i posted a job', 'check the board',
   'apply on the board',
@@ -155,12 +197,25 @@ function linkifyText(text) {
   );
 }
 
-function getPostTypeStyle(type) {
-  return POST_TYPES.find(t => t.id === type)?.color || 'bg-white/[0.04] text-charcoal-300';
+function getSeedAvatar(id) {
+  const seedAvatars = {
+    'net-seed-1': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
+    'net-seed-2': 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=200&q=80',
+    'net-seed-3': 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80',
+    'net-seed-4': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80',
+    'net-seed-5': 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=200&q=80'
+  };
+  return seedAvatars[id] || null;
 }
 
 function getPostTypeLabel(type) {
-  return POST_TYPES.find(t => t.id === type)?.label || 'General';
+  switch (type) {
+    case 'looking_for_creator': return 'Gig Lead';
+    case 'collab': return 'Collab';
+    case 'portfolio': return 'Referral';
+    case 'industry_news': return 'Industry News';
+    default: return 'General';
+  }
 }
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i;
@@ -247,10 +302,35 @@ function saveLocalReply(stateCode, postId, reply) {
   } catch {}
 }
 
+const encodeChannelMessage = (channel, text) => {
+  if (channel === 'general') return text;
+  return `[${channel}] ${text}`;
+};
+
+const decodeChannelMessage = (text) => {
+  const match = text.match(/^\[(general|referrals|gear|leads)\]\s*(.*)$/);
+  if (match) {
+    return { channel: match[1], message: match[2] };
+  }
+  return { channel: 'general', message: text };
+};
+
 function loadLocalChat(stateCode) {
-  try {
-    return JSON.parse(localStorage.getItem(`cm-state-chat-${stateCode}`) || '[]');
-  } catch { return []; }
+  const list = [];
+  Object.keys(MOCK_CHAT).forEach(channel => {
+    MOCK_CHAT[channel].forEach(m => {
+      list.push({
+        id: m.id,
+        state_code: stateCode,
+        user_display_name: m.name,
+        user_verification_status: 'verified',
+        user_primary_service: '',
+        message: channel === 'general' ? m.text : `[${channel}] ${m.text}`,
+        created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString()
+      });
+    });
+  });
+  return list;
 }
 
 function saveLocalMessage(stateCode, msg) {
@@ -264,7 +344,7 @@ function saveLocalMessage(stateCode, msg) {
 function VerificationDot({ status }) {
   if (!status || status === 'unverified') return null;
   return (
-    <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-gold-500/15 text-gold-400 text-[8px] font-bold ml-1">
+    <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-gold-500/15 text-gold-400 text-[8px] font-bold ml-1" title="Verified Creator">
       ✓
     </span>
   );
@@ -277,7 +357,6 @@ function PostCard({ post, dark, isVerified, onLike, onReport, onReply }) {
   const [liked, setLiked] = useState(false);
   const [localLikes, setLocalLikes] = useState(post.likes_count || 0);
 
-  const cardBg = dark ? 'bg-charcoal-900/72 border-white/[0.07] shadow-[0_22px_70px_rgba(0,0,0,0.18)]' : 'bg-white border-gray-200';
   const visibleReplyCount = Math.max(post.reply_count || 0, replies.length || 0);
 
   useEffect(() => {
@@ -309,99 +388,104 @@ function PostCard({ post, dark, isVerified, onLike, onReport, onReply }) {
     setReplyText('');
   }
 
+  const avatarUrl = post.avatar_url || (post.id && post.id.startsWith('net-seed-') ? getSeedAvatar(post.id) : null);
+
   return (
-    <div className={`rounded-2xl border p-5 transition-all ${cardBg}`}>
-      <div className="flex items-start gap-3">
-        <div className="w-9 h-9 rounded-full bg-gold-500/20 text-gold-400 flex items-center justify-center text-xs font-bold shrink-0">
-          {getInitials(post.user_display_name)}
-        </div>
+    <div className="post-card">
+      <div className="post-meta">
+        {avatarUrl ? (
+          <div className="post-avatar">
+            <img src={avatarUrl} alt={post.user_display_name} />
+          </div>
+        ) : (
+          <div className="w-9 h-9 rounded-[10px] bg-gold-500/20 text-gold-400 flex items-center justify-center text-xs font-bold shrink-0 border border-white/[0.08]">
+            {getInitials(post.user_display_name)}
+          </div>
+        )}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1 flex-wrap mb-1">
-            <span className={`text-sm font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-white">
               {post.user_display_name}
             </span>
             <VerificationDot status={post.user_verification_status} />
-            {post.user_primary_service && (
-              <span className={`text-xs px-2 py-0.5 rounded-full ml-1 ${dark ? 'bg-white/[0.04] text-charcoal-300 ring-1 ring-white/[0.06]' : 'bg-gray-100 text-gray-500'}`}>
-                {post.user_primary_service}
-              </span>
-            )}
-            <span className={`text-xs px-2 py-0.5 rounded-full ml-1 ${dark ? 'bg-white/[0.04] text-charcoal-300 ring-1 ring-white/[0.06]' : 'bg-gray-100 text-gray-500'}`}>
-              <MapPin size={9} className="inline mr-0.5" />{post.state_code}
-            </span>
-          </div>
-          <div className="mb-2">
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${getPostTypeStyle(post.post_type)}`}>
+            <span className="tag-gold">
               {getPostTypeLabel(post.post_type)}
             </span>
           </div>
-          <p className={`text-sm leading-relaxed ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>
-            {linkifyText(post.content)}
-          </p>
-          <div className="flex items-center gap-4 mt-3">
-            <button
-              type="button"
-              onClick={handleLike}
-              className={`flex items-center gap-1.5 text-xs transition-colors ${liked ? 'text-red-400' : dark ? 'text-charcoal-500 hover:text-red-400' : 'text-gray-400 hover:text-red-400'}`}
-            >
-              <Heart size={13} className={liked ? 'fill-current' : ''} /> {localLikes}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowReplies(v => !v)}
-              className={`flex items-center gap-1.5 text-xs transition-colors ${dark ? 'text-charcoal-500 hover:text-charcoal-300' : 'text-gray-400 hover:text-gray-600'}`}
-            >
-              <MessageSquare size={13} /> {visibleReplyCount} {showReplies ? 'Hide' : 'Reply'}
-            </button>
-            <span className={`text-xs ml-auto ${dark ? 'text-charcoal-600' : 'text-gray-400'}`}>
-              {timeAgo(post.created_at)}
-            </span>
-            <button
-              type="button"
-              onClick={() => onReport && onReport(post.id)}
-              className={`text-[10px] transition-colors ${dark ? 'text-charcoal-700 hover:text-charcoal-500' : 'text-gray-300 hover:text-gray-400'}`}
-              title="Report post"
-            >
-              <Flag size={11} />
-            </button>
+          <div className="text-[11px] text-[var(--text-dim)]">
+            {post.user_primary_service || 'Media Professional'} · {timeAgo(post.created_at)}
           </div>
+        </div>
+        <button
+          onClick={() => onReport && onReport(post.id)}
+          className="text-[var(--text-dim)] hover:text-[var(--gold)] transition-colors"
+          title="Report post"
+        >
+          <Flag size={14} />
+        </button>
+      </div>
 
-          {showReplies && (
-            <div className={`mt-3 space-y-2 pl-3 border-l-2 ${dark ? 'border-gold-500/25' : 'border-gold-200'}`}>
-              {replies.map(r => (
-                <div key={r.id} className="text-xs">
-                  <span className={`font-semibold ${dark ? 'text-charcoal-300' : 'text-gray-700'}`}>{r.user_display_name}</span>
-                  <span className={`ml-2 ${dark ? 'text-charcoal-400' : 'text-gray-600'}`}>{linkifyText(r.content)}</span>
-                  <span className={`ml-2 ${dark ? 'text-charcoal-600' : 'text-gray-400'}`}>{timeAgo(r.created_at)}</span>
-                </div>
-              ))}
-              {isVerified ? (
-                <form onSubmit={handleReplySubmit} className="flex gap-2 mt-2">
-                  <input
-                    type="text"
-                    value={replyText}
-                    onChange={e => setReplyText(e.target.value)}
-                    maxLength={280}
-                    placeholder="Write a reply..."
-                    className={`flex-1 text-xs rounded-lg px-3 py-1.5 border outline-none focus:border-gold-500 ${dark ? 'bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'}`}
-                  />
-                  <button type="submit" className="text-xs px-3 py-1.5 rounded-lg bg-gold-500 hover:bg-gold-600 text-charcoal-900 font-bold transition-all">
-                    Reply
-                  </button>
-                </form>
-              ) : (
-                <p className={`text-xs italic mt-1 ${dark ? 'text-charcoal-600' : 'text-gray-400'}`}>Verify your account to reply.</p>
-              )}
+      <p className="text-sm text-[var(--text)]/90 leading-relaxed mb-4">
+        {linkifyText(post.content)}
+      </p>
+
+      <div className="flex items-center gap-4 text-[11px] text-[var(--text-dim)] pt-3 border-t border-[var(--border)]">
+        <button
+          onClick={() => handleLike()}
+          className={`flex items-center gap-1.5 transition-colors ${liked ? 'text-red-400 animate-pulse' : 'hover:text-[var(--gold)]'}`}
+        >
+          <Heart size={14} className={liked ? 'fill-current' : ''} /> {localLikes} Likes
+        </button>
+        <button
+          onClick={() => setShowReplies(v => !v)}
+          className="flex items-center gap-1.5 hover:text-[var(--gold)] transition-colors"
+        >
+          <MessageSquare size={14} /> {visibleReplyCount} replies
+        </button>
+        <button
+          onClick={() => setShowReplies(v => !v)}
+          className="flex items-center gap-1.5 hover:text-[var(--gold)] transition-colors ml-auto font-medium"
+        >
+          Reply <span className="text-[10px] ml-0.5">→</span>
+        </button>
+      </div>
+
+      {showReplies && (
+        <div className="mt-4 space-y-3 pl-3 border-l-2 border-gold-500/25">
+          {replies.map(r => (
+            <div key={r.id} className="text-xs">
+              <span className="font-semibold text-charcoal-200">{r.user_display_name}</span>
+              <span className="ml-2 text-charcoal-300">{linkifyText(r.content)}</span>
+              <span className="ml-2 text-charcoal-600">{timeAgo(r.created_at)}</span>
             </div>
+          ))}
+          {isVerified ? (
+            <form onSubmit={handleReplySubmit} className="flex gap-2 mt-2">
+              <input
+                type="text"
+                value={replyText}
+                onChange={e => setReplyText(e.target.value)}
+                maxLength={280}
+                placeholder="Write a reply..."
+                className="flex-1 text-xs rounded-lg px-3 py-1.5 border outline-none focus:border-gold-500 bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500"
+              />
+              <button type="submit" className="text-xs px-3 py-1.5 rounded-lg bg-gold-500 hover:bg-gold-600 text-charcoal-900 font-bold transition-all">
+                Reply
+              </button>
+            </form>
+          ) : (
+            <p className="text-xs italic mt-1 text-charcoal-600">Verify your account to reply.</p>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
 export function NetworkingPage({ dark, user, profile }) {
-  const [selectedState, setSelectedState] = useState('');
+  const [selectedState, setSelectedState] = useState('CA');
+  const [selectedChannel, setSelectedChannel] = useState('general');
+  const [filterType, setFilterType] = useState('all');
   const [posts, setPosts] = useState([]);
   const [messages, setMessages] = useState([]);
   const [postContent, setPostContent] = useState('');
@@ -413,6 +497,9 @@ export function NetworkingPage({ dark, user, profile }) {
   const chatBottomRef = useRef(null);
   const channelRef = useRef(null);
 
+  const postComposerRef = useRef(null);
+  const chatInputRef = useRef(null);
+
   const isVerified = !!user?.id && (
     profile?.role === 'client' ||
     ['verified', 'pro_verified', 'approved'].includes(profile?.verification_status) ||
@@ -420,15 +507,33 @@ export function NetworkingPage({ dark, user, profile }) {
     !!user?.verified ||
     !!user?.email_confirmed_at
   );
-  const stateName = US_STATES.find(s => s.code === selectedState)?.name || selectedState;
 
-  const activePosts = [
-    { code: 'AZ', count: SEED_NETWORK_POSTS.filter(p => p.state_code === 'AZ').length },
-    { code: 'CA', count: SEED_NETWORK_POSTS.filter(p => p.state_code === 'CA').length },
-    { code: 'TX', count: SEED_NETWORK_POSTS.filter(p => p.state_code === 'TX').length },
-    { code: 'NY', count: SEED_NETWORK_POSTS.filter(p => p.state_code === 'NY').length },
-    { code: 'FL', count: 0 },
-  ].sort((a, b) => b.count - a.count).slice(0, 5);
+  const displayStates = useMemo(() => {
+    const list = [...MOCK_STATES];
+    if (selectedState && !list.some(s => s.abbr === selectedState)) {
+      const fullState = US_STATES.find(s => s.code === selectedState);
+      list.push({
+        abbr: selectedState,
+        name: fullState ? fullState.name : selectedState,
+        creators: 14,
+        posts: 2,
+        active: 3,
+        hot: false
+      });
+    }
+    return list;
+  }, [selectedState]);
+
+  const activeStateObj = useMemo(() => {
+    return displayStates.find(s => s.abbr === selectedState) || {
+      abbr: selectedState,
+      name: US_STATES.find(s => s.code === selectedState)?.name || selectedState,
+      creators: 12,
+      posts: 2,
+      active: 4,
+      hot: false
+    };
+  }, [displayStates, selectedState]);
 
   useEffect(() => {
     if (!selectedState) return;
@@ -439,7 +544,7 @@ export function NetworkingPage({ dark, user, profile }) {
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, selectedChannel]);
 
   async function loadPosts() {
     setLoadingPosts(true);
@@ -586,14 +691,16 @@ export function NetworkingPage({ dark, user, profile }) {
     }
     setChatError('');
 
+    const encodedMsg = encodeChannelMessage(selectedChannel, cleanMessage);
+
     const msg = {
       id: `msg-${Date.now()}`,
       state_code: selectedState,
       user_id: user?.id,
-        user_display_name: getUserDisplayName(user, profile),
-        user_verification_status: getUserVerificationStatus(user, profile),
-        user_primary_service: getUserPrimaryService(user, profile),
-      message: cleanMessage,
+      user_display_name: getUserDisplayName(user, profile),
+      user_verification_status: getUserVerificationStatus(user, profile),
+      user_primary_service: getUserPrimaryService(user, profile),
+      message: encodedMsg,
       created_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     };
@@ -602,7 +709,7 @@ export function NetworkingPage({ dark, user, profile }) {
       const { data, error } = await supabase.from('state_chat_messages').insert({
         state_code: selectedState,
         user_id: user.id,
-        message: cleanMessage,
+        message: encodedMsg,
         user_display_name: msg.user_display_name,
         user_verification_status: msg.user_verification_status,
         user_primary_service: msg.user_primary_service,
@@ -675,320 +782,504 @@ export function NetworkingPage({ dark, user, profile }) {
     }
   }
 
-  const bg = dark ? 'bg-transparent' : 'bg-gray-50';
-  const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`;
-  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
+  const scrollToPostComposer = () => {
+    postComposerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    postComposerRef.current?.focus();
+  };
+
+  const focusChatInput = () => {
+    chatInputRef.current?.focus();
+    chatInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  const filteredPosts = useMemo(() => {
+    return posts.filter(post => {
+      if (filterType === 'all') return true;
+      return post.post_type === filterType;
+    });
+  }, [posts, filterType]);
+
+  const filteredMessages = useMemo(() => {
+    return messages.filter(msg => {
+      const decoded = decodeChannelMessage(msg.message);
+      return decoded.channel === selectedChannel;
+    });
+  }, [messages, selectedChannel]);
+
+  const activeInStateStats = useMemo(() => {
+    // Verified creators count is based on state stats or actual posts count
+    const creatorsCount = activeStateObj?.creators || 12;
+    // Posts this week: count posts in list
+    const postsCount = posts.length || 0;
+    return {
+      creators: creatorsCount,
+      postsWeek: Math.max(activeStateObj?.posts || 0, postsCount)
+    };
+  }, [activeStateObj, posts]);
+
+  const recentUsers = useMemo(() => {
+    const list = [];
+    const seen = new Set();
+    // Add creators from posts first
+    posts.forEach(p => {
+      if (!seen.has(p.user_display_name)) {
+        seen.add(p.user_display_name);
+        list.push({
+          name: p.user_display_name,
+          service: p.user_primary_service,
+          initials: getInitials(p.user_display_name)
+        });
+      }
+    });
+    // Add default if list too short
+    const fallbackUsers = [
+      { name: 'Naomi Greene', service: 'Video Director', initials: 'NG' },
+      { name: 'David Park', service: 'Cinematographer', initials: 'DP' },
+      { name: 'Aria Vasquez', service: 'Editor', initials: 'AV' },
+      { name: 'Sofia Pellizzari', service: 'Colorist', initials: 'SP' }
+    ];
+    fallbackUsers.forEach(u => {
+      if (list.length < 4 && !seen.has(u.name)) {
+        list.push(u);
+      }
+    });
+    return list.slice(0, 4);
+  }, [posts]);
 
   return (
-    <div className={`min-h-screen ${bg}`}>
-      <div className="cb-home-wide mx-auto w-full px-5 sm:px-8 lg:px-14 2xl:px-16 py-10">
-
-        {/* Page header */}
-        <div className={`relative overflow-hidden rounded-[28px] border p-6 md:p-8 mb-6 ${
-          dark ? 'bg-charcoal-900/72 border-white/[0.08] shadow-[0_28px_90px_rgba(0,0,0,0.28)]' : 'bg-white border-gray-200'
-        }`}>
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/60 to-transparent" />
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px] gap-6 items-stretch">
-            <div>
-              <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
-                State Creator Network
-              </p>
-              <h1 className={`font-display font-bold text-4xl md:text-5xl mb-4 ${dark ? 'text-white' : 'text-gray-900'}`}>
-                Creator Network
+    <div className="min-h-screen text-[var(--text)] relative z-10 pb-20">
+      <div className="cb-home-wide mx-auto w-full px-5 sm:px-8 lg:px-14 2xl:px-16 pt-24">
+        
+        {/* ===== BREADCRUMB + PAGE HEADER ===== */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 text-[11px] text-[var(--text-dim)] mb-4">
+            <a href="/" className="hover:text-[var(--text)] transition-colors">Home</a>
+            <span className="opacity-40">/</span>
+            <span className="text-[var(--text)] font-medium">Creator Network</span>
+          </div>
+          
+          <div className="grid lg:grid-cols-12 gap-8 items-end">
+            <div className="lg:col-span-7">
+              <div className="eyebrow mb-2">State creator networks</div>
+              <h1 className="text-4xl md:text-5xl font-display font-medium leading-[1.05] serif">
+                A trusted local circuit. <span className="gold-text">Verified only.</span>
               </h1>
-              <p className={`text-sm md:text-base leading-7 max-w-2xl ${textSub}`}>
-                Connect with verified media professionals in your area while keeping referrals, production questions, and peer conversations inside CreatorBridge.
+              <p className="text-sm text-[var(--text-secondary)] max-w-xl mt-4 leading-relaxed">
+                Referrals, gear swaps, collab requests, and gig leads — organized by state so the conversation stays local. No DM scraping, no contact poaching, no general-marketplace noise.
               </p>
-              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl">
-                {[
-                  ['Verified circles', 'Creators and clients stay tied to real accounts.'],
-                  ['State context', 'Local production needs stay easier to scan.'],
-                  ['No poaching', 'Contact and job-board abuse are filtered.'],
-                ].map(([title, copy]) => (
-                  <div key={title} className={`rounded-xl border p-3 ${dark ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-gray-50 border-gray-200'}`}>
-                    <p className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{title}</p>
-                    <p className={`mt-1 text-xs leading-5 ${textSub}`}>{copy}</p>
-                  </div>
-                ))}
-              </div>
             </div>
-            <div className={`relative hidden overflow-hidden rounded-2xl border lg:block ${dark ? 'border-gold-500/18 bg-charcoal-950/70' : 'border-gray-200 bg-gray-50'}`}>
-              <img src={NETWORK_IMAGE} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
-              <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950/92 via-charcoal-950/42 to-charcoal-950/12" />
-              <div className="absolute bottom-0 left-0 right-0 p-5">
-                <p className="text-gold-300 mb-2" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
-                  Local production layer
-                </p>
-                <p className="max-w-sm text-sm font-bold leading-6 text-white">
-                  Build trusted media relationships before the next shoot needs a crew.
-                </p>
+            
+            {/* Header statistics block */}
+            <div className="lg:col-span-5 grid grid-cols-3 gap-3">
+              <div className="liquid-glass rounded-xl p-3 text-center">
+                <div className="text-2xl font-serif gold-text leading-none">{activeStateObj?.creators || '—'}</div>
+                <div className="text-[9px] uppercase tracking-wider text-[var(--text-dim)] mt-1">Creators</div>
+              </div>
+              <div className="liquid-glass rounded-xl p-3 text-center">
+                <div className="text-2xl font-serif gold-text leading-none">{activeStateObj?.posts || '—'}</div>
+                <div className="text-[9px] uppercase tracking-wider text-[var(--text-dim)] mt-1">Posts today</div>
+              </div>
+              <div className="liquid-glass rounded-xl p-3 text-center">
+                <div className="text-2xl font-serif gold-text leading-none">{activeStateObj?.active || '—'}</div>
+                <div className="text-[9px] uppercase tracking-wider text-[var(--text-dim)] mt-1">Active now</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* State selector */}
-        <div className={`${cardCls} p-5 mb-6`}>
-          <div className="flex items-center gap-4 flex-wrap">
-            <MapPin size={16} className="text-gold-400 shrink-0" />
-            <div>
-              <p className={`text-xs font-bold uppercase tracking-[0.16em] ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>Choose a state network</p>
-              <p className={`text-xs mt-1 ${textSub}`}>Posts and live chat are organized by state.</p>
+        {/* ===== STATE PICKER GRID ===== */}
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-[10px] tracking-[0.2em] uppercase text-[var(--text-dim)] font-medium">Choose your state</div>
+            <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-dim)]">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Active networks pulse green
             </div>
-            <div className="relative">
-              <select
-                value={selectedState}
-                onChange={e => setSelectedState(e.target.value)}
-                className={`appearance-none pl-3 pr-8 py-2 rounded-xl border text-sm font-medium outline-none focus:border-gold-500 cursor-pointer ${dark ? 'bg-charcoal-950/75 border-white/[0.09] text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+          </div>
+          
+          <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-12 gap-2">
+            {displayStates.map(st => (
+              <button
+                key={st.abbr}
+                onClick={() => setSelectedState(st.abbr)}
+                className={`state-tile ${st.hot ? 'hot' : ''} ${selectedState === st.abbr ? 'active' : ''}`}
               >
-                <option value="">Select your state...</option>
-                {US_STATES.map(s => (
+                <div className="abbr">{st.abbr}</div>
+                <div className="name truncate">{st.name}</div>
+                <div className="count truncate">{st.creators} verified</div>
+              </button>
+            ))}
+
+            {/* "+ More States" elegant dropdown card */}
+            <div className="state-tile relative flex flex-col justify-center items-center">
+              <select
+                value=""
+                onChange={e => {
+                  const code = e.target.value;
+                  if (code) setSelectedState(code);
+                }}
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+              >
+                <option value="">+ Other State...</option>
+                {US_STATES.filter(s => !displayStates.some(ds => ds.abbr === s.code)).map(s => (
                   <option key={s.code} value={s.code}>{s.name}</option>
                 ))}
               </select>
-              <ChevronDown size={14} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${textSub}`} />
+              <div className="abbr font-serif text-[18px] text-[var(--text-secondary)]">+ More</div>
+              <div className="name text-[9px] text-[var(--text-dim)]">Select State</div>
             </div>
-          </div>
-
-          {/* Active state bubbles */}
-          <div className="flex gap-2 flex-wrap mt-4">
-            <span className={`text-xs ${textSub}`}>Most active:</span>
-            {activePosts.map(s => (
-              <button
-                key={s.code}
-                type="button"
-                onClick={() => setSelectedState(s.code)}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition-all border ${
-                  selectedState === s.code
-                    ? 'bg-gold-500 text-charcoal-900 border-gold-500'
-                    : dark
-                      ? 'border-white/[0.09] text-charcoal-400 hover:border-gold-500 hover:text-gold-400'
-                      : 'border-gray-200 text-gray-500 hover:border-gold-500 hover:text-gold-500'
-                }`}
-              >
-                {s.code} {s.count > 0 && <span className="opacity-60">({s.count})</span>}
-              </button>
-            ))}
           </div>
         </div>
 
-        {!selectedState ? (
-          <div className={`${cardCls} p-12 text-center`}>
-            <MapPin size={32} className={`mx-auto mb-3 ${textSub}`} />
-            <p className={`text-lg font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>Select a state to get started</p>
-            <p className={`text-sm mt-1 ${textSub}`}>Browse posts and join live chat from creators in your area.</p>
+        {/* ===== ACTIVE STATE BANNER ===== */}
+        <div className="liquid-glass rounded-2xl p-6 mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <div className="flex items-baseline gap-3 mb-1.5 flex-wrap">
+              <span className="serif text-3xl gold-text font-semibold">{activeStateObj?.abbr}</span>
+              <span className="serif text-2xl text-white font-medium">{activeStateObj?.name} Network</span>
+              <span className="tag-green">Verified creators only</span>
+            </div>
+            <p className="text-xs text-[var(--text-secondary)]">
+              {activeStateObj?.creators} verified creators · join the local conversation and build trusted relationships.
+            </p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="flex gap-2">
+            <button
+              onClick={scrollToPostComposer}
+              className="btn-ghost text-xs cursor-pointer"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 5h14M5 12h14M5 19h14"/>
+              </svg>
+              Compose post
+            </button>
+            <button
+              onClick={focusChatInput}
+              className="btn-gold text-xs cursor-pointer"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Join chat
+            </button>
+          </div>
+        </div>
 
-            {/* Feed column */}
-            <div className="space-y-4 lg:col-span-2">
+        {/* ===== MAIN CONTAINER (FEED + SIDEBAR) ===== */}
+        <div className="grid lg:grid-cols-12 gap-8">
+          
+          {/* Feed Column */}
+          <div className="lg:col-span-8 space-y-6">
+            
+            {/* Filter pills */}
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <button
+                onClick={() => setFilterType('all')}
+                className={`filter-pill ${filterType === 'all' ? 'active' : ''}`}
+              >
+                All posts
+              </button>
+              <button
+                onClick={() => setFilterType('portfolio')}
+                className={`filter-pill ${filterType === 'portfolio' ? 'active' : ''}`}
+              >
+                Referrals
+              </button>
+              <button
+                onClick={() => setFilterType('general')}
+                className={`filter-pill ${filterType === 'general' ? 'active' : ''}`}
+              >
+                Gear swap
+              </button>
+              <button
+                onClick={() => setFilterType('collab')}
+                className={`filter-pill ${filterType === 'collab' ? 'active' : ''}`}
+              >
+                Collabs
+              </button>
+              <button
+                onClick={() => setFilterType('looking_for_creator')}
+                className={`filter-pill ${filterType === 'looking_for_creator' ? 'active' : ''}`}
+              >
+                Gig leads
+              </button>
+            </div>
 
-              {/* Post composer */}
-              <div className={`${cardCls} p-5`}>
-                {/* Warning banner */}
-                <div className={`rounded-xl p-3 mb-4 text-xs ${dark ? 'bg-charcoal-950/75 text-charcoal-400 border border-white/[0.07]' : 'bg-gold-50 text-gold-800 border border-gold-200'}`}>
-                  Keep all posts professional and relevant to media production. Mentioning job postings from the Project Board is not allowed here. Violations result in strikes against your account.
-                </div>
-
-                {isVerified ? (
-                  <form onSubmit={handleSubmitPost}>
-                    <textarea
-                      value={postContent}
-                      onChange={e => setPostContent(e.target.value)}
-                      maxLength={500}
-                      rows={3}
-                      placeholder={`Share something with the ${stateName} community...`}
-                      className={`w-full rounded-xl border p-3 text-sm outline-none focus:border-gold-500 resize-none ${dark ? 'bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'}`}
-                    />
-                    <div className="flex items-center justify-between mt-1 mb-3">
-                      <span className={`text-xs ${textSub}`}>{postContent.length}/500</span>
-                    </div>
-
-                    {/* Post type pills */}
-                    <div className="flex gap-2 flex-wrap mb-3">
-                      {POST_TYPES.map(pt => (
-                        <button
-                          key={pt.id}
-                          type="button"
-                          onClick={() => setPostType(pt.id)}
-                          className={`text-xs px-3 py-1.5 rounded-full font-semibold border transition-all ${
-                            postType === pt.id
-                              ? 'border-gold-500 bg-gold-500/10 text-gold-400'
-                              : dark
-                                ? 'border-white/[0.09] text-charcoal-400 hover:border-charcoal-500'
-                                : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                          }`}
-                        >
-                          {pt.label}
-                        </button>
-                      ))}
-                    </div>
-
-                    {postError && (
-                      <p className="text-xs text-red-400 mb-3">{postError}</p>
-                    )}
-
-                    <button
-                      type="submit"
-                      disabled={!postContent.trim()}
-                      className="w-full py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 text-charcoal-900 text-sm font-bold transition-all"
-                    >
-                      Post to {stateName} Network
-                    </button>
-                  </form>
-                ) : (
-                  <div className={`flex items-center gap-3 p-4 rounded-xl ${dark ? 'bg-charcoal-950/75 border border-white/[0.07]' : 'bg-gray-50 border border-gray-200'}`}>
-                    <Lock size={18} className={textSub} />
-                    <div>
-                      <p className={`text-sm font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>Verify your account to post in state networks.</p>
-                      <p className={`text-xs mt-0.5 ${textSub}`}>Browsing is open to everyone.</p>
-                    </div>
-                  </div>
-                )}
+            {/* Post composer */}
+            <div className="liquid-glass rounded-2xl p-5">
+              <div className="rounded-xl p-3 mb-4 text-xs bg-charcoal-950/75 text-charcoal-400 border border-white/[0.07] leading-relaxed">
+                Keep all posts professional and relevant to media production. Mentioning job postings from the Project Board is not allowed here. Violations result in strikes against your account.
               </div>
 
-              {/* Posts */}
-              {loadingPosts ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin w-6 h-6 border-2 border-gold-500 border-t-transparent rounded-full" />
-                </div>
-              ) : posts.length === 0 ? (
-                <div className={`${cardCls} p-10 text-center`}>
-                  <p className={`text-sm ${textSub}`}>No posts yet in {stateName}. Be the first to share something.</p>
-                </div>
+              {isVerified ? (
+                <form onSubmit={handleSubmitPost}>
+                  <textarea
+                    ref={postComposerRef}
+                    value={postContent}
+                    onChange={e => setPostContent(e.target.value)}
+                    maxLength={500}
+                    rows={3}
+                    placeholder={`Share something with the ${activeStateObj.name} community...`}
+                    className="w-full rounded-xl border p-3 text-sm outline-none focus:border-gold-500 resize-none bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500 transition-colors"
+                  />
+                  <div className="flex items-center justify-between mt-1.5 mb-3">
+                    <span className="text-xs text-[var(--text-dim)]">{postContent.length}/500</span>
+                  </div>
+
+                  {/* Post type pills for creator choice */}
+                  <div className="flex gap-2 flex-wrap mb-4">
+                    {[
+                      { id: 'general', label: 'Gear swap' },
+                      { id: 'collab', label: 'Collab' },
+                      { id: 'looking_for_creator', label: 'Gig lead' },
+                      { id: 'portfolio', label: 'Referral' },
+                      { id: 'industry_news', label: 'Industry News' }
+                    ].map(pt => (
+                      <button
+                        key={pt.id}
+                        type="button"
+                        onClick={() => setPostType(pt.id)}
+                        className={`text-xs px-3 py-1.5 rounded-full font-semibold border transition-all cursor-pointer ${
+                          postType === pt.id
+                            ? 'border-gold-500 bg-gold-500/10 text-gold-400'
+                            : 'border-white/[0.09] text-charcoal-400 hover:border-charcoal-500 hover:text-white'
+                        }`}
+                      >
+                        {pt.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {postError && (
+                    <p className="text-xs text-red-400 mb-3">{postError}</p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={!postContent.trim()}
+                    className="w-full py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 disabled:cursor-not-allowed text-charcoal-900 text-sm font-bold transition-all cursor-pointer"
+                  >
+                    Post to {activeStateObj.name} Network
+                  </button>
+                </form>
               ) : (
-                <div className="space-y-3">
-                  {posts.map(post => (
-                    <PostCard
-                      key={post.id}
-                      post={post}
-                      dark={dark}
-                      isVerified={isVerified}
-                      onLike={handleLike}
-                      onReport={handleReport}
-                      onReply={handleReply}
-                    />
-                  ))}
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-charcoal-950/75 border border-white/[0.07]">
+                  <Lock size={18} className="text-[var(--text-dim)]" />
+                  <div>
+                    <p className="text-sm font-semibold text-white">Verify your account to post in state networks.</p>
+                    <p className="text-xs mt-0.5 text-[var(--text-dim)]">Browsing is open to everyone.</p>
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Chat sidebar */}
-            <div className="space-y-4 lg:col-span-1">
-              <div className={`${cardCls} flex flex-col`} style={{ height: '520px' }}>
-                {/* Chat header */}
-                <div className={`p-4 border-b flex items-center gap-2 ${dark ? 'border-white/[0.07]' : 'border-gray-200'}`}>
-                  <span className="w-2 h-2 rounded-full bg-gold-400 animate-pulse" />
-                  <span className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>
-                    {stateName} Live Chat
-                  </span>
-                  <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${dark ? 'bg-white/[0.04] text-charcoal-300 ring-1 ring-white/[0.06]' : 'bg-gray-100 text-gray-500'}`}>
-                    <Users size={10} className="inline mr-1" />
-                    Live
-                  </span>
-                </div>
+            {/* Posts Feed */}
+            {loadingPosts ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin w-6 h-6 border-2 border-gold-500 border-t-transparent rounded-full" />
+              </div>
+            ) : filteredPosts.length === 0 ? (
+              <div className="liquid-glass rounded-2xl p-10 text-center">
+                <p className="text-sm text-[var(--text-dim)]">No posts found in this lane for {activeStateObj.name}. Be the first to share something.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredPosts.map(post => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    dark={dark}
+                    isVerified={isVerified}
+                    onLike={handleLike}
+                    onReport={handleReport}
+                    onReply={handleReply}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
 
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                  {messages.length === 0 ? (
-                    <p className={`text-xs text-center pt-4 ${textSub}`}>No messages yet. Start the conversation.</p>
-                  ) : (
-                    messages.map(msg => (
-                      <div key={msg.id} className="flex items-start gap-2">
-                        <div className="w-7 h-7 rounded-full bg-gold-500/15 text-gold-400 flex items-center justify-center text-[10px] font-bold shrink-0">
-                          {getInitials(msg.user_display_name)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-baseline gap-1">
-                            <span className={`text-xs font-semibold ${dark ? 'text-charcoal-200' : 'text-gray-800'}`}>
-                              {msg.user_display_name}
-                            </span>
-                            <VerificationDot status={msg.user_verification_status} />
-                            <span className={`text-[10px] ml-auto shrink-0 ${dark ? 'text-charcoal-600' : 'text-gray-400'}`}>
-                              {formatTime(msg.created_at)}
-                            </span>
-                          </div>
-                          <p className={`text-xs mt-0.5 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
-                            {msg.message}
-                          </p>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                  <div ref={chatBottomRef} />
+          {/* Sidebar Chat Column */}
+          <div className="lg:col-span-4 space-y-6">
+            
+            {/* Live Chat Panel */}
+            <div className="liquid-glass rounded-2xl overflow-hidden flex flex-col" style={{ position: 'sticky', top: '6rem' }}>
+              
+              {/* Chat Header */}
+              <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
+                <div>
+                  <div className="eyebrow mb-0.5">Live chat</div>
+                  <div className="text-sm font-medium text-white">{activeStateObj.name}</div>
                 </div>
-
-                {/* Chat input */}
-                <div className={`p-3 border-t ${dark ? 'border-white/[0.07]' : 'border-gray-200'}`}>
-                  {chatError && <p className="text-xs text-red-400 mb-2">{chatError}</p>}
-                  {isVerified ? (
-                    <form onSubmit={handleSendMessage} className="flex gap-2">
-                      <input
-                        type="text"
-                        value={chatInput}
-                        onChange={e => setChatInput(e.target.value)}
-                        maxLength={300}
-                        placeholder={`Message ${stateName} chat...`}
-                        className={`flex-1 text-xs rounded-xl px-3 py-2 border outline-none focus:border-gold-500 ${dark ? 'bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'}`}
-                        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); }}}
-                      />
-                      <button type="submit" className="p-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 transition-all">
-                        <Send size={14} />
-                      </button>
-                    </form>
-                  ) : (
-                    <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-xl ${dark ? 'bg-charcoal-950/75 text-charcoal-600' : 'bg-gray-100 text-gray-400'}`} title="Verify your account to join the chat">
-                      <Lock size={12} /> Verify your account to join the chat
-                    </div>
-                  )}
+                <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-secondary)]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span>{activeStateObj?.active || '1'} online</span>
                 </div>
               </div>
 
-              {/* Stats card */}
-              <div className={`${cardCls} p-4`}>
-                <p className={`text-[10px] font-bold uppercase tracking-wider mb-3 ${textSub}`}>
-                  Active in {stateName}
-                </p>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className={`text-xs ${textSub}`}>Verified creators</span>
-                    <span className={`text-xs font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>
-                      {posts.filter(p => p.user_verification_status && p.user_verification_status !== 'unverified').length || 0}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className={`text-xs ${textSub}`}>Posts this week</span>
-                    <span className={`text-xs font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>
-                      {posts.filter(p => Date.now() - new Date(p.created_at).getTime() < 7 * 24 * 60 * 60 * 1000).length}
-                    </span>
-                  </div>
-                </div>
-                {posts.length > 0 && (
-                  <div className="mt-4">
-                    <p className={`text-[10px] uppercase tracking-wider mb-2 ${textSub}`}>Recently Active</p>
-                    <div className="space-y-2">
-                      {posts.slice(0, 4).map((p, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-gold-500/20 text-gold-400 flex items-center justify-center text-[9px] font-bold shrink-0">
-                            {getInitials(p.user_display_name)}
-                          </div>
-                          <div className="min-w-0">
-                            <p className={`text-xs font-medium truncate ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>{p.user_display_name}</p>
-                            {p.user_primary_service && (
-                              <p className={`text-[10px] truncate ${textSub}`}>{p.user_primary_service}</p>
-                            )}
-                          </div>
+              {/* Channels Selector Tab Block */}
+              <div className="flex gap-1 px-4 py-3 border-b border-[var(--border)] flex-wrap bg-charcoal-950/20">
+                <button
+                  onClick={() => setSelectedChannel('general')}
+                  className={`chat-channel cursor-pointer ${selectedChannel === 'general' ? 'active' : ''}`}
+                >
+                  <span className="hash mr-0.5 font-serif font-medium text-[13px]">#</span>general
+                </button>
+                <button
+                  onClick={() => setSelectedChannel('referrals')}
+                  className={`chat-channel cursor-pointer ${selectedChannel === 'referrals' ? 'active' : ''}`}
+                >
+                  <span className="hash mr-0.5 font-serif font-medium text-[13px]">#</span>referrals
+                </button>
+                <button
+                  onClick={() => setSelectedChannel('gear')}
+                  className={`chat-channel cursor-pointer ${selectedChannel === 'gear' ? 'active' : ''}`}
+                >
+                  <span className="hash mr-0.5 font-serif font-medium text-[13px]">#</span>gear-swap
+                </button>
+                <button
+                  onClick={() => setSelectedChannel('leads')}
+                  className={`chat-channel cursor-pointer ${selectedChannel === 'leads' ? 'active' : ''}`}
+                >
+                  <span className="hash mr-0.5 font-serif font-medium text-[13px]">#</span>gig-leads
+                </button>
+              </div>
+
+              {/* Chat Message Stream */}
+              <div className="px-3 py-3 space-y-1.5 max-h-[420px] min-h-[300px] overflow-y-auto bg-charcoal-950/10">
+                {filteredMessages.length === 0 ? (
+                  <p className="text-xs text-center py-10 text-[var(--text-dim)]">No messages in #{selectedChannel} yet. Start the conversation.</p>
+                ) : (
+                  filteredMessages.map(msg => {
+                    const decoded = decodeChannelMessage(msg.message);
+                    return (
+                      <div key={msg.id} className="chat-msg">
+                        <div className="w-7 h-7 rounded-full bg-gold-500/15 text-gold-400 flex items-center justify-center text-[10px] font-bold shrink-0 border border-white/[0.05]">
+                          {getInitials(msg.user_display_name)}
                         </div>
-                      ))}
-                    </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-xs font-semibold text-charcoal-200 truncate">
+                              {msg.user_display_name}
+                            </span>
+                            <VerificationDot status={msg.user_verification_status} />
+                            <span className="text-[9px] text-[var(--text-dim)] ml-auto shrink-0">
+                              {formatTime(msg.created_at)}
+                            </span>
+                          </div>
+                          <p className="text-[12px] text-charcoal-300 mt-0.5 leading-relaxed break-words">
+                            {decoded.message}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+                <div ref={chatBottomRef} />
+              </div>
+
+              {/* Chat Input Field */}
+              <div className="border-t border-[var(--border)] p-3 bg-charcoal-950/40">
+                {chatError && <p className="text-xs text-red-400 mb-2">{chatError}</p>}
+                {isVerified ? (
+                  <form onSubmit={handleSendMessage} className="flex gap-2">
+                    <input
+                      ref={chatInputRef}
+                      type="text"
+                      value={chatInput}
+                      onChange={e => setChatInput(e.target.value)}
+                      maxLength={300}
+                      placeholder={`Message #${selectedChannel}…`}
+                      className="flex-1 text-xs rounded-xl px-3 py-2 border outline-none focus:border-gold-500 bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500 transition-colors"
+                      onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); }}}
+                    />
+                    <button type="submit" className="p-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 transition-all cursor-pointer">
+                      <Send size={14} />
+                    </button>
+                  </form>
+                ) : (
+                  <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-xl bg-charcoal-950/75 text-charcoal-600">
+                    <Lock size={12} /> Verify your account to join the chat
                   </div>
                 )}
               </div>
             </div>
+
+            {/* Network Rules Card */}
+            <div className="liquid-glass rounded-2xl p-5">
+              <div className="eyebrow mb-3">Network rules</div>
+              <ul className="space-y-3 text-xs text-[var(--text-secondary)]">
+                <li className="flex gap-2 items-start">
+                  <svg className="w-3.5 h-3.5 text-[var(--gold)] mt-0.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  <span>Verified accounts only · no off-platform contact sharing.</span>
+                </li>
+                <li className="flex gap-2 items-start">
+                  <svg className="w-3.5 h-3.5 text-[var(--gold)] mt-0.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  <span>Job leads route through the Project Board, not DMs.</span>
+                </li>
+                <li className="flex gap-2 items-start">
+                  <svg className="w-3.5 h-3.5 text-[var(--gold)] mt-0.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  <span>Referrals earn 3% of completed project value.</span>
+                </li>
+                <li className="flex gap-2 items-start">
+                  <svg className="w-3.5 h-3.5 text-[var(--gold)] mt-0.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  <span>Be local. State conversations stay state-specific.</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Sidebar Stats and Recently Active Panel */}
+            <div className="liquid-glass rounded-2xl p-5 space-y-4">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-dim)]">
+                Active in {activeStateObj.name}
+              </p>
+              
+              <div className="space-y-2 border-b border-white/[0.05] pb-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[var(--text-secondary)]">Verified creators</span>
+                  <span className="text-xs font-bold text-white">
+                    {activeInStateStats.creators}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[var(--text-secondary)]">Posts this week</span>
+                  <span className="text-xs font-bold text-white">
+                    {activeInStateStats.postsWeek}
+                  </span>
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-[var(--text-dim)] mb-3">Recently Active</p>
+                <div className="space-y-3">
+                  {recentUsers.map((u, i) => (
+                    <div key={i} className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-full bg-gold-500/10 text-gold-400 flex items-center justify-center text-[10px] font-bold shrink-0 border border-white/[0.05]">
+                        {u.initials}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-charcoal-200 truncate">{u.name}</p>
+                        <p className="text-[9px] text-[var(--text-dim)] truncate">{u.service || 'Media Professional'}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
           </div>
-        )}
+
+        </div>
+
       </div>
     </div>
   );
 }
+

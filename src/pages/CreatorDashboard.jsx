@@ -302,7 +302,7 @@ export function CreatorDashboard({ dark }) {
         <LayoutDashboard size={40} className="text-gold-400" />
         <h2 className="font-display text-xl font-bold">Sign in to access your Dashboard</h2>
         <p className={`text-sm ${textSub}`}>You need to be logged in to manage your creator profile.</p>
-        <button type="button" onClick={() => navigate('/')}
+        <button type="button" onClick={() => navigate('/find')}
           className="px-5 py-2.5 rounded-xl bg-gold-500 text-charcoal-900 font-bold text-sm">
           Go Home
         </button>

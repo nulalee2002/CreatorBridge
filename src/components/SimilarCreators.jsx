@@ -99,7 +99,7 @@ export function SimilarCreators({ creator, dark }) {
         })}
       </div>
 
-      <button type="button" onClick={() => navigate('/')}
+      <button type="button" onClick={() => navigate('/find')}
         className={`mt-3 w-full py-2 rounded-xl border text-xs font-semibold transition-all ${
           dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/35 hover:text-white' : 'border-gray-200 text-gray-500 hover:text-gray-900'
         }`}>

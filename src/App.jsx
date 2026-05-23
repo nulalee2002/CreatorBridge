@@ -46,6 +46,7 @@ const DisputePolicy = lazy(() => import('./pages/DisputePolicy.jsx').then(m => (
 const JoinAsCreator = lazy(() => import('./pages/JoinAsCreator.jsx').then(m => ({ default: m.JoinAsCreator })));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage.jsx').then(m => ({ default: m.ResetPasswordPage })));
 const QuickQuoteMode = lazy(() => import('./components/QuickQuoteMode.jsx').then(m => ({ default: m.QuickQuoteMode })));
+const LandingPage = lazy(() => import('./pages/LandingPage.jsx').then(m => ({ default: m.LandingPage })));
 
 function RouteLoading({ dark }) {
   return (
@@ -332,7 +333,8 @@ export default function App() {
     : location.pathname.startsWith('/messages')   ? 'messages'
     : location.pathname.startsWith('/projects')   ? 'projects'
     : location.pathname.startsWith('/network')    ? 'network'
-    : 'directory';
+    : location.pathname.startsWith('/find')       ? 'directory'
+    : '';
 
   // Persist state
   useEffect(() => {
@@ -429,7 +431,7 @@ export default function App() {
           {/* Main tab switcher */}
           <div className={`hidden md:flex rounded-2xl border overflow-hidden p-1 ${dark ? 'bg-white/[0.025] border-gold-500/14' : 'bg-gray-50 border-gray-200'}`}>
             {[
-              { path: '/',           id: 'directory',  icon: Search,   label: 'Find Creators' },
+              { path: '/find',       id: 'directory',  icon: Search,   label: 'Find Creators' },
               { path: '/projects',   id: 'projects',   icon: Briefcase, label: 'Projects' },
               { path: '/network',    id: 'network',    icon: Users,     label: 'Network' },
               { path: '/calculator', id: 'calculator', icon: Zap,      label: 'Rate Calculator' },
@@ -603,7 +605,7 @@ export default function App() {
       <nav className={`md:hidden sticky top-16 z-20 border-b backdrop-blur-xl ${dark ? 'bg-charcoal-950/90 border-gold-500/12' : 'bg-white/94 border-gray-200'}`}>
         <div className="flex gap-2 overflow-x-auto px-5 py-2 no-scrollbar">
           {[
-            { path: '/',           id: 'directory',  icon: Search,   label: 'Find' },
+            { path: '/find',       id: 'directory',  icon: Search,   label: 'Find' },
             { path: '/projects',   id: 'projects',   icon: Briefcase, label: 'Projects' },
             { path: '/network',    id: 'network',    icon: Users,     label: 'Network' },
             { path: '/calculator', id: 'calculator', icon: Zap,      label: 'Rates' },
@@ -635,8 +637,9 @@ export default function App() {
 
       {/* ── Routes ── */}
       <Routes>
-        <Route path="/" element={<CreatorDirectory dark={dark} mode="search" onSwitchToRegister={() => navigate('/register')} />} />
-        <Route path="/register" element={<CreatorDirectory dark={dark} mode="register" onSwitchToSearch={() => navigate('/')} />} />
+        <Route path="/" element={<LandingPage dark={dark} />} />
+        <Route path="/find" element={<CreatorDirectory dark={dark} mode="search" onSwitchToRegister={() => navigate('/register')} />} />
+        <Route path="/register" element={<CreatorDirectory dark={dark} mode="register" onSwitchToSearch={() => navigate('/find')} />} />
         <Route path="/creator/:id" element={<LazyRoute dark={dark}><CreatorProfilePage dark={dark} /></LazyRoute>} />
         <Route path="/dashboard" element={
           <AuthRequired dark={dark} user={user} loading={authLoading} role="creator" title="Sign in to manage your creator account." copy="Creator tools, Stripe setup, packages, availability, earnings, and verification need an authenticated account.">
@@ -989,7 +992,7 @@ export default function App() {
       )}
 
       {/* ── Footer ── */}
-      {activeTab !== 'calculator' && location.pathname.startsWith('/creator') ? null : (
+      {location.pathname === '/' || (activeTab !== 'calculator' && location.pathname.startsWith('/creator')) ? null : (
         <footer className={`mt-12 border-t ${dark ? 'border-charcoal-800' : 'border-gray-200'} py-6`}>
           <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>

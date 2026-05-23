@@ -446,7 +446,7 @@ export function ClientProfilePage({ dark }) {
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-gold-500 px-4 py-2.5 text-sm font-bold text-charcoal-900 hover:bg-gold-600">
                     Post a project <ArrowRight size={14} />
                   </button>
-                  <button type="button" onClick={() => navigate('/')}
+                  <button type="button" onClick={() => navigate('/find')}
                     className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold transition-colors ${dark ? 'border-white/[0.09] text-charcoal-200 hover:border-gold-500/35 hover:text-white' : 'border-gray-200 text-gray-700 hover:border-gold-300'}`}>
                     Browse creators
                   </button>
@@ -457,7 +457,7 @@ export function ClientProfilePage({ dark }) {
 
           <div className="grid gap-4 md:grid-cols-3">
             {[
-              { title: 'Find creators', copy: 'Browse verified media specialists by category, location, and fit.', icon: Search, action: () => navigate('/') },
+              { title: 'Find creators', copy: 'Browse verified media specialists by category, location, and fit.', icon: Search, action: () => navigate('/find') },
               { title: 'Review messages', copy: 'Keep project questions and booking context inside CreatorBridge.', icon: MessageSquare, action: () => navigate('/messages') },
               { title: 'Post a project', copy: 'Create a brief and review Smart Match recommendations.', icon: Zap, action: () => navigate('/projects') },
             ].map(({ title, copy, icon: Icon, action }) => (

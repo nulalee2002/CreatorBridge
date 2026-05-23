@@ -90,6 +90,42 @@ function getRotatingPreviewCreators(allCreators) {
   }).filter(Boolean).slice(0, 3);
 }
 
+// ── Creator Card Helpers ─────────────────────────────────────
+function getCreatorCoverImage(creator) {
+  const serviceId = creator.services?.[0]?.serviceId || creator.services?.[0]?.service_id || '';
+  switch(serviceId) {
+    case 'video':
+      return '/images/creatorbridge/camera-lens-event-reflection.png';
+    case 'photography':
+      return '/images/creatorbridge/commercial-photographer.png';
+    case 'drone':
+      return '/images/creatorbridge/drone-operator-golden-hour.png';
+    case 'podcast':
+      return '/images/creatorbridge/podcast-producer-studio.png';
+    case 'postProduction':
+    case 'editor':
+    case 'social':
+      return '/images/creatorbridge/post-production-suite.png';
+    default:
+      return '/images/creatorbridge/creator-profile-cover-studio.jpg';
+  }
+}
+
+function getLowestRate(creator) {
+  let min = Infinity;
+  const services = creator.services || [];
+  services.forEach(svc => {
+    const rates = svc.rates || {};
+    Object.values(rates).forEach(rateVal => {
+      const val = parseFloat(rateVal);
+      if (!isNaN(val) && val > 0 && val < min) {
+        min = val;
+      }
+    });
+  });
+  return min === Infinity ? null : min;
+}
+
 // ── Creator Profile Card ─────────────────────────────────────
 function CreatorCard({ creator, dark, onDelete, onViewProfile }) {
   const navigate = useNavigate();
@@ -108,101 +144,138 @@ function CreatorCard({ creator, dark, onDelete, onViewProfile }) {
 
   const location = creator.location || {};
   const expLabel = { entry: '2-3 yrs', mid: '4-6 yrs', senior: '7+ yrs' }[creator.experience] || '';
-  const locationStr = [location.city, location.state, location.country].filter(Boolean).join(', ');
+  const locationStr = [location.city, location.state].filter(Boolean).join(', ');
+
+  const coverImage = getCreatorCoverImage(creator);
+  const lowestRate = getLowestRate(creator);
+
+  const handleCardClick = onViewProfile ?? (() => navigate(`/creator/${creator.id}`));
 
   return (
-    <div className={`rounded-2xl border overflow-hidden transition-all ${
-      dark ? 'bg-charcoal-800 border-charcoal-700 hover:border-charcoal-500' : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
-    }`}>
-      <div className="p-5">
-        {/* Top row: Avatar + Name/Badges + Fav */}
-        <div className="flex items-start gap-3 mb-3">
-          <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 ${dark ? 'bg-charcoal-700' : 'bg-gray-100'}`}>
-            {creator.avatar || '🎬'}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start gap-2 flex-wrap">
-              <h3 className={`font-display font-bold text-base leading-tight ${dark ? 'text-white' : 'text-gray-900'}`}>
-                {creator.businessName || creator.name}
-              </h3>
-              {creator.verification_status && creator.verification_status !== 'unverified' ? (
-                <VerificationBadge status={creator.verification_status} />
-              ) : creator.verified ? (
-                <BadgeCheck size={14} className="text-gold-400 shrink-0 mt-0.5" title="Verified creator" />
-              ) : null}
-              {creator.tier && creator.tier !== 'launch' && <TierBadge tierId={creator.tier} />}
-              {creator.completed_projects > 0 && <LoyaltyBadge completedProjects={creator.completed_projects} />}
+    <div 
+      className="creator-card" 
+      onClick={handleCardClick}
+    >
+      <div className="cover">
+        <img src={coverImage} alt={creator.businessName || creator.name} loading="lazy" />
+        
+        {/* Tier Badges + Availability Overlay */}
+        <div className="tier-chips">
+          {creator.availability === 'available' && (
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/90 text-white font-semibold tracking-wider uppercase shadow-sm">
+              Available
+            </span>
+          )}
+          {creator.tier && creator.tier !== 'launch' && (
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/90 text-white font-semibold tracking-wider uppercase shadow-sm">
+              {creator.tier}
+            </span>
+          )}
+        </div>
+
+        {/* Overlapping Avatar */}
+        <div className="avatar">
+          {creator.avatar?.startsWith('http') || (creator.avatar && creator.avatar.includes('/')) ? (
+            <img src={creator.avatar} alt={creator.name} />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-charcoal-800 text-xl border-none">
+              {creator.avatar || '🎬'}
             </div>
+          )}
+        </div>
+      </div>
+
+      <div className="body">
+        {/* Title & Favorite Row */}
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <div className="min-w-0 flex-1">
+            <h3 className={`font-display font-bold text-base leading-tight truncate ${dark ? 'text-white' : 'text-gray-900'}`}>
+              {creator.businessName || creator.name}
+            </h3>
             {creator.businessName && creator.name && (
-              <p className={`text-xs ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>{creator.name}</p>
+              <p className={`text-xs ${dark ? 'text-charcoal-400' : 'text-gray-500'} truncate`}>{creator.name}</p>
             )}
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              {locationStr && (
-                <span className={`text-xs flex items-center gap-1 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
-                  <MapPin size={10} /> {locationStr}
-                </span>
-              )}
-              {expLabel && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${dark ? 'bg-charcoal-700 text-charcoal-400' : 'bg-gray-100 text-gray-500'}`}>
-                  {expLabel}
-                </span>
-              )}
-              {creator.availability === 'available' && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gold-500/10 text-gold-300 font-medium ring-1 ring-gold-500/15">
-                  Available
-                </span>
-              )}
-            </div>
           </div>
-          <button type="button" onClick={toggleFav}
+          <button 
+            type="button" 
+            onClick={toggleFav}
             className={`p-1.5 rounded-lg transition-all shrink-0 ${isFav ? 'text-red-400' : dark ? 'text-charcoal-600 hover:text-red-400' : 'text-gray-300 hover:text-red-400'}`}
-            title={isFav ? 'Remove from favorites' : 'Save to favorites'}>
+            title={isFav ? 'Remove from favorites' : 'Save to favorites'}
+          >
             <Heart size={14} className={isFav ? 'fill-current' : ''} />
           </button>
         </div>
 
-        {/* Bio: always 2 lines max */}
-        <p className={`text-xs leading-relaxed line-clamp-2 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
+        {/* Sub-header badges (Verification, Location, Experience) */}
+        <div className="flex flex-wrap items-center gap-2 mb-3 mt-1">
+          {creator.verification_status && creator.verification_status !== 'unverified' ? (
+            <VerificationBadge status={creator.verification_status} />
+          ) : creator.verified ? (
+            <BadgeCheck size={13} className="text-gold-400 shrink-0" title="Verified creator" />
+          ) : null}
+          
+          {locationStr && (
+            <span className={`text-[11px] flex items-center gap-1 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
+              <MapPin size={10} /> {locationStr}
+            </span>
+          )}
+          {expLabel && (
+            <span className={`text-[10px] px-1.5 py-0.25 rounded-full font-medium ${dark ? 'bg-charcoal-800 text-charcoal-400' : 'bg-gray-100 text-gray-500'}`}>
+              {expLabel}
+            </span>
+          )}
+        </div>
+
+        {/* Bio (capped to 2 lines) */}
+        <p className={`text-xs leading-relaxed line-clamp-2 mb-3 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
           {creator.bio}
         </p>
 
-        {/* Tags: max 4, no expand */}
+        {/* Tags */}
         {creator.tags?.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {creator.tags.slice(0, 4).map(tag => (
-              <span key={tag} className={`text-[10px] px-2 py-0.5 rounded-full ${dark ? 'bg-charcoal-700 text-charcoal-300' : 'bg-gray-100 text-gray-600'}`}>
+          <div className="flex flex-wrap gap-1 mb-4 mt-auto">
+            {creator.tags.slice(0, 3).map(tag => (
+              <span key={tag} className={`text-[9px] px-2 py-0.5 rounded-md font-medium tracking-wide ${dark ? 'bg-white/[0.04] text-charcoal-300' : 'bg-gray-100 text-gray-600'}`}>
                 {tag}
               </span>
             ))}
           </div>
         )}
 
-        {/* Bottom row: rating left, View Profile right */}
-        <div className="flex items-center justify-between mt-3">
-          <div>
+        {/* Bottom row: Ratings + Price */}
+        <div className="flex items-center justify-between border-t border-white/[0.06] pt-3 mt-auto">
+          <div className="flex items-center gap-1">
             {creator.rating ? (
-              <div className="flex items-center gap-1">
+              <>
                 <Star size={12} className="text-gold-400 fill-gold-400" />
-                <span className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{creator.rating}</span>
+                <span className={`text-xs font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{creator.rating}</span>
                 {creator.reviewCount && (
-                  <span className={`text-[10px] ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>({creator.reviewCount})</span>
+                  <span className={`text-[9px] ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>({creator.reviewCount})</span>
                 )}
-              </div>
-            ) : <span />}
+              </>
+            ) : (
+              <span className={`text-[10px] ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>New Creator</span>
+            )}
           </div>
-          <button
-            type="button"
-            onClick={onViewProfile ?? (() => navigate(`/creator/${creator.id}`))}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-gold-500 hover:bg-gold-600 text-charcoal-900 font-bold transition-all"
-          >
-            <ExternalLink size={11} /> View Profile
-          </button>
+          
+          <div className="text-right">
+            {lowestRate ? (
+              <span className={`text-xs font-bold ${dark ? 'text-gold-400' : 'text-gold-600'}`}>
+                FROM <span className="text-sm font-extrabold">${lowestRate}</span>
+              </span>
+            ) : (
+              <span className={`text-[10px] ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>Rates on request</span>
+            )}
+          </div>
         </div>
 
-        {/* Delete for user-added listings */}
+        {/* Delete button (for admin/developer added listings) */}
         {onDelete && (
-          <button type="button" onClick={() => onDelete(creator.id)}
-            className="mt-2 text-[10px] text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors">
+          <button 
+            type="button" 
+            onClick={(e) => { e.stopPropagation(); onDelete(creator.id); }}
+            className="mt-3 text-[10px] text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors justify-center w-full border border-red-500/10 hover:border-red-500/20 py-1 rounded-md bg-red-500/5"
+          >
             <Trash2 size={10} /> Remove listing
           </button>
         )}
@@ -1179,6 +1252,10 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
   const [showFilters, setShowFilters] = useState(false);
   const [showGuestGate, setShowGuestGate] = useState(false);
 
+  const [tierFilter, setTierFilter] = useState('all');
+  const [budgetFilter, setBudgetFilter] = useState('all');
+  const [availFilter, setAvailFilter] = useState('all');
+
   const isGuest = !user;
 
   useEffect(() => {
@@ -1265,7 +1342,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
       });
     }
 
-    // Budget filter
+    // Budget filter from query input
     if (budgetNum > 0 && serviceFilter !== 'all') {
       list = list.filter(c => {
         const svc = findMatchingService(c);
@@ -1275,6 +1352,28 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
         const min = Math.min(...rates);
         return min <= budgetNum * 2.5;
       });
+    }
+
+    // Tier Filter
+    if (tierFilter !== 'all') {
+      list = list.filter(c => c.tier === tierFilter);
+    }
+
+    // Budget Categories Filter (Chips)
+    if (budgetFilter !== 'all') {
+      list = list.filter(c => {
+        const lowestRate = getLowestRate(c);
+        if (!lowestRate) return false;
+        if (budgetFilter === 'under1000') return lowestRate < 1000;
+        if (budgetFilter === 'under2500') return lowestRate < 2500;
+        if (budgetFilter === 'over2500') return lowestRate >= 2500;
+        return true;
+      });
+    }
+
+    // Availability Filter
+    if (availFilter === 'available') {
+      list = list.filter(c => c.availability === 'available');
     }
 
     // Sort
@@ -1332,7 +1431,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
     });
 
     return list;
-  }, [listings, serviceFilter, searchQuery, budgetNum, zipRegion, sortBy, user?.id]);
+  }, [listings, serviceFilter, searchQuery, budgetNum, zipRegion, sortBy, user?.id, tierFilter, budgetFilter, availFilter]);
 
   const displayListings = isGuest ? getRotatingPreviewCreators(filtered) : filtered;
 
@@ -1475,484 +1574,283 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
   }
 
   // ── Search mode (default) ──
-
-  const MARKETPLACE_PROOFS = [
-    { label: 'Creator review', value: 'Manual', detail: 'Profiles are checked before they publish.' },
-    { label: 'Payment rhythm', value: '50 / 50', detail: 'Retainer upfront, final payment on delivery.' },
-    { label: 'Creator fee', value: '10% to 6%', detail: 'Fees drop as completed work grows.' },
-  ];
-
-  const MARKETPLACE_SIGNALS = [
-    { label: 'Profile gate', value: '2+ yrs', detail: 'Paid production experience required before review.' },
-    { label: 'Proof layer', value: '3+', detail: 'Portfolio samples required before a listing can publish.' },
-    { label: 'Intro check', value: '60-90s', detail: 'Creators submit a short professional intro video.' },
-  ];
-
-  const PROJECT_SIGNALS = [
-    { label: 'Brand film', detail: 'Corporate story, event recap, launch video', range: '$1.5k+' },
-    { label: 'Podcast', detail: 'Edit, launch, studio, remote recording', range: '$350+' },
-    { label: 'Commercial photo', detail: 'Product, real estate, portraits, campaigns', range: '$500+' },
-  ];
-
-  const CREATORBRIDGE_IMAGES = {
-    hub: '/images/creatorbridge/homepage-production-hub.jpg',
-    hubSecondary: '/images/creatorbridge/homepage-production-hub-secondary.jpg',
-    post: '/images/creatorbridge/post-production-suite.png',
-    drone: '/images/creatorbridge/drone-operator-golden-hour.png',
-    podcast: '/images/creatorbridge/podcast-producer-studio.png',
-    event: '/images/creatorbridge/event-crew-stage.png',
-    photo: '/images/creatorbridge/commercial-photographer.png',
-    lens: '/images/creatorbridge/camera-lens-event-reflection.png',
-  };
-
-  const CATEGORY_IMAGE_BY_ID = {
-    all: CREATORBRIDGE_IMAGES.lens,
-    video: CREATORBRIDGE_IMAGES.post,
-    photo: CREATORBRIDGE_IMAGES.photo,
-    podcast: CREATORBRIDGE_IMAGES.podcast,
-    aerial: CREATORBRIDGE_IMAGES.drone,
-    events: CREATORBRIDGE_IMAGES.event,
-    brand_content: CREATORBRIDGE_IMAGES.hubSecondary,
-    editing: CREATORBRIDGE_IMAGES.post,
-  };
-
-  const CATEGORY_PREVIEWS = MARKETPLACE_CATEGORIES
-    .map(category => ({
-      ...category,
-      image: CATEGORY_IMAGE_BY_ID[category.id],
-      count: category.id === 'all'
-        ? listings.filter(isApprovedCreator).length
-        : listings.filter(creator => (creator.services || []).some(service => serviceMatchesMarketplaceCategory(service.serviceId || service.service_id, category.id))).length,
-    }));
-
-  const VALUE_PILLARS = [
-    { headline: 'Production talent on demand', desc: 'CreatorBridge gives companies a flexible production bench without hiring a full internal media department.' },
-    { headline: 'Cleaner client decisions', desc: 'Brands can compare focused creator profiles, service fit, availability, packages, and proof before starting a project.' },
-    { headline: 'Standards before booking', desc: 'Creator profiles are gated by experience, portfolio, verification, and platform rules before they can go live.' },
-  ];
-
-  const PROCESS_STEPS = [
-    { step: '01', title: 'Define the production need', copy: 'Choose the service type, market, budget range, and delivery expectations.' },
-    { step: '02', title: 'Review curated creator fit', copy: 'Browse verified media specialists instead of sorting through general gig profiles.' },
-    { step: '03', title: 'Book with protected payments', copy: 'Use the 50% retainer and 50% delivery structure to keep both sides accountable.' },
-  ];
-
-  const COMPARISON_ROWS = [
-    { label: 'Creator fee', creatorbridge: '10% to 6%', alternative: 'Often up to 20%' },
-    { label: 'Client booking fee', creatorbridge: '5%', alternative: 'Often higher or unclear' },
-    { label: 'Media-only focus', creatorbridge: 'Yes', alternative: 'Usually broad categories' },
-    { label: 'Verified creator standards', creatorbridge: 'Required', alternative: 'Mixed or self-managed' },
-    { label: 'Protected payment structure', creatorbridge: '50 / 50', alternative: 'Varies by platform' },
-  ];
-
   return (
-    <div className="w-full overflow-hidden">
-
-      {/* Page content wrapper */}
-      <div className="cb-home-wide mx-auto w-full px-5 sm:px-8 lg:px-14 2xl:px-16">
-
-        {/* 2. Editorial hero */}
-        <section className="relative py-12 sm:py-16 lg:py-20 2xl:py-24">
-          <div
-            className="absolute inset-x-0 top-8 h-px"
-            style={{ background: 'linear-gradient(90deg, transparent, rgba(212,169,65,0.45), transparent)' }}
-          />
-          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.18fr)_minmax(500px,0.82fr)] 2xl:grid-cols-[300px_minmax(0,1fr)_540px] gap-8 lg:gap-14 2xl:gap-16 items-center">
-
-            {/* Wide-screen left rail */}
-            <aside className="hidden 2xl:block">
-              <div className={`rounded-lg border p-5 ${dark ? 'bg-charcoal-950/72 border-gold-500/18' : 'bg-white/90 border-gray-200'}`}>
-                <p className="text-gold-400 mb-4" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
-                  Marketplace pulse
-                </p>
-                <div className="space-y-4">
-                  {MARKETPLACE_SIGNALS.map(({ label, value, detail }) => (
-                    <div key={label} className={`border-b pb-4 last:border-b-0 last:pb-0 ${dark ? 'border-white/[0.07]' : 'border-gray-200'}`}>
-                      <div className="flex items-baseline justify-between gap-4">
-                        <p className={`${dark ? 'text-charcoal-300' : 'text-gray-500'} text-[10px] font-bold uppercase tracking-[0.18em]`}>{label}</p>
-                        <p className="font-display text-lg font-bold text-gold-400">{value}</p>
-                      </div>
-                      <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} mt-2 text-xs leading-5`}>{detail}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </aside>
-
-            {/* Left column */}
-            <div className="relative z-10 max-w-6xl">
-              <div className="mb-7 flex flex-wrap items-center gap-3">
-                <span
-                  className="text-gold-400"
-                  style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}
-                >
-                  On-demand media production hub
-                </span>
-                <span className="hidden sm:block h-px w-20 bg-gold-500/35" />
-                <span className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} text-[11px] font-semibold uppercase tracking-[0.18em]`}>
-                  National production reach
-                </span>
-              </div>
-              <h1
-                className={`max-w-6xl leading-[0.96] ${dark ? 'text-white' : 'text-gray-950'}`}
-                style={{ fontFamily: "'Georgia', 'Times New Roman', serif", fontWeight: 400, fontSize: 'clamp(42px, 6.6vw, 124px)' }}
-              >
-                Verified creative talent for brands that need the work done right.
-              </h1>
-              <div className="mt-8 grid grid-cols-1 lg:grid-cols-[minmax(0,580px)_auto] gap-6 lg:gap-10 items-end">
-                <p className={`${dark ? 'text-charcoal-200' : 'text-gray-700'} text-base sm:text-lg leading-8`}>
-                  CreatorBridge helps companies source vetted video, photo, podcast, drone, event, and post-production specialists without building an internal production department.
-                </p>
-                <div className="flex gap-3 flex-wrap lg:justify-end">
-                  <button
-                    type="button"
-                    onClick={() => document.getElementById('creator-search')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-                    className="bg-gold-500 hover:bg-gold-600 text-charcoal-900 font-bold transition-all inline-flex items-center gap-2"
-                    style={{ padding: '15px 26px', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', borderRadius: 8, border: 'none', cursor: 'pointer', boxShadow: '0 18px 42px rgba(212,169,65,0.18)' }}
-                  >
-                    Find Creators <ArrowRight size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onSwitchToRegister}
-                    className={`font-bold transition-all ${dark ? 'text-white hover:text-gold-400' : 'text-gray-900 hover:text-gold-500'}`}
-                    style={{ padding: '15px 24px', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', borderRadius: 8, background: dark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)', border: dark ? '1px solid rgba(212,169,65,0.28)' : '1px solid rgba(0,0,0,0.18)', cursor: 'pointer' }}
-                  >
-                    Join as Creator
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Right column */}
-            <div className="relative xl:justify-self-end xl:w-full">
-              <div
-                className="absolute -inset-8 opacity-70"
-                style={{ background: 'radial-gradient(circle at 50% 30%, rgba(212,169,65,0.12), transparent 62%)' }}
-              />
-              <div
-                className={`relative overflow-hidden rounded-lg border ${dark ? 'bg-charcoal-950/80 border-gold-500/25' : 'bg-white/90 border-gold-500/20'}`}
-                style={{ boxShadow: dark ? '0 28px 90px rgba(0,0,0,0.36)' : '0 24px 80px rgba(0,0,0,0.12)' }}
-              >
-                <div
-                  className="absolute inset-x-0 top-0 h-1"
-                  style={{ background: 'linear-gradient(90deg, transparent, rgba(212,169,65,0.85), transparent)' }}
-                />
-                <div className="relative min-h-[270px] overflow-hidden">
-                  <img
-                    src={CREATORBRIDGE_IMAGES.hub}
-                    alt="Production hub studio with camera and media equipment"
-                    className="absolute inset-0 h-full w-full object-cover"
-                    loading="eager"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950 via-charcoal-950/42 to-charcoal-950/18" />
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_18%,rgba(212,169,65,0.24),transparent_34%)]" />
-                  <div className="relative flex min-h-[270px] flex-col justify-end p-5 sm:p-6 xl:p-7">
-                    <p className="text-gold-300 mb-3" style={{ fontSize: '10px', letterSpacing: '2.5px', textTransform: 'uppercase' }}>
-                      Production done right
-                    </p>
-                    <p className="max-w-sm font-display text-3xl font-bold leading-tight text-white">
-                      Real media work deserves real production standards.
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-3 p-5 sm:p-6 xl:p-7">
-                  {MARKETPLACE_PROOFS.map(({ label, value, detail }) => (
-                    <div
-                      key={label}
-                      className={`rounded-lg border p-4 ${dark ? 'bg-white/[0.035] border-white/[0.07]' : 'bg-gray-50 border-gray-200'}`}
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className={`${dark ? 'text-charcoal-300' : 'text-gray-500'} text-[10px] font-bold uppercase tracking-[0.18em]`}>{label}</p>
-                          <p className={`${dark ? 'text-white' : 'text-gray-950'} mt-1 text-sm font-semibold`}>{detail}</p>
-                        </div>
-                        <p className="shrink-0 text-right font-display text-xl font-bold text-gold-400">{value}</p>
-                      </div>
-                    </div>
-                  ))}
-                  <div className={`rounded-lg border px-4 py-3 ${dark ? 'bg-gold-500/10 border-gold-500/25' : 'bg-gold-50 border-gold-200'}`}>
-                    <p className={`${dark ? 'text-gold-200' : 'text-gold-800'} text-sm font-bold`}>Built for serious production work</p>
-                <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} mt-1 text-xs leading-5`}>
-                      Profiles, packages, booking flow, and payment structure are designed around companies that need a production partner before the first invoice.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 2B. Wide category and project signals */}
-        <section className="mb-8 grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_390px] 2xl:grid-cols-[minmax(0,1fr)_430px] gap-5">
-          <div className={`rounded-lg border p-5 2xl:p-6 ${dark ? 'bg-charcoal-950/72 border-gold-500/16' : 'bg-white border-gray-200'}`}>
-            <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
-                  Production lanes
-                </p>
-                <h2 className={`${dark ? 'text-white' : 'text-gray-950'} font-display text-2xl font-bold`}>
-                  Production coverage without building a full in-house team.
-                </h2>
-              </div>
-              <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} max-w-md text-xs leading-5`}>
-                Choose the type of production work first, then compare creators by proof, package, availability, and fit.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 2xl:grid-cols-8 gap-3">
-              {CATEGORY_PREVIEWS.map(category => (
-                <button
-                  key={category.id}
-                  type="button"
-                  onClick={() => {
-                    setServiceFilter(category.id);
-                    document.getElementById('creator-search')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }}
-                  className={`group overflow-hidden rounded-lg border text-left transition-all ${dark ? 'bg-white/[0.025] border-white/[0.07] hover:border-gold-500/35' : 'bg-gray-50 border-gray-200 hover:border-gold-300'}`}
-                >
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    {category.image ? (
-                      <img
-                        src={category.image}
-                        alt=""
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className={`grid h-full place-items-center text-2xl ${dark ? 'bg-charcoal-900' : 'bg-white'}`}>{category.icon}</div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950/92 via-charcoal-950/18 to-transparent" />
-                    <span className="absolute left-3 top-3 rounded-full bg-charcoal-950/72 px-2.5 py-1 text-sm ring-1 ring-gold-500/18">{category.icon}</span>
-                    <p className="absolute bottom-3 left-3 right-3 text-xs font-bold uppercase tracking-[0.12em] text-white">{category.name}</p>
-                  </div>
-                  <div className="p-4">
-                    <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} text-xs leading-5`}>{category.description}</p>
-                    <p className={`${dark ? 'text-charcoal-400' : 'text-gray-500'} mt-3 text-[11px]`}>{category.count || 'Curated'} available</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className={`rounded-lg border p-5 2xl:p-6 ${dark ? 'bg-gold-500/[0.08] border-gold-500/20' : 'bg-gold-50 border-gold-200'}`}>
-            <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
-              Project signals
+    <div className="w-full">
+      {/* Search Header Banner */}
+      <div className="cb-home-wide mx-auto w-full px-5 sm:px-8 lg:px-14 2xl:px-16 py-8 md:py-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 border-b border-white/[0.08] pb-8">
+          <div>
+            <p className="text-gold-400 mb-2 font-semibold" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+              Curated Production Network
             </p>
-            <h2 className={`${dark ? 'text-white' : 'text-gray-950'} font-display text-xl font-bold`}>
-              Guide clients toward the right production path.
-            </h2>
-            <div className="mt-4 space-y-3">
-              {PROJECT_SIGNALS.map(({ label, detail, range }) => (
-                <div key={label} className={`rounded-lg border p-4 ${dark ? 'bg-charcoal-950/55 border-white/[0.07]' : 'bg-white border-gold-100'}`}>
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className={`${dark ? 'text-white' : 'text-gray-950'} text-sm font-bold`}>{label}</p>
-                      <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} mt-1 text-xs leading-5`}>{detail}</p>
-                    </div>
-                    <p className="shrink-0 text-sm font-bold text-gold-400">{range}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <h1 className="font-display text-4xl md:text-5xl font-bold text-white mb-2 leading-tight">
+              Find Verified Creators
+            </h1>
+            <p className="text-sm text-charcoal-400 max-w-2xl">
+              Browse professional media production specialists, verify their real-time availability, and view standardized packages.
+            </p>
           </div>
-        </section>
-
-        {/* 3. Curation strip */}
-        <section className="mb-8 grid grid-cols-1 lg:grid-cols-[320px_1fr] 2xl:grid-cols-[340px_1fr] gap-4 lg:gap-6 items-stretch">
-          <div className={`rounded-lg border p-5 flex flex-col justify-between ${dark ? 'bg-charcoal-950/80 border-gold-500/20' : 'bg-white border-gray-200'}`}>
-            <div>
-              <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
-                Guided discovery
-              </p>
-              <p className={`${dark ? 'text-white' : 'text-gray-950'} font-display text-2xl font-bold leading-tight`}>
-                Start with fit, not endless scrolling.
-              </p>
+          
+          {/* Sorting and zip layout at top right */}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="relative flex items-center">
+              <MapPin size={14} className="absolute left-3 pointer-events-none text-charcoal-400" />
+              <input 
+                type="text" 
+                maxLength={5} 
+                value={zip} 
+                onChange={e => setZip(e.target.value.replace(/\D/g,''))}
+                placeholder="ZIP Code..."
+                className="w-32 pl-9 pr-3 py-2 text-xs rounded-xl border border-white/[0.08] outline-none bg-charcoal-900 text-white placeholder-charcoal-500 focus:border-gold-500" 
+              />
             </div>
-            <div className="mt-5">
-              <FastMatch dark={dark} />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 2xl:gap-5">
-            {PROCESS_STEPS.map(({ step, title, copy }) => (
-              <div key={step} className={`rounded-lg border p-5 2xl:p-6 ${dark ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-white border-gray-200'}`}>
-                <p className="text-gold-400 font-display text-xl font-bold">{step}</p>
-                <p className={`${dark ? 'text-white' : 'text-gray-950'} mt-3 text-sm font-bold`}>{title}</p>
-                <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} mt-2 text-xs leading-5`}>{copy}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* 4. Search bar (logged-in only) / Guest banner */}
-        {isGuest ? (
-          <div id="creator-search" className="rounded-lg border border-gold-500/35 bg-gold-500/10 p-5 mb-5 flex items-center justify-between gap-4 flex-wrap">
-            <div>
-              <p className="text-sm font-bold text-gold-400 mb-1">Daily curated preview</p>
-              <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} text-xs leading-5`}>
-                Guests see 3 verified creators each day. Create a free account to browse full profiles, packages, rates, and project requests.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new CustomEvent('open-auth', { detail: { tab: 'signup' } }))}
-              className="shrink-0 px-4 py-2 bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-xs font-bold rounded-xl transition-all">
-              Create Free Account
-            </button>
-          </div>
-        ) : (
-          <>
-            <div
-              id="creator-search"
-              className={`flex overflow-hidden mb-3 shadow-sm rounded-lg ${dark ? 'bg-charcoal-950/80' : 'bg-white'}`}
-              style={{ border: dark ? '1px solid rgba(212,169,65,0.22)' : '1px solid rgba(0,0,0,0.12)' }}
+            
+            <select 
+              value={sortBy} 
+              onChange={e => setSortBy(e.target.value)}
+              className="px-3 py-2 text-xs rounded-xl border border-white/[0.08] outline-none bg-charcoal-900 text-white focus:border-gold-500"
             >
-              <div className="relative flex-1 flex items-center">
-                <Search size={16} className={`absolute left-4 pointer-events-none ${dark ? 'text-charcoal-400' : 'text-gray-400'}`} />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Search by name, service, location, or specialty..."
-                  className={`w-full pl-11 pr-4 py-4 text-sm bg-transparent outline-none ${dark ? 'text-white placeholder-charcoal-400' : 'text-gray-900 placeholder-gray-400'}`}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowFilters(f => !f)}
-                className={`px-4 flex items-center gap-1.5 text-xs font-semibold transition-colors ${
-                  showFilters
-                    ? 'bg-gold-500 text-charcoal-900'
-                    : dark ? 'text-charcoal-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'
-                }`}
-                style={{ borderLeft: dark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)' }}
-              >
-                <Filter size={12} /> Filters
-              </button>
-            </div>
-
-            {showFilters && (
-              <div className={`mb-3 p-4 ${dark ? 'bg-charcoal-800 border-charcoal-700' : 'bg-white border-gray-200'}`} style={{ border: '1px solid', borderColor: dark ? '#2a2a45' : '#e5e7eb' }}>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <p className={`text-xs font-medium mb-1 ${textSub}`}>Budget</p>
-                    <div className="relative flex items-center">
-                      <span className={`absolute left-3 text-sm pointer-events-none ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>$</span>
-                      <input type="number" min={0} value={budget} onChange={e => setBudget(e.target.value)}
-                        placeholder="e.g. 500"
-                        className={`w-full pl-7 pr-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
-                    </div>
-                  </div>
-                  <div>
-                    <p className={`text-xs font-medium mb-1 ${textSub}`}>Your ZIP Code</p>
-                    <div className="relative flex items-center">
-                      <MapPin size={14} className={`absolute left-3 pointer-events-none ${dark ? 'text-charcoal-400' : 'text-gray-400'}`} />
-                      <input type="text" maxLength={5} value={zip} onChange={e => setZip(e.target.value.replace(/\D/g,''))}
-                        placeholder="e.g. 90210"
-                        className={`w-full pl-9 pr-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
-                    </div>
-                    {zipCity && <p className="text-[10px] text-gold-400 mt-1">{zipCity}</p>}
-                  </div>
-                  <div>
-                    <p className={`text-xs font-medium mb-1 ${textSub}`}>Sort By</p>
-                    <select value={sortBy} onChange={e => setSortBy(e.target.value)}
-                      className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`}>
-                      <option value="rating">Top Rated</option>
-                      <option value="reviews">Most Reviews</option>
-                      <option value="match">Best Budget Match</option>
-                      <option value="price_asc">Price: Low to High</option>
-                      <option value="price_desc">Price: High to Low</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* 5. Spotlight */}
-        {spotlightCreators.length > 0 && (
-          <section className="mt-8 mb-6">
-            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <BadgeCheck size={15} className="text-gold-400" />
-                  <h2 className={`font-display font-bold text-xl ${dark ? 'text-white' : 'text-gray-900'}`}>
-                    Recently verified creators
-                  </h2>
-                </div>
-                <p className={`text-sm ${textSub}`}>A rotating look at fresh professional talent ready for real production work.</p>
-              </div>
-              <p className="text-gold-400 text-[10px] font-bold uppercase tracking-[0.2em]">Curated preview</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
-              {spotlightCreators.map(creator => (
-                <CreatorCard key={creator.id} creator={creator} dark={dark} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Results count (logged-in only) */}
-        {!isGuest && (
-          <div className="flex items-center justify-between mt-2 mb-3">
-            <p className={`text-xs ${textSub}`}>
-              {filtered.length} creator{filtered.length !== 1 ? 's' : ''} found
-              {budgetNum > 0 && ` matching ~$${budgetNum.toLocaleString()} budget`}
-              {zipCity && ` near ${zipCity}`}
-            </p>
-          </div>
-        )}
-
-        {/* 6. Creator cards grid */}
-        {displayListings.length > 0 ? (
-          <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
-            {displayListings.map(creator => (
-              <CreatorCard
-                key={creator.id}
-                creator={creator}
-                dark={dark}
-                onViewProfile={isGuest && !creator.id?.startsWith('seed-') ? () => setShowGuestGate(true) : undefined}
-                onDelete={!isGuest && !creator.id?.startsWith('seed-') ? () => handleDelete(creator.id) : undefined}
-              />
-            ))}
-          </section>
-        ) : (
-          <div className={`border p-10 text-center ${dark ? 'border-charcoal-700 text-charcoal-500' : 'border-gray-200 text-gray-400'}`}>
-            <p className="text-4xl mb-2">{searchQuery ? '🔍' : '🎬'}</p>
-            <p className={`text-sm font-medium ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
-              No creators found for these filters.
-            </p>
-            <p className={`text-xs mt-1 ${textSub}`}>
-              Try adjusting your search, service type, or budget range.
-            </p>
-          </div>
-        )}
-
-        {/* 7. CTA */}
-        <div className={`mt-10 rounded-lg border p-7 sm:p-8 ${dark ? 'bg-charcoal-950/80 border-gold-500/20' : 'bg-white border-gray-200'}`}>
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 items-center">
-            <div>
-              <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
-                For working creators
-              </p>
-              <p className={`font-display text-2xl font-bold mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>
-                Bring your best work into a marketplace with standards.
-              </p>
-              <p className={`text-sm ${textSub} max-w-2xl`}>
-                List focused services, show proof of experience, and meet clients who need professional media production.
-              </p>
-            </div>
-          <button
-            type="button"
-            onClick={onSwitchToRegister}
-            className="bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold transition-all flex items-center gap-2 justify-center"
-            style={{ padding: '14px 24px', borderRadius: 8, border: 'none', cursor: 'pointer' }}
-          >
-            <UserPlus size={14} /> Join as Creator
-          </button>
+              <option value="rating">Top Rated</option>
+              <option value="reviews">Most Reviews</option>
+              <option value="match">Best Budget Match</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+            </select>
           </div>
         </div>
 
+        {/* Global Search Input Box */}
+        <div className="relative flex items-center mb-8 bg-charcoal-950/80 rounded-xl border border-white/[0.08] focus-within:border-gold-500/50 shadow-md">
+          <Search size={18} className="absolute left-4 pointer-events-none text-charcoal-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Search by creator name, business name, tags, or locations..."
+            className="w-full pl-12 pr-4 py-4 text-sm bg-transparent outline-none text-white placeholder-charcoal-500"
+          />
+          {searchQuery && (
+            <button 
+              type="button" 
+              onClick={() => setSearchQuery('')}
+              className="absolute right-4 p-1 text-charcoal-400 hover:text-white transition-colors"
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
+
+        {/* Main Grid: Sidebar Filters + Creator Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 items-start">
+          
+          {/* Left Column: Sticky Filters Sidebar */}
+          <aside className="lg:sticky lg:top-24 space-y-6 bg-charcoal-900/50 border border-white/[0.08] p-5 rounded-2xl">
+            <div>
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Service specialties</h3>
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => setServiceFilter('all')}
+                  className={`filter-chip ${serviceFilter === 'all' ? 'active' : ''}`}
+                >
+                  <span>All Categories</span>
+                  <span className="count">
+                    {listings.filter(isApprovedCreator).length}
+                  </span>
+                </button>
+                {MARKETPLACE_CATEGORIES.filter(c => c.id !== 'all').map(category => {
+                  const count = listings.filter(creator => 
+                    (creator.services || []).some(service => 
+                      serviceMatchesMarketplaceCategory(service.serviceId || service.service_id, category.id)
+                    )
+                  ).length;
+                  return (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => setServiceFilter(category.id)}
+                      className={`filter-chip ${serviceFilter === category.id ? 'active' : ''}`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span>{category.icon}</span>
+                        <span>{category.name}</span>
+                      </span>
+                      <span className="count">{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="border-t border-white/[0.06] pt-5">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Creator Tier</h3>
+              <div className="space-y-1">
+                {[
+                  { id: 'all', label: 'All Tiers' },
+                  { id: 'launch', label: 'Launch' },
+                  { id: 'pro', label: 'Pro' },
+                  { id: 'signature', label: 'Signature' }
+                ].map(tier => {
+                  const count = listings.filter(c => {
+                    const approved = isApprovedCreator(c) || c.user_id === user?.id;
+                    if (!approved) return false;
+                    return tier.id === 'all' || c.tier === tier.id;
+                  }).length;
+                  return (
+                    <button
+                      key={tier.id}
+                      type="button"
+                      onClick={() => setTierFilter(tier.id)}
+                      className={`filter-chip ${tierFilter === tier.id ? 'active' : ''}`}
+                    >
+                      <span>{tier.label}</span>
+                      <span className="count">{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="border-t border-white/[0.06] pt-5">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Budget signals</h3>
+              <div className="space-y-1">
+                {[
+                  { id: 'all', label: 'All Budgets' },
+                  { id: 'under1000', label: 'Under $1,000' },
+                  { id: 'under2500', label: 'Under $2,500' },
+                  { id: 'over2500', label: 'Over $2,500' }
+                ].map(b => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => setBudgetFilter(b.id)}
+                    className={`filter-chip ${budgetFilter === b.id ? 'active' : ''}`}
+                  >
+                    <span>{b.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="border-t border-white/[0.06] pt-5">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Availability</h3>
+              <div className="space-y-1">
+                {[
+                  { id: 'all', label: 'All Statuses' },
+                  { id: 'available', label: 'Available Now' }
+                ].map(a => (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => setAvailFilter(a.id)}
+                    className={`filter-chip ${availFilter === a.id ? 'active' : ''}`}
+                  >
+                    <span>{a.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Quick guided discovery match widget inside sidebar */}
+            <div className="border-t border-white/[0.06] pt-5">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Guided Discovery</h3>
+              <FastMatch dark={dark} />
+            </div>
+          </aside>
+
+          {/* Right Column: Results Grid */}
+          <main className="space-y-6">
+            {/* Guest Promo Notice */}
+            {isGuest && (
+              <div className="rounded-xl border border-gold-500/20 bg-gold-500/5 p-4 flex items-center justify-between gap-4 flex-wrap">
+                <div className="max-w-md">
+                  <p className="text-xs font-bold text-gold-400 mb-0.5">Daily Curated Preview</p>
+                  <p className="text-[11px] text-charcoal-400 leading-normal">
+                    Guests see a limited selection of 3 verified creators each day. Create a free account to browse the full national directory, view active rates, packages, and book instantly.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent('open-auth', { detail: { tab: 'signup' } }))}
+                  className="shrink-0 px-3.5 py-1.5 bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-xs font-bold rounded-lg transition-all"
+                >
+                  Create Free Account
+                </button>
+              </div>
+            )}
+
+            {/* Results Header Info */}
+            <div className="flex items-center justify-between text-xs text-charcoal-400">
+              <p>
+                Showing {displayListings.length} creator{displayListings.length !== 1 ? 's' : ''} 
+                {serviceFilter !== 'all' && ` in ${SERVICES[serviceFilter]?.name}`}
+                {zipCity && ` near ${zipCity}`}
+              </p>
+            </div>
+
+            {/* Cards Grid */}
+            {displayListings.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
+                {displayListings.map(creator => (
+                  <CreatorCard
+                    key={creator.id}
+                    creator={creator}
+                    dark={dark}
+                    onViewProfile={isGuest && !creator.id?.startsWith('seed-') ? () => setShowGuestGate(true) : undefined}
+                    onDelete={!isGuest && !creator.id?.startsWith('seed-') ? () => handleDelete(creator.id) : undefined}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="border border-white/[0.08] rounded-2xl p-12 text-center bg-charcoal-900/30">
+                <p className="text-4xl mb-3">🔍</p>
+                <p className="text-sm font-semibold text-white">
+                  No creators found
+                </p>
+                <p className="text-xs text-charcoal-400 mt-1 max-w-sm mx-auto">
+                  Try adjusting your search query, selecting "All Categories", or clearing the search filters.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setServiceFilter('all');
+                    setTierFilter('all');
+                    setBudgetFilter('all');
+                    setAvailFilter('all');
+                    setZip('');
+                  }}
+                  className="mt-4 px-4 py-2 border border-gold-500/20 hover:border-gold-500/40 text-gold-400 text-xs font-bold rounded-lg transition-all"
+                >
+                  Reset All Filters
+                </button>
+              </div>
+            )}
+            
+            {/* Join CTA for creators if they scroll to bottom */}
+            <div className="rounded-2xl border border-white/[0.06] bg-charcoal-900/40 p-6 md:p-8 mt-12 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div>
+                <p className="text-gold-400 mb-1" style={{ fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase' }}>
+                  Are you a content creator?
+                </p>
+                <h3 className="font-display text-xl font-bold text-white mb-1">
+                  List your professional services & set your rates
+                </h3>
+                <p className="text-xs text-charcoal-400 max-w-xl">
+                  CreatorBridge matches verified filmmakers, photographers, and podcast editors with serious corporate projects. Keep 90% of your earnings.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onSwitchToRegister}
+                className="shrink-0 bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-xs font-bold px-5 py-2.5 rounded-lg transition-all flex items-center gap-1.5"
+              >
+                <UserPlus size={13} /> Join as Creator
+              </button>
+            </div>
+          </main>
+
+        </div>
       </div>
 
       {/* Guest gate modal */}
@@ -1988,90 +1886,6 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
           </div>
         </div>
       )}
-
-      {/* 8. Bottom value section */}
-      <section
-        className="cb-home-wide mx-auto w-full px-5 sm:px-8 lg:px-14 2xl:px-16 py-14"
-        style={{ borderTop: '1px solid rgba(212,169,65,0.14)' }}
-      >
-        <div className="grid grid-cols-1 lg:grid-cols-[0.75fr_1.25fr] gap-8 lg:gap-12 items-start">
-          <div>
-            <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
-              Why CreatorBridge
-            </p>
-            <h2
-              className={`${dark ? 'text-white' : 'text-gray-950'} max-w-xl leading-tight`}
-              style={{ fontFamily: "'Georgia','Times New Roman',serif", fontWeight: 400, fontSize: 'clamp(30px, 4vw, 58px)' }}
-            >
-              A production bench you can activate when the work matters.
-            </h2>
-            <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} mt-5 max-w-lg text-sm leading-7`}>
-              CreatorBridge gives clients a cleaner path to vetted media specialists while giving creators a platform built around professional standards and protected payment structure.
-            </p>
-            <div className={`mt-8 max-w-lg overflow-hidden rounded-lg border ${dark ? 'border-gold-500/20 bg-charcoal-950/70' : 'border-gray-200 bg-white'}`}>
-              <div className="relative aspect-[16/10]">
-                <img
-                  src={CREATORBRIDGE_IMAGES.lens}
-                  alt="Camera lens reflecting a professional event"
-                  className="absolute inset-0 h-full w-full object-cover"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950/92 via-charcoal-950/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-5">
-                  <p className="text-gold-300 mb-2" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
-                    Risk control
-                  </p>
-                  <p className="max-w-sm text-sm font-bold leading-6 text-white">
-                    Stop guessing who can deliver. Start with creators built for production work.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {VALUE_PILLARS.map(({ headline, desc }) => (
-                <div key={headline} className={`rounded-lg border p-5 ${dark ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-white border-gray-200'}`}>
-                  <div className="mb-5 h-px w-14 bg-gold-500/65" />
-                  <p className={`${dark ? 'text-white' : 'text-gray-950'} text-sm font-bold leading-5`}>{headline}</p>
-                  <p className={`${dark ? 'text-charcoal-300' : 'text-gray-600'} mt-3 text-xs leading-5`}>{desc}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className={`rounded-lg border overflow-hidden ${dark ? 'bg-charcoal-950/80 border-gold-500/20' : 'bg-white border-gray-200'}`}>
-              <div className={`grid grid-cols-1 md:grid-cols-[1fr_0.8fr_0.9fr] gap-0 ${dark ? 'border-b border-gold-500/14' : 'border-b border-gray-200'}`}>
-                <div className="p-5">
-                  <p className="text-gold-400 mb-1" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
-                    Fee comparison
-                  </p>
-                  <p className={`${dark ? 'text-white' : 'text-gray-950'} text-lg font-display font-bold`}>
-                    Built to cost less and feel more focused.
-                  </p>
-                </div>
-                <div className="hidden md:flex items-end p-5">
-                  <p className="text-gold-400 text-[10px] font-bold uppercase tracking-[0.18em]">CreatorBridge</p>
-                </div>
-                <div className="hidden md:flex items-end p-5">
-                  <p className={`${dark ? 'text-charcoal-400' : 'text-gray-500'} text-[10px] font-bold uppercase tracking-[0.18em]`}>General marketplaces</p>
-                </div>
-              </div>
-
-              {COMPARISON_ROWS.map(({ label, creatorbridge, alternative }) => (
-                <div
-                  key={label}
-                  className={`grid grid-cols-1 md:grid-cols-[1fr_0.8fr_0.9fr] gap-2 md:gap-0 px-5 py-4 ${dark ? 'border-b border-white/[0.06]' : 'border-b border-gray-100'} last:border-b-0`}
-                >
-                  <p className={`${dark ? 'text-charcoal-200' : 'text-gray-700'} text-sm font-semibold`}>{label}</p>
-                  <p className="text-gold-400 text-sm font-bold">{creatorbridge}</p>
-                  <p className={`${dark ? 'text-charcoal-400' : 'text-gray-500'} text-sm`}>{alternative}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
 
     </div>
   );

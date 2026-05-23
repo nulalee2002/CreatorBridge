@@ -284,7 +284,7 @@ export function CreatorProfilePage({ dark }) {
           <p className={`text-sm leading-6 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
             This creator may be under review, hidden, or no longer listed.
           </p>
-        <button type="button" onClick={() => navigate('/')}
+        <button type="button" onClick={() => navigate('/find')}
           className="mt-5 px-5 py-2.5 rounded-xl bg-gold-500 text-charcoal-900 font-bold text-sm">
           Back to Directory
         </button>
@@ -307,7 +307,7 @@ export function CreatorProfilePage({ dark }) {
           <p className={`text-sm leading-6 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
             CreatorBridge profiles are hidden until manual review is complete.
           </p>
-          <button type="button" onClick={() => navigate('/')}
+          <button type="button" onClick={() => navigate('/find')}
             className="mt-5 px-5 py-2.5 rounded-xl bg-gold-500 text-charcoal-900 font-bold text-sm">
             Back to Directory
           </button>

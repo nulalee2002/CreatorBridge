@@ -1,31 +1,39 @@
 import { SERVICES } from '../data/rates.js';
 
 export function ServiceSelector({ value, onChange, dark = true }) {
+  // Estimated base hourly rates for display matching database/industry averages
+  const baseRates = {
+    video: 180,
+    photography: 120,
+    drone: 150,
+    social: 95,
+    postProduction: 75,
+    liveevents: 135
+  };
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
       {Object.values(SERVICES).map(svc => {
         const active = value === svc.id;
+        const rate = baseRates[svc.id] || 100;
         return (
           <button
             key={svc.id}
             type="button"
             onClick={() => onChange(svc.id)}
-            className={`group relative flex flex-col items-start gap-1.5 p-3 rounded-xl border text-left transition-all duration-200 ${
-              active
-                ? 'border-gold-500 bg-gold-500/10 text-gold-400'
-                : dark
-                  ? 'border-white/[0.08] bg-charcoal-900/60 text-charcoal-300 hover:border-gold-500/35 hover:bg-white/[0.06]'
-                  : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
-            }`}
+            className={`lane-pick ${active ? 'active' : ''} w-full`}
           >
-            <span className="text-xl">{svc.icon}</span>
-            <span className="text-xs font-semibold leading-tight">{svc.name}</span>
-            {active && (
-              <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-gold-400" />
-            )}
+            <div className="ico">
+              <span className="text-base select-none">{svc.icon}</span>
+            </div>
+            <div className="text-sm font-semibold text-white leading-snug">{svc.name}</div>
+            <div className="text-[10px] text-[var(--text-dim)] mt-1 font-medium">
+              ${rate}/hr base
+            </div>
           </button>
         );
       })}
     </div>
   );
 }
+
