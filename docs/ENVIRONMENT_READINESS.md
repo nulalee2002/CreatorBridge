@@ -41,6 +41,7 @@ SITE_URL
 SUPABASE_URL
 SUPABASE_SERVICE_ROLE_KEY
 PLATFORM_JOB_SECRET
+TURNSTILE_SECRET_KEY
 ```
 
 Supabase provides `SUPABASE_URL` and service role access to Edge Functions, but verify them through the Supabase secrets screen or CLI before release. Current Supabase docs confirm Edge Functions read secrets with `Deno.env.get(...)`, and production secrets can be managed with `supabase secrets set` and inspected by name with `supabase secrets list`.
