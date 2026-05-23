@@ -118,9 +118,9 @@ check('Admin dashboard access control', 'src/pages/AdminDashboard.jsx', [
   { label: 'checks database admin status before loading admin data', test: includes(".rpc('is_platform_admin'") },
   { label: 'loads admin platform summary through RPC', test: includes(".rpc('get_admin_platform_summary'") },
   { label: 'loads creator review queue through RPC', test: includes(".rpc('get_admin_creator_review_queue'") },
-  { label: 'keeps the first admin pass read only', test: includes('Read-only operations visibility') },
-  { label: 'does not expose approval action controls yet', test: notIncludes('Approve Creator') },
-  { label: 'does not expose payment release action controls yet', test: notIncludes('releasePayment') },
+  { label: 'exposes creator review approval controls', test: includes('admin_approve_creator') },
+  { label: 'exposes creator review rejection controls', test: includes('admin_reject_creator') },
+  { label: 'exposes payment release action controls', test: includes('release-payment') },
 ]);
 
 check('Admin database foundation', 'supabase/migrations/20260516235356_admin_control_hub_foundation.sql', [
@@ -236,7 +236,7 @@ check('Stripe webhook completion path', 'supabase/functions/stripe-webhook/index
 
 check('Payment release hardening', 'supabase/functions/release-payment/index.ts', [
   { label: 'requires authenticated client or trusted job secret', test: includes('PLATFORM_JOB_SECRET') },
-  { label: 'verifies the paying client before release', test: includes('Only the paying client can release this payment') },
+  { label: 'verifies the paying client or admin before release', test: includes('Only the paying client or a platform admin can release this payment') },
   { label: 'requires both payments before payout release', test: includes('Both retainer and final payment must be paid') },
   { label: 'uses Stripe idempotency key for payout transfer', test: includes('idempotencyKey') },
 ]);

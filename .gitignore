@@ -7,3 +7,5 @@ supabase/.temp/
 .env.*
 !.env.example
 .env.txt
+.vercel
+.env*.local

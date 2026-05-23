@@ -68,6 +68,8 @@ export function AdminDashboard({ dark }) {
   const [error, setError] = useState('');
   const [summary, setSummary] = useState(EMPTY_SUMMARY);
   const [queue, setQueue] = useState([]);
+  const [pendingTxns, setPendingTxns] = useState([]);
+  const [submittingAction, setSubmittingAction] = useState(false);
 
   const riskCounts = useMemo(() => ({
     disputesAndViolations: Number(summary.disputes || 0) + Number(summary.violations || 0),
@@ -101,20 +103,98 @@ export function AdminDashboard({ dark }) {
     }
 
     setAuthorized(true);
-    const [summaryResult, queueResult] = await Promise.all([
+    const [summaryResult, queueResult, txnsResult] = await Promise.all([
       supabase.rpc('get_admin_platform_summary'),
       supabase.rpc('get_admin_creator_review_queue'),
+      supabase
+        .from('transactions')
+        .select('*')
+        .eq('retainer_status', 'paid')
+        .eq('final_status', 'paid')
+        .is('final_transfer_id', null),
     ]);
 
-    if (summaryResult.error || queueResult.error) {
-      setError(summaryResult.error?.message || queueResult.error?.message || 'Could not load admin data.');
+    if (summaryResult.error || queueResult.error || txnsResult.error) {
+      setError(
+        summaryResult.error?.message || 
+        queueResult.error?.message || 
+        txnsResult.error?.message || 
+        'Could not load admin data.'
+      );
     } else {
       setSummary({ ...EMPTY_SUMMARY, ...(summaryResult.data || {}) });
       setQueue(Array.isArray(queueResult.data) ? queueResult.data : []);
+      setPendingTxns(Array.isArray(txnsResult.data) ? txnsResult.data : []);
     }
 
     setLoading(false);
     setRefreshing(false);
+  }
+
+  async function handleApproveCreator(listingId) {
+    if (!supabaseConfigured || !supabase || submittingAction) return;
+    setSubmittingAction(true);
+    setError('');
+    try {
+      const { error: err } = await supabase.rpc('admin_approve_creator', {
+        p_listing_id: listingId
+      });
+      if (err) throw err;
+      await loadAdminData({ quiet: true });
+    } catch (err) {
+      setError(err.message || 'Failed to approve creator.');
+    } finally {
+      setSubmittingAction(false);
+    }
+  }
+
+  async function handleRejectCreator(listingId) {
+    if (!supabaseConfigured || !supabase || submittingAction) return;
+    setSubmittingAction(true);
+    setError('');
+    try {
+      const { error: err } = await supabase.rpc('admin_reject_creator', {
+        p_listing_id: listingId
+      });
+      if (err) throw err;
+      await loadAdminData({ quiet: true });
+    } catch (err) {
+      setError(err.message || 'Failed to reject creator.');
+    } finally {
+      setSubmittingAction(false);
+    }
+  }
+
+  async function handleReleasePayment(transactionId) {
+    if (!supabaseConfigured || !supabase || submittingAction) return;
+    setSubmittingAction(true);
+    setError('');
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session?.session?.access_token;
+      
+      const endpoint = `${supabase.supabaseUrl}/functions/v1/release-payment`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token || ''}`,
+        },
+        body: JSON.stringify({ transactionId, autoApprove: false }),
+      });
+
+      const resBody = await response.json();
+      if (!response.ok) {
+        throw new Error(resBody.error || 'Failed to release payout.');
+      }
+
+      await loadAdminData({ quiet: true });
+      window.alert('Payout successfully released through Stripe!');
+    } catch (err) {
+      setError(err.message || 'Failed to release payment.');
+    } finally {
+      setSubmittingAction(false);
+    }
   }
 
   useEffect(() => {
@@ -144,17 +224,17 @@ export function AdminDashboard({ dark }) {
               Admin Control Hub
             </p>
             <h1 className={`max-w-4xl text-4xl font-black leading-tight md:text-6xl ${dark ? 'text-white' : 'text-gray-950'}`}>
-              Platform operations without risky buttons.
+              Platform operations dashboard.
             </h1>
             <p className={`mt-4 max-w-2xl text-sm leading-7 md:text-base ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
-              Read-only operations visibility for creator reviews, project movement, payment records, disputes, and communication flags before owner action controls are added.
+              Manage pending creator listing reviews and manually release project payouts.
             </p>
           </div>
           <div className={`rounded-2xl border p-5 ${dark ? 'border-gold-500/18 bg-gold-500/10' : 'border-gold-200 bg-gold-50'}`}>
             <div className="flex items-center gap-3">
               <ShieldCheck className="text-gold-400" size={22} />
               <div>
-                <p className={`text-sm font-black ${dark ? 'text-white' : 'text-gray-950'}`}>Read-only operations visibility</p>
+                <p className={`text-sm font-black ${dark ? 'text-white' : 'text-gray-950'}`}>Admin operations active</p>
                 <p className={`mt-1 text-xs leading-5 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
                   Signed in as {user?.email || 'admin user'}.
                 </p>
@@ -164,7 +244,7 @@ export function AdminDashboard({ dark }) {
               type="button"
               onClick={() => loadAdminData({ quiet: true })}
               className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gold-500 px-4 py-3 text-sm font-black text-charcoal-950 transition-colors hover:bg-gold-600 disabled:opacity-60"
-              disabled={refreshing}
+              disabled={refreshing || submittingAction}
             >
               <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
               Refresh visibility
@@ -202,7 +282,7 @@ export function AdminDashboard({ dark }) {
             <div className={`rounded-2xl border p-8 text-center ${dark ? 'border-white/[0.07] bg-white/[0.025]' : 'border-gray-200 bg-gray-50'}`}>
               <Eye className="mx-auto mb-3 text-gold-400" size={24} />
               <p className={`font-bold ${dark ? 'text-white' : 'text-gray-950'}`}>No pending creator reviews found.</p>
-              <p className={`mt-2 text-sm ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>The next pass can add owner approval controls after this visibility layer is tested.</p>
+              <p className={`mt-2 text-sm ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>All submitted creator profiles have been approved or rejected.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -223,9 +303,24 @@ export function AdminDashboard({ dark }) {
                           {item.creator_name || 'Creator'} · {item.city || 'City pending'}, {item.state || 'State pending'} · {item.years_experience || 0}+ yrs
                         </p>
                       </div>
-                      <span className="w-fit rounded-full border border-gold-500/20 bg-gold-500/10 px-3 py-1 text-[11px] font-black uppercase tracking-[1.8px] text-gold-300">
-                        {item.review_status || 'pending_review'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleApproveCreator(item.listing_id)}
+                          disabled={submittingAction}
+                          className="rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 text-charcoal-950 px-3.5 py-2 text-xs font-black transition-all"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRejectCreator(item.listing_id)}
+                          disabled={submittingAction}
+                          className="rounded-xl border border-red-500/25 bg-red-500/10 hover:bg-red-500/20 disabled:opacity-40 text-red-400 px-3.5 py-2 text-xs font-black transition-all"
+                        >
+                          Reject
+                        </button>
+                      </div>
                     </div>
                     <div className="mt-4 grid gap-2 sm:grid-cols-3">
                       <div className={`rounded-xl px-3 py-2 text-xs ${dark ? 'bg-charcoal-900/70 text-charcoal-300' : 'bg-white text-gray-600'}`}>Portfolio: {item.portfolio_count || 0}</div>
@@ -242,21 +337,55 @@ export function AdminDashboard({ dark }) {
           )}
         </Panel>
 
-        <Panel dark={dark} className="p-5 md:p-6">
-          <p className="mb-2 text-gold-400" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
-            What this pass does
-          </p>
-          <h2 className={`text-2xl font-black ${dark ? 'text-white' : 'text-gray-950'}`}>Owner visibility first.</h2>
-          <div className={`mt-5 space-y-4 text-sm leading-6 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
-            <p>This view confirms whether the platform can safely show operational records to the owner without relying on editable profile metadata.</p>
-            <p>No approval, deletion, refund, payout, or profile mutation controls are exposed here yet.</p>
-            <p>The next admin pass should add audited actions one by one, starting with creator review decisions.</p>
+        <Panel dark={dark} className="p-5 md:p-6 flex flex-col justify-between">
+          <div>
+            <p className="mb-2 text-gold-400" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+              Pending payouts
+            </p>
+            <h2 className={`text-2xl font-black mb-4 ${dark ? 'text-white' : 'text-gray-950'}`}>Manual releases</h2>
+            
+            {pendingTxns.length === 0 ? (
+              <div className={`rounded-2xl border p-8 text-center ${dark ? 'border-white/[0.07] bg-white/[0.025]' : 'border-gray-200 bg-gray-50'}`}>
+                <CreditCard className="mx-auto mb-3 text-gold-400 opacity-60" size={24} />
+                <p className={`text-xs ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>No transactions pending payout release.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {pendingTxns.map(txn => {
+                  const amount = (txn.project_amount / 100).toFixed(2);
+                  const fee = (txn.creator_fee_amount / 100).toFixed(2);
+                  const net = ((txn.project_amount - txn.creator_fee_amount) / 100).toFixed(2);
+                  
+                  return (
+                    <div key={txn.id} className={`rounded-xl border p-4 text-xs ${dark ? 'border-white/[0.07] bg-white/[0.015]' : 'border-gray-200 bg-gray-50'}`}>
+                      <div className="flex justify-between font-bold mb-1">
+                        <span className={dark ? 'text-white' : 'text-gray-900'}>Tx: {txn.id.slice(0, 8)}</span>
+                        <span className="text-gold-400">${amount}</span>
+                      </div>
+                      <div className={`space-y-1 mb-3 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
+                        <p>Creator ID: {txn.creator_id?.slice(0, 8)}</p>
+                        <p>Fee: ${fee} | Net to Creator: <span className="font-semibold text-gold-400">${net}</span></p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleReleasePayment(txn.id)}
+                        disabled={submittingAction}
+                        className="w-full rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 text-charcoal-950 py-2.5 font-bold transition-all text-center"
+                      >
+                        Release Payout
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
+
           <div className={`mt-6 rounded-2xl border p-4 ${dark ? 'border-white/[0.07] bg-white/[0.025]' : 'border-gray-200 bg-gray-50'}`}>
             <Database className="mb-3 text-gold-400" size={20} />
             <p className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-950'}`}>Admin source of truth</p>
             <p className={`mt-2 text-xs leading-5 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
-              Admin access is controlled by the platform admin roster in Supabase, not user-editable profile fields.
+              Admin actions check auth tokens directly against the Supabase platform_admins roster for cryptographic enforcement.
             </p>
           </div>
         </Panel>

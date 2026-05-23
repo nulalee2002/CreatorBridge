@@ -27,6 +27,11 @@ Deno.serve(async (req) => {
   if (rateLimited) return rateLimited;
 
   try {
+    const stripeKey = Deno.env.get('STRIPE_SECRET_KEY') ?? '';
+    if (!stripeKey.startsWith('sk_test')) {
+      return jsonResponse({ error: 'Top-ups are only allowed in Stripe Test Mode.' }, 403);
+    }
+
     const expectedSecret = Deno.env.get('TEST_TOPUP_SECRET') || Deno.env.get('PLATFORM_JOB_SECRET') || '';
     const suppliedSecret = req.headers.get('x-job-secret') || '';
     if (!expectedSecret || suppliedSecret !== expectedSecret) {

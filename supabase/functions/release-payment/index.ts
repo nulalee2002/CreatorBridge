@@ -78,8 +78,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch transaction, then fetch creator Stripe account separately. The schema stores
-    // creator_id as text for compatibility with local/demo ids, so do not rely on an FK join.
+    // Fetch transaction, then fetch creator Stripe account separately. The schema now uses
+    // a foreign key uuid constraint for creator_id.
     const { data: txn, error: txnErr } = await supabaseAdmin
       .from('transactions')
       .select('*')
@@ -93,9 +93,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!isTrustedJob && authData.user?.id !== txn.client_id) {
+    let isAuthorized = isTrustedJob;
+    let isAdmin = false;
+
+    if (!isTrustedJob && authData.user) {
+      if (authData.user.id === txn.client_id) {
+        isAuthorized = true;
+      } else {
+        const { data: checkAdmin, error: checkAdminErr } = await supabaseAdmin
+          .rpc('is_platform_admin', { p_user_id: authData.user.id });
+        if (!checkAdminErr && checkAdmin) {
+          isAuthorized = true;
+          isAdmin = true;
+        }
+      }
+    }
+
+    if (!isAuthorized) {
       return new Response(
-        JSON.stringify({ error: 'Only the paying client can release this payment' }),
+        JSON.stringify({ error: 'Only the paying client or a platform admin can release this payment' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -195,16 +211,24 @@ Deno.serve(async (req) => {
       .eq('id', transactionId)
       .is('final_transfer_id', null);
 
+    let eventType = 'client_approved_and_released';
+    if (isTrustedJob) {
+      eventType = 'auto_approved_and_released';
+    } else if (isAdmin) {
+      eventType = 'admin_approved_and_released';
+    }
+
     // Log payment event
     await supabaseAdmin.from('payment_events').insert({
       transaction_id: transactionId,
-      event_type:     autoApprove ? 'auto_approved_and_released' : 'client_approved_and_released',
+      event_type:     eventType,
       actor_id:       isTrustedJob ? null : authData.user?.id ?? null,
       metadata: {
         retainerTransferId: retainerTransfer.id,
         finalTransferId:    finalTransfer.id,
         amount:        netToCreator,
         autoApprove,
+        adminRelease:  isAdmin,
       },
     });
 
