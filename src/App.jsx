@@ -1,5 +1,5 @@
 import { lazy, Suspense, useReducer, useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { formatCurrency } from './utils/pricing.js';
 import { Moon, Sun, Zap, RotateCcw, Search, UserPlus, LogIn, LogOut, User, MessageSquare, Briefcase, LayoutDashboard, Users } from 'lucide-react';
 import { v4 as uuid } from 'uuid';
@@ -999,15 +999,20 @@ export default function App() {
               CreatorBridge - connecting content creators with brands and clients seeking media production and digital content services
             </p>
             <div className={`flex items-center gap-4 text-xs ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
-              <button type="button" onClick={() => setShowTerms(true)}
+              <Link to="/terms"
                 className={`hover:text-gold-400 transition-colors ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
                 Terms of Service
-              </button>
+              </Link>
               <span className={dark ? 'text-charcoal-500' : 'text-gray-300'}>|</span>
-              <button type="button" onClick={() => setShowPrivacy(true)}
+              <Link to="/creator-agreement"
                 className={`hover:text-gold-400 transition-colors ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
-                Privacy
-              </button>
+                Creator Agreement
+              </Link>
+              <span className={dark ? 'text-charcoal-500' : 'text-gray-300'}>|</span>
+              <Link to="/dispute-policy"
+                className={`hover:text-gold-400 transition-colors ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
+                Dispute Policy
+              </Link>
               <span className={dark ? 'text-charcoal-500' : 'text-gray-300'}>|</span>
               <a href="mailto:drl33@creatorbridge.studio" className={`hover:text-gold-400 transition-colors ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
                 {/* TODO: Update to support@creatorbridge.studio once domain email is active */}
