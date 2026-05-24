@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Star, Globe, Mail, Phone, Instagram, Heart, Share2, Check, ExternalLink, MessageSquare, FileText, BadgeCheck, X, Search } from 'lucide-react';
+import { SEO } from '../components/SEO.jsx';
 import { VerificationBadge } from '../components/VerificationFlow.jsx';
 import { LoyaltyBadge } from '../components/LoyaltyBadge.jsx';
 import { TierBadge } from '../components/TierBadge.jsx';
@@ -394,8 +395,34 @@ export function CreatorProfilePage({ dark }) {
   const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
   const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.08]' : 'bg-white border-gray-200 shadow-sm'}`;
 
+  // ── SEO + JSON-LD for this creator profile ──────────────────────────────
+  const creatorPageUrl = `https://www.creatorbridge.studio/creator/${id}`;
+  const creatorTitle   = creator
+    ? `${creator.display_name} — ${creator.tier || 'Creator'} on CreatorBridge`
+    : 'Creator Profile | CreatorBridge';
+  const creatorDesc    = creator
+    ? `${creator.display_name}${creator.location ? ` (${creator.location})` : ''} is a verified media creator on CreatorBridge. ${creator.bio ? creator.bio.slice(0, 140) : ''}`
+    : 'View this verified creator profile on CreatorBridge.';
+  const creatorJsonLd  = creator ? {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: creator.display_name,
+    url: creatorPageUrl,
+    description: creator.bio || '',
+    address: creator.location ? { '@type': 'PostalAddress', addressLocality: creator.location } : undefined,
+    worksFor: { '@type': 'Organization', name: 'CreatorBridge', url: 'https://www.creatorbridge.studio' },
+  } : null;
+
   return (
     <div className={`min-h-screen ${dark ? 'bg-transparent' : 'bg-gray-50'}`}>
+      {creator && (
+        <SEO
+          title={creatorTitle}
+          description={creatorDesc}
+          url={creatorPageUrl}
+          jsonLd={creatorJsonLd}
+        />
+      )}
       {/* Back button */}
       <div className="mx-auto w-full max-w-[1520px] px-5 sm:px-8 lg:px-12 pt-5">
         <button type="button" onClick={() => navigate(-1)}

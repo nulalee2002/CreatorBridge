@@ -1,6 +1,28 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ArrowRight, Star, Video, Camera, Mic, Radio, Award, Sliders, Play, Compass, CheckCircle2, Zap } from 'lucide-react';
+import { SEO } from '../components/SEO.jsx';
+import { EmailCapture } from '../components/EmailCapture.jsx';
+
+const ORG_JSON_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'CreatorBridge',
+  url: 'https://www.creatorbridge.studio',
+  logo: 'https://www.creatorbridge.studio/icons/icon-512.png',
+  description: 'On-demand media production hub connecting brands with verified freelance creators.',
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Phoenix',
+    addressRegion: 'AZ',
+    addressCountry: 'US',
+  },
+  contactPoint: {
+    '@type': 'ContactPoint',
+    email: 'drl33@creatorbridge.studio',
+    contactType: 'customer support',
+  },
+};
 
 export function LandingPage({ dark }) {
   const navigate = useNavigate();
@@ -204,6 +226,13 @@ export function LandingPage({ dark }) {
 
   return (
     <>
+      <SEO
+        title="Hire Verified Media Creators"
+        description="CreatorBridge is an on-demand media production hub for brands that need video, podcast, event coverage, brand content, or photography — without building an internal department."
+        url="https://www.creatorbridge.studio"
+        jsonLd={ORG_JSON_LD}
+      />
+
       {/* Scroll Progress Indicator */}
       <div className="scroll-progress" ref={progRef} />
 
@@ -291,6 +320,11 @@ export function LandingPage({ dark }) {
                     Browse All Creators
                   </button>
                   <button onClick={() => navigate('/projects')} className="btn-ghost">Post a brief</button>
+                </div>
+
+                {/* Waitlist email capture */}
+                <div className="reveal-up pt-1">
+                  <EmailCapture source="homepage_hero" />
                 </div>
               </div>
 
@@ -678,6 +712,9 @@ export function LandingPage({ dark }) {
                 <p className="text-xs text-[#a0a0a8] max-w-sm leading-relaxed">
                   The verified marketplace connecting brands with professional media specialists. Video, photo, podcast, drone, events, and post-production — without building an internal department.
                 </p>
+                <div className="mt-5">
+                  <EmailCapture source="homepage_footer" compact />
+                </div>
               </div>
               <div>
                 <h4 className="text-[10px] font-bold tracking-wider text-[#6a6a72] mb-3 uppercase">Platform</h4>
