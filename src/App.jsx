@@ -5,6 +5,7 @@ import { Moon, Sun, Zap, RotateCcw, Search, UserPlus, LogIn, LogOut, User, Messa
 import { v4 as uuid } from 'uuid';
 import { useAuth } from './contexts/AuthContext.jsx';
 import { AuthModal } from './components/auth/AuthModal.jsx';
+import { SupportTicketForm } from './components/SupportTicketForm.jsx';
 import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 import { TermsModal } from './components/TermsModal.jsx';
 import { PrivacyModal } from './components/PrivacyModal.jsx';
@@ -39,6 +40,7 @@ const MatchResultsPage = lazy(() => import('./pages/MatchResultsPage.jsx').then(
 const NetworkingPage = lazy(() => import('./pages/NetworkingPage.jsx').then(m => ({ default: m.NetworkingPage })));
 const ClientProfilePage = lazy(() => import('./pages/ClientProfilePage.jsx').then(m => ({ default: m.ClientProfilePage })));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx').then(m => ({ default: m.AdminDashboard })));
+const AdminSupport   = lazy(() => import('./pages/AdminSupport.jsx').then(m => ({ default: m.AdminSupport })));
 const TermsPage = lazy(() => import('./pages/TermsPage.jsx').then(m => ({ default: m.TermsPage })));
 const TermsOfService = lazy(() => import('./pages/TermsOfService.jsx').then(m => ({ default: m.TermsOfService })));
 const CreatorAgreement = lazy(() => import('./pages/CreatorAgreement.jsx').then(m => ({ default: m.CreatorAgreement })));
@@ -316,8 +318,9 @@ export default function App() {
   const [authTab, setAuthTab]               = useState('login');
   const [authRole, setAuthRole]             = useState('client');
   const [quickMode, setQuickMode]           = useState(false);
-  const [showTerms, setShowTerms]           = useState(false);
-  const [showPrivacy, setShowPrivacy]       = useState(false);
+  const [showTerms, setShowTerms]               = useState(false);
+  const [showPrivacy, setShowPrivacy]           = useState(false);
+  const [showSupportTicket, setShowSupportTicket] = useState(false);
   const [showJoinDropdown, setShowJoinDropdown] = useState(false);
   const joinDropdownRef = useRef(null);
   const [calcLocation, setCalcLocation] = useState(null); // { state, city, regionKey }
@@ -669,6 +672,11 @@ export default function App() {
             <LazyRoute dark={dark}><AdminDashboard dark={dark} /></LazyRoute>
           </AuthRequired>
         } />
+        <Route path="/admin/support" element={
+          <AuthRequired dark={dark} user={user} loading={authLoading} role="client" title="Sign in to view support tickets." copy="CreatorBridge admin visibility requires an authenticated owner account.">
+            <LazyRoute dark={dark}><AdminSupport dark={dark} /></LazyRoute>
+          </AuthRequired>
+        } />
         <Route path="/terms" element={<LazyRoute dark={dark}><TermsOfService dark={dark} /></LazyRoute>} />
         <Route path="/terms-of-service" element={<LazyRoute dark={dark}><TermsOfService dark={dark} /></LazyRoute>} />
         <Route path="/creator-agreement" element={<LazyRoute dark={dark}><CreatorAgreement dark={dark} /></LazyRoute>} />
@@ -1014,10 +1022,13 @@ export default function App() {
                 Dispute Policy
               </Link>
               <span className={dark ? 'text-charcoal-500' : 'text-gray-300'}>|</span>
-              <a href="mailto:drl33@creatorbridge.studio" className={`hover:text-gold-400 transition-colors ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
-                {/* TODO: Update to support@creatorbridge.studio once domain email is active */}
+              <button
+                type="button"
+                onClick={() => user ? setShowSupportTicket(true) : setShowAuth(true)}
+                className={`hover:text-gold-400 transition-colors ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}
+              >
                 Support
-              </a>
+              </button>
             </div>
           </div>
         </footer>
@@ -1033,6 +1044,11 @@ export default function App() {
           onOpenTerms={() => { setShowTerms(true); }}
           onOpenCreatorRegistration={() => { setShowAuth(false); navigate('/register'); }}
         />
+      )}
+
+      {/* Support ticket modal */}
+      {showSupportTicket && (
+        <SupportTicketForm dark={dark} onClose={() => setShowSupportTicket(false)} />
       )}
 
       {/* Terms modal */}
