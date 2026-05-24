@@ -40,7 +40,8 @@ const MatchResultsPage = lazy(() => import('./pages/MatchResultsPage.jsx').then(
 const NetworkingPage = lazy(() => import('./pages/NetworkingPage.jsx').then(m => ({ default: m.NetworkingPage })));
 const ClientProfilePage = lazy(() => import('./pages/ClientProfilePage.jsx').then(m => ({ default: m.ClientProfilePage })));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx').then(m => ({ default: m.AdminDashboard })));
-const AdminSupport   = lazy(() => import('./pages/AdminSupport.jsx').then(m => ({ default: m.AdminSupport })));
+const AdminSupport     = lazy(() => import('./pages/AdminSupport.jsx').then(m => ({ default: m.AdminSupport })));
+const AdminOperations  = lazy(() => import('./pages/AdminOperations.jsx').then(m => ({ default: m.AdminOperations })));
 const TermsPage = lazy(() => import('./pages/TermsPage.jsx').then(m => ({ default: m.TermsPage })));
 const TermsOfService = lazy(() => import('./pages/TermsOfService.jsx').then(m => ({ default: m.TermsOfService })));
 const CreatorAgreement = lazy(() => import('./pages/CreatorAgreement.jsx').then(m => ({ default: m.CreatorAgreement })));
@@ -675,6 +676,11 @@ export default function App() {
         <Route path="/admin/support" element={
           <AuthRequired dark={dark} user={user} loading={authLoading} role="client" title="Sign in to view support tickets." copy="CreatorBridge admin visibility requires an authenticated owner account.">
             <LazyRoute dark={dark}><AdminSupport dark={dark} /></LazyRoute>
+          </AuthRequired>
+        } />
+        <Route path="/admin/operations" element={
+          <AuthRequired dark={dark} user={user} loading={authLoading} role="client" title="Sign in to access admin operations." copy="CreatorBridge admin visibility requires an authenticated owner account.">
+            <LazyRoute dark={dark}><AdminOperations dark={dark} /></LazyRoute>
           </AuthRequired>
         } />
         <Route path="/terms" element={<LazyRoute dark={dark}><TermsOfService dark={dark} /></LazyRoute>} />
