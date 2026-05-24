@@ -25,8 +25,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   process.exit(1);
 }
 
-const clientEmail = 'drl33+client@creatorbridge.studio';
-const clientPass = 'CB-Client-L8pN43sX!26';
+const clientEmail = env.QA_CLIENT_EMAIL || 'drl33+client@creatorbridge.studio';
+const clientPass  = env.QA_CLIENT_PASS;
+if (!clientPass) { console.error('Error: QA_CLIENT_PASS must be set in .env'); process.exit(1); }
 
 async function runTests() {
   console.log('--- STARTING CLIENT FEATURES TEST SUITE ---');

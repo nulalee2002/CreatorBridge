@@ -25,8 +25,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   process.exit(1);
 }
 
-const creatorEmail = 'drl33+creator@creatorbridge.studio';
-const creatorPass = 'CB-Creator-K7mQ92rV!26';
+const creatorEmail = env.QA_CREATOR_EMAIL || 'drl33+creator@creatorbridge.studio';
+const creatorPass  = env.QA_CREATOR_PASS;
+if (!creatorPass) { console.error('Error: QA_CREATOR_PASS must be set in .env'); process.exit(1); }
 
 async function runTests() {
   console.log('--- STARTING CREATOR PROFILE FEATURES TEST SUITE ---');

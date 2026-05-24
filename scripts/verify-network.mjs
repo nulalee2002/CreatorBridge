@@ -25,14 +25,19 @@ if (!supabaseUrl || !supabaseAnonKey) {
   process.exit(1);
 }
 
-const creatorEmail = 'drl33+creator@creatorbridge.studio';
-const creatorPass = 'CB-Creator-K7mQ92rV!26';
+const creatorEmail = env.QA_CREATOR_EMAIL || 'drl33+creator@creatorbridge.studio';
+const creatorPass  = env.QA_CREATOR_PASS;
 
-const clientEmail = 'drl33+client@creatorbridge.studio';
-const clientPass = 'CB-Client-L8pN43sX!26';
+const clientEmail  = env.QA_CLIENT_EMAIL  || 'drl33+client@creatorbridge.studio';
+const clientPass   = env.QA_CLIENT_PASS;
 
-const adminEmail = 'drl33@creatorbridge.studio';
-const adminPass = 'CB-Admin-Secured!2026';
+const adminEmail   = env.QA_ADMIN_EMAIL   || 'drl33@creatorbridge.studio';
+const adminPass    = env.QA_ADMIN_PASS;
+
+if (!creatorPass || !clientPass || !adminPass) {
+  console.error('Error: QA_CREATOR_PASS, QA_CLIENT_PASS, and QA_ADMIN_PASS must be set in .env');
+  process.exit(1);
+}
 
 async function runTests() {
   console.log('--- STARTING NETWORK AND MEMBERSHIP GATE TEST SUITE ---');

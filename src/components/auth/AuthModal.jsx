@@ -28,6 +28,16 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
+  /** Basic email format + common typo domain check */
+  const TYPO_DOMAINS = ['gamil.com','gmai.com','gmial.com','gnail.com','yaho.com','yahooo.com','hotmial.com','hotmai.com','outlok.com','outloook.com','iclod.com'];
+  function isValidEmail(email) {
+    const basic = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+    if (!basic) return { ok: false, msg: 'Please enter a valid email address.' };
+    const domain = email.split('@')[1]?.toLowerCase();
+    if (TYPO_DOMAINS.includes(domain)) return { ok: false, msg: `"${domain}" looks like a typo. Please double-check your email.` };
+    return { ok: true };
+  }
+
   const inputCls = `w-full px-4 py-3 text-base md:text-sm rounded-xl border outline-none transition-all ${
     dark
       ? 'bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20'
@@ -46,6 +56,10 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    // Email format check — runs before any Supabase call on both signup and login
+    const emailCheck = isValidEmail(form.email);
+    if (!emailCheck.ok) { setError(emailCheck.msg); setLoading(false); return; }
 
     if (tab === 'signup') {
       // Honeypot check: real users never fill this field
@@ -214,6 +228,8 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
     e.preventDefault();
     setError('');
     setLoading(true);
+    const emailCheck = isValidEmail(forgotEmail);
+    if (!emailCheck.ok) { setError(emailCheck.msg); setLoading(false); return; }
     const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
       redirectTo: `${window.location.origin}/reset-password`,
     });

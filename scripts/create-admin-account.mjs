@@ -31,8 +31,12 @@ const admin = createClient(supabaseUrl, serviceRoleKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
-const adminEmail = 'drl33@creatorbridge.studio';
-const adminPassword = 'CB-Admin-Secured!2026';
+const adminEmail    = env.QA_ADMIN_EMAIL || 'drl33@creatorbridge.studio';
+const adminPassword = env.QA_ADMIN_PASS;
+if (!adminPassword) {
+  console.error('Error: QA_ADMIN_PASS must be set in .env');
+  process.exit(1);
+}
 
 async function createAdmin() {
   console.log(`Creating Admin Account: ${adminEmail}...`);
