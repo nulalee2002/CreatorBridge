@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle, ChevronDown, ChevronUp, Filter,
-  Plus, RefreshCw, ShieldCheck, Users, X,
+  Loader, Plus, RefreshCw, Search, ShieldCheck, Users, X,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
@@ -512,6 +512,165 @@ function ViolationsTab({ dark }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
+// ── Admin Global Search ────────────────────────────────────────────────────────
+
+function AdminGlobalSearch({ dark }) {
+  const [query,   setQuery]   = useState('');
+  const [results, setResults] = useState(null);  // null = not searched yet
+  const [loading, setLoading] = useState(false);
+  const debounceRef = useRef(null);
+
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
+  const cardBg  = dark ? 'bg-charcoal-900/50 border-white/[0.07]' : 'bg-white border-gray-200';
+  const inputBg = dark
+    ? 'border-white/[0.08] bg-white/[0.02] focus-within:border-gold-500/40 focus-within:bg-white/[0.04]'
+    : 'border-gray-200 bg-white focus-within:border-gold-400/60 shadow-sm';
+
+  async function runSearch(q) {
+    if (!q.trim()) { setResults(null); return; }
+    setLoading(true);
+
+    const term = `%${q.toLowerCase()}%`;
+
+    const [creatorsRes, ticketsRes, violationsRes] = await Promise.all([
+      supabase
+        .from('creator_listings')
+        .select('id, display_name, tier, location, review_status')
+        .or(`display_name.ilike.${term},bio.ilike.${term},location.ilike.${term}`)
+        .limit(8),
+      supabase
+        .from('support_tickets')
+        .select('id, subject, category, status, created_at')
+        .or(`subject.ilike.${term},description.ilike.${term}`)
+        .limit(8),
+      supabase
+        .from('violations')
+        .select('id, violation_type, status, strike_number, created_at, creator_id')
+        .or(`description.ilike.${term},admin_notes.ilike.${term}`)
+        .limit(8),
+    ]);
+
+    setResults({
+      creators:   creatorsRes.data  ?? [],
+      tickets:    ticketsRes.data   ?? [],
+      violations: violationsRes.data ?? [],
+    });
+    setLoading(false);
+  }
+
+  function handleChange(e) {
+    const val = e.target.value;
+    setQuery(val);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => runSearch(val), 300);
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    clearTimeout(debounceRef.current);
+    runSearch(query);
+  }
+
+  const totalHits = results
+    ? results.creators.length + results.tickets.length + results.violations.length
+    : 0;
+
+  return (
+    <div className={`rounded-2xl border mb-6 p-5 ${cardBg}`}>
+      <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
+        Global Search
+      </p>
+
+      <form onSubmit={handleSubmit} className="mb-4">
+        <div className={`flex rounded-xl border transition-all ${inputBg}`}>
+          <div className={`flex items-center px-3 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
+            {loading ? <Loader size={16} className="animate-spin text-gold-400" /> : <Search size={16} />}
+          </div>
+          <input
+            type="search"
+            value={query}
+            onChange={handleChange}
+            placeholder="Search creators, tickets, violations…"
+            aria-label="Admin global search"
+            className={`flex-1 bg-transparent py-2.5 text-sm focus:outline-none ${dark ? 'text-white placeholder-charcoal-500' : 'text-gray-900 placeholder-gray-400'}`}
+          />
+          <button type="submit" className="m-1 rounded-lg bg-gold-500 px-4 py-1.5 text-xs font-bold text-charcoal-950 hover:bg-gold-600 transition-colors">
+            Search
+          </button>
+        </div>
+      </form>
+
+      {results && !loading && (
+        <div className="space-y-4">
+          {totalHits === 0 && (
+            <p className={`text-xs text-center py-4 ${textSub}`}>No results for "{query}"</p>
+          )}
+
+          {/* Creators */}
+          {results.creators.length > 0 && (
+            <div>
+              <p className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${dark ? 'text-gold-500/60' : 'text-gold-600'}`}>
+                Creators ({results.creators.length})
+              </p>
+              <div className="space-y-1">
+                {results.creators.map(c => (
+                  <div key={c.id} className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs ${dark ? 'bg-white/[0.03] border border-white/[0.05]' : 'bg-gray-50 border border-gray-100'}`}>
+                    <span className={`font-medium ${dark ? 'text-charcoal-100' : 'text-gray-800'}`}>{c.display_name}</span>
+                    <div className="flex items-center gap-2">
+                      {c.location && <span className={textSub}>{c.location}</span>}
+                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${dark ? 'bg-charcoal-800 text-charcoal-300' : 'bg-gray-100 text-gray-500'}`}>{c.review_status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Support Tickets */}
+          {results.tickets.length > 0 && (
+            <div>
+              <p className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${dark ? 'text-gold-500/60' : 'text-gold-600'}`}>
+                Support Tickets ({results.tickets.length})
+              </p>
+              <div className="space-y-1">
+                {results.tickets.map(t => (
+                  <div key={t.id} className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs ${dark ? 'bg-white/[0.03] border border-white/[0.05]' : 'bg-gray-50 border border-gray-100'}`}>
+                    <span className={`font-medium truncate max-w-[60%] ${dark ? 'text-charcoal-100' : 'text-gray-800'}`}>{t.subject}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={textSub}>{t.category}</span>
+                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${dark ? 'bg-charcoal-800 text-charcoal-300' : 'bg-gray-100 text-gray-500'}`}>{t.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Violations */}
+          {results.violations.length > 0 && (
+            <div>
+              <p className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${dark ? 'text-gold-500/60' : 'text-gold-600'}`}>
+                Violations ({results.violations.length})
+              </p>
+              <div className="space-y-1">
+                {results.violations.map(v => (
+                  <div key={v.id} className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs ${dark ? 'bg-white/[0.03] border border-white/[0.05]' : 'bg-gray-50 border border-gray-100'}`}>
+                    <span className={`font-medium ${dark ? 'text-charcoal-100' : 'text-gray-800'}`}>{v.violation_type.replace(/_/g, ' ')}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={textSub}>Strike {v.strike_number}</span>
+                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${dark ? 'bg-charcoal-800 text-charcoal-300' : 'bg-gray-100 text-gray-500'}`}>{v.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AdminOperations({ dark }) {
   const { user } = useAuth();
   const [checking,   setChecking]   = useState(true);
@@ -557,6 +716,9 @@ export function AdminOperations({ dark }) {
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-10">
       <h1 className={`mb-6 text-2xl font-black ${dark ? 'text-white' : 'text-gray-950'}`}>Admin Operations</h1>
+
+      {/* Global search across creators, tickets, violations */}
+      <AdminGlobalSearch dark={dark} />
 
       {/* Tab bar */}
       <div className={`mb-6 flex gap-1 rounded-xl border p-1 ${dark ? 'border-white/[0.08] bg-charcoal-900/40' : 'border-gray-200 bg-gray-100'}`}>

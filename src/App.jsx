@@ -42,6 +42,7 @@ const ClientProfilePage = lazy(() => import('./pages/ClientProfilePage.jsx').the
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx').then(m => ({ default: m.AdminDashboard })));
 const AdminSupport     = lazy(() => import('./pages/AdminSupport.jsx').then(m => ({ default: m.AdminSupport })));
 const AdminOperations  = lazy(() => import('./pages/AdminOperations.jsx').then(m => ({ default: m.AdminOperations })));
+const SearchPage       = lazy(() => import('./pages/Search.jsx').then(m => ({ default: m.Search })));
 const TermsPage = lazy(() => import('./pages/TermsPage.jsx').then(m => ({ default: m.TermsPage })));
 const TermsOfService = lazy(() => import('./pages/TermsOfService.jsx').then(m => ({ default: m.TermsOfService })));
 const CreatorAgreement = lazy(() => import('./pages/CreatorAgreement.jsx').then(m => ({ default: m.CreatorAgreement })));
@@ -338,6 +339,7 @@ export default function App() {
     : location.pathname.startsWith('/projects')   ? 'projects'
     : location.pathname.startsWith('/network')    ? 'network'
     : location.pathname.startsWith('/find')       ? 'directory'
+    : location.pathname.startsWith('/search')     ? 'search'
     : '';
 
   // Persist state
@@ -436,6 +438,7 @@ export default function App() {
           <div className={`hidden md:flex rounded-2xl border overflow-hidden p-1 ${dark ? 'bg-white/[0.025] border-gold-500/14' : 'bg-gray-50 border-gray-200'}`}>
             {[
               { path: '/find',       id: 'directory',  icon: Search,   label: 'Find Creators' },
+              { path: '/search',     id: 'search',     icon: Search,   label: 'Search' },
               { path: '/projects',   id: 'projects',   icon: Briefcase, label: 'Projects' },
               { path: '/network',    id: 'network',    icon: Users,     label: 'Network' },
               { path: '/calculator', id: 'calculator', icon: Zap,      label: 'Rate Calculator' },
@@ -610,6 +613,7 @@ export default function App() {
         <div className="flex gap-2 overflow-x-auto px-5 py-2 no-scrollbar">
           {[
             { path: '/find',       id: 'directory',  icon: Search,   label: 'Find' },
+            { path: '/search',     id: 'search',     icon: Search,   label: 'Search' },
             { path: '/projects',   id: 'projects',   icon: Briefcase, label: 'Projects' },
             { path: '/network',    id: 'network',    icon: Users,     label: 'Network' },
             { path: '/calculator', id: 'calculator', icon: Zap,      label: 'Rates' },
@@ -643,6 +647,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<LandingPage dark={dark} />} />
         <Route path="/find" element={<CreatorDirectory dark={dark} mode="search" onSwitchToRegister={() => navigate('/register')} />} />
+        <Route path="/search" element={<LazyRoute dark={dark}><SearchPage dark={dark} /></LazyRoute>} />
         <Route path="/register" element={<CreatorDirectory dark={dark} mode="register" onSwitchToSearch={() => navigate('/find')} />} />
         <Route path="/creator/:id" element={<LazyRoute dark={dark}><CreatorProfilePage dark={dark} /></LazyRoute>} />
         <Route path="/dashboard" element={
