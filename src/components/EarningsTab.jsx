@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import { DollarSign, TrendingUp, Clock, CheckCircle, Minus } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { DollarSign, TrendingUp, Clock, CheckCircle, Minus, Download } from 'lucide-react';
 import { centsToDisplay, PLATFORM_FEES } from '../config/fees.js';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
+import { exportCsv } from '../utils/exportCsv.js';
 
 function loadTransactions(creatorId) {
   try {
@@ -173,10 +174,29 @@ export function EarningsTab({ creator, dark }) {
 
       {/* Transaction history */}
       <div className={`${cardCls} overflow-hidden`}>
-        <div className={`px-5 py-4 border-b ${dark ? 'border-white/[0.07]' : 'border-gray-200'}`}>
+        <div className={`px-5 py-4 border-b flex items-center justify-between gap-3 ${dark ? 'border-white/[0.07]' : 'border-gray-200'}`}>
           <h3 className={`font-display font-bold text-base ${dark ? 'text-white' : 'text-gray-900'}`}>
             Transaction History
           </h3>
+          {txns.length > 0 && (
+            <button
+              onClick={() => {
+                const rows = txns.map(t => ({
+                  Date:              t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-US') : '-',
+                  'Project Ref':     t.projectId ? t.projectId.slice(0, 8).toUpperCase() : '-',
+                  'Gross ($)':       (t.projectAmount    / 100).toFixed(2),
+                  'Platform Fee ($)': (t.creatorFeeAmount / 100).toFixed(2),
+                  'Net ($)':         (t.creatorNet       / 100).toFixed(2),
+                  'Retainer Status': t.retainerStatus,
+                  'Final Status':    t.finalStatus,
+                }));
+                exportCsv(rows, `creatorbridge-earnings-${new Date().toISOString().slice(0, 10)}`);
+              }}
+              className="flex items-center gap-1.5 rounded-xl border border-gold-500/30 px-3 py-1.5 text-[11px] font-bold text-gold-400 hover:bg-gold-500/10 transition-colors"
+            >
+              <Download size={11} /> Export CSV
+            </button>
+          )}
         </div>
         {txns.length === 0 ? (
           <div className={`text-center py-12 ${textSub}`}>

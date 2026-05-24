@@ -232,6 +232,41 @@ Deno.serve(async (req) => {
       },
     });
 
+    // Send final_paid notification email to creator (best-effort, non-blocking).
+    try {
+      const [{ data: creatorAuth }, { data: project }] = await Promise.all([
+        supabaseAdmin.auth.admin.getUserById(txn.creator_id),
+        supabaseAdmin.from('projects').select('title').eq('id', txn.project_id).single(),
+      ]);
+      const creatorEmail = creatorAuth?.user?.email;
+      if (creatorEmail) {
+        const notifyRes = await fetch(
+          `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-notification-email`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+            },
+            body: JSON.stringify({
+              to: creatorEmail,
+              template: 'final_paid',
+              data: {
+                creator_name:  creatorAuth.user.user_metadata?.display_name ?? creatorEmail,
+                project_title: project?.title ?? 'Your Project',
+                payout_amount: (netToCreator / 100).toFixed(2),
+              },
+            }),
+          }
+        );
+        if (!notifyRes.ok) {
+          console.warn('release-payment: notification email failed', await notifyRes.text());
+        }
+      }
+    } catch (emailErr) {
+      console.warn('release-payment: notification email error (non-fatal):', emailErr);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,

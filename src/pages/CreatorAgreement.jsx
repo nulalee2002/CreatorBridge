@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { Download } from 'lucide-react';
 
 const SECTIONS = [
   { id: 'introduction', title: '1. Introduction & Scope' },
@@ -51,6 +52,13 @@ export function CreatorAgreement({ dark }) {
             Creator Agreement
           </h1>
           <p className={`text-sm ${textSub}`}>Effective May 20, 2026. Last updated May 20, 2026.</p>
+          <button
+            onClick={() => window.print()}
+            className="cb-no-print mt-4 inline-flex items-center gap-2 rounded-xl border border-gold-500/30 px-4 py-2 text-xs font-bold text-gold-400 hover:bg-gold-500/10 transition-colors"
+            aria-label="Download Creator Agreement as PDF"
+          >
+            <Download size={13} /> Download as PDF
+          </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-8">

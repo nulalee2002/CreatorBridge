@@ -1036,4 +1036,102 @@ body.mouse-active .mouse-glow {
   border: 2px solid var(--bg);
 }
 
+/* ===== MOBILE — SAFE-AREA & TOUCH ===== */
+/* Honour iPhone notch / home-bar insets */
+body {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+header {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+/* Minimum 44×44 px touch targets on mobile without breaking desktop layout */
+@media (max-width: 767px) {
+  button, a[role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
 
+/* ===== ACCESSIBILITY — SKIP LINK ===== */
+.cb-skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: -1;
+}
+.cb-skip-link:focus {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  width: auto;
+  height: auto;
+  z-index: 9999;
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: #d4a941;
+  color: #0d0d0f;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  outline: 3px solid #fff;
+}
+
+/* ===== ACCESSIBILITY — FOCUS RINGS ===== */
+/* Restore visible focus for keyboard navigation (browsers suppress on click) */
+:focus-visible {
+  outline: 2px solid #d4a941;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* Suppress focus ring when using mouse (only show for keyboard) */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ===== PRINT STYLES — CREATOR AGREEMENT PDF ===== */
+@media print {
+  /* Hide everything except the agreement content */
+  header, nav, footer,
+  .cb-skip-link,
+  aside.cb-toc,
+  .cb-no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff !important;
+    color: #111 !important;
+    font-size: 11pt;
+    line-height: 1.6;
+    padding: 0 !important;
+  }
+  main, .cb-print-content {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  h1, h2, h3 {
+    color: #111 !important;
+    page-break-after: avoid;
+  }
+  section {
+    page-break-inside: avoid;
+  }
+  a {
+    color: #111 !important;
+    text-decoration: underline;
+  }
+  .cb-print-header {
+    display: block !important;
+    text-align: center;
+    margin-bottom: 24pt;
+    font-size: 16pt;
+    font-weight: 700;
+  }
+}

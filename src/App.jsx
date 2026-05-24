@@ -418,6 +418,9 @@ export default function App() {
 
   return (
     <>
+    {/* Skip to main content — visible only on keyboard focus */}
+    <a href="#cb-main-content" className="cb-skip-link">Skip to main content</a>
+
     <div className={`min-h-screen ${bgMain} font-body transition-colors duration-200`} style={{ position: 'relative', zIndex: 1 }}>
       <CircuitBackground subdued={softFocusBackground} />
       {softFocusBackground && <div className="cb-page-depth-veil" />}
@@ -547,30 +550,33 @@ export default function App() {
           {user ? (
             <div className="flex items-center gap-1">
               <button type="button" onClick={() => navigate('/messages')}
+                aria-label="Messages"
                 className={`p-3 md:p-2 rounded-xl transition-colors ${
                   activeTab === 'messages'
                     ? 'bg-gold-500/20 text-gold-400'
                     : dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
-                }`} title="Messages">
+                }`}>
                 <MessageSquare size={14} />
               </button>
               {/* Role-gated nav: creators see creator dashboard, clients see client profile */}
               {authProfile?.role === 'creator' ? (
                 <button type="button" onClick={() => navigate('/dashboard')}
+                  aria-label="Creator Dashboard"
                   className={`p-3 md:p-2 rounded-xl transition-colors ${
                     activeTab === 'dashboard'
                       ? 'bg-gold-500/20 text-gold-400'
                       : dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
-                  }`} title="Creator Dashboard">
+                  }`}>
                   <LayoutDashboard size={14} />
                 </button>
               ) : (
                 <button type="button" onClick={() => navigate('/client')}
+                  aria-label="My Profile"
                   className={`p-3 md:p-2 rounded-xl transition-colors ${
                     activeTab === 'client'
                       ? 'bg-gold-500/20 text-gold-400'
                       : dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
-                  }`} title="My Profile">
+                  }`}>
                   <User size={14} />
                 </button>
               )}
@@ -578,18 +584,18 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => navigate(authProfile?.role === 'creator' ? '/dashboard' : '/client')}
+                aria-label="Go to my profile"
                 className={`w-11 h-11 md:w-7 md:h-7 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold transition-opacity hover:opacity-80 ${dark ? 'bg-gold-500/20 text-gold-400' : 'bg-gold-100 text-gold-600'}`}
-                title="Go to my profile"
               >
                 {authProfile?.avatar_url ? (
-                  <img src={authProfile.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                  <img src={authProfile.avatar_url} alt={`${authProfile?.full_name ?? 'Your'} avatar`} className="w-full h-full object-cover" />
                 ) : (
                   (authProfile?.full_name || user.email || 'U')[0].toUpperCase()
                 )}
               </button>
               <button type="button" onClick={signOut}
-                className={`p-3 md:p-2 rounded-xl transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}
-                title="Sign out">
+                aria-label="Sign out"
+                className={`p-3 md:p-2 rounded-xl transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
                 <LogOut size={14} />
               </button>
             </div>
@@ -604,6 +610,7 @@ export default function App() {
 
           {/* Dark mode */}
           <button type="button" onClick={() => setDark(d => !d)}
+            aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
             className={`p-3 md:p-2.5 rounded-xl transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}
           >
             {dark ? <Sun size={16} /> : <Moon size={16} />}
@@ -646,6 +653,7 @@ export default function App() {
       </nav>
 
       {/* ── Routes ── */}
+      <main id="cb-main-content" tabIndex={-1} style={{ outline: 'none' }}>
       <Routes>
         <Route path="/" element={<LandingPage dark={dark} />} />
         <Route path="/find" element={<CreatorDirectory dark={dark} mode="search" onSwitchToRegister={() => navigate('/register')} />} />
@@ -709,6 +717,7 @@ export default function App() {
         <Route path="/reset-password" element={<LazyRoute dark={dark}><ResetPasswordPage dark={dark} /></LazyRoute>} />
         <Route path="/calculator" element={null} />
       </Routes>
+      </main>
 
       {/* ── Calculator (rendered outside Routes to preserve state) ── */}
       {activeTab === 'calculator' && (
