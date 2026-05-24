@@ -43,6 +43,7 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx').then(m =>
 const AdminSupport     = lazy(() => import('./pages/AdminSupport.jsx').then(m => ({ default: m.AdminSupport })));
 const AdminOperations  = lazy(() => import('./pages/AdminOperations.jsx').then(m => ({ default: m.AdminOperations })));
 const AdminFinance     = lazy(() => import('./pages/AdminFinance.jsx').then(m => ({ default: m.AdminFinance })));
+const AdminAnalytics   = lazy(() => import('./pages/AdminAnalytics.jsx').then(m => ({ default: m.AdminAnalytics })));
 const SearchPage       = lazy(() => import('./pages/Search.jsx').then(m => ({ default: m.Search })));
 const TermsPage = lazy(() => import('./pages/TermsPage.jsx').then(m => ({ default: m.TermsPage })));
 const TermsOfService = lazy(() => import('./pages/TermsOfService.jsx').then(m => ({ default: m.TermsOfService })));
@@ -692,6 +693,11 @@ export default function App() {
         <Route path="/admin/finance" element={
           <AuthRequired dark={dark} user={user} loading={authLoading} role="client" title="Sign in to access finance." copy="CreatorBridge admin visibility requires an authenticated owner account.">
             <LazyRoute dark={dark}><AdminFinance dark={dark} /></LazyRoute>
+          </AuthRequired>
+        } />
+        <Route path="/admin/analytics" element={
+          <AuthRequired dark={dark} user={user} loading={authLoading} role="client" title="Sign in to view analytics." copy="CreatorBridge admin visibility requires an authenticated owner account.">
+            <LazyRoute dark={dark}><AdminAnalytics dark={dark} /></LazyRoute>
           </AuthRequired>
         } />
         <Route path="/terms" element={<LazyRoute dark={dark}><TermsOfService dark={dark} /></LazyRoute>} />
