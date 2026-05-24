@@ -1361,13 +1361,6 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
 }
 
 // Obsolete modal placeholder
-function ProjectDetailModal({ onClose }) {
-  useEffect(() => { onClose(); }, [onClose]);
-  return null;
-}
-
-// Old modal render block removed
-
 // ── Main Project Board ───────────────────────────────────────────
 export function ProjectBoard({ dark }) {
   const { user } = useAuth();
@@ -1378,14 +1371,12 @@ export function ProjectBoard({ dark }) {
   const [creatorListing, setCreatorListing] = useState(null);
   const [showPost, setShowPost]         = useState(false);
   const [applyTarget, setApplyTarget]   = useState(null);
-  const [viewTarget, setViewTarget]     = useState(null);
   const [activeProjectId, setActiveProjectId] = useState(null);
 
   function handleStatusChange(projectId, newStatus, patch = {}) {
     const cleanPatch = { ...(patch || {}) };
     delete cleanPatch.id;
     setProjects(prev => prev.map(p => p.id === projectId ? { ...p, status: newStatus, ...cleanPatch } : p));
-    setViewTarget(prev => prev?.id === projectId ? { ...prev, status: newStatus, ...cleanPatch } : prev);
   }
   const [search, setSearch]             = useState('');
   const [filterService, setFilterService] = useState('');
@@ -1793,19 +1784,6 @@ export function ProjectBoard({ dark }) {
           onClose={() => setApplyTarget(null)}
           onApply={handleApplied}
           creatorListing={creatorListing}
-        />
-      )}
-      {viewTarget && (
-        <ProjectDetailModal
-          project={viewTarget}
-          dark={dark}
-          onClose={() => setViewTarget(null)}
-          onApply={setApplyTarget}
-          myApplications={myApplications}
-          applications={applications}
-          isClient={viewTarget.clientId === user?.id}
-          canApply={isCreator && viewTarget.clientId !== user?.id}
-          onStatusChange={handleStatusChange}
         />
       )}
     </div>
