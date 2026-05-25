@@ -11,6 +11,7 @@ Updated: 2026-05-25
 - [ ] Run live browser QA for notification center: quote request notification, direct message notification, proposal accepted notification, and unread/read state.
 - [ ] Run `npm run verify:notifications` from a network-enabled terminal after notification deploys.
 - [ ] Run `npm run verify:email-provider` after Resend setup. It must return a Resend message id, not local mock mode.
+- [ ] Confirm Supabase Edge Function secrets include `RESEND_API_KEY`, and optionally `RESEND_FROM_EMAIL` if the sender should differ from `CreatorBridge <drl33@creatorbridge.studio>`.
 - [ ] Confirm Supabase Dashboard → Authentication → Emails uses the Resend/custom SMTP provider for Auth emails, not the default Supabase sender.
 - [ ] Review Supabase/Resend bounce logs and remove or correct bounced recipient addresses before launch.
 - [ ] Confirm Vercel production has `VITE_TURNSTILE_SITE_KEY` and Supabase Edge Functions have `TURNSTILE_SECRET_KEY`.

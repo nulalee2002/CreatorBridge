@@ -236,6 +236,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: true, message: 'Local mock success', logged: true });
     }
 
+    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'CreatorBridge <drl33@creatorbridge.studio>';
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -243,7 +244,7 @@ Deno.serve(async (req) => {
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        from: 'CreatorBridge <drl33@creatorbridge.studio>',
+        from: fromEmail,
         to: [to],
         subject,
         html,
@@ -253,7 +254,11 @@ Deno.serve(async (req) => {
     if (!response.ok) {
       const errBody = await response.text();
       console.error('Resend API response error:', response.status, errBody);
-      return jsonResponse({ error: 'Failed to deliver email through Resend API' }, 502);
+      return jsonResponse({
+        error: 'Failed to deliver email through Resend API',
+        providerStatus: response.status,
+        providerError: errBody.slice(0, 700),
+      }, 502);
     }
 
     const resData = await response.json();
