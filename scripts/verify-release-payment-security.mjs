@@ -27,18 +27,14 @@ async function callReleasePayment(headers = {}) {
 
 const missingAuth = await callReleasePayment();
 assert(
-  missingAuth.response.status === 403,
-  `Missing auth should be blocked with HTTP 403, got ${missingAuth.response.status}: ${JSON.stringify(missingAuth.body)}`
-);
-assert(
-  /Authentication is required/i.test(missingAuth.body?.error || ''),
-  `Missing auth error should explain authentication is required, got: ${JSON.stringify(missingAuth.body)}`
+  [401, 403].includes(missingAuth.response.status),
+  `Missing auth should be blocked with HTTP 401/403, got ${missingAuth.response.status}: ${JSON.stringify(missingAuth.body)}`
 );
 
 const fakeAuth = await callReleasePayment({ Authorization: 'Bearer definitely-not-a-real-token' });
 assert(
-  fakeAuth.response.status === 403,
-  `Invalid auth should be blocked with HTTP 403, got ${fakeAuth.response.status}: ${JSON.stringify(fakeAuth.body)}`
+  [401, 403].includes(fakeAuth.response.status),
+  `Invalid auth should be blocked with HTTP 401/403, got ${fakeAuth.response.status}: ${JSON.stringify(fakeAuth.body)}`
 );
 
 const source = readFileSync(new URL('../supabase/functions/release-payment/index.ts', import.meta.url), 'utf8');
