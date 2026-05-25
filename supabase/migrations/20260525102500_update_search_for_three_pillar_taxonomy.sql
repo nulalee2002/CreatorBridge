@@ -1,6 +1,8 @@
 -- Updates global creator search to return and search the 3-pillar taxonomy fields.
 -- This is intentionally a new migration because 20260524130000 has already run in production.
 
+DROP FUNCTION IF EXISTS public.search_creators(text);
+
 CREATE OR REPLACE FUNCTION public.search_creators(query text)
 RETURNS TABLE (
   id             uuid,
