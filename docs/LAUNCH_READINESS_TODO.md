@@ -14,7 +14,7 @@ Updated: 2026-05-25
 - [ ] Confirm Supabase Edge Function secrets include `RESEND_API_KEY`, and optionally `RESEND_FROM_EMAIL` if the sender should differ from `CreatorBridge <drl33@creatorbridge.studio>`.
 - [ ] Confirm Supabase Dashboard → Authentication → Emails uses the Resend/custom SMTP provider for Auth emails, not the default Supabase sender.
 - [ ] Review Supabase/Resend bounce logs and remove or correct bounced recipient addresses before launch.
-- [ ] Run `supabase db query --linked -f scripts/verify-data-api-grants.sql` and fix any `CHECK_RLS_OFF` or `CHECK_NO_DATA_API_GRANT` rows before UI redesign work.
+- [x] Run `supabase db query --linked -f scripts/verify-data-api-grants.sql` and fix any `CHECK_RLS_OFF` or `CHECK_NO_DATA_API_GRANT` rows before UI redesign work.
 - [ ] Confirm Vercel production has `VITE_TURNSTILE_SITE_KEY` and Supabase Edge Functions have `TURNSTILE_SECRET_KEY`.
 - [ ] Confirm `release-payment` is protected in production by a valid user token or trusted job secret. Do not assume Supabase `verify_jwt` config from function list alone.
 - [ ] Verify `send-notification-email` rejects unauthenticated calls after redeploy.
@@ -44,3 +44,4 @@ Updated: 2026-05-25
 - `send-notification-email` now requires a valid logged-in user token or trusted service-role call before sending.
 - Notification emails now skip missing, invalid, and reserved example/test recipient domains instead of sending to fake fallback addresses.
 - Resend provider verification passed after rotating the Supabase `RESEND_API_KEY` secret. Resend showed the QA support email as delivered.
+- Supabase Data API grant/RLS audit passed with `issue_count = 0`.
