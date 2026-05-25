@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search as SearchIcon, MapPin, ExternalLink, Loader } from 'lucide-react';
 import { supabase } from '../lib/supabase.js';
 import { SEO } from '../components/SEO.jsx';
+import { getPillar, getSubNiche } from '../data/taxonomy.js';
 
 const TIER_COLOURS = {
   Launch:    'bg-charcoal-800/60 text-charcoal-300  border-white/[0.08]',
@@ -24,9 +25,15 @@ function CreatorCard({ creator, dark, onView }) {
     ? 'bg-charcoal-900/70 border-white/[0.07] hover:border-gold-500/25'
     : 'bg-white border-gray-200 hover:border-gold-400/50';
 
-  const specialties = Array.isArray(creator.specialties)
-    ? creator.specialties.slice(0, 3)
-    : [];
+  const displayName = creator.name || creator.display_name || 'CreatorBridge Creator';
+  const avatarUrl = creator.avatar || creator.avatar_url;
+  const location = creator.location || [creator.city, creator.state].filter(Boolean).join(', ');
+  const pillar = getPillar(creator.primary_pillar);
+  const specialties = Array.isArray(creator.sub_niches)
+    ? creator.sub_niches.map(id => getSubNiche(id)?.label || id).slice(0, 3)
+    : Array.isArray(creator.specialties)
+      ? creator.specialties.slice(0, 3)
+      : [];
 
   return (
     <article
@@ -35,31 +42,37 @@ function CreatorCard({ creator, dark, onView }) {
     >
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-3">
-          {creator.avatar_url ? (
+          {avatarUrl ? (
             <img
-              src={creator.avatar_url}
-              alt={creator.display_name}
+              src={avatarUrl}
+              alt={displayName}
               className="w-10 h-10 rounded-full object-cover shrink-0 border border-white/[0.08]"
             />
           ) : (
             <div className={`w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-sm font-bold ${dark ? 'bg-charcoal-800 text-gold-400' : 'bg-gray-100 text-gray-600'}`}>
-              {creator.display_name?.charAt(0) ?? '?'}
+              {displayName?.charAt(0) ?? '?'}
             </div>
           )}
           <div>
             <p className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>
-              {creator.display_name}
+              {displayName}
             </p>
-            {creator.location && (
+            {location && (
               <p className={`flex items-center gap-1 text-[11px] ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>
                 <MapPin size={10} />
-                {creator.location}
+                {location}
               </p>
             )}
           </div>
         </div>
         <TierChip tier={creator.tier} />
       </div>
+
+      {pillar && (
+        <p className={`mb-2 text-[10px] font-bold uppercase tracking-[0.18em] ${dark ? 'text-gold-400' : 'text-gold-600'}`}>
+          {pillar.name}
+        </p>
+      )}
 
       {specialties.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-4">
@@ -173,7 +186,7 @@ export function Search({ dark }) {
               Find the right creator
             </h1>
             <p className={`mt-1.5 text-sm ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
-              Search by name, specialty, location, or keyword.
+              Search by name, pillar, specialty, location, or keyword.
             </p>
           </div>
 
@@ -191,7 +204,7 @@ export function Search({ dark }) {
                 type="search"
                 value={query}
                 onChange={handleChange}
-                placeholder="Video production, podcast, events, Phoenix…"
+                placeholder="Video Production, Product & Still Life, Phoenix..."
                 aria-label="Search creators"
                 className={inputCls}
               />
