@@ -6,7 +6,7 @@ Updated: 2026-05-25
 
 - [ ] Re-test creator profile pages after the 3-pillar profile fix. Public profiles must show one primary pillar and 1-3 specialties, never multiple old service lanes such as Drone / Aerial as a standalone primary tab.
 - [ ] Re-test Admin Operations global search after the creator listing column fix. Search should work against creator name, business name, city, state, and primary pillar.
-- [ ] Run `npm run verify:release-payment-security` after redeploying `release-payment`. It must prove unauthenticated calls are blocked and the final payout email resolves the creator listing's `user_id`, not the listing id.
+- [x] Run `npm run verify:release-payment-security` after redeploying `release-payment`. It must prove unauthenticated calls are blocked and the final payout email resolves the creator listing's `user_id`, not the listing id.
 - [ ] Run live browser QA for support ticket submit, admin support view/update, admin operations, admin finance CSV export, admin analytics, global creator search, and creator agreement print-to-PDF.
 - [ ] Run live browser QA for notification center: quote request notification, direct message notification, proposal accepted notification, and unread/read state.
 - [ ] Run `npm run verify:notifications` from a network-enabled terminal after notification deploys.
@@ -16,7 +16,7 @@ Updated: 2026-05-25
 - [ ] Review Supabase/Resend bounce logs and remove or correct bounced recipient addresses before launch.
 - [x] Run `supabase db query --linked -f scripts/verify-data-api-grants.sql` and fix any `CHECK_RLS_OFF` or `CHECK_NO_DATA_API_GRANT` rows before UI redesign work.
 - [ ] Confirm Vercel production has `VITE_TURNSTILE_SITE_KEY` and Supabase Edge Functions have `TURNSTILE_SECRET_KEY`.
-- [ ] Confirm `release-payment` is protected in production by a valid user token or trusted job secret. Do not assume Supabase `verify_jwt` config from function list alone.
+- [x] Confirm `release-payment` is protected in production by a valid user token or trusted job secret. Do not assume Supabase `verify_jwt` config from function list alone.
 - [ ] Verify `send-notification-email` rejects unauthenticated calls after redeploy.
 - [ ] Choose an SMS provider before adding text notifications. Do not fake SMS until phone verification, consent, opt-out, and provider billing are configured.
 
@@ -45,3 +45,4 @@ Updated: 2026-05-25
 - Notification emails now skip missing, invalid, and reserved example/test recipient domains instead of sending to fake fallback addresses.
 - Resend provider verification passed after rotating the Supabase `RESEND_API_KEY` secret. Resend showed the QA support email as delivered.
 - Supabase Data API grant/RLS audit passed with `issue_count = 0`.
+- `npm run verify:release-payment-security` passed: unauthenticated/fake-token calls are blocked, client/admin authorization is present, trusted job secret path exists, and creator payout email resolves through `creator_listings.user_id`.
