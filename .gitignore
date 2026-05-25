@@ -9,3 +9,16 @@ supabase/.temp/
 .env.txt
 .vercel
 .env*.local
+
+# Local AI/design handoff artifacts
+.agents/
+creatorbridge/
+creatorbridge-new-assets/
+video/
+landing_design.html
+creatorbridge-ui-overview.html
+niche_implementation_handoff.md
+2026-05-20-codex-build-prompts.md
+2026-05-20-creatorbridge-codex-handoff.md
+skills-lock.json
+vite.config.js.timestamp-*.mjs
