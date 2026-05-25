@@ -7,8 +7,6 @@
 -- exposed to the Data API. CreatorBridge should make grants intentional and
 -- keep RLS enabled on application-owned public tables.
 
-\pset null 'NULL'
-
 with app_tables as (
   select
     n.nspname as schema_name,
