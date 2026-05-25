@@ -3,6 +3,7 @@ import { getNewCreatorSpotlight } from '../utils/matchingAlgorithm.js';
 import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Star, X, Plus, Trash2, ArrowRight, Filter, UserPlus, Heart, ExternalLink, BadgeCheck, AlertCircle } from 'lucide-react';
 import { SERVICES, RATES, MARKETPLACE_CATEGORIES, getMarketplaceServiceIds, serviceMatchesMarketplaceCategory } from '../data/rates.js';
+import { PILLARS, SUB_NICHES_BY_PILLAR, getSubNiche, MAX_SUB_NICHES } from '../data/taxonomy.js';
 import { REGIONS } from '../data/regions.js';
 import { SEED_CREATORS, initSeedData, SHOW_DEMO_CREATORS } from '../data/seedCreators.js';
 import { zipToRegion, zipToCity } from '../data/zipCodes.js';
@@ -26,15 +27,11 @@ function parseYearsExperience(value) {
   return 0;
 }
 
-function serviceHasRates(service) {
-  return Object.values(service?.rates || {}).some(value => Number(value) > 0);
-}
-
 function portfolioItemComplete(item) {
   return !!(
     item?.title?.trim() &&
     item?.description?.trim() &&
-    item?.serviceId &&
+    (item?.subNicheId || item?.serviceId) &&
     item?.link?.trim()
   );
 }
@@ -302,7 +299,8 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
     name: '', businessName: '', bio: '', experience: 'mid',
     avatar: '', tags: '',
     location: { city: '', state: '', country: 'US', zip: '' },
-    services: [{ serviceId: 'photography', subtypes: '', rates: {}, description: '' }],
+    primary_pillar: '',
+    sub_niches: [],
     portfolio: [],
     contact: { email: '', phone: '', website: '', instagram: '' },
     rating: '', reviewCount: '',
@@ -328,43 +326,27 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
   const setLocation = (field, val) => setForm(f => ({ ...f, location: { ...f.location, [field]: val } }));
   const setContact = (field, val) => setForm(f => ({ ...f, contact: { ...f.contact, [field]: val } }));
 
-	  const updateService = (idx, field, val) => {
-	    setForm(f => {
-	      const services = [...f.services];
-	      services[idx] = {
-	        ...services[idx],
-	        [field]: val,
-	        ...(field === 'serviceId' ? { rates: {}, subtypes: '', description: '' } : {}),
-	      };
-	      return { ...f, services };
-	    });
-	  };
-  const setServiceRate = (idx, key, val) => {
-    setForm(f => {
-      const services = [...f.services];
-      services[idx] = { ...services[idx], rates: { ...services[idx].rates, [key]: parseFloat(val) || 0 } };
-      return { ...f, services };
-    });
+  const setPillar = (pillarId) => {
+    // Selecting a new pillar resets sub-niches (they're scoped to a pillar)
+    setForm(f => ({ ...f, primary_pillar: pillarId, sub_niches: [] }));
   };
-  const addService = () => {
+  const toggleSubNiche = (subNicheId) => {
     setForm(f => {
-      if (f.services.length >= 3) {
-        setServiceLimit('CreatorBridge encourages creators to focus on their strongest services. You can list a maximum of 3 service specialties. This helps clients find the right creator faster and helps you stand out in your strongest areas.');
+      const has = f.sub_niches.includes(subNicheId);
+      if (has) {
+        return { ...f, sub_niches: f.sub_niches.filter(id => id !== subNicheId) };
+      }
+      if (f.sub_niches.length >= MAX_SUB_NICHES) {
+        setServiceLimit(`CreatorBridge limits creators to ${MAX_SUB_NICHES} specialties within their primary pillar. Deselect one to add another.`);
         return f;
       }
-      return {
-        ...f,
-        services: [...f.services, { serviceId: 'video', subtypes: '', rates: {}, description: '' }],
-      };
+      return { ...f, sub_niches: [...f.sub_niches, subNicheId] };
     });
-  };
-  const removeService = (idx) => {
-    setForm(f => ({ ...f, services: f.services.filter((_, i) => i !== idx) }));
   };
   const addPortfolio = () => {
     setForm(f => ({
       ...f,
-      portfolio: [...f.portfolio, { title: '', description: '', serviceId: f.services[0]?.serviceId || 'photography' }],
+      portfolio: [...f.portfolio, { title: '', description: '', subNicheId: f.sub_niches[0] || '' }],
     }));
   };
   const updatePortfolio = (idx, field, val) => {
@@ -409,7 +391,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
   const stepMeta = [
     { n: 1, label: 'About You', title: 'Start with the creator identity clients will see.', desc: 'Use clear professional details, location, and positioning that match the standard of work you want to book.' },
     { n: 2, label: 'Standards', title: 'Confirm the marketplace requirements.', desc: 'CreatorBridge is built around experienced, US-based professionals with reviewed profiles.' },
-    { n: 3, label: 'Services', title: 'Build real service packages and rates.', desc: 'Add the production services you want clients to book, with transparent pricing attached.' },
+    { n: 3, label: 'Craft', title: 'Choose your craft and your specialties.', desc: 'Pick the pillar that matches your primary work, then choose up to 3 specialties within it. These show on your profile.' },
     { n: 4, label: 'Portfolio', title: 'Show proof of the work.', desc: 'Add your intro video and at least three portfolio samples from real client work.' },
     { n: 5, label: 'Submit', title: 'Review contact details and final acknowledgments.', desc: 'These confirmations protect clients, creators, and the quality of the marketplace.' },
   ];
@@ -421,20 +403,26 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
   const completePortfolioCount = form.portfolio.filter(portfolioItemComplete).length;
   const portfolioMet = completePortfolioCount >= 3;
   const videoIntroMet = form.videoIntroUrl.trim().length > 0;
-  const serviceOffersMet = form.services.length > 0 && form.services.every(serviceHasRates);
+  const pillarSelected = !!form.primary_pillar
+    && form.sub_niches.length >= 1
+    && form.sub_niches.length <= MAX_SUB_NICHES
+    && form.sub_niches.every(id => {
+      const sn = getSubNiche(id);
+      return sn && sn.pillar === form.primary_pillar;
+    });
   const usLocationMet = form.location.country === 'US' && form.usBasedConfirm;
 
   const nextDisabled =
     (step === 1 && (!form.name || bioLen < 100 || form.location.country !== 'US')) ||
     (step === 2 && (!form.yearsExperience || expBlocked || !usLocationMet || !form.ageConfirm)) ||
-    (step === 3 && !serviceOffersMet) ||
+    (step === 3 && !pillarSelected) ||
     (step === 4 && (!portfolioMet || !videoIntroMet));
 
 	  const canPublish =
 	    !!(form.name && form.contact.email &&
 	    form.yearsExperience && !expBlocked &&
 	    usLocationMet && form.ageConfirm &&
-	    serviceOffersMet &&
+	    pillarSelected &&
 	    videoIntroMet && bioLen >= 100 && portfolioMet &&
 	    form.insuranceAck && form.lockConfirm && form.reviewNoticeConfirm &&
 	    form.tosAccepted && form.creatorAgreementAccepted && form.aiOriginalWorkConfirm);
@@ -442,7 +430,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	  const publishChecks = [
 	    { label: 'Creator identity', done: !!form.name && bioLen >= 100 },
 	    { label: 'Marketplace standards', done: !!form.yearsExperience && !expBlocked && usLocationMet && form.ageConfirm },
-	    { label: 'Service offers', done: serviceOffersMet },
+	    { label: 'Craft + specialties', done: pillarSelected },
 	    { label: 'Proof of work', done: videoIntroMet && portfolioMet },
 	    { label: 'Contact email', done: !!form.contact.email },
 	    { label: 'Final acknowledgments', done: form.insuranceAck && form.lockConfirm && form.reviewNoticeConfirm && form.tosAccepted && form.creatorAgreementAccepted && form.aiOriginalWorkConfirm },
@@ -457,10 +445,8 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
       id: Date.now().toString(),
       location: { ...form.location, city: city || form.location.city, regionKey },
       tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
-      services: form.services.map(s => ({
-        ...s,
-        subtypes: typeof s.subtypes === 'string' ? s.subtypes.split(',').map(t => t.trim()).filter(Boolean) : s.subtypes,
-      })),
+      primary_pillar: form.primary_pillar,
+      sub_niches: form.sub_niches,
       aiToolsDisclosure: form.aiToolsDisclosure,
       rating: parseFloat(form.rating) || null,
       reviewCount: parseInt(form.reviewCount) || null,
@@ -706,119 +692,96 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
         </div>
       )}
 
-	      {/* Step 3: Services & Rates */}
-	      {step === 3 && (
-	        <div className="space-y-4">
-	          <div className={`rounded-2xl border p-4 ${dark ? 'border-gold-500/20 bg-gold-500/10' : 'border-gold-200 bg-gold-50'}`}>
-	            <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '2.2px', textTransform: 'uppercase' }}>
-	              Service positioning
-	            </p>
-	            <p className={`text-sm leading-6 ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>
-	              Choose up to 3 focused specialties. CreatorBridge is not built for every possible gig, so your strongest services, clear package language, and real rates matter more than a long menu.
-	            </p>
-	          </div>
-	          {form.services.map((svc, sIdx) => {
-	            const serviceDef = SERVICES[svc.serviceId];
-	            const serviceRates = RATES[svc.serviceId] || {};
-	            const allRateKeys = serviceDef ? [...(serviceDef.primaryRates || []), ...(serviceDef.packageRates || [])] : [];
-	            const ratesEntered = allRateKeys.filter(key => Number(svc.rates[key]) > 0).length;
-	            return (
-	              <div key={sIdx} className={`rounded-2xl border p-4 sm:p-5 ${dark ? 'border-white/[0.07] bg-charcoal-950/55' : 'border-gray-200 bg-gray-50'}`}>
-	                <div className="flex items-start justify-between gap-3 mb-4">
-	                  <div>
-	                    <p className="text-gold-400 mb-1" style={{ fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase' }}>
-	                      Service {sIdx + 1}
-	                    </p>
-	                    <p className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>
-	                      {serviceDef?.name || 'Choose a service'}
-	                    </p>
-	                    <p className={`mt-1 text-xs leading-5 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
-	                      {serviceDef?.description || 'Select the production category that best matches this offer.'}
-	                    </p>
-	                  </div>
-	                  {form.services.length > 1 && (
-	                    <button type="button" onClick={() => removeService(sIdx)}
-	                      className="rounded-lg p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"><Trash2 size={14} /></button>
-	                  )}
-	                </div>
-	                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
-	                  {Object.values(SERVICES).map(s => (
-	                    <button key={s.id} type="button" onClick={() => updateService(sIdx, 'serviceId', s.id)}
-	                      className={`flex items-start gap-3 p-3 rounded-xl border text-left transition-all ${
-	                        svc.serviceId === s.id
-	                          ? 'border-gold-500 bg-gold-500/10 text-gold-400'
-	                          : dark ? 'border-white/[0.07] text-charcoal-300 hover:border-gold-500/35 hover:bg-white/[0.035]' : 'border-gray-200 text-gray-500 hover:border-gray-300'
-	                      }`}>
-	                      <span className="text-xl leading-none">{s.icon}</span>
-	                      <span>
-	                        <span className="block text-xs font-bold leading-tight">{s.name}</span>
-	                        <span className={`mt-1 block text-[10px] leading-4 ${svc.serviceId === s.id ? 'text-gold-300' : dark ? 'text-charcoal-500' : 'text-gray-400'}`}>{s.description}</span>
-	                      </span>
-	                    </button>
-	                  ))}
-	                </div>
-	                <div className="grid gap-3 md:grid-cols-2 mb-4">
-	                <div>
-	                  <p className={labelCls}>Specialties (comma-separated)</p>
-	                  <input type="text" value={svc.subtypes} onChange={e => updateService(sIdx, 'subtypes', e.target.value)}
-	                    placeholder={serviceDef?.subtypes?.join(', ')}
-	                    className={`w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
-	                </div>
-	                <div>
-	                  <p className={labelCls}>Description</p>
-	                  <textarea value={svc.description} onChange={e => updateService(sIdx, 'description', e.target.value)} rows={2}
-	                    placeholder="Describe what clients receive, your style, and what is included..."
-	                    className={`w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all resize-none ${inputCls}`} />
-	                </div>
-	                </div>
-	                <div className="flex items-center justify-between gap-3 mb-3">
-	                  <p className={labelCls}>Your Rates ($)</p>
-	                  <span className={`text-[10px] font-bold uppercase tracking-[0.14em] ${ratesEntered ? 'text-gold-400' : dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
-	                    {ratesEntered}/{allRateKeys.length} entered
-	                  </span>
-	                </div>
-	                <div className="grid gap-2 md:grid-cols-2">
-	                  {allRateKeys.map(key => {
-	                    const meta = serviceRates[key];
-	                    if (!meta) return null;
-	                    return (
-	                      <div key={key} className={`rounded-xl border p-3 ${dark ? 'border-white/[0.06] bg-charcoal-950/45' : 'border-gray-200 bg-white'}`}>
-	                        <div className="flex items-center gap-3">
-	                        <span className={`text-xs flex-1 leading-4 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>{meta.label}</span>
-	                        <div className="relative flex items-center w-32 shrink-0">
-	                          <span className={`absolute left-2 text-xs pointer-events-none ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>$</span>
-	                          <input type="number" min={0} value={svc.rates[key] || ''}
-	                            onChange={e => setServiceRate(sIdx, key, e.target.value)} placeholder="0"
-	                            className={`w-full pl-5 pr-2 py-1.5 text-sm rounded-lg border outline-none transition-all ${inputCls}`} />
-	                        </div>
-	                        </div>
-	                        {meta.tooltip && (
-	                          <p className={`mt-2 text-[10px] leading-4 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>{meta.tooltip}</p>
-	                        )}
-	                      </div>
-	                    );
-	                  })}
-	                </div>
-	                {ratesEntered === 0 && (
-	                  <p className="text-xs text-gold-400 mt-3">
-	                    Add at least one realistic rate so clients can understand your pricing.
-	                  </p>
-	                )}
-	              </div>
-	            );
-	          })}
+      {/* Step 3: Pillar + Specialties */}
+      {step === 3 && (
+        <div className="space-y-6">
+          <div className={`rounded-2xl border p-4 ${dark ? 'border-gold-500/20 bg-gold-500/10' : 'border-gold-200 bg-gold-50'}`}>
+            <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '2.2px', textTransform: 'uppercase' }}>
+              Your craft, your specialties
+            </p>
+            <p className={`text-sm leading-6 ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>
+              Pick the pillar that matches your primary work, then choose 1 to {MAX_SUB_NICHES} specialties within it. Specialties show on your profile and help clients find you faster. You can refine your rates later in your dashboard.
+            </p>
+          </div>
+
+          {/* Pillar picker */}
+          <div>
+            <p className={`text-[10px] font-bold uppercase tracking-[0.2em] mb-3 ${dark ? 'text-gold-400' : 'text-gold-600'}`}>
+              Step 1 · Pick your primary pillar
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {Object.values(PILLARS).map(pillar => (
+                <button
+                  key={pillar.id}
+                  type="button"
+                  onClick={() => setPillar(pillar.id)}
+                  className={`rounded-2xl border p-4 text-left transition-all ${
+                    form.primary_pillar === pillar.id
+                      ? 'border-gold-500 bg-gold-500/10 text-gold-400 shadow-lg shadow-gold-500/5'
+                      : dark
+                        ? 'border-white/[0.08] bg-charcoal-950/55 text-charcoal-300 hover:border-gold-500/40'
+                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-400'
+                  }`}
+                >
+                  <span className="text-2xl block mb-2">{pillar.icon}</span>
+                  <span className="block text-sm font-bold mb-1">{pillar.name}</span>
+                  <span className={`block text-[10px] leading-4 ${form.primary_pillar === pillar.id ? 'text-gold-300' : dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
+                    {pillar.description}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Sub-niche picker (only shows after a pillar is picked) */}
+          {form.primary_pillar && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <p className={`text-[10px] font-bold uppercase tracking-[0.2em] ${dark ? 'text-gold-400' : 'text-gold-600'}`}>
+                  Step 2 · Pick up to {MAX_SUB_NICHES} specialties
+                </p>
+                <span className={`text-[10px] font-semibold ${form.sub_niches.length === MAX_SUB_NICHES ? 'text-gold-400' : dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
+                  {form.sub_niches.length} / {MAX_SUB_NICHES} selected
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                {(SUB_NICHES_BY_PILLAR[form.primary_pillar] || []).map(sn => {
+                  const isSelected = form.sub_niches.includes(sn.id);
+                  const isMaxed = form.sub_niches.length >= MAX_SUB_NICHES && !isSelected;
+                  return (
+                    <button
+                      key={sn.id}
+                      type="button"
+                      disabled={isMaxed}
+                      onClick={() => toggleSubNiche(sn.id)}
+                      className={`rounded-xl border p-3 text-xs font-medium text-left transition-all ${
+                        isSelected
+                          ? 'border-gold-500 bg-gold-500/10 text-gold-400'
+                          : isMaxed
+                            ? 'opacity-30 cursor-not-allowed border-white/[0.04] bg-transparent'
+                            : dark
+                              ? 'border-white/[0.06] bg-charcoal-950/40 text-charcoal-300 hover:border-gold-500/30'
+                              : 'border-gray-200 bg-gray-50 text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <span className="mr-1">{isSelected ? '✓' : '+'}</span>
+                      {sn.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {form.sub_niches.length === MAX_SUB_NICHES && (
+                <p className="text-[10px] text-gold-400 mt-3 font-medium">
+                  Maximum reached. Deselect a specialty to add a different one.
+                </p>
+              )}
+            </div>
+          )}
+
           {serviceLimit && (
             <div className={`rounded-xl border p-3 text-xs ${dark ? 'border-gold-500/25 bg-gold-500/10 text-gold-300' : 'border-gold-300 bg-gold-50 text-gold-700'}`}>
               {serviceLimit}
             </div>
-          )}
-          {form.services.length < 3 && (
-            <button type="button" onClick={addService}
-              className={`w-full py-2.5 rounded-xl border-2 border-dashed text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                dark ? 'border-charcoal-600 text-charcoal-400 hover:border-gold-500/50 hover:text-gold-400' : 'border-gray-300 text-gray-500 hover:border-gold-500/50 hover:text-gold-500'
-              }`}>
-              <Plus size={14} /> Add Another Service
-            </button>
           )}
         </div>
       )}
@@ -899,11 +862,13 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	                <input type="text" value={item.title} onChange={e => updatePortfolio(i, 'title', e.target.value)}
 	                  placeholder="Project title, e.g. Product launch campaign"
 	                  className={`w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
-	                <select value={item.serviceId} onChange={e => updatePortfolio(i, 'serviceId', e.target.value)}
+	                <select value={item.subNicheId || ''} onChange={e => updatePortfolio(i, 'subNicheId', e.target.value)}
 	                  className={`w-full px-3 py-2 text-xs rounded-xl border outline-none transition-all ${inputCls}`}>
-	                  {form.services.map((s, si) => (
-	                    <option key={si} value={s.serviceId}>{SERVICES[s.serviceId]?.icon} {SERVICES[s.serviceId]?.name}</option>
-	                  ))}
+	                  <option value="">Tag a specialty</option>
+	                  {form.sub_niches.map(snId => {
+	                    const sn = getSubNiche(snId);
+	                    return sn ? <option key={snId} value={snId}>{sn.label}</option> : null;
+	                  })}
 	                </select>
 	              </div>
 	              <textarea value={item.description} onChange={e => updatePortfolio(i, 'description', e.target.value)}
@@ -1245,7 +1210,9 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
   const [listings, setListings] = useState(loadListings);
   const availabilityLoadedFor = useRef('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [serviceFilter, setServiceFilter] = useState('all');
+  const [serviceFilter, setServiceFilter] = useState('all'); // DEPRECATED: kept for legacy refs, do not use in new code
+  const [pillarFilter, setPillarFilter] = useState('all'); // 'all' | pillar id
+  const [subNicheFilter, setSubNicheFilter] = useState('all'); // 'all' | sub_niche id
   const [budget, setBudget] = useState('');
   const [zip, setZip] = useState('');
   const [sortBy, setSortBy] = useState('rating');
@@ -1300,19 +1267,31 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
   // Filter and sort creators
   const filtered = useMemo(() => {
     let list = listings.filter(creator => isApprovedCreator(creator) || creator.user_id === user?.id);
-    const serviceIds = getMarketplaceServiceIds(serviceFilter);
+    const PILLAR_TO_LEGACY = { video_production: 'video', photography: 'photography', post_production: 'postProduction' };
+    const creatorMatchesPillar = (creator, pillarId) => {
+      if (pillarId === 'all') return true;
+      if (creator.primary_pillar === pillarId) return true;
+      // Legacy fallback for any creator whose row predates backfill
+      const legacyServiceId = PILLAR_TO_LEGACY[pillarId];
+      if (!legacyServiceId) return false;
+      return (creator.services || []).some(s => (s.serviceId || s.service_id) === legacyServiceId);
+    };
+    const creatorMatchesSubNiche = (creator, subNicheId) => {
+      if (subNicheId === 'all') return true;
+      return (creator.sub_niches || []).includes(subNicheId);
+    };
     const findMatchingService = (creator) => {
       const services = creator.services || [];
-      return serviceFilter === 'all'
-        ? services[0]
-        : services.find(s => serviceMatchesMarketplaceCategory(s.serviceId, serviceFilter));
+      return services[0];
     };
 
-    // Service filter
-    if (serviceFilter !== 'all') {
-      list = list.filter(c =>
-        c.services?.some(s => serviceIds.includes(s.serviceId))
-      );
+    // Pillar filter
+    if (pillarFilter !== 'all') {
+      list = list.filter(c => creatorMatchesPillar(c, pillarFilter));
+    }
+    // Sub-niche filter (only meaningful when a pillar is selected, but works either way)
+    if (subNicheFilter !== 'all') {
+      list = list.filter(c => creatorMatchesSubNiche(c, subNicheFilter));
     }
 
     // Text search (name, bio, tags, location)
@@ -1343,7 +1322,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
     }
 
     // Budget filter from query input
-    if (budgetNum > 0 && serviceFilter !== 'all') {
+    if (budgetNum > 0 && pillarFilter !== 'all') {
       list = list.filter(c => {
         const svc = findMatchingService(c);
         if (!svc?.rates) return true;
@@ -1403,7 +1382,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
         break;
       }
       case 'match':
-        if (budgetNum > 0 && serviceFilter !== 'all') {
+        if (budgetNum > 0 && pillarFilter !== 'all') {
           list.sort((a, b) => {
             const aRate = Object.values(findMatchingService(a)?.rates || {});
             const bRate = Object.values(findMatchingService(b)?.rates || {});
@@ -1431,7 +1410,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
     });
 
     return list;
-  }, [listings, serviceFilter, searchQuery, budgetNum, zipRegion, sortBy, user?.id, tierFilter, budgetFilter, availFilter]);
+  }, [listings, pillarFilter, subNicheFilter, searchQuery, budgetNum, zipRegion, sortBy, user?.id, tierFilter, budgetFilter, availFilter]);
 
   const displayListings = isGuest ? getRotatingPreviewCreators(filtered) : filtered;
 
@@ -1470,6 +1449,8 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
             rating: enriched.rating,
             review_count: enriched.reviewCount,
             video_intro_url: enriched.video_intro_url || enriched.videoIntroUrl || null,
+            primary_pillar: enriched.primary_pillar,
+            sub_niches: enriched.sub_niches || [],
           })
           .select()
           .single();
@@ -1477,18 +1458,14 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
 
         savedListing = { ...enriched, id: row.id, createdAt: row.created_at };
 
-        const serviceRows = savedListing.services.map(service => ({
-          listing_id: row.id,
-          service_id: service.serviceId,
-          subtypes: service.subtypes || [],
-          description: service.description || null,
-          rates: service.rates || {},
-        }));
-        if (serviceRows.length) await supabase.from('creator_services').insert(serviceRows);
+        // creator_services is deprecated under the 3-pillar model.
+        // primary_pillar + sub_niches live directly on creator_listings.
 
         const portfolioRows = savedListing.portfolio.map((item, index) => ({
           listing_id: row.id,
-          service_id: item.serviceId,
+          // portfolio_items.service_id column is reused to store sub_niche IDs
+          // until a follow-up migration renames it to sub_niche_id.
+          service_id: item.subNicheId || item.serviceId || null,
           title: item.title,
           description: item.description,
           link: item.link,
@@ -1646,40 +1623,72 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
           {/* Left Column: Sticky Filters Sidebar */}
           <aside className="lg:sticky lg:top-24 space-y-6 bg-charcoal-900/50 border border-white/[0.08] p-5 rounded-2xl">
             <div>
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Service specialties</h3>
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Service pillar</h3>
               <div className="space-y-1">
                 <button
                   type="button"
-                  onClick={() => setServiceFilter('all')}
-                  className={`filter-chip ${serviceFilter === 'all' ? 'active' : ''}`}
+                  onClick={() => { setPillarFilter('all'); setSubNicheFilter('all'); }}
+                  className={`filter-chip ${pillarFilter === 'all' ? 'active' : ''}`}
                 >
-                  <span>All Categories</span>
+                  <span>All services</span>
                   <span className="count">
                     {listings.filter(isApprovedCreator).length}
                   </span>
                 </button>
-                {MARKETPLACE_CATEGORIES.filter(c => c.id !== 'all').map(category => {
-                  const count = listings.filter(creator => 
-                    (creator.services || []).some(service => 
-                      serviceMatchesMarketplaceCategory(service.serviceId || service.service_id, category.id)
-                    )
-                  ).length;
+                {Object.values(PILLARS).map(pillar => {
+                  const count = listings.filter(creator => {
+                    if (!isApprovedCreator(creator) && creator.user_id !== user?.id) return false;
+                    if (creator.primary_pillar === pillar.id) return true;
+                    const PILLAR_TO_LEGACY = { video_production: 'video', photography: 'photography', post_production: 'postProduction' };
+                    const legacy = PILLAR_TO_LEGACY[pillar.id];
+                    return legacy && (creator.services || []).some(s => (s.serviceId || s.service_id) === legacy);
+                  }).length;
                   return (
                     <button
-                      key={category.id}
+                      key={pillar.id}
                       type="button"
-                      onClick={() => setServiceFilter(category.id)}
-                      className={`filter-chip ${serviceFilter === category.id ? 'active' : ''}`}
+                      onClick={() => { setPillarFilter(pillar.id); setSubNicheFilter('all'); }}
+                      className={`filter-chip ${pillarFilter === pillar.id ? 'active' : ''}`}
                     >
                       <span className="flex items-center gap-2">
-                        <span>{category.icon}</span>
-                        <span>{category.name}</span>
+                        <span>{pillar.icon}</span>
+                        <span>{pillar.name}</span>
                       </span>
                       <span className="count">{count}</span>
                     </button>
                   );
                 })}
               </div>
+
+              {/* Sub-niche secondary filter: only shows when a pillar is selected */}
+              {pillarFilter !== 'all' && (
+                <div className="mt-4 pl-2 border-l border-gold-500/20">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gold-400 mb-2 ml-1">Specialty</p>
+                  <div className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => setSubNicheFilter('all')}
+                      className={`filter-chip text-[11px] ${subNicheFilter === 'all' ? 'active' : ''}`}
+                    >
+                      <span>All specialties</span>
+                    </button>
+                    {(SUB_NICHES_BY_PILLAR[pillarFilter] || []).map(sn => {
+                      const count = listings.filter(c => (c.sub_niches || []).includes(sn.id)).length;
+                      return (
+                        <button
+                          key={sn.id}
+                          type="button"
+                          onClick={() => setSubNicheFilter(sn.id)}
+                          className={`filter-chip text-[11px] ${subNicheFilter === sn.id ? 'active' : ''}`}
+                        >
+                          <span>{sn.label}</span>
+                          {count > 0 && <span className="count">{count}</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="border-t border-white/[0.06] pt-5">
@@ -1783,7 +1792,8 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
             <div className="flex items-center justify-between text-xs text-charcoal-400">
               <p>
                 Showing {displayListings.length} creator{displayListings.length !== 1 ? 's' : ''} 
-                {serviceFilter !== 'all' && ` in ${SERVICES[serviceFilter]?.name}`}
+                {pillarFilter !== 'all' && ` in ${PILLARS[pillarFilter]?.name || ''}`}
+                {subNicheFilter !== 'all' && ` · ${getSubNiche(subNicheFilter)?.label || ''}`}
                 {zipCity && ` near ${zipCity}`}
               </p>
             </div>
@@ -1815,6 +1825,8 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                   onClick={() => {
                     setSearchQuery('');
                     setServiceFilter('all');
+                    setPillarFilter('all');
+                    setSubNicheFilter('all');
                     setTierFilter('all');
                     setBudgetFilter('all');
                     setAvailFilter('all');

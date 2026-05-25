@@ -269,13 +269,24 @@ export function scoreCreator(creator, brief) {
   const serviceId = normalizedBrief.serviceId;
   const { budgetMin = 0, budgetMax = DEFAULT_BUDGET_MAX } = normalizedBrief;
 
-  // Must offer the requested service (if serviceId provided)
-  if (serviceId) {
+  // Must offer the requested service.
+  // Pillar match (primary_pillar / sub_niches) is the new path.
+  // Legacy services array is the fallback for un-backfilled rows.
+  const LEGACY_SERVICE_TO_PILLAR_ID = { video: 'video_production', photography: 'photography', drone: 'video_production', social: 'video_production', postProduction: 'post_production', liveevents: 'video_production', corporate_events: 'video_production', podcast: 'video_production' };
+  const briefPillar = brief?.primary_pillar || LEGACY_SERVICE_TO_PILLAR_ID[serviceId];
+  const briefSubNiche = brief?.sub_niche || brief?.subNicheId || null;
+  if (briefPillar) {
+    const creatorPillar = creator.primary_pillar
+      || LEGACY_SERVICE_TO_PILLAR_ID[(creator.services || []).map(s => getCreatorServiceId(s))[0]];
+    if (creatorPillar && creatorPillar !== briefPillar) return -Infinity;
+  } else if (serviceId) {
     const hasService = (creator.services || []).some(
       s => getCreatorServiceId(s) === serviceId
     );
     if (!hasService) return -Infinity;
   }
+  // Sub-niche boost (not a hard filter — broadens matches)
+  const subNicheBoost = briefSubNiche && (creator.sub_niches || []).includes(briefSubNiche) ? 8 : 0;
 
   const budget = scoreBudget(creator, serviceId, budgetMin, budgetMax);
   if (budget === -Infinity) return -Infinity;
@@ -297,7 +308,7 @@ export function scoreCreator(creator, brief) {
   // 5F. Featured rotation penalty
   const featuredPenalty = getFeaturedPenalty(creator);
 
-  return Math.round(Math.min(100, base + recencyBoost + featuredPenalty));
+  return Math.round(Math.min(100, base + recencyBoost + featuredPenalty + subNicheBoost));
 }
 
 /**

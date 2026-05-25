@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find Creators — CreatorBridge</title>
+<link rel="stylesheet" href="styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+.filter-chip {
+  display:flex; align-items:center; justify-content:space-between;
+  width:100%; padding:0.5rem 0.7rem;
+  border-radius:8px; cursor:pointer;
+  font-size:12px; color:var(--text-secondary);
+  border:1px solid transparent;
+  transition:all 0.2s;
+  background:transparent;
+  text-align:left;
+}
+.filter-chip:hover { background:rgba(255,255,255,0.03); color:var(--text); }
+.filter-chip.active {
+  background:var(--gold-dim);
+  border-color:rgba(201,168,76,0.2);
+  color:var(--gold);
+}
+.filter-chip .count {
+  font-size:10px; color:var(--text-dim);
+  font-variant-numeric:tabular-nums;
+}
+.filter-chip.active .count { color:var(--gold); opacity:0.8; }
+
+.creator-card {
+  display:flex; flex-direction:column;
+  background:rgba(20,20,24,0.45);
+  backdrop-filter:blur(20px) saturate(1.4);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:16px;
+  overflow:hidden;
+  cursor:pointer;
+  transition:all 0.45s cubic-bezier(0.23,1,0.32,1);
+  text-decoration:none; color:inherit;
+}
+.creator-card:hover {
+  border-color:var(--border-hover);
+  transform:translateY(-4px);
+  box-shadow:0 20px 50px rgba(0,0,0,0.4), 0 0 30px rgba(201,168,76,0.06);
+}
+.creator-card .cover {
+  position:relative; aspect-ratio:16/10; overflow:hidden;
+}
+.creator-card .cover img {
+  width:100%; height:100%; object-fit:cover;
+  transition:transform 0.7s cubic-bezier(0.23,1,0.32,1);
+}
+.creator-card:hover .cover img { transform:scale(1.06); }
+.creator-card .cover::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(to top,rgba(0,0,0,0.55),transparent 55%);
+}
+.creator-card .avatar {
+  position:absolute; bottom:-20px; left:1rem;
+  width:54px; height:54px;
+  border-radius:12px;
+  overflow:hidden;
+  border:2px solid var(--bg);
+  box-shadow:0 4px 12px rgba(0,0,0,0.4);
+}
+.creator-card .avatar img { width:100%; height:100%; object-fit:cover; }
+.creator-card .body { padding:2rem 1.25rem 1.25rem; flex:1; display:flex; flex-direction:column; }
+.creator-card .tier-chips {
+  position:absolute; top:0.75rem; right:0.75rem;
+  display:flex; gap:0.35rem;
+}
+</style>
+</head>
+<body>
+
+<div id="nav-root"></div>
+
+<main style="position:relative;z-index:10; padding-top:5.5rem;">
+
+<!-- ===== HEADER STRIP ===== -->
+<section class="px-6 lg:px-16 pt-10 pb-8">
+  <div class="max-w-[1400px] mx-auto">
+    <div class="flex items-center gap-2 text-[11px] text-[var(--text-dim)] mb-4 reveal-up">
+      <a href="Landing.html" class="hover:text-[var(--text)] transition-colors">Home</a>
+      <span class="opacity-40">/</span>
+      <span class="text-[var(--text)]">Find Creators</span>
+    </div>
+    <div class="grid lg:grid-cols-12 gap-6 items-end reveal-up">
+      <div class="lg:col-span-7">
+        <div class="eyebrow mb-2">Browse the network</div>
+        <h1 class="text-4xl md:text-5xl serif font-medium leading-[1.05]">
+          Verified creators, <span class="gold-text">sorted by what matters</span>.
+        </h1>
+      </div>
+      <div class="lg:col-span-5">
+        <div class="liquid-glass rounded-xl p-1.5 flex items-center gap-2">
+          <svg class="w-4 h-4 text-[var(--text-dim)] ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <input id="search-input" type="text" placeholder="Search by name, studio, or keyword" class="flex-1 bg-transparent border-0 text-sm py-2 focus:outline-none placeholder:text-[var(--text-dim)]" style="color:var(--text);">
+          <button class="btn-gold text-[11px]" style="padding:0.5rem 1rem;">Search</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== RESULTS LAYOUT ===== -->
+<section class="px-6 lg:px-16 pb-24">
+  <div class="max-w-[1400px] mx-auto">
+    <div class="grid lg:grid-cols-12 gap-8">
+
+      <!-- FILTER SIDEBAR -->
+      <aside class="lg:col-span-3 reveal-up">
+        <div class="liquid-glass rounded-2xl p-5 lg:sticky lg:top-24">
+          <div class="flex items-center justify-between mb-4">
+            <div class="eyebrow">Filters</div>
+            <button id="reset-btn" class="text-[10px] text-[var(--text-dim)] hover:text-[var(--gold)] transition-colors tracking-wider uppercase">Reset</button>
+          </div>
+
+          <div class="mb-5">
+            <div class="text-[10px] tracking-[0.2em] uppercase text-[var(--text-dim)] mb-2">Service lane</div>
+            <div class="flex flex-col gap-1" data-filter-group="lane">
+              <button class="filter-chip active" data-value="all"><span>All services</span><span class="count" data-count="all"></span></button>
+              <button class="filter-chip" data-value="Video Production"><span>Video Production</span><span class="count" data-count="Video Production"></span></button>
+              <button class="filter-chip" data-value="Photography"><span>Photography</span><span class="count" data-count="Photography"></span></button>
+              <button class="filter-chip" data-value="Podcast"><span>Podcast</span><span class="count" data-count="Podcast"></span></button>
+              <button class="filter-chip" data-value="Drone &amp; Aerial"><span>Drone &amp; Aerial</span><span class="count" data-count="Drone &amp; Aerial"></span></button>
+              <button class="filter-chip" data-value="Brand Content"><span>Brand Content</span><span class="count" data-count="Brand Content"></span></button>
+              <button class="filter-chip" data-value="Events"><span>Events &amp; Corporate</span><span class="count" data-count="Events"></span></button>
+              <button class="filter-chip" data-value="Editing &amp; Post"><span>Editing &amp; Post</span><span class="count" data-count="Editing &amp; Post"></span></button>
+            </div>
+          </div>
+
+          <div class="divider mb-5"></div>
+
+          <div class="mb-5">
+            <div class="text-[10px] tracking-[0.2em] uppercase text-[var(--text-dim)] mb-2">Tier</div>
+            <div class="flex flex-col gap-1" data-filter-group="tier">
+              <button class="filter-chip active" data-value="all"><span>Any tier</span></button>
+              <button class="filter-chip" data-value="Elite"><span>Elite</span></button>
+              <button class="filter-chip" data-value="Proven"><span>Proven</span></button>
+              <button class="filter-chip" data-value="Verified"><span>Verified</span></button>
+            </div>
+          </div>
+
+          <div class="divider mb-5"></div>
+
+          <div class="mb-5">
+            <div class="text-[10px] tracking-[0.2em] uppercase text-[var(--text-dim)] mb-2">Budget signal</div>
+            <div class="flex flex-col gap-1" data-filter-group="budget">
+              <button class="filter-chip active" data-value="all"><span>Any budget</span></button>
+              <button class="filter-chip" data-value="low"><span>Under $750</span></button>
+              <button class="filter-chip" data-value="mid"><span>$750 – $2,000</span></button>
+              <button class="filter-chip" data-value="high"><span>$2,000+</span></button>
+            </div>
+          </div>
+
+          <div class="divider mb-5"></div>
+
+          <div>
+            <div class="text-[10px] tracking-[0.2em] uppercase text-[var(--text-dim)] mb-2">Availability</div>
+            <div class="flex flex-col gap-1" data-filter-group="avail">
+              <button class="filter-chip active" data-value="all"><span>Any availability</span></button>
+              <button class="filter-chip" data-value="open"><span>Open now</span></button>
+              <button class="filter-chip" data-value="2wk"><span>Within 2 weeks</span></button>
+              <button class="filter-chip" data-value="4wk"><span>Within 4 weeks</span></button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- RESULTS -->
+      <div class="lg:col-span-9">
+        <div class="flex items-center justify-between mb-5 reveal-up">
+          <div class="text-xs text-[var(--text-secondary)]">
+            Showing <span id="result-count" class="text-[var(--text)] font-medium">10</span> of <span class="text-[var(--text)] font-medium">10</span> verified creators
+          </div>
+          <div class="liquid-glass rounded-lg flex items-center gap-2 px-3 py-1.5">
+            <span class="text-[10px] uppercase tracking-wider text-[var(--text-dim)]">Sort</span>
+            <select id="sort-select" class="bg-transparent text-xs focus:outline-none" style="color:var(--text);">
+              <option value="featured">Featured</option>
+              <option value="rating">Highest rated</option>
+              <option value="price-asc">Price · low to high</option>
+              <option value="price-desc">Price · high to low</option>
+              <option value="newest">Newest</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="results-grid" class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <!-- cards rendered by JS -->
+        </div>
+
+        <div id="empty-state" class="liquid-glass rounded-2xl p-12 text-center" style="display:none;">
+          <div class="text-3xl serif mb-2">No matches yet</div>
+          <p class="text-sm text-[var(--text-secondary)] max-w-sm mx-auto mb-4">Loosen the filters or try a different service lane. New creators verify into the network every week.</p>
+          <button id="empty-reset" class="btn-ghost text-xs">Clear all filters</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<div id="footer-root"></div>
+
+<script src="core.js"></script>
+<script>
+window.CB.mountChrome('find');
+
+// ===== DATA =====
+const CREATORS = [
+  { id: 1, studio: "Aria Visual Studio", name: "Aria Vasquez", lane: "Photography", city: "Miami, FL", tier: "Elite", price: 850, budget: "mid", rating: 4.9, reviews: 64, avail: "open", years: 7,
+    blurb: "Editorial commercial photography with a bold, narrative eye.",
+    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80",
+    cover: "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=600&q=80",
+    tags: ["Commercial", "Editorial", "Portrait"], featured: true },
+  { id: 2, studio: "SoundWave Podcast Co.", name: "Jordan Mitchell", lane: "Podcast", city: "New York, NY", tier: "Proven", price: 350, budget: "low", rating: 4.8, reviews: 53, avail: "open", years: 7,
+    blurb: "Full-service podcast studio. 200+ shows launched from scratch.",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80",
+    cover: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=600&q=80",
+    tags: ["Podcast", "Audio Editing", "Studio"], featured: true },
+  { id: 3, studio: "LensCraft Studios", name: "David Park", lane: "Video Production", city: "Los Angeles, CA", tier: "Elite", price: 2500, budget: "high", rating: 5.0, reviews: 31, avail: "2wk", years: 5,
+    blurb: "Cinematic brand films. Red-certified cinematography + full post.",
+    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80",
+    cover: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=600&q=80",
+    tags: ["Brand Film", "Commercial", "Color"], featured: true },
+  { id: 4, studio: "Skyframe Aerial", name: "Mateo Reyes", lane: "Drone & Aerial", city: "Austin, TX", tier: "Verified", price: 650, budget: "low", rating: 4.7, reviews: 22, avail: "open", years: 4,
+    blurb: "Part 107 certified. Aerial cinematography for real estate, events, brand.",
+    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80",
+    cover: "https://images.unsplash.com/photo-1506947411487-a56738267384?w=600&q=80",
+    tags: ["Aerial", "Real Estate", "Mapping"], featured: false },
+  { id: 5, studio: "Bondi Brand House", name: "Maya Chen", lane: "Brand Content", city: "Chicago, IL", tier: "Verified", price: 1200, budget: "mid", rating: 4.8, reviews: 48, avail: "2wk", years: 6,
+    blurb: "Monthly content packages for boutique brands. Stills, reels, stories.",
+    avatar: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=200&q=80",
+    cover: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&q=80",
+    tags: ["Brand", "Reels", "Social"], featured: false },
+  { id: 6, studio: "Northgrade Color", name: "Aaron Wei", lane: "Editing & Post", city: "Toronto, ON", tier: "Elite", price: 400, budget: "low", rating: 4.9, reviews: 41, avail: "4wk", years: 8,
+    blurb: "DaVinci-certified colorist. Editorial commercials and music videos.",
+    avatar: "https://images.unsplash.com/photo-1463453091185-61582044d556?w=200&q=80",
+    cover: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=600&q=80",
+    tags: ["Color", "Motion", "Post"], featured: false },
+  { id: 7, studio: "Greene Street Films", name: "Naomi Greene", lane: "Video Production", city: "Brooklyn, NY", tier: "Elite", price: 3500, budget: "high", rating: 4.9, reviews: 28, avail: "4wk", years: 9,
+    blurb: "Narrative-driven brand films. Past clients: Equinox, Aesop, Tribeca Film Fest.",
+    avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=200&q=80",
+    cover: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=600&q=80",
+    tags: ["Narrative", "Brand Film", "Commercial"], featured: true },
+  { id: 8, studio: "Studio Mojave", name: "Iris Patel", lane: "Photography", city: "Phoenix, AZ", tier: "Proven", price: 750, budget: "mid", rating: 4.6, reviews: 19, avail: "open", years: 5,
+    blurb: "Desert landscape + hospitality photography. Hotels, restaurants, resorts.",
+    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80",
+    cover: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&q=80",
+    tags: ["Hospitality", "Landscape", "Architecture"], featured: false },
+  { id: 9, studio: "Cumulus Events Co", name: "Dre Williams", lane: "Events", city: "Atlanta, GA", tier: "Verified", price: 900, budget: "mid", rating: 4.8, reviews: 36, avail: "2wk", years: 6,
+    blurb: "Conference and corporate event coverage. Same-day social cutdowns.",
+    avatar: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=200&q=80",
+    cover: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80",
+    tags: ["Conference", "Live Event", "Same-day"], featured: false },
+  { id: 10, studio: "Pellizzari Editorial", name: "Sofia Pellizzari", lane: "Photography", city: "Boston, MA", tier: "Elite", price: 1100, budget: "mid", rating: 4.9, reviews: 52, avail: "open", years: 8,
+    blurb: "Editorial fashion + portrait. Featured in Harper's, Vogue Italia.",
+    avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=200&q=80",
+    cover: "https://images.unsplash.com/photo-1496217590455-aa63a8350eea?w=600&q=80",
+    tags: ["Fashion", "Editorial", "Portrait"], featured: false }
+];
+
+const state = { lane: 'all', tier: 'all', budget: 'all', avail: 'all', sort: 'featured', q: '' };
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+function starSvg(filled) {
+  return `<svg width="11" height="11" viewBox="0 0 20 20" fill="${filled ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.2"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>`;
+}
+
+function cardHtml(c) {
+  const stars = [1,2,3,4,5].map(i => starSvg(i <= Math.round(c.rating))).join('');
+  return `
+    <a href="Creator Profile.html" class="creator-card">
+      <div class="cover">
+        <img src="${c.cover}" alt="${c.studio}">
+        <div class="tier-chips">
+          <span class="tag-gold">${c.tier}</span>
+          ${c.avail === 'open' ? '<span class="tag-green">Available</span>' : ''}
+        </div>
+        <div class="avatar"><img src="${c.avatar}" alt="${c.name}"></div>
+      </div>
+      <div class="body">
+        <div class="flex items-start justify-between gap-2 mb-1">
+          <div class="font-semibold text-sm leading-tight">${c.studio}</div>
+          <div class="flex items-center gap-1 text-[var(--gold)] shrink-0">
+            ${stars}
+            <span class="font-semibold text-xs text-[var(--text)] ml-1">${c.rating.toFixed(1)}</span>
+          </div>
+        </div>
+        <div class="text-[11px] text-[var(--text-dim)] mb-3">${c.name} · ${c.city} · ${c.years}+ yrs</div>
+        <p class="text-xs text-[var(--text-secondary)] leading-relaxed mb-4 flex-1">${c.blurb}</p>
+        <div class="flex flex-wrap gap-1.5 mb-4">
+          ${c.tags.map(t => `<span class="tag-plain">${t}</span>`).join('')}
+        </div>
+        <div class="flex items-center justify-between pt-3 border-t border-[var(--border)]">
+          <div>
+            <div class="text-[10px] uppercase tracking-wider text-[var(--text-dim)]">from</div>
+            <div class="text-base serif gold-text leading-none">$${c.price.toLocaleString()}</div>
+          </div>
+          <span class="btn-ghost text-[10px]" style="padding:0.4rem 0.85rem;">View profile</span>
+        </div>
+      </div>
+    </a>`;
+}
+
+function applyFilters() {
+  let filtered = CREATORS.filter(c => {
+    if (state.lane !== 'all' && c.lane !== state.lane) return false;
+    if (state.tier !== 'all' && c.tier !== state.tier) return false;
+    if (state.budget !== 'all' && c.budget !== state.budget) return false;
+    if (state.avail !== 'all') {
+      const order = { open: 0, '2wk': 1, '4wk': 2 };
+      if (order[c.avail] > order[state.avail]) return false;
+    }
+    if (state.q) {
+      const q = state.q.toLowerCase();
+      const hay = (c.studio + ' ' + c.name + ' ' + c.city + ' ' + c.lane + ' ' + c.tags.join(' ') + ' ' + c.blurb).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  if (state.sort === 'rating') filtered.sort((a,b) => b.rating - a.rating);
+  else if (state.sort === 'price-asc') filtered.sort((a,b) => a.price - b.price);
+  else if (state.sort === 'price-desc') filtered.sort((a,b) => b.price - a.price);
+  else if (state.sort === 'newest') filtered.sort((a,b) => a.years - b.years);
+  else filtered.sort((a,b) => (b.featured?1:0) - (a.featured?1:0));
+
+  const grid = $('#results-grid');
+  const empty = $('#empty-state');
+  if (filtered.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+  } else {
+    grid.innerHTML = filtered.map(cardHtml).join('');
+    empty.style.display = 'none';
+  }
+  $('#result-count').textContent = filtered.length;
+}
+
+function updateCounts() {
+  $$('[data-count]').forEach(el => {
+    const v = el.dataset.count;
+    if (v === 'all') { el.textContent = CREATORS.length; return; }
+    const count = CREATORS.filter(c => c.lane === v).length;
+    el.textContent = count;
+  });
+}
+
+// Filter chip handlers
+$$('[data-filter-group]').forEach(group => {
+  const key = group.dataset.filterGroup;
+  group.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      group.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      state[key] = chip.dataset.value;
+      applyFilters();
+    });
+  });
+});
+
+$('#sort-select').addEventListener('change', (e) => { state.sort = e.target.value; applyFilters(); });
+$('#search-input').addEventListener('input', (e) => { state.q = e.target.value; applyFilters(); });
+
+function reset() {
+  state.lane = 'all'; state.tier = 'all'; state.budget = 'all'; state.avail = 'all'; state.q = ''; state.sort = 'featured';
+  $('#search-input').value = '';
+  $('#sort-select').value = 'featured';
+  $$('[data-filter-group]').forEach(g => {
+    g.querySelectorAll('.filter-chip').forEach(c => c.classList.toggle('active', c.dataset.value === 'all'));
+  });
+  applyFilters();
+}
+$('#reset-btn').addEventListener('click', reset);
+$('#empty-reset').addEventListener('click', reset);
+
+// Handle ?lane= from landing page links
+const urlLane = new URLSearchParams(location.search).get('lane');
+if (urlLane) {
+  const map = { video: 'Video Production', photo: 'Photography', podcast: 'Podcast',
+                drone: 'Drone & Aerial', events: 'Events', post: 'Editing & Post' };
+  const target = map[urlLane];
+  if (target) {
+    state.lane = target;
+    $$('[data-filter-group="lane"] .filter-chip').forEach(c => c.classList.toggle('active', c.dataset.value === target));
+  }
+}
+
+updateCounts();
+applyFilters();
+</script>
+</body>
+</html>

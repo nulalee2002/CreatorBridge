@@ -161,12 +161,30 @@ export function CreatorProfilePage({ dark }) {
         .eq('id', id)
         .single();
       if (data) {
+        // Build backward-compat services array from creator_services rows.
+        // For creators registered under the 3-pillar model, creator_services
+        // will be empty - synthesize a single entry from primary_pillar so
+        // legacy components that read services[0].serviceId still resolve.
+        const legacyFromCreatorServices = data.creator_services?.map(s => ({ ...s, serviceId: s.service_id, rates: s.rates || {} })) || [];
+        const PILLAR_TO_LEGACY = { video_production: 'video', photography: 'photography', post_production: 'postProduction' };
+        const synthesizedFromPillar = data.primary_pillar
+          ? [{
+              serviceId: PILLAR_TO_LEGACY[data.primary_pillar] || 'video',
+              service_id: PILLAR_TO_LEGACY[data.primary_pillar] || 'video',
+              rates: {},
+              subtypes: data.sub_niches || [],
+            }]
+          : [];
+        const services = legacyFromCreatorServices.length > 0 ? legacyFromCreatorServices : synthesizedFromPillar;
+
         // Normalize to same shape as localStorage format
         const normalized = {
           ...data,
           location: { city: data.city, state: data.state, country: data.country, zip: data.zip, regionKey: data.region_key },
           contact: { email: data.email, phone: data.phone, website: data.website, instagram: data.instagram },
-          services: data.creator_services?.map(s => ({ ...s, serviceId: s.service_id, rates: s.rates || {} })) || [],
+          primary_pillar: data.primary_pillar,
+          sub_niches: data.sub_niches || [],
+          services,
           portfolio: data.portfolio_items || [],
           tags: data.tags || [],
         };

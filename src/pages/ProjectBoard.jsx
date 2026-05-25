@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { SERVICES, MARKETPLACE_CATEGORIES, getMarketplaceServiceIds, normalizeServiceId } from '../data/rates.js';
+import { PILLARS, LEGACY_SERVICE_TO_PILLAR } from '../data/taxonomy.js';
 import { PROJECT_STATUSES, statusBadgeClass } from '../config/fees.js';
 import { ProjectTimeline } from '../components/ProjectTimeline.jsx';
 import { DisputeModal } from '../components/DisputeModal.jsx';
@@ -1517,8 +1518,10 @@ export function ProjectBoard({ dark }) {
     if (tab !== 'browse') return true;
     if (search && !p.title.toLowerCase().includes(search.toLowerCase()) && !p.description.toLowerCase().includes(search.toLowerCase())) return false;
     if (filterService) {
-      const serviceId = normalizeServiceId(p.serviceId || p.service_id || p.serviceType);
-      if (!getMarketplaceServiceIds(filterService).includes(serviceId)) return false;
+      // filterService now holds a pillar id (video_production / photography / post_production)
+      const projectPillar = p.primary_pillar
+        || LEGACY_SERVICE_TO_PILLAR[normalizeServiceId(p.serviceId || p.service_id || p.serviceType)]?.pillar;
+      if (projectPillar !== filterService) return false;
     }
     if (filterBudget !== 'any') {
       const range = BUDGET_RANGES.find(r => r.id === filterBudget);
@@ -1632,21 +1635,21 @@ export function ProjectBoard({ dark }) {
             <div className="flex flex-wrap gap-2 items-center w-full">
               <span className={`text-[10px] uppercase tracking-wider font-bold ${textSub} mr-2`}>Specialty:</span>
               <button 
-                type="button" 
+                type="button"
                 onClick={() => setFilterService('')}
                 className={`filter-pill ${filterService === '' ? 'active' : ''}`}
               >
-                All Categories
+                All services
               </button>
-              {MARKETPLACE_CATEGORIES.filter(category => category.id !== 'all').map(category => (
+              {Object.values(PILLARS).map(pillar => (
                 <button
-                  key={category.id}
+                  key={pillar.id}
                   type="button"
-                  onClick={() => setFilterService(category.id)}
-                  className={`filter-pill ${filterService === category.id ? 'active' : ''}`}
+                  onClick={() => setFilterService(pillar.id)}
+                  className={`filter-pill ${filterService === pillar.id ? 'active' : ''}`}
                 >
-                  <span>{category.icon}</span>
-                  <span>{category.name}</span>
+                  <span>{pillar.icon}</span>
+                  <span>{pillar.name}</span>
                 </button>
               ))}
             </div>

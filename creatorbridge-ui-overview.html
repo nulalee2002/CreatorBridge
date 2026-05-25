@@ -1,0 +1,934 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CreatorBridge UI Overview Concepts</title>
+  <style>
+    :root {
+      --bg: #08080d;
+      --panel: rgba(18, 18, 29, 0.78);
+      --panel-strong: rgba(23, 23, 36, 0.92);
+      --line: rgba(212, 169, 65, 0.22);
+      --line-soft: rgba(255, 255, 255, 0.08);
+      --gold: #d4a941;
+      --gold-soft: #f2d37a;
+      --ink: #f8f5eb;
+      --muted: #9895c8;
+      --deep: #0d0d18;
+      --shadow: 0 30px 90px rgba(0, 0, 0, 0.44);
+      color-scheme: dark;
+      font-family: "DM Sans", "Space Grotesk", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      position: relative;
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 12%, rgba(212, 169, 65, 0.16), transparent 24%),
+        radial-gradient(circle at 80% 6%, rgba(212, 169, 65, 0.12), transparent 22%),
+        linear-gradient(120deg, rgba(212, 169, 65, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        var(--bg);
+      background-size: auto, auto, 100% 360px, 280px 100%;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .motion-field {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 24% 18%, rgba(212, 169, 65, 0.12), transparent 18%),
+        radial-gradient(circle at 76% 14%, rgba(255, 255, 255, 0.045), transparent 22%),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 128px),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 128px);
+      opacity: 0.7;
+      animation: gridDrift 34s linear infinite;
+    }
+
+    .motion-field::before,
+    .motion-field::after {
+      content: "";
+      position: absolute;
+      inset: -20%;
+      background:
+        radial-gradient(ellipse at 50% 50%, transparent 0 46%, rgba(212, 169, 65, 0.12) 47%, transparent 48%),
+        radial-gradient(ellipse at 50% 50%, transparent 0 58%, rgba(255, 255, 255, 0.055) 59%, transparent 60%);
+      transform: rotate(-7deg) scale(1.1);
+      animation: lensBreath 12s ease-in-out infinite;
+    }
+
+    .motion-field::after {
+      inset: -28%;
+      opacity: 0.46;
+      transform: rotate(11deg) scale(1.3);
+      animation-duration: 18s;
+      animation-delay: -5s;
+    }
+
+    .signal {
+      position: absolute;
+      left: -18vw;
+      right: -18vw;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(212, 169, 65, 0.08), rgba(242, 211, 122, 0.36), rgba(212, 169, 65, 0.08), transparent);
+      filter: blur(0.2px);
+      transform-origin: center;
+      animation: signalSweep 16s ease-in-out infinite;
+    }
+
+    .signal:nth-child(1) { top: 18%; transform: rotate(-4deg); }
+    .signal:nth-child(2) { top: 42%; transform: rotate(3deg); animation-duration: 21s; animation-delay: -8s; }
+    .signal:nth-child(3) { top: 72%; transform: rotate(-6deg); animation-duration: 24s; animation-delay: -13s; }
+
+    .pulse {
+      position: absolute;
+      width: 180px;
+      aspect-ratio: 1;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(242, 211, 122, 0.5), rgba(212, 169, 65, 0.14) 18%, transparent 58%);
+      filter: blur(14px);
+      opacity: 0.35;
+      animation: focusPulse 10s ease-in-out infinite;
+    }
+
+    .pulse-a { top: 20%; left: 38%; }
+    .pulse-b { top: 58%; right: 15%; animation-delay: -4s; }
+    .pulse-c { bottom: 12%; left: 12%; animation-delay: -7s; }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      width: min(1780px, calc(100vw - 48px));
+      margin: 0 auto;
+      padding: 24px 0 80px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 14px 0 18px;
+      background: linear-gradient(to bottom, rgba(8, 8, 13, 0.96), rgba(8, 8, 13, 0.72), transparent);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 260px;
+    }
+
+    .brand img {
+      width: 270px;
+      max-width: 42vw;
+      height: auto;
+      display: block;
+    }
+
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .nav a,
+    .pill {
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 255, 255, 0.035);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .nav a:hover,
+    .pill.gold {
+      color: #11111b;
+      background: var(--gold);
+      border-color: var(--gold);
+    }
+
+    .intro {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+      gap: 24px;
+      align-items: stretch;
+      margin: 28px 0 34px;
+    }
+
+    .intro-card,
+    .brief-card,
+    .concept,
+    .metric,
+    .glass {
+      border: 1px solid var(--line-soft);
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.065), transparent 28%),
+        linear-gradient(145deg, rgba(19, 19, 31, 0.82), rgba(10, 10, 18, 0.68));
+      backdrop-filter: blur(18px) saturate(1.18);
+      -webkit-backdrop-filter: blur(18px) saturate(1.18);
+      box-shadow: var(--shadow);
+      border-radius: 28px;
+      overflow: hidden;
+    }
+
+    .intro-card {
+      padding: clamp(28px, 4vw, 58px);
+      border-color: rgba(212, 169, 65, 0.24);
+    }
+
+    .eyebrow {
+      margin: 0 0 14px;
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      max-width: 940px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(52px, 8vw, 124px);
+      font-weight: 400;
+      line-height: 0.95;
+    }
+
+    h2 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(34px, 5vw, 74px);
+      font-weight: 400;
+      line-height: 0.98;
+    }
+
+    h3 {
+      font-size: 24px;
+      line-height: 1.08;
+    }
+
+    p {
+      color: var(--muted);
+      line-height: 1.65;
+      margin: 0;
+    }
+
+    .intro-card p.body {
+      max-width: 760px;
+      margin-top: 24px;
+      font-size: 17px;
+    }
+
+    .brief-card {
+      min-height: 360px;
+      position: relative;
+      border-color: var(--line);
+    }
+
+    .brief-card img,
+    .visual img,
+    .tile-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .brief-overlay {
+      position: absolute;
+      inset: 0;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      background: linear-gradient(to top, rgba(8, 8, 13, 0.92), rgba(8, 8, 13, 0.22), rgba(8, 8, 13, 0.2));
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin: 20px 0 38px;
+    }
+
+    .metric {
+      padding: 20px;
+      border-radius: 18px;
+      box-shadow: none;
+    }
+
+    .metric strong {
+      display: block;
+      color: var(--gold);
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .concept {
+      position: relative;
+      margin: 42px 0;
+      padding: clamp(20px, 3vw, 38px);
+      border-color: rgba(212, 169, 65, 0.2);
+      box-shadow: 0 40px 120px rgba(0, 0, 0, 0.5);
+    }
+
+    .concept::before {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: inherit;
+      pointer-events: none;
+      background:
+        linear-gradient(120deg, transparent, rgba(242, 211, 122, 0.08), transparent 38%),
+        radial-gradient(circle at 78% 18%, rgba(212, 169, 65, 0.08), transparent 26%);
+      opacity: 0.7;
+    }
+
+    .concept-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 22px;
+      align-items: end;
+      margin-bottom: 24px;
+    }
+
+    .concept-head p {
+      max-width: 720px;
+      margin-top: 14px;
+    }
+
+    .screen {
+      position: relative;
+      isolation: isolate;
+      border: 1px solid var(--line-soft);
+      border-radius: 24px;
+      overflow: hidden;
+      background: rgba(7, 7, 12, 0.88);
+    }
+
+    .screen::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(circle at 64% 26%, rgba(212, 169, 65, 0.12), transparent 24%),
+        radial-gradient(ellipse at 40% 46%, transparent 0 48%, rgba(212, 169, 65, 0.09) 49%, transparent 50%),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 96px);
+      opacity: 0.7;
+      animation: screenField 20s ease-in-out infinite;
+    }
+
+    .screen-nav {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 0 22px;
+      border-bottom: 1px solid var(--line-soft);
+      background: rgba(13, 13, 24, 0.88);
+    }
+
+    .mini-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      color: var(--ink);
+    }
+
+    .mini-logo img {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      object-fit: contain;
+    }
+
+    .screen-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .screen-tabs span {
+      padding: 8px 11px;
+      border-radius: 999px;
+      border: 1px solid var(--line-soft);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .screen-tabs span.active {
+      color: #11111b;
+      background: var(--gold);
+      border-color: var(--gold);
+    }
+
+    .concept-grid {
+      display: grid;
+      grid-template-columns: 0.9fr 1.15fr 0.85fr;
+      gap: 18px;
+      padding: 22px;
+      min-height: 560px;
+    }
+
+    .concept-grid.two {
+      grid-template-columns: 1.1fr 0.9fr;
+    }
+
+    .concept-grid.dashboard {
+      grid-template-columns: 0.68fr 1.35fr 0.72fr;
+    }
+
+    .glass {
+      border-radius: 20px;
+      box-shadow: none;
+      padding: 20px;
+      min-height: 120px;
+    }
+
+    .visual {
+      position: relative;
+      min-height: 260px;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: #11111b;
+    }
+
+    .visual::after,
+    .tile-image::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(8, 8, 13, 0.9), rgba(8, 8, 13, 0.08));
+    }
+
+    .visual-copy {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 18px;
+      z-index: 2;
+    }
+
+    .visual-copy strong {
+      display: block;
+      color: var(--ink);
+      font-size: 24px;
+      line-height: 1.05;
+      margin-bottom: 8px;
+    }
+
+    .rail {
+      display: grid;
+      gap: 12px;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid var(--line-soft);
+      padding: 14px 0;
+    }
+
+    .row:last-child { border-bottom: 0; }
+
+    .row b {
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    .row span {
+      color: var(--gold);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .creator-card {
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 255, 255, 0.035);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .avatar-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      color: #11111b;
+      background: var(--gold);
+      font-weight: 900;
+    }
+
+    .creator-card b {
+      display: block;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+
+    .creator-card small {
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      min-height: 46px;
+      padding: 0 18px;
+      background: var(--gold);
+      color: #11111b;
+      font-weight: 900;
+      margin-top: 16px;
+    }
+
+    .button.secondary {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--line-soft);
+    }
+
+    .tile-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .tile-image {
+      position: relative;
+      overflow: hidden;
+      border-radius: 18px;
+      min-height: 160px;
+      border: 1px solid var(--line-soft);
+    }
+
+    .tile-image b {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      z-index: 2;
+      color: var(--ink);
+    }
+
+    .pipeline {
+      display: grid;
+      gap: 12px;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 14px;
+      align-items: center;
+      padding: 14px;
+      border: 1px solid var(--line-soft);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 28px rgba(212, 169, 65, 0.55);
+    }
+
+    .quote-panel {
+      display: grid;
+      gap: 12px;
+    }
+
+    .quote-line {
+      height: 42px;
+      border-radius: 13px;
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .footer-note {
+      color: var(--muted);
+      text-align: center;
+      padding: 34px 0 10px;
+      font-size: 13px;
+    }
+
+    @keyframes gridDrift {
+      from { background-position: 0 0, 0 0, 0 0, 0 0; }
+      to { background-position: 0 0, 0 0, 128px 64px, 0 128px; }
+    }
+
+    @keyframes lensBreath {
+      0%, 100% { opacity: 0.22; transform: rotate(-7deg) scale(1.05); }
+      50% { opacity: 0.55; transform: rotate(-4deg) scale(1.16); }
+    }
+
+    @keyframes signalSweep {
+      0%, 100% { opacity: 0.16; translate: -4vw 0; }
+      50% { opacity: 0.58; translate: 5vw 0; }
+    }
+
+    @keyframes focusPulse {
+      0%, 100% { opacity: 0.18; transform: scale(0.82); }
+      45% { opacity: 0.48; transform: scale(1.08); }
+    }
+
+    @keyframes screenField {
+      0%, 100% { opacity: 0.5; transform: translate3d(0, 0, 0) scale(1); }
+      50% { opacity: 0.82; transform: translate3d(-18px, 10px, 0) scale(1.02); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .motion-field,
+      .motion-field::before,
+      .motion-field::after,
+      .signal,
+      .pulse,
+      .screen::before {
+        animation: none;
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .intro,
+      .concept-head,
+      .concept-grid,
+      .concept-grid.two,
+      .concept-grid.dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      .metrics,
+      .tile-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 680px) {
+      .page { width: min(100vw - 26px, 1780px); }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .brand img { max-width: 86vw; }
+      .metrics,
+      .card-grid,
+      .tile-row { grid-template-columns: 1fr; }
+      .screen-nav { height: auto; align-items: flex-start; flex-direction: column; padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="motion-field" aria-hidden="true">
+    <span class="signal"></span>
+    <span class="signal"></span>
+    <span class="signal"></span>
+    <span class="pulse pulse-a"></span>
+    <span class="pulse pulse-b"></span>
+    <span class="pulse pulse-c"></span>
+  </div>
+  <main class="page">
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="CreatorBridge UI overview">
+        <img src="public/images/brand/creatorbridge-logo-lockup.png" alt="CreatorBridge" />
+      </a>
+      <nav class="nav" aria-label="Concept options">
+        <a href="#option-1">01 Command</a>
+        <a href="#option-2">02 Atlas</a>
+        <a href="#option-3">03 Studio OS</a>
+        <a href="#option-4">04 Trust Flow</a>
+        <a href="#option-5">05 Editorial</a>
+      </nav>
+    </header>
+
+    <section id="top" class="intro">
+      <div class="intro-card">
+        <p class="eyebrow">CreatorBridge UI Redesign Overview</p>
+        <h1>Five directions for a premium media marketplace.</h1>
+        <p class="body">These are coded interface concepts, not generated UI images. Each direction keeps CreatorBridge focused on verified media production talent, trusted booking, creator tools, project flow, and a dark charcoal and gold brand system.</p>
+      </div>
+      <div class="brief-card">
+        <img src="public/images/creatorbridge/post-production-suite.png" alt="" />
+        <div class="brief-overlay">
+          <p class="eyebrow">Design Goal</p>
+          <h3>More visual authority, less empty panel space, no cheap marketplace energy.</h3>
+        </div>
+      </div>
+    </section>
+
+    <section class="metrics" aria-label="Product priorities">
+      <div class="metric"><strong>Verified</strong><span>Talent Standard</span></div>
+      <div class="metric"><strong>Media Only</strong><span>Focused Marketplace</span></div>
+      <div class="metric"><strong>50 / 50</strong><span>Payment Rhythm</span></div>
+      <div class="metric"><strong>10% to 6%</strong><span>Creator Fee Path</span></div>
+    </section>
+
+    <section class="concept" id="option-1">
+      <div class="concept-head">
+        <div>
+          <p class="eyebrow">Option 01</p>
+          <h2>Cinematic Command Center</h2>
+          <p>Best for the homepage and client entry path. The layout leads with a strong editorial hero, marketplace standards, curated creators, and booking guidance without feeling crowded.</p>
+        </div>
+        <span class="pill gold">Recommended Homepage Base</span>
+      </div>
+      <div class="screen">
+        <div class="screen-nav">
+          <div class="mini-logo"><img src="public/images/brand/creatorbridge-mark.png" alt="" /> CreatorBridge</div>
+          <div class="screen-tabs"><span class="active">Find Creators</span><span>Projects</span><span>Network</span><span>Rate Tool</span></div>
+        </div>
+        <div class="concept-grid">
+          <div class="glass">
+            <p class="eyebrow">Marketplace Pulse</p>
+            <div class="row"><b>Profile Gate</b><span>2+ yrs</span></div>
+            <div class="row"><b>Portfolio Proof</b><span>3+</span></div>
+            <div class="row"><b>Intro Check</b><span>60-90s</span></div>
+            <a class="button secondary" href="#">Review standards</a>
+          </div>
+          <div>
+            <h2>Verified creative talent for brands that need the work done right.</h2>
+            <p style="margin-top: 18px;">Clients start with fit, production lane, proof, package, and booking readiness instead of scrolling broad gig listings.</p>
+            <div class="tile-row">
+              <div class="tile-image"><img src="public/images/creatorbridge/post-production-suite.png" alt="" /><b>Video Production</b></div>
+              <div class="tile-image"><img src="public/images/creatorbridge/commercial-photographer.png" alt="" /><b>Photography</b></div>
+              <div class="tile-image"><img src="public/images/creatorbridge/podcast-producer-studio.png" alt="" /><b>Podcast</b></div>
+              <div class="tile-image"><img src="public/images/creatorbridge/drone-operator-golden-hour.png" alt="" /><b>Drone</b></div>
+            </div>
+          </div>
+          <div class="rail">
+            <div class="visual">
+              <img src="public/images/creatorbridge/camera-lens-event-reflection.png" alt="" />
+              <div class="visual-copy"><strong>Risk control</strong><p>Start with creators built for production work.</p></div>
+            </div>
+            <div class="glass">
+              <div class="row"><b>Creator Review</b><span>Manual</span></div>
+              <div class="row"><b>Payment Rhythm</b><span>50 / 50</span></div>
+              <div class="row"><b>Creator Fee</b><span>10% to 6%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="concept" id="option-2">
+      <div class="concept-head">
+        <div>
+          <p class="eyebrow">Option 02</p>
+          <h2>Atlas Marketplace</h2>
+          <p>Best for discovery, Smart Match, and local hiring. This makes region, service lane, availability, and trust signals feel like a controlled production network instead of a directory.</p>
+        </div>
+        <span class="pill">Location First</span>
+      </div>
+      <div class="screen">
+        <div class="screen-nav">
+          <div class="mini-logo"><img src="public/images/brand/creatorbridge-mark.png" alt="" /> CreatorBridge Atlas</div>
+          <div class="screen-tabs"><span class="active">Phoenix</span><span>Los Angeles</span><span>New York</span><span>Remote</span></div>
+        </div>
+        <div class="concept-grid two">
+          <div>
+            <div class="visual" style="min-height: 430px;">
+              <img src="public/images/creatorbridge/drone-operator-golden-hour.png" alt="" />
+              <div class="visual-copy"><strong>Find verified production talent by market.</strong><p>Region, service lane, availability, and project fit drive the first decision.</p></div>
+            </div>
+            <div class="tile-row">
+              <div class="glass"><p class="eyebrow">AZ</p><h3>14 creators</h3><p>Video, drone, photo</p></div>
+              <div class="glass"><p class="eyebrow">CA</p><h3>22 creators</h3><p>Brand film, events</p></div>
+              <div class="glass"><p class="eyebrow">NY</p><h3>11 creators</h3><p>Podcast, studio</p></div>
+              <div class="glass"><p class="eyebrow">Remote</p><h3>31 creators</h3><p>Editing, post</p></div>
+            </div>
+          </div>
+          <div class="rail">
+            <div class="glass">
+              <p class="eyebrow">Smart Match Brief</p>
+              <div class="quote-panel">
+                <div class="quote-line"></div>
+                <div class="quote-line"></div>
+                <div class="quote-line"></div>
+                <a class="button" href="#">Match creators</a>
+              </div>
+            </div>
+            <div class="card-grid">
+              <div class="creator-card"><div class="avatar-row"><div class="avatar">CB</div><div><b>Marcus Reed</b><small>Video, Phoenix</small></div></div><p>Verified, available now.</p></div>
+              <div class="creator-card"><div class="avatar-row"><div class="avatar">CB</div><div><b>Aria Studio</b><small>Photo, Miami</small></div></div><p>Portfolio ready.</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="concept" id="option-3">
+      <div class="concept-head">
+        <div>
+          <p class="eyebrow">Option 03</p>
+          <h2>Studio Desk OS</h2>
+          <p>Best for creator-side tools. It makes pricing, packages, availability, quote requests, earnings, and profile readiness feel like a serious production business console.</p>
+        </div>
+        <span class="pill">Creator Tools</span>
+      </div>
+      <div class="screen">
+        <div class="screen-nav">
+          <div class="mini-logo"><img src="public/images/brand/creatorbridge-mark.png" alt="" /> Creator Dashboard</div>
+          <div class="screen-tabs"><span class="active">Overview</span><span>Packages</span><span>Quotes</span><span>Rate Tool</span></div>
+        </div>
+        <div class="concept-grid dashboard">
+          <div class="rail">
+            <div class="visual"><img src="public/images/creatorbridge/commercial-photographer.png" alt="" /><div class="visual-copy"><strong>Creator identity</strong><p>Profile, proof, packages, intro video.</p></div></div>
+            <div class="glass"><div class="row"><b>Profile readiness</b><span>92%</span></div><div class="row"><b>Tier</b><span>Launch</span></div></div>
+          </div>
+          <div class="glass">
+            <p class="eyebrow">Pricing Workspace</p>
+            <h3>Build rates with professional confidence.</h3>
+            <div class="tile-row">
+              <div class="metric"><strong>$2,200</strong><span>Brand Film</span></div>
+              <div class="metric"><strong>$650</strong><span>Photo Half Day</span></div>
+              <div class="metric"><strong>$350</strong><span>Podcast Edit</span></div>
+              <div class="metric"><strong>42%</strong><span>Margin</span></div>
+            </div>
+            <div class="quote-panel" style="margin-top: 18px;">
+              <div class="quote-line"></div>
+              <div class="quote-line"></div>
+              <div class="quote-line"></div>
+              <a class="button" href="#">Generate quote</a>
+            </div>
+          </div>
+          <div class="rail">
+            <div class="glass"><p class="eyebrow">Quote Requests</p><div class="row"><b>Corporate recap</b><span>New</span></div><div class="row"><b>Podcast launch</b><span>Draft</span></div><div class="row"><b>Drone coverage</b><span>Ready</span></div></div>
+            <div class="visual"><img src="public/images/creatorbridge/post-production-suite.png" alt="" /><div class="visual-copy"><strong>Production math</strong><p>Rates, costs, margin, and delivery terms stay visible.</p></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="concept" id="option-4">
+      <div class="concept-head">
+        <div>
+          <p class="eyebrow">Option 04</p>
+          <h2>Trust Flow</h2>
+          <p>Best for client project management. This puts booking status, Smart Match, messages, payment protection, delivery, and trust requirements into one controlled command center.</p>
+        </div>
+        <span class="pill">Client Journey</span>
+      </div>
+      <div class="screen">
+        <div class="screen-nav">
+          <div class="mini-logo"><img src="public/images/brand/creatorbridge-mark.png" alt="" /> Client Command Center</div>
+          <div class="screen-tabs"><span class="active">Pipeline</span><span>Messages</span><span>Payments</span><span>Saved</span></div>
+        </div>
+        <div class="concept-grid two">
+          <div class="rail">
+            <div class="glass">
+              <p class="eyebrow">Booking Pipeline</p>
+              <div class="pipeline">
+                <div class="stage"><div class="dot"></div><div><b>Brief created</b><p>Brand film, Phoenix, $1.5k to $3k</p></div><span class="pill gold">Done</span></div>
+                <div class="stage"><div class="dot"></div><div><b>Smart Match review</b><p>Three verified creators fit the production lane.</p></div><span class="pill">Open</span></div>
+                <div class="stage"><div class="dot"></div><div><b>Protected retainer</b><p>50% upfront, final balance on delivery.</p></div><span class="pill">Next</span></div>
+              </div>
+            </div>
+            <div class="card-grid">
+              <div class="creator-card"><div class="avatar-row"><div class="avatar">CB</div><div><b>Elevation Films</b><small>Pro Verified</small></div></div><p>Brand film, corporate, event coverage.</p></div>
+              <div class="creator-card"><div class="avatar-row"><div class="avatar">CB</div><div><b>SoundWave</b><small>Verified</small></div></div><p>Podcast launch, studio, remote edit.</p></div>
+            </div>
+          </div>
+          <div class="rail">
+            <div class="visual" style="min-height: 360px;"><img src="public/images/creatorbridge/event-crew-stage.png" alt="" /><div class="visual-copy"><strong>Bookings without losing the thread.</strong><p>Project activity, creator fit, and payment status in one place.</p></div></div>
+            <div class="glass"><div class="row"><b>Account verification</b><span>Ready</span></div><div class="row"><b>Saved creators</b><span>6</span></div><div class="row"><b>Total spent</b><span>$0</span></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="concept" id="option-5">
+      <div class="concept-head">
+        <div>
+          <p class="eyebrow">Option 05</p>
+          <h2>Editorial Showcase</h2>
+          <p>Best for creator profiles and public proof. This direction makes portfolios, packages, availability, intro video, and protected contact feel premium without turning profiles into social pages.</p>
+        </div>
+        <span class="pill">Profile Experience</span>
+      </div>
+      <div class="screen">
+        <div class="screen-nav">
+          <div class="mini-logo"><img src="public/images/brand/creatorbridge-mark.png" alt="" /> Creator Profile</div>
+          <div class="screen-tabs"><span class="active">Profile</span><span>Services</span><span>Portfolio</span><span>Availability</span></div>
+        </div>
+        <div class="concept-grid">
+          <div class="visual" style="min-height: 520px;"><img src="public/images/creatorbridge/podcast-producer-studio.png" alt="" /><div class="visual-copy"><strong>Verified specialist profile</strong><p>Focused proof, not generic creator clutter.</p></div></div>
+          <div class="rail">
+            <div class="glass">
+              <p class="eyebrow">Marcus Reed</p>
+              <h2>Production lead for brand stories, events, and polished delivery.</h2>
+              <p style="margin-top: 16px;">Clients review production focus, service packages, portfolio samples, availability, and payment path before requesting a quote.</p>
+            </div>
+            <div class="tile-row">
+              <div class="tile-image"><img src="public/images/creatorbridge/post-production-suite.png" alt="" /><b>Brand Film</b></div>
+              <div class="tile-image"><img src="public/images/creatorbridge/event-crew-stage.png" alt="" /><b>Event Coverage</b></div>
+              <div class="tile-image"><img src="public/images/creatorbridge/commercial-photographer.png" alt="" /><b>Commercial Photo</b></div>
+              <div class="tile-image"><img src="public/images/creatorbridge/camera-lens-event-reflection.png" alt="" /><b>Protected Booking</b></div>
+            </div>
+          </div>
+          <div class="rail">
+            <div class="glass"><div class="row"><b>Service Types</b><span>3</span></div><div class="row"><b>Work Samples</b><span>3</span></div><div class="row"><b>Experience</b><span>7+ yrs</span></div><div class="row"><b>Payment Path</b><span>Protected</span></div></div>
+            <div class="glass"><p class="eyebrow">Availability</p><div class="quote-panel"><div class="quote-line"></div><div class="quote-line"></div><div class="quote-line"></div></div><a class="button" href="#">Request a quote</a></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <p class="footer-note">Concept file only. This does not change live CreatorBridge behavior.</p>
+  </main>
+</body>
+</html>

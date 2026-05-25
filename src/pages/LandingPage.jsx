@@ -82,10 +82,10 @@ export function LandingPage({ dark }) {
     // Fast lerp speeds
     let frameId;
     const tick = () => {
-      rx += (mx - rx) * 0.28; // Responsive cursor tracking
-      ry += (my - ry) * 0.28;
-      gx += (mx - gx) * 0.16; // Optimized spotlight tracking
-      gy += (my - gy) * 0.16;
+      rx += (mx - rx) * 0.30; // Responsive cursor tracking
+      ry += (my - ry) * 0.30;
+      gx += (mx - gx) * 0.20; // Spotlight tracking, faster follow
+      gy += (my - gy) * 0.20;
 
       ring.style.left = `${rx}px`;
       ring.style.top = `${ry}px`;
@@ -214,14 +214,29 @@ export function LandingPage({ dark }) {
     }
   };
 
+  // 3-pillar production lanes. Each card links to Find Creators with the pillar pre-filtered.
   const productionLanes = [
-    { title: 'All Services', desc: 'Browse all', url: '/find', count: '10 available', img: '/images/creatorbridge/camera-lens-event-reflection.png' },
-    { title: 'Video Production', desc: 'Brand films, commercial', url: '/find?lane=video', count: '3 available', img: '/images/creatorbridge/camera-lens-event-reflection.png' },
-    { title: 'Photography', desc: 'Commercial, product', url: '/find?lane=photo', count: '3 available', img: '/images/creatorbridge/commercial-photographer.png' },
-    { title: 'Podcast Production', desc: 'Audio, video, launch', url: '/find?lane=podcast', count: '2 available', img: '/images/creatorbridge/podcast-producer-studio.png' },
-    { title: 'Drone & Aerial', desc: 'Aerial, mapping', url: '/find?lane=drone', count: '2 available', img: '/images/creatorbridge/drone-operator-golden-hour.png' },
-    { title: 'Events & Corporate', desc: 'Corporate, live', url: '/find?lane=events', count: '2 available', img: '/images/creatorbridge/event-crew-stage.png' },
-    { title: 'Editing & Post', desc: 'Color, motion', url: '/find?lane=post', count: '2 available', img: '/images/creatorbridge/post-production-suite.png' }
+    {
+      title:    'Video Production',
+      desc:     'Brand films · weddings · events · drone · podcast video',
+      url:      '/find?pillar=video_production',
+      count:    'Brand films, commercials, social, drone, podcasts',
+      img:      '/images/creatorbridge/camera-lens-event-reflection.png',
+    },
+    {
+      title:    'Photography',
+      desc:     'Commercial · weddings · headshots · product · editorial',
+      url:      '/find?pillar=photography',
+      count:    'Brand, lifestyle, real estate, food, drone',
+      img:      '/images/creatorbridge/commercial-photographer.png',
+    },
+    {
+      title:    'Post Production',
+      desc:     'Editing · color · motion · sound · podcast audio',
+      url:      '/find?pillar=post_production',
+      count:    'Long-form, short-form, color, VFX, retouching',
+      img:      '/images/creatorbridge/post-production-suite.png',
+    },
   ];
 
   return (
@@ -383,14 +398,14 @@ export function LandingPage({ dark }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 bob-grid">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 bob-grid">
               {productionLanes.map((lane, idx) => (
-                <div key={idx} onClick={() => navigate(lane.url)} className="lane-card aspect-[3/4] reveal-up block">
+                <div key={idx} onClick={() => navigate(lane.url)} className="lane-card aspect-[4/5] reveal-up block">
                   <img src={lane.img} alt={lane.title} className="w-full h-full object-cover" />
                   <div className="lane-content">
-                    <div className="text-[9px] uppercase tracking-wider text-white/60 mb-1">{lane.desc}</div>
-                    <div className="font-semibold text-xs uppercase tracking-wide text-white">{lane.title}</div>
-                    <div className="text-[9px] text-[#c9a84c] mt-2">{lane.count}</div>
+                    <div className="text-[10px] uppercase tracking-wider text-white/60 mb-2">{lane.desc}</div>
+                    <div className="font-semibold text-base uppercase tracking-wide text-white">{lane.title}</div>
+                    <div className="text-[10px] text-[#c9a84c] mt-2 leading-snug">{lane.count}</div>
                   </div>
                 </div>
               ))}

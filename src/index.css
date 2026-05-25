@@ -685,18 +685,21 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 380px;
-  height: 380px;
+  width: 340px;
+  height: 340px;
   pointer-events: none;
   z-index: 2;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(221,185,106,0.11) 0%, rgba(201,168,76,0.03) 30%, transparent 60%);
+  background: radial-gradient(circle, rgba(221,185,106,0.10) 0%, rgba(201,168,76,0.025) 25%, transparent 50%);
   mix-blend-mode: screen;
   transition: opacity 0.4s;
   opacity: 0;
 }
 body.mouse-active .mouse-glow {
   opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mouse-glow { display: none !important; }
 }
 
 .cursor-ring {

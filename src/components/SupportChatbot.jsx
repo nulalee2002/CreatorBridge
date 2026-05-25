@@ -143,10 +143,13 @@ VIOLATIONS AND STRIKES:
 Strike 1 is a warning. Strike 2 is a 30-day restriction. Strike 3 is account suspension. Violations include sharing contact info in chat, working off-platform, fake reviews, and harassment.
 
 SERVICES OFFERED:
-Video Production, Photography, Drone and Aerial, Brand and Short-Form Content, Editing and Post, Live Event Coverage, Corporate Events, and Podcast Production.
+CreatorBridge organizes services into 3 pillars. Creators pick one and choose up to 3 specialties within it.
+Video Production specialties include brand films, weddings, events, music videos, documentaries, video podcasts, short-form and social, real estate, drone, and corporate.
+Photography specialties include brand and commercial, weddings, events, headshots, products, real estate, lifestyle and fashion, editorial, drone, and food and hospitality.
+Post Production specialties include long-form video editing, short-form editing, color grading, motion graphics and VFX, sound design, podcast audio editing, photo retouching, and documentary editing.
 
 GEOGRAPHIC AVAILABILITY:
-US only currently. Expanding to Canada next then Europe.
+US only.
 
 SUPPORT:
 For account-specific issues, billing problems, or disputes needing human review email drl33@creatorbridge.studio. For urgent payment disputes mark subject line URGENT. Response within 24 hours.`;
@@ -282,7 +285,7 @@ const BOOKING_STEPS = [
     step: 1, field: 'serviceType',
     question: 'What type of project do you need help with?',
     type: 'options',
-    options: ['Video Production','Photography','Drone and Aerial','Brand and Short-Form Content','Podcast Production','Corporate Events','Live Event Coverage','Editing and Post','Not sure yet'],
+    options: ['Video Production','Photography','Post Production','Not sure yet'],
   },
   {
     step: 2, field: 'location',
@@ -343,7 +346,7 @@ const CREATOR_STEPS = [
     step: 1, field: 'serviceType',
     question: 'What type of service are you quoting for?',
     type: 'options',
-    options: ['Video Production','Photography','Drone and Aerial','Brand and Short-Form Content','Podcast Production','Corporate Events','Live Event Coverage','Editing and Post'],
+    options: ['Video Production','Photography','Post Production'],
   },
   {
     step: 2, field: 'deliverables',

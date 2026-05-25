@@ -5,24 +5,32 @@ import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { TurnstileWidget, turnstileConfigured } from './TurnstileWidget.jsx';
 import { normalizeServiceId, SERVICE_TYPE_OPTIONS } from '../data/rates.js';
+import { PILLARS, SUB_NICHES_BY_PILLAR } from '../data/taxonomy.js';
 import { fromSupabaseProject, upsertLocalProject } from '../utils/projectStorage.js';
 import { sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
 import { parseBudgetRange } from '../utils/matchingAlgorithm.js';
 
 // ── Static option sets ───────────────────────────────────────
 
-const SERVICE_TYPES = SERVICE_TYPE_OPTIONS;
+// SERVICE_TYPES is now the 3 pillar NAMES (string labels) so existing
+// form fields that store serviceType as a string still work.
+const SERVICE_TYPES = Object.values(PILLARS).map(p => p.name);
 
-const PROJECT_SUBTYPES = {
-  'Video Production':       ['Corporate', 'Wedding', 'Documentary', 'Music Video', 'Brand Commercial', 'Brand & Short-Form Content', 'Podcast', 'Birthday/Celebration', 'Anniversary', 'Graduation', 'Concert', 'Sports', 'Real Estate Tour', 'Other'],
-  'Photography':            ['Real Estate', 'Headshots', 'Wedding', 'Commercial', 'Event', 'Product', 'Brand', 'Birthday/Celebration', 'Anniversary', 'Graduation', 'Concert', 'Sports', 'Family Portrait', 'Maternity', 'Other'],
-  'Drone / Aerial':         ['Real Estate Aerial', 'Event Aerial', 'Mapping', 'Film/Video Support', 'Construction Progress', 'Other'],
-  'Brand & Short-Form Content': ['Reels/TikTok', 'YouTube', 'Brand Campaign', 'UGC', 'Behind the Scenes', 'Other'],
-  'Editing & Post':         ['Video Editing', 'Color Grading', 'Audio Mixing', 'Motion Graphics', 'Podcast Editing', 'Other'],
-  'Live Event Coverage':    ['Concert/Music', 'Sports', 'Corporate Event', 'Conference', 'Festival', 'Birthday/Celebration', 'Wedding Reception', 'Other'],
-  'Corporate Events':       ['Conference Coverage', 'Product Launch', 'Award Ceremony', 'Trade Show', 'Company Retreat', 'Executive Portraits at Events', 'Investor Presentation', 'Town Hall / All-Hands', 'Other'],
-  'Podcast Production':     ['Audio Only', 'Video Podcast', 'Remote Recording', 'In-Studio Recording', 'Show Launch Package', 'Monthly Retainer', 'Other'],
-};
+// PROJECT_SUBTYPES maps pillar NAME → array of sub-niche label strings.
+// Built from taxonomy.js so labels stay in sync with the source of truth.
+const PROJECT_SUBTYPES = Object.values(PILLARS).reduce((acc, pillar) => {
+  acc[pillar.name] = [
+    ...(SUB_NICHES_BY_PILLAR[pillar.id] || []).map(sn => sn.label),
+    'Other',
+  ];
+  return acc;
+}, {});
+
+// Reverse-lookup: pillar name → pillar id (used when writing primary_pillar to DB)
+const PILLAR_NAME_TO_ID = Object.values(PILLARS).reduce((acc, p) => {
+  acc[p.name] = p.id;
+  return acc;
+}, {});
 
 const TIME_OPTIONS = [
   'Early Morning (before 8am)',
@@ -273,6 +281,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
       title:              cleanForm.projectTitle,
       serviceId,
       serviceType:        cleanForm.serviceType,
+      primary_pillar:     PILLAR_NAME_TO_ID[cleanForm.serviceType] || null,
       projectType,
       projectDate:        cleanForm.projectDate,
       projectTime:        cleanForm.projectTime,
