@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
 
     const { data: creatorListing } = await supabaseAdmin
       .from('creator_listings')
-      .select('stripe_account_id')
+      .select('stripe_account_id, user_id, name, business_name')
       .eq('id', txn.creator_id)
       .single();
 
@@ -235,7 +235,9 @@ Deno.serve(async (req) => {
     // Send final_paid notification email to creator (best-effort, non-blocking).
     try {
       const [{ data: creatorAuth }, { data: project }] = await Promise.all([
-        supabaseAdmin.auth.admin.getUserById(txn.creator_id),
+        creatorListing?.user_id
+          ? supabaseAdmin.auth.admin.getUserById(creatorListing.user_id)
+          : Promise.resolve({ data: null }),
         supabaseAdmin.from('projects').select('title').eq('id', txn.project_id).single(),
       ]);
       const creatorEmail = creatorAuth?.user?.email;
@@ -252,7 +254,10 @@ Deno.serve(async (req) => {
               to: creatorEmail,
               template: 'final_paid',
               data: {
-                creator_name:  creatorAuth.user.user_metadata?.display_name ?? creatorEmail,
+                creator_name:  creatorListing?.business_name
+                  ?? creatorListing?.name
+                  ?? creatorAuth.user.user_metadata?.display_name
+                  ?? creatorEmail,
                 project_title: project?.title ?? 'Your Project',
                 payout_amount: (netToCreator / 100).toFixed(2),
               },

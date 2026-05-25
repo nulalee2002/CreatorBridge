@@ -6,6 +6,7 @@ import { VerificationBadge } from '../components/VerificationFlow.jsx';
 import { LoyaltyBadge } from '../components/LoyaltyBadge.jsx';
 import { TierBadge } from '../components/TierBadge.jsx';
 import { SERVICES, RATES } from '../data/rates.js';
+import { getPillar, getSubNiche, LEGACY_SERVICE_TO_PILLAR } from '../data/taxonomy.js';
 import { REGIONS } from '../data/regions.js';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
@@ -161,21 +162,23 @@ export function CreatorProfilePage({ dark }) {
         .eq('id', id)
         .single();
       if (data) {
-        // Build backward-compat services array from creator_services rows.
-        // For creators registered under the 3-pillar model, creator_services
-        // will be empty - synthesize a single entry from primary_pillar so
-        // legacy components that read services[0].serviceId still resolve.
+        // Prefer the 3-pillar model on public profiles. Legacy creator_services
+        // rows can still exist, but they must not render as multiple primary
+        // lanes now that each creator owns one pillar and 1-3 specialties.
         const legacyFromCreatorServices = data.creator_services?.map(s => ({ ...s, serviceId: s.service_id, rates: s.rates || {} })) || [];
         const PILLAR_TO_LEGACY = { video_production: 'video', photography: 'photography', post_production: 'postProduction' };
+        const pillar = getPillar(data.primary_pillar);
         const synthesizedFromPillar = data.primary_pillar
           ? [{
               serviceId: PILLAR_TO_LEGACY[data.primary_pillar] || 'video',
               service_id: PILLAR_TO_LEGACY[data.primary_pillar] || 'video',
+              pillarId: data.primary_pillar,
+              displayName: pillar?.name || 'Primary Pillar',
               rates: {},
-              subtypes: data.sub_niches || [],
+              subtypes: (data.sub_niches || []).map(id => getSubNiche(id)?.label || id),
             }]
           : [];
-        const services = legacyFromCreatorServices.length > 0 ? legacyFromCreatorServices : synthesizedFromPillar;
+        const services = synthesizedFromPillar.length > 0 ? synthesizedFromPillar : legacyFromCreatorServices;
 
         // Normalize to same shape as localStorage format
         const normalized = {
@@ -370,7 +373,8 @@ export function CreatorProfilePage({ dark }) {
   const portfolio = creator.portfolio || [];
   const locationStr = [location.city, location.state, location.country].filter(Boolean).join(', ');
 
-  function getServiceDisplayName(serviceId) {
+  function getServiceDisplayName(serviceId, service = null) {
+    if (service?.displayName) return service.displayName;
     const names = {
       video:            'Video Production',
       video_production: 'Video Production',
@@ -403,6 +407,7 @@ export function CreatorProfilePage({ dark }) {
     post: '/images/creatorbridge/creator-profile-cover-suite.jpg',
     post_production: '/images/creatorbridge/creator-profile-cover-suite.jpg',
   };
+  const primaryPillar = getPillar(creator.primary_pillar);
   const primaryServiceId = services[0]?.serviceId || services[0]?.service_id || 'video';
   const customCoverImage = normalizeMediaUrl(
     creator.cover_image_url || creator.coverImageUrl || creator.banner_url || creator.bannerUrl
@@ -415,19 +420,21 @@ export function CreatorProfilePage({ dark }) {
 
   // ── SEO + JSON-LD for this creator profile ──────────────────────────────
   const creatorPageUrl = `https://www.creatorbridge.studio/creator/${id}`;
+  const creatorNameForMeta = creator?.businessName || creator?.business_name || creator?.display_name || creator?.name || 'Creator';
+  const creatorLocationForMeta = locationStr || [creator?.city, creator?.state].filter(Boolean).join(', ');
   const creatorTitle   = creator
-    ? `${creator.display_name} — ${creator.tier || 'Creator'} on CreatorBridge`
+    ? `${creatorNameForMeta} — ${creator.tier || 'Creator'} on CreatorBridge`
     : 'Creator Profile | CreatorBridge';
   const creatorDesc    = creator
-    ? `${creator.display_name}${creator.location ? ` (${creator.location})` : ''} is a verified media creator on CreatorBridge. ${creator.bio ? creator.bio.slice(0, 140) : ''}`
+    ? `${creatorNameForMeta}${creatorLocationForMeta ? ` (${creatorLocationForMeta})` : ''} is a verified media creator on CreatorBridge. ${creator.bio ? creator.bio.slice(0, 140) : ''}`
     : 'View this verified creator profile on CreatorBridge.';
   const creatorJsonLd  = creator ? {
     '@context': 'https://schema.org',
     '@type': 'Person',
-    name: creator.display_name,
+    name: creatorNameForMeta,
     url: creatorPageUrl,
     description: creator.bio || '',
-    address: creator.location ? { '@type': 'PostalAddress', addressLocality: creator.location } : undefined,
+    address: creatorLocationForMeta ? { '@type': 'PostalAddress', addressLocality: creatorLocationForMeta } : undefined,
     worksFor: { '@type': 'Organization', name: 'CreatorBridge', url: 'https://www.creatorbridge.studio' },
   } : null;
 
@@ -580,7 +587,7 @@ export function CreatorProfilePage({ dark }) {
 
             <div className="relative mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
-                { label: 'Service types', value: services.length || 0 },
+                { label: 'Primary pillar', value: primaryPillar?.name || services.length || 0 },
                 { label: 'Work samples', value: portfolio.length || 0 },
                 { label: 'Experience', value: expLabel || 'Reviewed' },
                 { label: 'Payment path', value: 'Protected' },
@@ -618,13 +625,13 @@ export function CreatorProfilePage({ dark }) {
                 ${dark ? 'text-white' : 'text-gray-900'}`}>
                 Service Offers
               </h2>
-              <p className={`text-sm mb-5 ${textSub}`}>Review the creator's strongest service lanes, pricing structure, and included deliverables before requesting a quote.</p>
+              <p className={`text-sm mb-5 ${textSub}`}>Review the creator's primary pillar, specialties, pricing structure, and included deliverables before requesting a quote.</p>
 
               {/* Niche tab buttons - service names only */}
               <div className="flex flex-wrap gap-2 mb-6">
                 {(creator.services || []).slice(0, 3).map((svc, i) => {
                   const sid = svc.serviceId || svc.service_id || '';
-                  const name = getServiceDisplayName(sid);
+                  const name = getServiceDisplayName(sid, svc);
                   const isActive = activeNiche === i;
                   return (
                     <button
@@ -658,9 +665,12 @@ export function CreatorProfilePage({ dark }) {
                 const serviceDef = SERVICES[sid] || {};
 
                 // Try structured packages first
-                const pkgs = (creator.packages || []).filter(
-                  p => (p.serviceId || p.service_id) === sid
-                );
+                const activePillarId = activeSvc.pillarId || creator.primary_pillar || LEGACY_SERVICE_TO_PILLAR[sid]?.pillar;
+                const pkgs = (creator.packages || []).filter(p => {
+                  const packageServiceId = p.serviceId || p.service_id;
+                  if (!activePillarId) return packageServiceId === sid;
+                  return LEGACY_SERVICE_TO_PILLAR[packageServiceId]?.pillar === activePillarId;
+                });
 
                 if (pkgs.length > 0) {
                   return (
@@ -668,7 +678,7 @@ export function CreatorProfilePage({ dark }) {
                       {(serviceDef.description || activeSvc.description || activeSvc.subtypes?.length > 0) && (
                         <div className={`rounded-2xl border p-4 lg:col-span-3 ${dark ? 'border-gold-500/18 bg-gold-500/[0.055]' : 'border-gold-200 bg-gold-50'}`}>
                           <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase' }}>
-                            Active service lane
+                            Selected specialties
                           </p>
                           <p className={`text-sm leading-6 ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>
                             {activeSvc.description || serviceDef.description}
@@ -769,7 +779,7 @@ export function CreatorProfilePage({ dark }) {
                 if (rates.length === 0) return (
                   <div className={`rounded-2xl border p-5 text-sm ${dark
                     ? 'border-white/[0.07] bg-charcoal-950/45 text-charcoal-300' : 'border-gray-200 bg-gray-50 text-gray-600'}`}>
-                    Pricing is reviewed through a custom quote for this service lane.
+                    Pricing is reviewed through a custom quote for this pillar.
                   </div>
                 );
 
@@ -1028,7 +1038,7 @@ export function CreatorProfilePage({ dark }) {
                 {[
                   { label: 'Experience', value: expLabel },
                   { label: 'Location', value: locationStr },
-                  { label: 'Services', value: `${services.length} service type${services.length !== 1 ? 's' : ''}` },
+                  { label: 'Pillar', value: primaryPillar?.name || `${services.length} service type${services.length !== 1 ? 's' : ''}` },
                   { label: 'Portfolio', value: `${portfolio.length} project${portfolio.length !== 1 ? 's' : ''}` },
                   ...(creator.view_count ? [{ label: 'Profile Views', value: creator.view_count.toLocaleString() }] : []),
                 ].map(({ label, value }) => (

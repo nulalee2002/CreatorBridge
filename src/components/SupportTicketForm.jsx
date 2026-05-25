@@ -3,6 +3,7 @@ import { CheckCircle, Ticket, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
 import { sendNotificationEmail } from '../lib/notifications.js';
+import { sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
 
 const CATEGORIES = [
   { value: 'technical',        label: 'Technical Problem' },
@@ -37,6 +38,8 @@ export function SupportTicketForm({ dark, onClose }) {
     setLoading(true);
 
     const userType = profile?.role === 'creator' ? 'creator' : 'client';
+    const cleanSubject = sanitizePlainText(form.subject, 120);
+    const cleanDescription = sanitizeLongText(form.description, 3000);
 
     const { data, error: insertErr } = await supabase
       .from('support_tickets')
@@ -44,8 +47,8 @@ export function SupportTicketForm({ dark, onClose }) {
         user_id:     user.id,
         user_type:   userType,
         category:    form.category,
-        subject:     form.subject.trim(),
-        description: form.description.trim(),
+        subject:     cleanSubject,
+        description: cleanDescription,
       })
       .select('id')
       .single();

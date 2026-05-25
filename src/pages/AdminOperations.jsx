@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
+import { getPillar } from '../data/taxonomy.js';
 
 // ── Shared helpers ─────────────────────────────────────────────────────────────
 
@@ -244,7 +245,7 @@ function ViolationsTab({ dark }) {
   // Creator name lookup: creator_id (auth.users.id) → name
   const creatorNameMap = useMemo(() => {
     const m = {};
-    creators.forEach(c => { m[c.user_id] = c.name || c.display_name || c.user_id?.slice(0, 8); });
+    creators.forEach(c => { m[c.user_id] = c.name || c.business_name || c.user_id?.slice(0, 8); });
     return m;
   }, [creators]);
 
@@ -253,7 +254,7 @@ function ViolationsTab({ dark }) {
     setFetchErr('');
     const [vRes, cRes] = await Promise.all([
       supabase.from('violations').select('*').order('created_at', { ascending: false }),
-      supabase.from('creator_listings').select('id, user_id, name, display_name').limit(500),
+      supabase.from('creator_listings').select('id, user_id, name, business_name').limit(500),
     ]);
     if (vRes.error) { setFetchErr(vRes.error.message); }
     else {
@@ -535,8 +536,8 @@ function AdminGlobalSearch({ dark }) {
     const [creatorsRes, ticketsRes, violationsRes] = await Promise.all([
       supabase
         .from('creator_listings')
-        .select('id, display_name, tier, location, review_status')
-        .or(`display_name.ilike.${term},bio.ilike.${term},location.ilike.${term}`)
+        .select('id, name, business_name, tier, city, state, review_status, primary_pillar')
+        .or(`name.ilike.${term},business_name.ilike.${term},bio.ilike.${term},city.ilike.${term},state.ilike.${term},primary_pillar.ilike.${term}`)
         .limit(8),
       supabase
         .from('support_tickets')
@@ -613,15 +614,19 @@ function AdminGlobalSearch({ dark }) {
                 Creators ({results.creators.length})
               </p>
               <div className="space-y-1">
-                {results.creators.map(c => (
+                {results.creators.map(c => {
+                  const displayName = c.business_name || c.name || 'Creator listing';
+                  const location = [c.city, c.state].filter(Boolean).join(', ');
+                  const pillar = getPillar(c.primary_pillar)?.name;
+                  return (
                   <div key={c.id} className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs ${dark ? 'bg-white/[0.03] border border-white/[0.05]' : 'bg-gray-50 border border-gray-100'}`}>
-                    <span className={`font-medium ${dark ? 'text-charcoal-100' : 'text-gray-800'}`}>{c.display_name}</span>
+                    <span className={`font-medium ${dark ? 'text-charcoal-100' : 'text-gray-800'}`}>{displayName}</span>
                     <div className="flex items-center gap-2">
-                      {c.location && <span className={textSub}>{c.location}</span>}
+                      {(pillar || location) && <span className={textSub}>{[pillar, location].filter(Boolean).join(' · ')}</span>}
                       <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${dark ? 'bg-charcoal-800 text-charcoal-300' : 'bg-gray-100 text-gray-500'}`}>{c.review_status}</span>
                     </div>
                   </div>
-                ))}
+                );})}
               </div>
             </div>
           )}

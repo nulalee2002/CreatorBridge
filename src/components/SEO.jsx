@@ -2,7 +2,7 @@ import { Helmet } from 'react-helmet-async';
 
 const SITE_NAME    = 'CreatorBridge';
 const SITE_URL     = 'https://www.creatorbridge.studio';
-const DEFAULT_DESC = 'CreatorBridge connects brands with verified freelance video, podcast, event, and media creators. Secure payments. Vetted talent. Phoenix, AZ.';
+const DEFAULT_DESC = 'CreatorBridge connects US brands with verified Video Production, Photography, and Post Production creators. Secure payments, scoped briefs, and vetted talent.';
 const DEFAULT_IMG  = `${SITE_URL}/images/og-default.jpg`;
 
 /**

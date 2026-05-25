@@ -40,6 +40,14 @@ function rowRevenue(t) {
   return crFee + Math.round(proj * clFeePct / 100);
 }
 
+function normalizeTier(tier) {
+  const raw = String(tier || 'launch').toLowerCase();
+  if (raw === 'signature') return 'Signature';
+  if (raw === 'elite') return 'Elite';
+  if (raw === 'proven') return 'Proven';
+  return 'Launch';
+}
+
 // ── Mini chart: vertical bar ──────────────────────────────────────────────────
 
 function BarChart({ data, formatValue, dark }) {
@@ -185,7 +193,7 @@ export function AdminAnalytics({ dark }) {
 
   // Creators
   const approvedCreators    = creators.filter(c => c.review_status === 'approved' && c.verified && !c.is_suspended);
-  const pendingCreators     = creators.filter(c => c.review_status === 'pending');
+  const pendingCreators     = creators.filter(c => c.review_status === 'pending_review');
   const newThisMonth        = creators.filter(c => new Date(c.created_at) >= monthStart).length;
   const newLastMonth        = creators.filter(c => {
     const d = new Date(c.created_at);
@@ -197,7 +205,7 @@ export function AdminAnalytics({ dark }) {
   const TIER_COLORS = ['bg-charcoal-600', 'bg-gold-500/40', 'bg-gold-500/65', 'bg-gold-400'];
   const tierCounts = TIERS.map((tier, i) => ({
     label:    tier,
-    value:    creators.filter(c => (c.tier || 'Launch') === tier).length,
+    value:    creators.filter(c => normalizeTier(c.tier) === tier).length,
     colorCls: TIER_COLORS[i],
   }));
 

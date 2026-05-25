@@ -170,7 +170,7 @@ export function Search({ dark }) {
     <>
       <SEO
         title="Search Creators"
-        description="Find freelance video, podcast, event, drone, and media creators on CreatorBridge. Full-text search across verified professionals."
+        description="Search verified US creators by Video Production, Photography, Post Production, specialty, location, or keyword on CreatorBridge."
         url="https://www.creatorbridge.studio/search"
       />
 
