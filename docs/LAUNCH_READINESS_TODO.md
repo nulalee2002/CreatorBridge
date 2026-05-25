@@ -13,7 +13,7 @@ Updated: 2026-05-25
 - [ ] Run `npm run verify:notifications` from a network-enabled terminal after notification deploys.
 - [x] Run `npm run verify:email-provider` after Resend setup. It must return a Resend message id, not local mock mode.
 - [x] Confirm Supabase Edge Function secrets include `RESEND_API_KEY`, and optionally `RESEND_FROM_EMAIL` if the sender should differ from `CreatorBridge <drl33@creatorbridge.studio>`.
-- [ ] Confirm Supabase Dashboard → Authentication → Emails uses the Resend/custom SMTP provider for Auth emails, not the default Supabase sender.
+- [x] Confirm Supabase Dashboard → Authentication → Emails uses the Resend/custom SMTP provider for Auth emails, not the default Supabase sender.
 - [ ] Review Supabase/Resend bounce logs and remove or correct bounced recipient addresses before launch.
 - [x] Run `supabase db query --linked -f scripts/verify-data-api-grants.sql` and fix any `CHECK_RLS_OFF` or `CHECK_NO_DATA_API_GRANT` rows before UI redesign work.
 - [ ] Confirm Vercel production has `VITE_TURNSTILE_SITE_KEY` and Supabase Edge Functions have `TURNSTILE_SECRET_KEY`.
@@ -46,6 +46,7 @@ Updated: 2026-05-25
 - Notification emails now skip missing, invalid, and reserved example/test recipient domains instead of sending to fake fallback addresses.
 - Resend provider verification passed after rotating the Supabase `RESEND_API_KEY` secret. Resend showed the QA support email as delivered.
 - `npm run verify:email-provider` passed with Resend message id `8c86ecad-52d2-4f5c-a176-f9d350d41c36`.
+- Supabase Auth SMTP settings are enabled with Resend (`smtp.resend.com`, sender `drl33@creatorbridge.studio`, sender name `CreatorBridge`).
 - Supabase Data API grant/RLS audit passed with `issue_count = 0`.
 - `npm run verify:release-payment-security` passed: unauthenticated/fake-token calls are blocked, client/admin authorization is present, trusted job secret path exists, and creator payout email resolves through `creator_listings.user_id`.
 - `npm run verify:admin-support-search` passed: support ticket RLS, non-admin admin-data blocks, 3-pillar search fields, and admin finance/analytics source queries are working.
