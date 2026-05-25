@@ -12,6 +12,7 @@
     "verify:notifications": "node --env-file=.env scripts/verify-notification-center.mjs",
     "verify:email-provider": "node --env-file=.env scripts/verify-email-provider.mjs",
     "verify:release-payment-security": "node --env-file=.env scripts/verify-release-payment-security.mjs",
+    "verify:admin-support-search": "node --env-file=.env scripts/verify-admin-support-search.mjs",
     "qa:create-accounts": "node scripts/create-qa-accounts.mjs",
     "qa": "npm run build && npm run audit:platform && npm run audit:env",
     "generate:sitemap": "node scripts/generate-sitemap.js"
