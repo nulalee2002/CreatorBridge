@@ -8,9 +8,11 @@ Updated: 2026-05-25
 - [ ] Re-test Admin Operations global search after the creator listing column fix. Search should work against creator name, business name, city, state, and primary pillar.
 - [ ] Re-test final payment release notification after redeploying `release-payment`. The email must resolve the creator listing's `user_id`, not the listing id.
 - [ ] Run live browser QA for support ticket submit, admin support view/update, admin operations, admin finance CSV export, admin analytics, global creator search, and creator agreement print-to-PDF.
+- [ ] Run live browser QA for notification center: quote request notification, direct message notification, proposal accepted notification, and unread/read state.
 - [ ] Confirm Vercel production has `VITE_TURNSTILE_SITE_KEY` and Supabase Edge Functions have `TURNSTILE_SECRET_KEY`.
 - [ ] Confirm `release-payment` is protected in production by a valid user token or trusted job secret. Do not assume Supabase `verify_jwt` config from function list alone.
-- [ ] Verify `send-notification-email` cannot be abused as an open public email sender. If the function is callable without JWT, tighten it before launch.
+- [ ] Verify `send-notification-email` rejects unauthenticated calls after redeploy.
+- [ ] Choose an SMS provider before adding text notifications. Do not fake SMS until phone verification, consent, opt-out, and provider billing are configured.
 
 ## UI Redesign Queue
 
@@ -24,6 +26,7 @@ Updated: 2026-05-25
 - Support tickets, admin support, admin finance, admin operations, platform search, SEO/waitlist, admin analytics, accessibility CSS, creator agreement print, and transactional email code exist in the codebase.
 - The search migration `20260525102500_update_search_for_three_pillar_taxonomy.sql` was corrected and applied to production.
 - The old orphaned payment transactions are no longer orphaned: both queried records show `final_status = released` with transfer ids.
+- In-app notification center code now exists for quote requests, direct messages, and accepted proposals with 24-hour response due dates.
 
 ## Corrected On 2026-05-25
 
@@ -32,3 +35,4 @@ Updated: 2026-05-25
 - Admin Analytics pending creator count now uses `pending_review`, and tier counts normalize lowercase stored tiers.
 - `release-payment` final payout email now resolves the creator auth user through `creator_listings.user_id`.
 - Support tickets now sanitize subject and description before insert.
+- `send-notification-email` now requires a valid logged-in user token or trusted service-role call before sending.

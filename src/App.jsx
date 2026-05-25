@@ -13,6 +13,7 @@ import { captureReferralCode } from './components/ReferralSection.jsx';
 import { SupportChatbot } from './components/SupportChatbot.jsx';
 import { CircuitBackground } from './components/CircuitBackground.jsx';
 import { BrandLogo } from './components/BrandLogo.jsx';
+import { NotificationBell } from './components/NotificationBell.jsx';
 
 import { SERVICES, RATES, PACKAGE_TIERS } from './data/rates.js';
 import { DEFAULT_EXCHANGE_RATES } from './data/regions.js';
@@ -549,6 +550,7 @@ export default function App() {
           {/* Auth buttons */}
           {user ? (
             <div className="flex items-center gap-1">
+              <NotificationBell user={user} dark={dark} navigate={navigate} />
               <button type="button" onClick={() => navigate('/messages')}
                 aria-label="Messages"
                 className={`p-3 md:p-2 rounded-xl transition-colors ${

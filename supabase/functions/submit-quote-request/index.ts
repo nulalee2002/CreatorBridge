@@ -88,6 +88,7 @@ Deno.serve(async (req) => {
       serviceRoleKey,
       { global: { headers: { Authorization: authHeader } } },
     );
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
     const { data, error } = await supabase.rpc('submit_quote_request', quotePayload);
     if (error) {
@@ -96,6 +97,38 @@ Deno.serve(async (req) => {
 
     if (!data?.project?.id || !data?.quote?.id) {
       return jsonResponse({ error: 'Quote request saved without a complete project record', stage: 'database' }, 500);
+    }
+
+    const listingId = quotePayload?.p_listing_id;
+    if (listingId) {
+      try {
+        const { data: listing } = await supabaseAdmin
+          .from('creator_listings')
+          .select('email, business_name, name')
+          .eq('id', listingId)
+          .maybeSingle();
+
+        if (listing?.email) {
+          await fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${serviceRoleKey}`,
+            },
+            body: JSON.stringify({
+              to: listing.email,
+              template: 'quote_request_received',
+              data: {
+                creator_name: listing.business_name || listing.name || 'Creator',
+                client_name: data.quote?.client_name || 'A client',
+                project_title: data.project?.title || data.quote?.project_title || 'CreatorBridge project',
+              },
+            }),
+          });
+        }
+      } catch (emailError) {
+        console.error('Quote request email notification failed:', emailError);
+      }
     }
 
     return jsonResponse(data);

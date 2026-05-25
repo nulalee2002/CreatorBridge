@@ -1,3 +1,4 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
 
 const corsHeaders = {
@@ -69,6 +70,17 @@ function getEmailTemplate(template: string, data: Record<string, any>): { subjec
         <p><strong>Next Steps:</strong></p>
         <p>The client is now prompted to pay the 50% retainer of <strong>$${Number(data.retainer_amount || 0).toFixed(2)}</strong>. You will receive a notification as soon as the funds clear, signaling you to safely begin creative production.</p>
         <p>Please do not initiate production or deliver files until you receive the confirmation that the retainer has cleared.</p>
+      `;
+      break;
+
+    case 'quote_request_received':
+      subject = `New quote request: ${data.project_title || 'CreatorBridge project'}`;
+      bodyContent = `
+        <h2 style="color: #d4a941; margin-top: 0; font-size: 20px;">New Quote Request</h2>
+        <p>Hi ${data.creator_name || 'Creator'},</p>
+        <p>${data.client_name || 'A client'} sent you a quote request for <strong>"${data.project_title || 'a new project'}"</strong>.</p>
+        <p>Please log in to CreatorBridge, review the project details, and respond inside the platform within <strong>24 hours</strong>.</p>
+        <p>For marketplace protection, keep communication and booking activity inside CreatorBridge until the booking is active.</p>
       `;
       break;
 
@@ -173,17 +185,40 @@ function getEmailTemplate(template: string, data: Record<string, any>): { subjec
   return { subject, html };
 }
 
+async function authorizeEmailRequest(req: Request) {
+  const authHeader = req.headers.get('Authorization') ?? '';
+  const token = authHeader.replace('Bearer ', '').trim();
+  if (!token || authHeader === token) {
+    return { ok: false, status: 401, error: 'Authentication required' };
+  }
+
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+  if (!supabaseUrl || !serviceRoleKey) {
+    return { ok: false, status: 500, error: 'Notification email service is not configured' };
+  }
+
+  if (token === serviceRoleKey) return { ok: true, status: 200, error: '' };
+
+  const supabase = createClient(supabaseUrl, serviceRoleKey);
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data?.user) {
+    return { ok: false, status: 401, error: 'Invalid authentication token' };
+  }
+
+  return { ok: true, status: 200, error: '' };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
-  // Support rate limits for public calls, bypass if authenticated service role
-  const authHeader = req.headers.get('Authorization') ?? '';
-  if (!authHeader.includes('Bearer ')) {
-    const rateLimited = checkRateLimit(req, { maxRequests: 10, windowMs: 60_000 });
-    if (rateLimited) return rateLimited;
-  }
+  const authorized = await authorizeEmailRequest(req);
+  if (!authorized.ok) return jsonResponse({ error: authorized.error }, authorized.status);
+
+  const rateLimited = checkRateLimit(req, { maxRequests: 20, windowMs: 60_000 });
+  if (rateLimited) return rateLimited;
 
   try {
     const { to, template, data } = await req.json();
