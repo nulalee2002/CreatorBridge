@@ -10,6 +10,7 @@
     "audit:platform": "node scripts/audit-platform.mjs",
     "audit:env": "node scripts/audit-env.mjs",
     "verify:notifications": "node --env-file=.env scripts/verify-notification-center.mjs",
+    "verify:email-provider": "node --env-file=.env scripts/verify-email-provider.mjs",
     "qa:create-accounts": "node scripts/create-qa-accounts.mjs",
     "qa": "npm run build && npm run audit:platform && npm run audit:env",
     "generate:sitemap": "node scripts/generate-sitemap.js"

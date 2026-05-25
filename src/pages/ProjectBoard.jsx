@@ -178,21 +178,9 @@ function DeliverySubmitModal({ project, dark, onClose, onDelivered, creatorName 
       deliveryNotes: cleanNotes,
     };
     
-    let clientEmail = 'client@example.com';
+    let clientEmail = project.clientEmail || project.client_email || '';
     try {
       if (supabaseConfigured && isUuid(project.id)) {
-        const clientId = project.clientId || project.client_id;
-        if (clientId) {
-          const { data: clientProfile } = await supabase
-            .from('profiles')
-            .select('email')
-            .eq('id', clientId)
-            .maybeSingle();
-          if (clientProfile?.email) {
-            clientEmail = clientProfile.email;
-          }
-        }
-
         const { data, error: deliveryError } = await supabase
           .from('projects')
           .update({
@@ -692,7 +680,7 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
     saveProjects(nextProjects);
 
     // Send application_received email
-    sendNotificationEmail(creatorListing?.email || 'creator@example.com', 'application_received', {
+    sendNotificationEmail(creatorListing?.email, 'application_received', {
       creator_name: app.creatorName,
       project_title: project.title
     });
@@ -1102,7 +1090,7 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
       acceptedAt: now,
     };
 
-    let creatorEmail = 'creator@example.com';
+    let creatorEmail = app.creatorEmail || app.creator_email || '';
     if (supabaseConfigured && isUuid(localProject.id) && isUuid(app.id)) {
       try {
         const { data: creatorData } = await supabase

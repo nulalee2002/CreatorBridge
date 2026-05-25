@@ -10,6 +10,9 @@ Updated: 2026-05-25
 - [ ] Run live browser QA for support ticket submit, admin support view/update, admin operations, admin finance CSV export, admin analytics, global creator search, and creator agreement print-to-PDF.
 - [ ] Run live browser QA for notification center: quote request notification, direct message notification, proposal accepted notification, and unread/read state.
 - [ ] Run `npm run verify:notifications` from a network-enabled terminal after notification deploys.
+- [ ] Run `npm run verify:email-provider` after Resend setup. It must return a Resend message id, not local mock mode.
+- [ ] Confirm Supabase Dashboard → Authentication → Emails uses the Resend/custom SMTP provider for Auth emails, not the default Supabase sender.
+- [ ] Review Supabase/Resend bounce logs and remove or correct bounced recipient addresses before launch.
 - [ ] Confirm Vercel production has `VITE_TURNSTILE_SITE_KEY` and Supabase Edge Functions have `TURNSTILE_SECRET_KEY`.
 - [ ] Confirm `release-payment` is protected in production by a valid user token or trusted job secret. Do not assume Supabase `verify_jwt` config from function list alone.
 - [ ] Verify `send-notification-email` rejects unauthenticated calls after redeploy.
@@ -37,3 +40,4 @@ Updated: 2026-05-25
 - `release-payment` final payout email now resolves the creator auth user through `creator_listings.user_id`.
 - Support tickets now sanitize subject and description before insert.
 - `send-notification-email` now requires a valid logged-in user token or trusted service-role call before sending.
+- Notification emails now skip missing, invalid, and reserved example/test recipient domains instead of sending to fake fallback addresses.
