@@ -8,7 +8,7 @@ Updated: 2026-05-25
 - [ ] Re-test Admin Operations global search after the creator listing column fix. Search should work against creator name, business name, city, state, and primary pillar.
 - [x] Run `npm run verify:release-payment-security` after redeploying `release-payment`. It must prove unauthenticated calls are blocked and the final payout email resolves the creator listing's `user_id`, not the listing id.
 - [ ] Run live browser QA for support ticket submit, admin support view/update, admin operations, admin finance CSV export, admin analytics, global creator search, and creator agreement print-to-PDF.
-- [ ] Run `npm run verify:admin-support-search` to verify support ticket RLS, non-admin admin-data blocks, platform search 3-pillar fields, and admin finance/analytics source queries.
+- [x] Run `npm run verify:admin-support-search` to verify support ticket RLS, non-admin admin-data blocks, platform search 3-pillar fields, and admin finance/analytics source queries.
 - [ ] Run live browser QA for notification center: quote request notification, direct message notification, proposal accepted notification, and unread/read state.
 - [ ] Run `npm run verify:notifications` from a network-enabled terminal after notification deploys.
 - [ ] Run `npm run verify:email-provider` after Resend setup. It must return a Resend message id, not local mock mode.
@@ -47,3 +47,4 @@ Updated: 2026-05-25
 - Resend provider verification passed after rotating the Supabase `RESEND_API_KEY` secret. Resend showed the QA support email as delivered.
 - Supabase Data API grant/RLS audit passed with `issue_count = 0`.
 - `npm run verify:release-payment-security` passed: unauthenticated/fake-token calls are blocked, client/admin authorization is present, trusted job secret path exists, and creator payout email resolves through `creator_listings.user_id`.
+- `npm run verify:admin-support-search` passed: support ticket RLS, non-admin admin-data blocks, 3-pillar search fields, and admin finance/analytics source queries are working.
