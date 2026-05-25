@@ -14,24 +14,36 @@ assert(SUPABASE_URL, 'Missing VITE_SUPABASE_URL or SUPABASE_URL');
 assert(SUPABASE_ANON_KEY, 'Missing VITE_SUPABASE_ANON_KEY or SUPABASE_ANON_KEY');
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const { error: signInError } = await supabase.auth.signInWithPassword({
+const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
   email: CLIENT_EMAIL,
   password: CLIENT_PASSWORD,
 });
 if (signInError) throw signInError;
 
-const { data, error } = await supabase.functions.invoke('send-notification-email', {
-  body: {
+const accessToken = authData?.session?.access_token;
+assert(accessToken, 'Could not get a signed-in access token for email verification');
+
+const response = await fetch(`${SUPABASE_URL}/functions/v1/send-notification-email`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${accessToken}`,
+  },
+  body: JSON.stringify({
     to: TEST_RECIPIENT,
     template: 'support_ticket_opened',
     data: {
       user_name: 'CreatorBridge QA',
       ticket_reference: `EMAIL-QA-${Date.now()}`,
     },
-  },
+  }),
 });
 
-if (error) throw error;
+const data = await response.json().catch(async () => ({ raw: await response.text() }));
+if (!response.ok) {
+  throw new Error(`Email function failed with HTTP ${response.status}: ${JSON.stringify(data)}`);
+}
+
 assert(data?.success === true, 'Email function did not report success');
 assert(data?.logged !== true, 'Email function is in local mock mode; RESEND_API_KEY is not configured in Supabase secrets');
 assert(Boolean(data?.id), 'Resend did not return an email id');
