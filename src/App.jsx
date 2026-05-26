@@ -591,7 +591,7 @@ export default function App() {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           {/* Join dropdown */}
-          {!user && (
+          {!user && !isPublicHandoffRoute && (
           <div className="relative" ref={joinDropdownRef}>
             <button
               type="button"
@@ -1127,7 +1127,7 @@ export default function App() {
       )}
 
       {/* ── Footer ── */}
-      {activeTab !== 'calculator' && location.pathname.startsWith('/creator') ? null : (
+      {false ? null : (
         <footer className="site">
           <div className="inner">
             <div className="grid">
