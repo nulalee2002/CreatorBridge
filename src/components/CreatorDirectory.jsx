@@ -1236,6 +1236,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
   const [availFilter, setAvailFilter] = useState('all');
 
   const isGuest = !user;
+  const approvedListingCount = listings.filter(isApprovedCreator).length;
 
   useEffect(() => {
     if (!supabaseConfigured || !supabase || listings.length === 0) return;
@@ -1565,24 +1566,52 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
   // ── Search mode (default) ──
   return (
     <div className="w-full">
-      {/* Search Header Banner */}
-      <div className="cb-home-wide mx-auto w-full px-5 sm:px-8 lg:px-14 2xl:px-16 py-8 md:py-12">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 border-b border-white/[0.08] pb-8">
-          <div>
-            <p className="text-gold-400 mb-2 font-semibold" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+      <div className="cb-home-wide mx-auto w-full px-5 sm:px-8 lg:px-14 2xl:px-16 py-10 md:py-14">
+        <div className="mb-4 flex items-center gap-2 text-[11px] text-charcoal-500">
+          <button type="button" onClick={() => navigate('/')} className="transition-colors hover:text-white">Home</button>
+          <span className="opacity-40">/</span>
+          <span className="text-charcoal-200">Find Creators</span>
+        </div>
+
+        <div className="grid gap-6 border-b border-white/[0.08] pb-8 lg:grid-cols-12 lg:items-end">
+          <div className="lg:col-span-7">
+            <p className="eyebrow mb-2">
               Browse the network · US-only
             </p>
-            <h1 className="font-display text-4xl md:text-5xl font-bold text-white mb-2 leading-tight">
-              Verified creators, sorted by what matters.
+            <h1 className="serif text-4xl md:text-5xl font-medium leading-[1.05] text-white">
+              Verified creators, <span className="gold-text">sorted by what matters</span>.
             </h1>
-            <p className="text-sm text-charcoal-400 max-w-2xl">
+            <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--text-secondary)]">
               Filter by primary pillar — Video Production, Photography, or Post Production — then narrow by specialty. Every creator commits to one pillar and 1–3 specialties.
             </p>
           </div>
           
-          {/* Sorting and zip layout at top right */}
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="relative flex items-center">
+          <div className="lg:col-span-5">
+            <div className="liquid-glass flex items-center gap-2 rounded-xl p-1.5">
+              <Search size={16} className="ml-2 text-charcoal-500" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search by name, studio, specialty, city"
+                className="min-w-0 flex-1 bg-transparent py-2 text-sm text-white outline-none placeholder:text-charcoal-500"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Clear search"
+                  className="rounded-lg p-2 text-charcoal-500 transition-colors hover:text-white"
+                >
+                  <X size={15} />
+                </button>
+              )}
+              <button type="button" className="btn-gold text-[11px]" style={{ padding: '0.5rem 1rem' }}>
+                Search
+              </button>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
+              <div className="relative flex items-center">
               <MapPin size={14} className="absolute left-3 pointer-events-none text-charcoal-400" />
               <input 
                 type="text" 
@@ -1590,14 +1619,14 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                 value={zip} 
                 onChange={e => setZip(e.target.value.replace(/\D/g,''))}
                 placeholder="ZIP Code..."
-                className="w-32 pl-9 pr-3 py-2 text-xs rounded-xl border border-white/[0.08] outline-none bg-charcoal-900 text-white placeholder-charcoal-500 focus:border-gold-500" 
+                className="w-32 rounded-xl border border-white/[0.08] bg-charcoal-950/70 py-2 pl-9 pr-3 text-xs text-white outline-none placeholder-charcoal-500 focus:border-gold-500" 
               />
             </div>
             
             <select 
               value={sortBy} 
               onChange={e => setSortBy(e.target.value)}
-              className="px-3 py-2 text-xs rounded-xl border border-white/[0.08] outline-none bg-charcoal-900 text-white focus:border-gold-500"
+              className="rounded-xl border border-white/[0.08] bg-charcoal-950/70 px-3 py-2 text-xs text-white outline-none focus:border-gold-500"
             >
               <option value="rating">Top Rated</option>
               <option value="reviews">Most Reviews</option>
@@ -1605,46 +1634,45 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
               <option value="price_asc">Price: Low to High</option>
               <option value="price_desc">Price: High to Low</option>
             </select>
+            </div>
           </div>
         </div>
 
-        {/* Global Search Input Box */}
-        <div className="relative flex items-center mb-8 bg-charcoal-950/80 rounded-xl border border-white/[0.08] focus-within:border-gold-500/50 shadow-md">
-          <Search size={18} className="absolute left-4 pointer-events-none text-charcoal-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Search by name, studio, specialty, city..."
-            className="w-full pl-12 pr-4 py-4 text-sm bg-transparent outline-none text-white placeholder-charcoal-500"
-          />
-          {searchQuery && (
-            <button 
-              type="button" 
-              onClick={() => setSearchQuery('')}
-              className="absolute right-4 p-1 text-charcoal-400 hover:text-white transition-colors"
-            >
-              <X size={16} />
-            </button>
-          )}
-        </div>
-
         {/* Main Grid: Sidebar Filters + Creator Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 items-start">
+        <div className="mt-8 grid grid-cols-1 items-start gap-8 lg:grid-cols-[280px_1fr]">
           
           {/* Left Column: Sticky Filters Sidebar */}
-          <aside className="lg:sticky lg:top-24 space-y-6 bg-charcoal-900/50 border border-white/[0.08] p-5 rounded-2xl">
+          <aside className="liquid-glass space-y-5 rounded-2xl p-5 lg:sticky lg:top-24">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="eyebrow">Filters</div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setServiceFilter('all');
+                  setPillarFilter('all');
+                  setSubNicheFilter('all');
+                  setTierFilter('all');
+                  setBudgetFilter('all');
+                  setAvailFilter('all');
+                  setZip('');
+                }}
+                className="text-[10px] uppercase tracking-wider text-charcoal-500 transition-colors hover:text-gold-400"
+              >
+                Reset
+              </button>
+            </div>
             <div>
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Service pillar</h3>
+              <h3 className="mb-2 text-[10px] uppercase tracking-[0.2em] text-charcoal-500">Primary pillar</h3>
               <div className="space-y-1">
                 <button
                   type="button"
                   onClick={() => { setPillarFilter('all'); setSubNicheFilter('all'); }}
                   className={`filter-chip ${pillarFilter === 'all' ? 'active' : ''}`}
                 >
-                  <span>All pillars</span>
+                  <span>Any pillar</span>
                   <span className="count">
-                    {listings.filter(isApprovedCreator).length}
+                    {approvedListingCount}
                   </span>
                 </button>
                 {Object.values(PILLARS).map(pillar => {
@@ -1663,7 +1691,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                       className={`filter-chip ${pillarFilter === pillar.id ? 'active' : ''}`}
                     >
                       <span className="flex items-center gap-2">
-                        <span>{pillar.icon}</span>
+                        <span className="font-display text-[11px] text-gold-400/80">{`0${Object.values(PILLARS).findIndex(item => item.id === pillar.id) + 1}`}</span>
                         <span>{pillar.name}</span>
                       </span>
                       <span className="count">{count}</span>
@@ -1674,8 +1702,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
 
               {/* Sub-niche secondary filter: only shows when a pillar is selected */}
               {pillarFilter !== 'all' && (
-                <div className="mt-4 pl-2 border-l border-gold-500/20">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gold-400 mb-2 ml-1">Specialty</p>
+                <div className="specialty-list">
                   <div className="space-y-1">
                     <button
                       type="button"
@@ -1704,13 +1731,13 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
             </div>
 
             <div className="border-t border-white/[0.06] pt-5">
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Creator Tier</h3>
+              <h3 className="mb-2 text-[10px] uppercase tracking-[0.2em] text-charcoal-500">Tier</h3>
               <div className="space-y-1">
                 {[
-                  { id: 'all', label: 'All Tiers' },
-                  { id: 'launch', label: 'Launch' },
-                  { id: 'pro', label: 'Pro' },
-                  { id: 'signature', label: 'Signature' }
+                  { id: 'all', label: 'Any tier' },
+                  { id: 'signature', label: 'Elite' },
+                  { id: 'pro', label: 'Proven' },
+                  { id: 'launch', label: 'Verified' }
                 ].map(tier => {
                   const count = listings.filter(c => {
                     const approved = isApprovedCreator(c) || c.user_id === user?.id;
@@ -1733,10 +1760,10 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
             </div>
 
             <div className="border-t border-white/[0.06] pt-5">
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Budget signals</h3>
+              <h3 className="mb-2 text-[10px] uppercase tracking-[0.2em] text-charcoal-500">Budget · USD</h3>
               <div className="space-y-1">
                 {[
-                  { id: 'all', label: 'All Budgets' },
+                  { id: 'all', label: 'Any budget' },
                   { id: 'under1000', label: 'Under $1,000' },
                   { id: 'under2500', label: 'Under $2,500' },
                   { id: 'over2500', label: 'Over $2,500' }
@@ -1754,11 +1781,11 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
             </div>
 
             <div className="border-t border-white/[0.06] pt-5">
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Availability</h3>
+              <h3 className="mb-2 text-[10px] uppercase tracking-[0.2em] text-charcoal-500">Availability</h3>
               <div className="space-y-1">
                 {[
-                  { id: 'all', label: 'All Statuses' },
-                  { id: 'available', label: 'Available Now' }
+                  { id: 'all', label: 'Any availability' },
+                  { id: 'available', label: 'Open now' }
                 ].map(a => (
                   <button
                     key={a.id}
@@ -1774,7 +1801,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
             
             {/* Quick guided discovery match widget inside sidebar */}
             <div className="border-t border-white/[0.06] pt-5">
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Guided Discovery</h3>
+              <h3 className="mb-3 text-[10px] uppercase tracking-[0.2em] text-charcoal-500">Guided Discovery</h3>
               <FastMatch dark={dark} />
             </div>
           </aside>
@@ -1807,6 +1834,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                 {pillarFilter !== 'all' && ` in ${PILLARS[pillarFilter]?.name || ''}`}
                 {subNicheFilter !== 'all' && ` · ${getSubNiche(subNicheFilter)?.label || ''}`}
                 {zipCity && ` near ${zipCity}`}
+                <span className="text-charcoal-600"> · {approvedListingCount} verified in network</span>
               </p>
             </div>
 

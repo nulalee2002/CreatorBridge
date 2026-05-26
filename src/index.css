@@ -1029,6 +1029,13 @@ body.mouse-active .mouse-glow {
 }
 .filter-chip.active .count { color: var(--gold); opacity: 0.8; }
 
+.specialty-list {
+  margin-top: 0.5rem;
+  margin-left: 0.5rem;
+  padding: 0.5rem 0.5rem 0.5rem 0.85rem;
+  border-left: 1px solid rgba(201,168,76,0.18);
+}
+
 .creator-card {
   display: flex; flex-direction: column;
   background: rgba(20,20,24,0.45);
