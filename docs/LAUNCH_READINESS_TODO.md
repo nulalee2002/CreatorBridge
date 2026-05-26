@@ -10,8 +10,8 @@ Updated: 2026-05-25
 - [ ] Run live browser QA for support ticket submit, admin support view/update, admin operations, admin finance CSV export, admin analytics, global creator search, and creator agreement print-to-PDF.
 - [x] Run `npm run verify:admin-support-search` to verify support ticket RLS, non-admin admin-data blocks, platform search 3-pillar fields, and admin finance/analytics source queries.
 - [ ] Run live browser QA for notification center: quote request notification, direct message notification, proposal accepted notification, and unread/read state.
-- [ ] Run `npm run verify:notifications` from a network-enabled terminal after notification deploys.
-- [ ] Run `npm run verify:launch-sweep` from a network-enabled terminal before UI redesign implementation. This runs build, notification QA, Resend, release-payment security, and admin/support/search in one pass.
+- [x] Run `npm run verify:notifications` from a network-enabled terminal after notification deploys.
+- [x] Run `npm run verify:launch-sweep` from a network-enabled terminal before UI redesign implementation. This runs build, notification QA, Resend, release-payment security, and admin/support/search in one pass.
 - [x] Run `npm run verify:email-provider` after Resend setup. It must return a Resend message id, not local mock mode.
 - [x] Confirm Supabase Edge Function secrets include `RESEND_API_KEY`, and optionally `RESEND_FROM_EMAIL` if the sender should differ from `CreatorBridge <drl33@creatorbridge.studio>`.
 - [x] Confirm Supabase Dashboard → Authentication → Emails uses the Resend/custom SMTP provider for Auth emails, not the default Supabase sender.
@@ -19,7 +19,7 @@ Updated: 2026-05-25
 - [x] Run `supabase db query --linked -f scripts/verify-data-api-grants.sql` and fix any `CHECK_RLS_OFF` or `CHECK_NO_DATA_API_GRANT` rows before UI redesign work.
 - [ ] Confirm Vercel production has `VITE_TURNSTILE_SITE_KEY` and Supabase Edge Functions have `TURNSTILE_SECRET_KEY`.
 - [x] Confirm `release-payment` is protected in production by a valid user token or trusted job secret. Do not assume Supabase `verify_jwt` config from function list alone.
-- [ ] Verify `send-notification-email` rejects unauthenticated calls after redeploy.
+- [x] Verify `send-notification-email` rejects unauthenticated calls after redeploy.
 - [ ] Choose an SMS provider before adding text notifications. Do not fake SMS until phone verification, consent, opt-out, and provider billing are configured.
 
 ## UI Redesign Queue
@@ -52,5 +52,7 @@ Updated: 2026-05-25
 - `npm run verify:release-payment-security` passed: unauthenticated/fake-token calls are blocked, client/admin authorization is present, trusted job secret path exists, and creator payout email resolves through `creator_listings.user_id`.
 - `npm run verify:admin-support-search` passed: support ticket RLS, non-admin admin-data blocks, 3-pillar search fields, and admin finance/analytics source queries are working.
 - Added `npm run verify:launch-sweep` so the final automated pre-UI checks can be run as one command.
+- `npm run verify:launch-sweep` passed on 2026-05-25: build, notifications, Resend, release-payment security, and admin/support/search all passed.
+- Notification verifier passed: direct-message notification created, 24-hour response due date set, cross-user RLS blocked, mark-read worked, and unauthenticated email calls were blocked.
 - Request quote onboarding now uses the 3 primary pillars and taxonomy specialties instead of old standalone service lanes.
 - Current homepage/join/footer copy was adjusted to stop presenting podcast, drone, and events as standalone primary categories.
