@@ -465,6 +465,14 @@ export default function App() {
     : location.pathname.startsWith('/find')       ? 'directory'
     : location.pathname.startsWith('/search')     ? 'search'
     : '';
+  const isPublicHandoffRoute = (
+    location.pathname === '/' ||
+    location.pathname.startsWith('/find') ||
+    location.pathname.startsWith('/projects') ||
+    location.pathname.startsWith('/network') ||
+    location.pathname.startsWith('/calculator') ||
+    location.pathname.startsWith('/creator/')
+  );
 
   // Persist state
   useEffect(() => {
@@ -660,7 +668,12 @@ export default function App() {
           )}
 
           {/* Auth buttons */}
-          {user ? (
+          {isPublicHandoffRoute ? (
+            <button type="button" onClick={() => user ? navigate(authProfile?.role === 'creator' ? '/dashboard' : '/client') : openAuth('login')}
+              className="btn-gold">
+              Sign In
+            </button>
+          ) : user ? (
             <div className="flex items-center gap-1">
               <NotificationBell user={user} dark={dark} navigate={navigate} />
               <button type="button" onClick={() => navigate('/messages')}
