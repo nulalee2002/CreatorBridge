@@ -502,12 +502,12 @@ function buildBookingRecords(bookingData, user, profile) {
 function makeInitialMessages(draft) {
   const welcome = {
     role: 'assistant',
-    content: "Hey, I'm Bridge. Whether you're looking to book a creator, build a quote, or just have questions about how this works — I've got you.",
+    content: "Hi — I'm <strong>Bridge</strong>, your concierge for verified US production talent.",
   };
   const prompts = {
     role: 'assistant',
     kind: 'welcome-prompts',
-    content: 'Here\'s what I can help with:',
+    content: 'Tell me what you\'re producing and I\'ll route you to the right pillar — <span class="g">Video Production</span>, <span class="g">Photography</span>, or <span class="g">Post Production</span> — or help you post a brief.',
   };
   if (!draft) return [welcome, prompts];
   return [
@@ -1075,15 +1075,19 @@ export function SupportChatbot({ dark = true }) {
                   <div className="cb-chat-quick">
                     <p className="cb-chat-quick-label">Quick paths</p>
                     {[
-                      { label: 'Find video production', text: 'I need video production' },
-                      { label: 'Find photography', text: 'I need photography' },
-                      { label: 'Find post production', text: 'I need post production' },
-                      { label: 'Post a production brief', text: 'I want to post a production brief' },
-                      { label: 'Calculate a rate', text: 'I want to send a quote' },
+                      { label: 'Find a videographer', action: () => { setOpen(false); navigate('/find?pillar=video'); } },
+                      { label: 'Find a photographer', action: () => { setOpen(false); navigate('/find?pillar=photo'); } },
+                      { label: 'Find an editor / colorist', action: () => { setOpen(false); navigate('/find?pillar=post'); } },
+                      { label: 'Post a production brief', action: () => { setOpen(false); navigate('/projects'); } },
+                      { label: 'Calculate a rate (creators)', action: () => { setOpen(false); navigate('/calculator'); } },
                       { label: 'How CreatorBridge works', text: 'How does CreatorBridge work?' },
-                    ].map(({ label, text }, index) => (
-                      <button key={text} type="button"
+                    ].map(({ label, text, action }, index) => (
+                      <button key={label} type="button"
                         onClick={() => {
+                          if (action) {
+                            action();
+                            return;
+                          }
                           setInput(text);
                           setTimeout(() => {
                             const syntheticInput = text;
