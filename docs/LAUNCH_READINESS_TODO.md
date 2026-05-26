@@ -17,7 +17,7 @@ Updated: 2026-05-25
 - [x] Confirm Supabase Dashboard → Authentication → Emails uses the Resend/custom SMTP provider for Auth emails, not the default Supabase sender.
 - [ ] Review Supabase/Resend bounce logs and remove or correct bounced recipient addresses before launch.
 - [x] Run `supabase db query --linked -f scripts/verify-data-api-grants.sql` and fix any `CHECK_RLS_OFF` or `CHECK_NO_DATA_API_GRANT` rows before UI redesign work.
-- [ ] Run `npm run verify:external-env` to confirm Vercel production has `VITE_TURNSTILE_SITE_KEY` and Supabase Edge Functions have `TURNSTILE_SECRET_KEY` plus `RESEND_API_KEY`.
+- [x] Run `npm run verify:external-env` to confirm Vercel production has `VITE_TURNSTILE_SITE_KEY` and Supabase Edge Functions have `TURNSTILE_SECRET_KEY` plus `RESEND_API_KEY`.
 - [x] Confirm `release-payment` is protected in production by a valid user token or trusted job secret. Do not assume Supabase `verify_jwt` config from function list alone.
 - [x] Verify `send-notification-email` rejects unauthenticated calls after redeploy.
 - [ ] Choose an SMS provider before adding text notifications. Do not fake SMS until phone verification, consent, opt-out, and provider billing are configured.
@@ -56,3 +56,4 @@ Updated: 2026-05-25
 - Notification verifier passed: direct-message notification created, 24-hour response due date set, cross-user RLS blocked, mark-read worked, and unauthenticated email calls were blocked.
 - Request quote onboarding now uses the 3 primary pillars and taxonomy specialties instead of old standalone service lanes.
 - Current homepage/join/footer copy was adjusted to stop presenting podcast, drone, and events as standalone primary categories.
+- `npm run verify:external-env` passed: Vercel production has `VITE_TURNSTILE_SITE_KEY`, and Supabase secrets have `TURNSTILE_SECRET_KEY` plus `RESEND_API_KEY`.
