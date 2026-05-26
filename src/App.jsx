@@ -837,24 +837,29 @@ export default function App() {
       {/* ── Calculator (rendered outside Routes to preserve state) ── */}
       {activeTab === 'calculator' && (
       <Suspense fallback={<RouteLoading dark={dark} />}>
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-10 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6">
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-10 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6">
 
         {/* ── Calculator purpose label ── */}
         <div className="col-span-full">
-          <div className={`relative overflow-hidden rounded-[28px] border p-6 md:p-8 ${
-            dark ? 'bg-charcoal-900/72 border-white/[0.08] shadow-[0_28px_90px_rgba(0,0,0,0.28)]' : 'bg-white border-gray-200'
+          <div className={`relative overflow-hidden rounded-[28px] border p-6 md:p-8 liquid-glass ${
+            dark ? 'border-white/[0.08] shadow-[0_28px_90px_rgba(0,0,0,0.28)]' : 'bg-white border-gray-200'
           }`}>
             <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/60 to-transparent" />
             <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-6 items-stretch">
               <div>
-                <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
-                  Creator Pricing Tool
+                <p className={`mb-5 text-xs ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
+                  <Link to="/" className="hover:text-gold-300 transition-colors">Home</Link>
+                  <span className="mx-2 text-gold-500/70">/</span>
+                  <span className={dark ? 'text-white' : 'text-gray-900'}>Rate Calculator</span>
                 </p>
-                <h1 className={`font-display font-bold text-4xl md:text-5xl leading-tight ${dark ? 'text-white' : 'text-gray-900'}`}>
-                  Build rates with professional confidence.
+                <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+                  Creator pricing tool · US markets
+                </p>
+                <h1 className={`font-display font-bold text-4xl md:text-6xl leading-tight ${dark ? 'text-white' : 'text-gray-900'}`}>
+                  Build rates with <span className="gold-text">professional confidence</span>.
                 </h1>
                 <p className={`mt-4 text-sm md:text-base leading-7 max-w-2xl ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
-                  Use this creator-side tool to calculate service pricing, quote structure, costs, margin, and package fit before sending work to a client.
+                  Calibrate scope, US market, and experience into a USD quote that holds up. Pick your primary pillar first, then build the quote around real production work.
                 </p>
                 <div className={`mt-6 max-w-md rounded-2xl border p-4 ${dark ? 'bg-gold-500/10 border-gold-500/20' : 'bg-gold-50 border-gold-200'}`}>
                   <Zap size={18} className="text-gold-400 mb-3" />
@@ -888,11 +893,11 @@ export default function App() {
         <div className="space-y-4 min-w-0">
 
           {/* Region + Experience row */}
-          <div className={`${cardCls} p-4`}>
+          <div className={`${cardCls} p-5 liquid-glass`}>
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 items-end">
               <div>
                 <p className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
-                  Your Market
+                  US market
                 </p>
                 <StateCitySelector
                   value={calcLocation}
@@ -905,7 +910,7 @@ export default function App() {
               </div>
               <div>
                 <p className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
-                  Experience Level
+                  Experience
                 </p>
                 <div className={`flex rounded-xl border overflow-hidden ${dark ? 'border-white/[0.09]' : 'border-gray-200'}`}>
                   {[
@@ -930,10 +935,15 @@ export default function App() {
           </div>
 
           {/* Service selector */}
-          <div className={`${cardCls} p-4`}>
-            <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
-              Primary Pillar
-            </p>
+          <div className={`${cardCls} p-5 liquid-glass`}>
+            <div className="mb-4">
+              <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
+                Primary pillar
+              </p>
+              <p className={`text-sm ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
+                Choose one. This sets the available rate structure for your quote.
+              </p>
+            </div>
             <ServiceSelector
               value={state.serviceId}
               onChange={v => dispatch({ type: 'SET_SERVICE', value: v })}
@@ -943,9 +953,9 @@ export default function App() {
 
           {/* Line Item Builder */}
           {state.serviceId && (
-            <div className={`${cardCls} p-4`}>
+            <div className={`${cardCls} p-5 liquid-glass`}>
               <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
-                Build Your Quote
+                Scope of work
               </p>
 
               <div className="grid grid-cols-2 gap-3 mb-4">
