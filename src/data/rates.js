@@ -1,7 +1,9 @@
 // ============================================================
-// COMPREHENSIVE INDUSTRY RATE DATABASE
-// All rates in the region's native currency
-// US: USD | Canada: CAD | UK: GBP | Europe: EUR
+// CREATORBRIDGE RATE DATABASE
+// Public taxonomy is US-only and organized into three primary pillars:
+// Video Production, Photography, and Post Production.
+// Some legacy service ids remain as internal aliases so existing packages,
+// quote records, and creator service rows continue to resolve safely.
 // ============================================================
 
 function r(low, high) {
@@ -485,18 +487,18 @@ export const SERVICES = {
   },
   drone: {
     id: 'drone',
-    name: 'Drone / Aerial',
+    name: 'Video Production · Drone & Aerial Video',
     icon: '🚁',
     color: 'from-gold-500 to-charcoal-800',
     accent: '#d4a941',
     subtypes: ['Real Estate', 'Event', 'Commercial', 'Mapping/Survey', 'Film/TV'],
-    description: 'FAA Part 107, photo, video, mapping, real estate',
+    description: 'FAA Part 107 aerial video, real estate, commercial, and film work',
     primaryRates: ['hourlyPhoto', 'hourlyVideo', 'editingHourly'],
     packageRates: ['halfDay', 'fullDay', 'realEstatePerProperty', 'mappingPerAcre'],
   },
   social: {
     id: 'social',
-    name: 'Brand & Short-Form Content',
+    name: 'Video Production · Short-Form & Social',
     icon: '📱',
     color: 'from-gold-400 to-charcoal-900',
     accent: '#c99a2e',
@@ -507,7 +509,7 @@ export const SERVICES = {
   },
   postProduction: {
     id: 'postProduction',
-    name: 'Editing & Post',
+    name: 'Post Production',
     icon: '🎛️',
     color: 'from-gold-600 to-charcoal-900',
     accent: '#b88622',
@@ -518,7 +520,7 @@ export const SERVICES = {
   },
   liveevents: {
     id: 'liveevents',
-    name: 'Live Event Coverage',
+    name: 'Video Production · Event & Conference Video',
     icon: '🎪',
     color: 'from-gold-500 to-charcoal-950',
     accent: '#d4a941',
@@ -529,7 +531,7 @@ export const SERVICES = {
   },
   corporate_events: {
     id: 'corporate_events',
-    name: 'Corporate Events',
+    name: 'Video Production · Corporate & Internal Video',
     icon: '🏢',
     color: 'from-gold-400 to-gold-800',
     accent: '#c99a2e',
@@ -540,7 +542,7 @@ export const SERVICES = {
   },
   podcast: {
     id: 'podcast',
-    name: 'Podcast Production',
+    name: 'Post Production · Podcast Audio Editing',
     icon: '🎙️',
     color: 'from-gold-300 to-charcoal-900',
     accent: '#d4a941',
@@ -551,7 +553,7 @@ export const SERVICES = {
   },
 };
 
-export const SERVICE_TYPE_OPTIONS = Object.values(SERVICES).map(service => service.name);
+export const SERVICE_TYPE_OPTIONS = ['Video Production', 'Photography', 'Post Production'];
 
 export const MARKETPLACE_CATEGORIES = [
   {
@@ -565,8 +567,8 @@ export const MARKETPLACE_CATEGORIES = [
     id: 'video',
     name: 'Video Production',
     icon: '🎬',
-    description: 'Brand films, commercial video, documentary, campaign work',
-    serviceIds: ['video'],
+    description: 'Brand films, events, drone, social, corporate, documentary, campaign work',
+    serviceIds: ['video', 'drone', 'social', 'liveevents', 'corporate_events'],
   },
   {
     id: 'photo',
@@ -576,44 +578,33 @@ export const MARKETPLACE_CATEGORIES = [
     serviceIds: ['photography'],
   },
   {
-    id: 'podcast',
-    name: 'Podcast Production',
-    icon: '🎙️',
-    description: 'Audio, video podcast, launch packages, retainers',
-    serviceIds: ['podcast'],
-  },
-  {
-    id: 'aerial',
-    name: 'Drone & Aerial',
-    icon: '🚁',
-    description: 'Licensed aerial photo, video, mapping, property work',
-    serviceIds: ['drone'],
-  },
-  {
-    id: 'events',
-    name: 'Events & Corporate',
-    icon: '🏢',
-    description: 'Conferences, launches, live coverage, executive events',
-    serviceIds: ['liveevents', 'corporate_events'],
-  },
-  {
-    id: 'brand_content',
-    name: 'Brand Content',
-    icon: '📱',
-    description: 'Short-form assets, UGC, campaign content, monthly packages',
-    serviceIds: ['social'],
-  },
-  {
-    id: 'editing',
-    name: 'Editing & Post',
+    id: 'post',
+    name: 'Post Production',
     icon: '🎛️',
-    description: 'Editing, color, audio, retouching, motion graphics',
-    serviceIds: ['postProduction'],
+    description: 'Editing, color, sound, motion graphics, podcast audio, retouching',
+    serviceIds: ['postProduction', 'podcast'],
   },
 ];
 
+const MARKETPLACE_CATEGORY_ALIASES = {
+  photography: 'photo',
+  post_production: 'post',
+  postProduction: 'post',
+  editing: 'post',
+  podcast: 'post',
+  aerial: 'video',
+  drone: 'video',
+  events: 'video',
+  event: 'video',
+  corporate: 'video',
+  corporate_events: 'video',
+  brand_content: 'video',
+  social: 'video',
+};
+
 export function getMarketplaceCategory(categoryId) {
-  return MARKETPLACE_CATEGORIES.find(category => category.id === categoryId) || MARKETPLACE_CATEGORIES[0];
+  const resolvedId = MARKETPLACE_CATEGORY_ALIASES[categoryId] || categoryId;
+  return MARKETPLACE_CATEGORIES.find(category => category.id === resolvedId) || MARKETPLACE_CATEGORIES[0];
 }
 
 export function getMarketplaceServiceIds(categoryId) {
@@ -638,6 +629,8 @@ const SERVICE_ID_ALIASES = {
   'Drone/Aerial': 'drone',
   'Drone / Aerial': 'drone',
   'Drone and Aerial': 'drone',
+  'Drone & Aerial Video': 'drone',
+  'Drone and Aerial Video': 'drone',
   social: 'social',
   socialmedia: 'social',
   social_media: 'social',
@@ -645,6 +638,8 @@ const SERVICE_ID_ALIASES = {
   'Social Media Content': 'social',
   'Brand & Short-Form Content': 'social',
   'Brand and Short-Form Content': 'social',
+  'Short-Form & Social': 'social',
+  'Short-Form and Social': 'social',
   brandcontent: 'social',
   brandshortformcontent: 'social',
   post: 'postProduction',
@@ -654,19 +649,25 @@ const SERVICE_ID_ALIASES = {
   'Editing & Post': 'postProduction',
   'Editing and Post': 'postProduction',
   editingpost: 'postProduction',
+  'Post Production': 'postProduction',
   liveevents: 'liveevents',
   live_events: 'liveevents',
   liveeventcoverage: 'liveevents',
   'Live Event Coverage': 'liveevents',
   'Live Events': 'liveevents',
+  'Event & Conference Video': 'liveevents',
+  'Event and Conference Video': 'liveevents',
   eventscorporate: 'liveevents',
   'Events & Corporate': 'liveevents',
   corporate_events: 'corporate_events',
   corporateevents: 'corporate_events',
   'Corporate Events': 'corporate_events',
+  'Corporate & Internal Video': 'corporate_events',
+  'Corporate and Internal Video': 'corporate_events',
   podcast: 'podcast',
   podcastproduction: 'podcast',
   'Podcast Production': 'podcast',
+  'Podcast Audio Editing': 'podcast',
 };
 
 export function normalizeServiceId(value) {
