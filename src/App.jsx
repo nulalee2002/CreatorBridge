@@ -1112,7 +1112,7 @@ export default function App() {
       )}
 
       {/* ── Footer ── */}
-      {location.pathname === '/' || (activeTab !== 'calculator' && location.pathname.startsWith('/creator')) ? null : (
+      {activeTab !== 'calculator' && location.pathname.startsWith('/creator') ? null : (
         <footer className="site">
           <div className="inner">
             <div className="grid">
