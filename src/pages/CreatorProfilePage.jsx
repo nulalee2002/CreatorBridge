@@ -394,25 +394,33 @@ export function CreatorProfilePage({ dark }) {
   const region = REGIONS[location.regionKey];
   const expLabel = { entry: '2-3 yrs', mid: '4-6 yrs', senior: '7+ yrs' }[creator.experience] || '';
   const creatorVisuals = {
-    video: '/images/creatorbridge/creator-profile-cover-suite.jpg',
-    video_production: '/images/creatorbridge/creator-profile-cover-suite.jpg',
-    photography: '/images/creatorbridge/creator-intro-video-alt-1.jpg',
-    drone: '/images/creatorbridge/drone-operator-golden-hour.png',
-    drone_aerial: '/images/creatorbridge/drone-operator-golden-hour.png',
-    podcast: '/images/creatorbridge/creator-intro-video-alt-2.jpg',
-    events: '/images/creatorbridge/network-media-community-alt.jpg',
-    live_events: '/images/creatorbridge/network-media-community-alt.jpg',
-    social: '/images/creatorbridge/creator-profile-cover-studio.jpg',
-    social_media: '/images/creatorbridge/creator-profile-cover-studio.jpg',
-    post: '/images/creatorbridge/creator-profile-cover-suite.jpg',
-    post_production: '/images/creatorbridge/creator-profile-cover-suite.jpg',
+    video: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1400&q=85',
+    video_production: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1400&q=85',
+    photography: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=1400&q=85',
+    postProduction: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=1400&q=85',
+    post_production: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=1400&q=85',
   };
   const primaryPillar = getPillar(creator.primary_pillar);
   const primaryServiceId = services[0]?.serviceId || services[0]?.service_id || 'video';
+  const legacyPrimary = LEGACY_SERVICE_TO_PILLAR[primaryServiceId] || LEGACY_SERVICE_TO_PILLAR.video;
+  const displayedPrimaryPillar = primaryPillar || getPillar(legacyPrimary?.pillar || 'video_production');
+  const displayedSubNicheIds = (creator.sub_niches?.length ? creator.sub_niches : [legacyPrimary?.sub_niche]).filter(Boolean).slice(0, 3);
+  const displayedSpecialties = displayedSubNicheIds.map(id => getSubNiche(id)).filter(Boolean);
+  const displayedService = {
+    ...(services[0] || {}),
+    serviceId: primaryServiceId,
+    service_id: primaryServiceId,
+    pillarId: displayedPrimaryPillar?.id || legacyPrimary?.pillar || 'video_production',
+    displayName: displayedPrimaryPillar?.name || getServiceDisplayName(primaryServiceId, services[0]),
+    description: `${displayedPrimaryPillar?.name || 'Production'} specialist focused on ${displayedSpecialties.map(s => s.label).join(', ') || 'verified client work'}.`,
+    subtypes: displayedSpecialties.map(s => s.label),
+  };
+  const visibleServices = displayedPrimaryPillar ? [displayedService] : [];
+  const avatarUrl = normalizeExternalUrl(creator.avatar || creator.avatar_url || creator.logo_url || '');
   const customCoverImage = normalizeMediaUrl(
-    creator.cover_image_url || creator.coverImageUrl || creator.banner_url || creator.bannerUrl
+    creator.cover || creator.cover_image_url || creator.coverImageUrl || creator.banner_url || creator.bannerUrl
   );
-  const profileVisual = resolvedCoverImage || customCoverImage || creatorVisuals[primaryServiceId] || '/images/creatorbridge/creator-profile-cover-studio.jpg';
+  const profileVisual = resolvedCoverImage || customCoverImage || creatorVisuals[displayedPrimaryPillar?.id] || creatorVisuals[primaryServiceId] || creatorVisuals.video_production;
   const introEmbedUrl = toEmbedUrl(creator.video_intro_url);
 
   const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
@@ -506,7 +514,11 @@ export function CreatorProfilePage({ dark }) {
                   className={`w-24 h-24 rounded-[1.35rem] border flex items-center justify-center text-5xl shadow-[0_20px_60px_rgba(0,0,0,0.22)] ${dark ? 'bg-white/[0.04] border-gold-500/22' : 'bg-gray-100 border-gray-200'}`}
                   title="Creator logo or profile mark"
                 >
-                  {creator.avatar || '🎬'}
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="" className="h-full w-full rounded-[1.35rem] object-cover" />
+                  ) : (
+                    creator.avatar || '🎬'
+                  )}
                 </div>
               </div>
               <div className="flex-1 min-w-0">
@@ -587,7 +599,7 @@ export function CreatorProfilePage({ dark }) {
 
             <div className="relative mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
-                { label: 'Primary pillar', value: primaryPillar?.name || services.length || 0 },
+                { label: 'Primary pillar', value: displayedPrimaryPillar?.name || 'Production' },
                 { label: 'Work samples', value: portfolio.length || 0 },
                 { label: 'Experience', value: expLabel || 'Reviewed' },
                 { label: 'Payment path', value: 'Protected' },
@@ -600,15 +612,15 @@ export function CreatorProfilePage({ dark }) {
             </div>
 
             {/* Tags */}
-            {creator.tags?.length > 0 && (
+            {displayedSpecialties.length > 0 && (
               <div className={`relative mt-5 border-t pt-4 ${dark ? 'border-white/[0.06]' : 'border-gray-200'}`}>
                 <p className={`mb-2 text-[10px] font-bold uppercase tracking-[0.2em] ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
                   Production Focus
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {creator.tags.slice(0, 5).map(tag => (
-                    <span key={tag} className={`text-[11px] px-2.5 py-1 rounded-full ${dark ? 'bg-white/[0.025] text-charcoal-400 ring-1 ring-white/[0.045]' : 'bg-gray-50 text-gray-500 ring-1 ring-gray-200'}`}>
-                      #{String(tag).replace(/^#/, '')}
+                  {displayedSpecialties.map(specialty => (
+                    <span key={specialty.id} className={`text-[11px] px-2.5 py-1 rounded-full ${dark ? 'bg-white/[0.025] text-charcoal-400 ring-1 ring-white/[0.045]' : 'bg-gray-50 text-gray-500 ring-1 ring-gray-200'}`}>
+                      {specialty.label}
                     </span>
                   ))}
                 </div>
@@ -619,7 +631,7 @@ export function CreatorProfilePage({ dark }) {
           </div>
 
           {/* Services and Packages */}
-          {(creator.services || []).length > 0 && (
+          {visibleServices.length > 0 && (
             <div className={`${cardCls} p-5 sm:p-6`}>
               <h2 className={`font-display font-bold text-xl mb-1
                 ${dark ? 'text-white' : 'text-gray-900'}`}>
@@ -627,9 +639,9 @@ export function CreatorProfilePage({ dark }) {
               </h2>
               <p className={`text-sm mb-5 ${textSub}`}>Review the creator's primary pillar, specialties, pricing structure, and included deliverables before requesting a quote.</p>
 
-              {/* Niche tab buttons - service names only */}
+              {/* Primary pillar only. Specialties are nested under the selected pillar. */}
               <div className="flex flex-wrap gap-2 mb-6">
-                {(creator.services || []).slice(0, 3).map((svc, i) => {
+                {visibleServices.map((svc, i) => {
                   const sid = svc.serviceId || svc.service_id || '';
                   const name = getServiceDisplayName(sid, svc);
                   const isActive = activeNiche === i;
@@ -657,7 +669,7 @@ export function CreatorProfilePage({ dark }) {
 
               {/* Package cards for active niche only */}
               {(() => {
-                const svcList = (creator.services || []).slice(0, 3);
+                const svcList = visibleServices;
                 const activeSvc = svcList[activeNiche];
                 if (!activeSvc) return null;
 
@@ -1038,7 +1050,7 @@ export function CreatorProfilePage({ dark }) {
                 {[
                   { label: 'Experience', value: expLabel },
                   { label: 'Location', value: locationStr },
-                  { label: 'Pillar', value: primaryPillar?.name || `${services.length} service type${services.length !== 1 ? 's' : ''}` },
+                  { label: 'Pillar', value: displayedPrimaryPillar?.name || 'Production' },
                   { label: 'Portfolio', value: `${portfolio.length} project${portfolio.length !== 1 ? 's' : ''}` },
                   ...(creator.view_count ? [{ label: 'Profile Views', value: creator.view_count.toLocaleString() }] : []),
                 ].map(({ label, value }) => (

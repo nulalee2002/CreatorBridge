@@ -9,7 +9,7 @@ export const SHOW_DEMO_CREATORS = true;
 // and forces a full re-write when the version is out of date.
 // This is what guarantees the profile-page "Creator not found" bug
 // cannot happen from stale localStorage.
-const SEED_VERSION = 7;
+const SEED_VERSION = 8;
 
 // ── Three demo creators: filmmaker, photographer, podcast producer ─
 export const SEED_CREATORS = [
@@ -20,7 +20,10 @@ export const SEED_CREATORS = [
     user_id: null,
     name: 'Marcus Chen',
     businessName: 'Elevation Films',
-    avatar: '🎬',
+    avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=200&q=80',
+    cover: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=700&q=80',
+    primary_pillar: 'video_production',
+    sub_niches: ['vp_brand_films', 'vp_documentary', 'vp_drone_video'],
     bio: 'Award-winning cinematographer and director with 12 years producing brand films, corporate stories, and documentary content for Fortune 500 clients. RED and ARRI certified. Available for single-day shoots, full campaigns, and long-term production partnerships.',
     experience: 'senior',
     yearsExperience: 12,
@@ -33,7 +36,7 @@ export const SEED_CREATORS = [
     rating: 4.9,
     reviewCount: 87,
     plan: 'pro',
-    tags: ['Corporate', 'Documentary', 'Drone', 'Brand Film', 'RED Camera', 'ARRI', 'Color Grade'],
+    tags: ['Brand Films & Commercials', 'Documentary & Interviews', 'Drone & Aerial Video'],
     location: {
       city: 'Los Angeles',
       state: 'CA',
@@ -160,7 +163,10 @@ export const SEED_CREATORS = [
     user_id: null,
     name: 'Aria Vasquez',
     businessName: 'Aria Visual Studio',
-    avatar: '📷',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',
+    cover: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=700&q=80',
+    primary_pillar: 'photography',
+    sub_niches: ['ph_brand_commercial', 'ph_real_estate', 'ph_lifestyle_fashion'],
     bio: 'Commercial and portrait photographer with a bold, editorial aesthetic. Featured in Vogue Business, Harper\'s Bazaar, and Architectural Digest. I specialize in luxury real estate, fashion campaigns, and executive portraits. Every image is delivered fully retouched, color-graded, and ready for print or digital.',
     experience: 'senior',
     yearsExperience: 9,
@@ -173,7 +179,7 @@ export const SEED_CREATORS = [
     rating: 4.9,
     reviewCount: 64,
     plan: 'studio',
-    tags: ['Commercial', 'Real Estate', 'Fashion', 'Luxury', 'Editorial', 'Headshots', 'Product'],
+    tags: ['Brand & Commercial Photography', 'Real Estate Photography', 'Lifestyle & Fashion'],
     location: {
       city: 'Miami',
       state: 'FL',
@@ -295,7 +301,10 @@ export const SEED_CREATORS = [
     user_id: null,
     name: 'Jordan Mitchell',
     businessName: 'SoundWave Podcast Co.',
-    avatar: '🎙️',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
+    cover: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=700&q=80',
+    primary_pillar: 'post_production',
+    sub_niches: ['pp_podcast_audio', 'pp_sound_design', 'pp_short_form_edit'],
     bio: 'Full-service podcast production studio in NYC. We\'ve launched over 200 shows from scratch and taken dozens of existing podcasts from hobbyist recordings to top-charting. Our team handles recording, editing, mastering, show notes, and distribution setup — you just show up and talk.',
     experience: 'senior',
     yearsExperience: 8,
@@ -308,7 +317,7 @@ export const SEED_CREATORS = [
     rating: 4.8,
     reviewCount: 53,
     plan: 'pro',
-    tags: ['Podcast', 'Audio Editing', 'Video Podcast', 'Studio Recording', 'Monthly Retainer', 'Show Notes', 'Distribution'],
+    tags: ['Podcast Audio Editing', 'Sound Design & Mixing', 'Short-Form Editing'],
     location: {
       city: 'New York',
       state: 'NY',

@@ -24,6 +24,17 @@ const ORG_JSON_LD = {
   },
 };
 
+const WORK_IMAGES = {
+  brandFilm: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=900&q=80',
+  photographer: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=700&q=80',
+  postSuite: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=700&q=80',
+  productPhoto: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=900&q=80',
+  musicVideo: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=600&q=80',
+  editorial: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&q=80',
+  fashion: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=600&q=80',
+  studio: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600&q=80',
+};
+
 export function LandingPage({ dark }) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -214,28 +225,37 @@ export function LandingPage({ dark }) {
     }
   };
 
-  // 3-pillar production lanes. Each card links to Find Creators with the pillar pre-filtered.
+  // 3-pillar production pillars. Each creator chooses exactly one pillar.
   const productionLanes = [
     {
       title:    'Video Production',
-      desc:     'Brand films · weddings · events · drone · podcast video',
+      eyebrow:  'Pillar 01',
+      desc:     'Brand films, commercials, weddings, conferences, music videos, documentary, social, real estate, drone, corporate.',
       url:      '/find?pillar=video_production',
-      count:    'Brand films, commercials, social, drone, podcasts',
-      img:      '/images/creatorbridge/camera-lens-event-reflection.png',
+      badge:    'Most active',
+      more:     '+7 more specialties',
+      chips:    ['Brand Films & Commercials', 'Event & Conference Video', 'Documentary & Interviews'],
+      img:      WORK_IMAGES.brandFilm,
     },
     {
       title:    'Photography',
-      desc:     'Commercial · weddings · headshots · product · editorial',
+      eyebrow:  'Pillar 02',
+      desc:     'Commercial, weddings, events, portraits, product, real estate, lifestyle, editorial, drone, food and hospitality.',
       url:      '/find?pillar=photography',
-      count:    'Brand, lifestyle, real estate, food, drone',
-      img:      '/images/creatorbridge/commercial-photographer.png',
+      badge:    'Bookings open',
+      more:     '+7 more specialties',
+      chips:    ['Brand & Commercial', 'Product & Still Life', 'Editorial & Press'],
+      img:      WORK_IMAGES.productPhoto,
     },
     {
       title:    'Post Production',
-      desc:     'Editing · color · motion · sound · podcast audio',
+      eyebrow:  'Pillar 03',
+      desc:     'Long-form editing, short-form cutdowns, color grading, motion graphics and VFX, sound design, podcast audio, retouching, documentary editing.',
       url:      '/find?pillar=post_production',
-      count:    'Long-form, short-form, color, VFX, retouching',
-      img:      '/images/creatorbridge/post-production-suite.png',
+      badge:    'Remote-first',
+      more:     '+5 more specialties',
+      chips:    ['Color Grading', 'Motion Graphics & VFX', 'Sound Design & Mixing'],
+      img:      WORK_IMAGES.postSuite,
     },
   ];
 
@@ -347,14 +367,14 @@ export function LandingPage({ dark }) {
               <div className="relative">
                 <div className="grid grid-cols-2 gap-3 reveal-up">
                   <div className="parallax-wrap rounded-2xl overflow-hidden aspect-[3/4] border border-white/[0.06]">
-                    <img src="/images/creatorbridge/camera-lens-event-reflection.png" alt="Camera" className="parallax-img w-full h-full object-cover scale-110" />
+                    <img src={WORK_IMAGES.brandFilm} alt="Finished brand-film frame" className="parallax-img w-full h-full object-cover scale-110" />
                   </div>
                   <div className="space-y-3">
                     <div className="parallax-wrap rounded-xl overflow-hidden aspect-video border border-white/[0.06]">
-                      <img src="/images/creatorbridge/commercial-photographer.png" alt="Photographer" className="parallax-img w-full h-full object-cover scale-110" />
+                      <img src={WORK_IMAGES.photographer} alt="Photographer working on location" className="parallax-img w-full h-full object-cover scale-110" />
                     </div>
                     <div className="parallax-wrap rounded-xl overflow-hidden aspect-video border border-white/[0.06]">
-                      <img src="/images/creatorbridge/post-production-suite.png" alt="Studio" className="parallax-img w-full h-full object-cover scale-110" />
+                      <img src={WORK_IMAGES.postSuite} alt="Post-production timeline" className="parallax-img w-full h-full object-cover scale-110" />
                     </div>
                   </div>
                 </div>
@@ -381,18 +401,18 @@ export function LandingPage({ dark }) {
           </div>
         </section>
 
-        {/* ===== PRODUCTION LANES ===== */}
+        {/* ===== 3 PILLAR CARDS ===== */}
         <section className="py-16 px-6 lg:px-16 border-t border-white/[0.04] bg-white/[0.01]">
           <div className="max-w-[1400px] mx-auto">
             <div className="grid lg:grid-cols-12 gap-8 mb-10 items-end">
               <div className="lg:col-span-7 reveal-up">
-                <div className="eyebrow mb-3">Production Lanes</div>
-                <h2 className="text-3xl md:text-4xl lg:text-5xl serif font-medium leading-tight text-white">Production coverage without building a full in-house team.</h2>
+                <div className="eyebrow mb-3">Three production pillars</div>
+                <h2 className="text-3xl md:text-4xl lg:text-5xl serif font-medium leading-tight text-white">Every creator chooses one primary pillar, and you choose theirs.</h2>
               </div>
               <div className="lg:col-span-5 reveal-up">
-                <p className="text-sm text-[#a0a0a8] mb-3">Choose the type of production work first, then compare creators by proof, package, availability, and fit.</p>
+                <p className="text-sm text-[#a0a0a8] mb-3">Each creator commits to a single production lane plus 1-3 specialties inside it. Cleaner discovery. Sharper portfolios. No generalists pretending to do everything.</p>
                 <button onClick={() => navigate('/find')} className="btn-ghost text-xs inline-flex items-center gap-1.5">
-                  Browse all services
+                  Browse all creators
                   <ArrowRight size={12} />
                 </button>
               </div>
@@ -400,14 +420,27 @@ export function LandingPage({ dark }) {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 bob-grid">
               {productionLanes.map((lane, idx) => (
-                <div key={idx} onClick={() => navigate(lane.url)} className="lane-card aspect-[4/5] reveal-up block">
-                  <img src={lane.img} alt={lane.title} className="w-full h-full object-cover" />
-                  <div className="lane-content">
-                    <div className="text-[10px] uppercase tracking-wider text-white/60 mb-2">{lane.desc}</div>
-                    <div className="font-semibold text-base uppercase tracking-wide text-white">{lane.title}</div>
-                    <div className="text-[10px] text-[#c9a84c] mt-2 leading-snug">{lane.count}</div>
+                <button key={lane.title} type="button" onClick={() => navigate(lane.url)} className="pillar-card reveal-up text-left">
+                  <div className="pillar-cover">
+                    <img src={lane.img} alt={`${lane.title} client work`} />
+                    <div className="pillar-num serif">{String(idx + 1).padStart(2, '0')}</div>
                   </div>
-                </div>
+                  <div className="pillar-body">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="eyebrow">{lane.eyebrow}</div>
+                      <span className="tag-gold">{lane.badge}</span>
+                    </div>
+                    <h3 className="serif text-2xl md:text-[1.7rem] font-medium leading-tight mb-2 text-white">{lane.title}</h3>
+                    <p className="text-xs text-[#a0a0a8] leading-relaxed mb-4">{lane.desc}</p>
+                    <div className="pillar-chips">
+                      {lane.chips.map((chip) => <span key={chip} className="chip">{chip}</span>)}
+                    </div>
+                    <div className="pillar-foot">
+                      <span className="text-[10px] uppercase tracking-[0.2em] text-[#6a6a72]">{lane.more}</span>
+                      <span className="pillar-arrow"><ArrowRight size={14} /></span>
+                    </div>
+                  </div>
+                </button>
               ))}
             </div>
           </div>
@@ -424,10 +457,10 @@ export function LandingPage({ dark }) {
                   <p className="text-sm text-[#a0a0a8]">Clear pricing signals help brands understand what level of production they need.</p>
                 </div>
                 <div className="space-y-3">
-                  <div onClick={() => navigate('/find?lane=video')} className="liquid-glass hover-lift rounded-xl p-5 flex items-center justify-between reveal-up cursor-pointer">
+                  <div onClick={() => navigate('/find?pillar=video_production')} className="liquid-glass hover-lift rounded-xl p-5 flex items-center justify-between reveal-up cursor-pointer">
                     <div className="flex items-center gap-4">
                       <div className="parallax-wrap w-12 h-12 rounded-lg overflow-hidden shrink-0">
-                        <img src="/images/creatorbridge/camera-lens-event-reflection.png" alt="Brand film" className="w-full h-full object-cover" />
+                        <img src={WORK_IMAGES.brandFilm} alt="Brand film" className="w-full h-full object-cover" />
                       </div>
                       <div>
                         <div className="font-medium text-sm text-white">Brand film</div>
@@ -436,22 +469,22 @@ export function LandingPage({ dark }) {
                     </div>
                     <div className="text-[#c9a84c] font-semibold serif text-xl">$1,500+</div>
                   </div>
-                  <div onClick={() => navigate('/find?pillar=video_production')} className="liquid-glass hover-lift rounded-xl p-5 flex items-center justify-between reveal-up cursor-pointer">
+                  <div onClick={() => navigate('/find?pillar=post_production')} className="liquid-glass hover-lift rounded-xl p-5 flex items-center justify-between reveal-up cursor-pointer">
                     <div className="flex items-center gap-4">
                       <div className="parallax-wrap w-12 h-12 rounded-lg overflow-hidden shrink-0">
-                        <img src="/images/creatorbridge/podcast-producer-studio.png" alt="Podcast" className="w-full h-full object-cover" />
+                        <img src={WORK_IMAGES.postSuite} alt="Post production timeline" className="w-full h-full object-cover" />
                       </div>
                       <div>
-                        <div className="font-medium text-sm text-white">Video podcast</div>
-                        <div className="text-xs text-[#6a6a72]">Show launch, capture, edits</div>
+                        <div className="font-medium text-sm text-white">Post production</div>
+                        <div className="text-xs text-[#6a6a72]">Color, motion, sound, edit</div>
                       </div>
                     </div>
                     <div className="text-[#c9a84c] font-semibold serif text-xl">$350+</div>
                   </div>
-                  <div onClick={() => navigate('/find?lane=photo')} className="liquid-glass hover-lift rounded-xl p-5 flex items-center justify-between reveal-up cursor-pointer">
+                  <div onClick={() => navigate('/find?pillar=photography')} className="liquid-glass hover-lift rounded-xl p-5 flex items-center justify-between reveal-up cursor-pointer">
                     <div className="flex items-center gap-4">
                       <div className="parallax-wrap w-12 h-12 rounded-lg overflow-hidden shrink-0">
-                        <img src="/images/creatorbridge/commercial-photographer.png" alt="Photo" className="w-full h-full object-cover" />
+                        <img src={WORK_IMAGES.productPhoto} alt="Commercial photography" className="w-full h-full object-cover" />
                       </div>
                       <div>
                         <div className="font-medium text-sm text-white">Commercial photo</div>
@@ -517,45 +550,45 @@ export function LandingPage({ dark }) {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 bob-grid">
               <div onClick={() => navigate('/find')} className="lane-card aspect-[3/4] reveal-up block cursor-pointer">
-                <img src="/images/creatorbridge/camera-lens-event-reflection.png" alt="Luxe" />
+                <img src={WORK_IMAGES.brandFilm} alt="Commercial brand film" />
                 <div className="lane-content">
-                  <div className="text-[9px] uppercase tracking-[0.2em] text-[#c9a84c] mb-1">Commercial</div>
+                  <div className="text-[9px] uppercase tracking-[0.2em] text-[#c9a84c] mb-1">Brand Films</div>
                   <div className="text-sm font-medium text-white">Luxe Campaign 2025</div>
                 </div>
               </div>
               <div onClick={() => navigate('/find')} className="lane-card aspect-[3/4] reveal-up block cursor-pointer">
-                <img src="/images/creatorbridge/commercial-photographer.png" alt="Music" />
+                <img src={WORK_IMAGES.musicVideo} alt="Music video frame" />
                 <div className="lane-content">
                   <div className="text-[9px] uppercase tracking-[0.2em] text-[#c9a84c] mb-1">Music Video</div>
                   <div className="text-sm font-medium text-white">Neon Dreams EP</div>
                 </div>
               </div>
               <div onClick={() => navigate('/find')} className="lane-card aspect-[3/4] reveal-up block cursor-pointer">
-                <img src="/images/creatorbridge/drone-operator-golden-hour.png" alt="Doc" />
+                <img src={WORK_IMAGES.photographer} alt="Documentary frame" />
                 <div className="lane-content">
                   <div className="text-[9px] uppercase tracking-[0.2em] text-[#c9a84c] mb-1">Documentary</div>
                   <div className="text-sm font-medium text-white">Beyond The Lens</div>
                 </div>
               </div>
               <div onClick={() => navigate('/find')} className="lane-card aspect-[3/4] reveal-up block cursor-pointer">
-                <img src="/images/creatorbridge/event-crew-stage.png" alt="Horizon" />
+                <img src={WORK_IMAGES.fashion} alt="Brand film frame" />
                 <div className="lane-content">
                   <div className="text-[9px] uppercase tracking-[0.2em] text-[#c9a84c] mb-1">Brand Film</div>
                   <div className="text-sm font-medium text-white">Horizon Rebrand</div>
                 </div>
               </div>
               <div onClick={() => navigate('/find')} className="lane-card aspect-[3/4] reveal-up block cursor-pointer">
-                <img src="/images/creatorbridge/post-production-suite.png" alt="Vogue" />
+                <img src={WORK_IMAGES.editorial} alt="Editorial photography" />
                 <div className="lane-content">
                   <div className="text-[9px] uppercase tracking-[0.2em] text-[#c9a84c] mb-1">Editorial</div>
                   <div className="text-sm font-medium text-white">Vogue · Resort</div>
                 </div>
               </div>
               <div onClick={() => navigate('/find')} className="lane-card aspect-[3/4] reveal-up block cursor-pointer">
-                <img src="/images/creatorbridge/podcast-producer-studio.png" alt="Podcast" />
+                <img src={WORK_IMAGES.studio} alt="Color grading suite" />
                 <div className="lane-content">
-                  <div className="text-[9px] uppercase tracking-[0.2em] text-[#c9a84c] mb-1">Podcast</div>
-                  <div className="text-sm font-medium text-white">The Business Hour</div>
+                  <div className="text-[9px] uppercase tracking-[0.2em] text-[#c9a84c] mb-1">Color Grading</div>
+                  <div className="text-sm font-medium text-white">Aritzia · Resort Cutdown</div>
                 </div>
               </div>
             </div>

@@ -89,22 +89,31 @@ function getRotatingPreviewCreators(allCreators) {
 
 // ── Creator Card Helpers ─────────────────────────────────────
 function getCreatorCoverImage(creator) {
+  if (creator.cover) return creator.cover;
+  const portfolioImage = (creator.portfolio || []).find(item => item.imageUrl || item.image_url);
+  if (portfolioImage) return portfolioImage.imageUrl || portfolioImage.image_url;
+  const subNiche = creator.sub_niches?.[0];
+  if (subNiche) {
+    if (subNiche.startsWith('ph_')) return 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=700&q=80';
+    if (subNiche.startsWith('pp_')) return 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=700&q=80';
+    return 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=700&q=80';
+  }
   const serviceId = creator.services?.[0]?.serviceId || creator.services?.[0]?.service_id || '';
   switch(serviceId) {
     case 'video':
-      return '/images/creatorbridge/camera-lens-event-reflection.png';
+      return 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=700&q=80';
     case 'photography':
-      return '/images/creatorbridge/commercial-photographer.png';
+      return 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=700&q=80';
     case 'drone':
-      return '/images/creatorbridge/drone-operator-golden-hour.png';
+      return 'https://images.unsplash.com/photo-1506947411487-a56738267384?w=700&q=80';
     case 'podcast':
-      return '/images/creatorbridge/podcast-producer-studio.png';
+      return 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=700&q=80';
     case 'postProduction':
     case 'editor':
     case 'social':
-      return '/images/creatorbridge/post-production-suite.png';
+      return 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=700&q=80';
     default:
-      return '/images/creatorbridge/creator-profile-cover-studio.jpg';
+      return 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=700&q=80';
   }
 }
 
@@ -145,6 +154,9 @@ function CreatorCard({ creator, dark, onDelete, onViewProfile }) {
 
   const coverImage = getCreatorCoverImage(creator);
   const lowestRate = getLowestRate(creator);
+  const specialtyTags = creator.sub_niches?.length
+    ? creator.sub_niches.map(id => getSubNiche(id)?.label).filter(Boolean)
+    : (creator.tags || []);
 
   const handleCardClick = onViewProfile ?? (() => navigate(`/creator/${creator.id}`));
 
@@ -229,9 +241,9 @@ function CreatorCard({ creator, dark, onDelete, onViewProfile }) {
         </p>
 
         {/* Tags */}
-        {creator.tags?.length > 0 && (
+        {specialtyTags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-4 mt-auto">
-            {creator.tags.slice(0, 3).map(tag => (
+            {specialtyTags.slice(0, 3).map(tag => (
               <span key={tag} className={`text-[9px] px-2 py-0.5 rounded-md font-medium tracking-wide ${dark ? 'bg-white/[0.04] text-charcoal-300' : 'bg-gray-100 text-gray-600'}`}>
                 {tag}
               </span>
