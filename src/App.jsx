@@ -11,8 +11,6 @@ import { TermsModal } from './components/TermsModal.jsx';
 import { PrivacyModal } from './components/PrivacyModal.jsx';
 import { captureReferralCode } from './components/ReferralSection.jsx';
 import { SupportChatbot } from './components/SupportChatbot.jsx';
-import { CircuitBackground } from './components/CircuitBackground.jsx';
-import { BrandLogo } from './components/BrandLogo.jsx';
 import { NotificationBell } from './components/NotificationBell.jsx';
 
 import { SERVICES, RATES, PACKAGE_TIERS } from './data/rates.js';
@@ -536,64 +534,61 @@ export default function App() {
 
   const bgMain = dark ? '' : 'bg-gray-50';
   const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.07] shadow-[0_22px_70px_rgba(0,0,0,0.18)]' : 'bg-white border-gray-200'}`;
-  const softFocusBackground = dark && location.pathname !== '/';
-
   return (
     <>
     {/* Skip to main content — visible only on keyboard focus */}
     <a href="#cb-main-content" className="cb-skip-link">Skip to main content</a>
 
     <div className={`min-h-screen ${bgMain} font-body transition-colors duration-200`} style={{ position: 'relative', zIndex: 1 }}>
-      <CircuitBackground subdued={softFocusBackground} />
+      <div className="bg-grid" aria-hidden="true" />
+      <div className="bg-signals" aria-hidden="true">
+        <span className="sig h1" />
+        <span className="sig h2" />
+        <span className="sig h3" />
+        <span className="sig h4" />
+        <span className="sig v1" />
+        <span className="sig v2" />
+        <span className="sig v3" />
+        <span className="sig d1" />
+        <span className="sig d2" />
+      </div>
       <CreatorBridgeChromeEffects />
-      {softFocusBackground && <div className="cb-page-depth-veil" />}
 
       {/* ── Top Nav ── */}
-      <header
-        className={`sticky top-0 z-20 border-b backdrop-blur-xl ${dark ? 'bg-charcoal-950/88 border-gold-500/14' : 'bg-white/92 border-gray-200'}`}
-        style={{ boxShadow: dark ? '0 18px 60px rgba(0,0,0,0.24)' : '0 12px 40px rgba(0,0,0,0.08)' }}
-      >
-        <div className="cb-home-wide mx-auto w-full px-5 sm:px-8 lg:px-14 2xl:px-16 h-16 flex items-center gap-4">
+      <header className="nav">
+        <div className="nav-inner">
 
           {/* Logo */}
-          <div className="group flex items-center gap-3 shrink-0 cursor-pointer" onClick={() => navigate('/')}>
-            <BrandLogo dark={dark} />
-          </div>
-
-          <div className="flex-1" />
+          <button type="button" className="logo-mark" onClick={() => navigate('/')} aria-label="CreatorBridge home">
+            <img src="/images/creatorbridge/handoff/logo.png" alt="CreatorBridge — Verified Media Marketplace" className="logo-img" />
+          </button>
 
           {/* Main tab switcher */}
-          <div className={`hidden md:flex rounded-2xl border overflow-hidden p-1 ${dark ? 'bg-white/[0.025] border-gold-500/14' : 'bg-gray-50 border-gray-200'}`}>
+          <nav className="nav-links" aria-label="Primary navigation">
             {[
-              { path: '/find',       id: 'directory',  icon: Search,   label: 'Find Creators' },
-              { path: '/projects',   id: 'projects',   icon: Briefcase, label: 'Project Board' },
-              { path: '/network',    id: 'network',    icon: Users,     label: 'Network' },
-              { path: '/calculator', id: 'calculator', icon: Zap,      label: 'Rate Calculator' },
-            ].map(({ path, id, icon: Icon, label }) => (
+              { path: '/find',       id: 'directory',  label: 'Find Creators' },
+              { path: '/projects',   id: 'projects',   label: 'Project Board' },
+              { path: '/network',    id: 'network',    label: 'Network' },
+              { path: '/calculator', id: 'calculator', label: 'Rate Calculator' },
+            ].map(({ path, id, label }) => (
               <button key={id} type="button" onClick={() => navigate(path)}
-                className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold transition-colors rounded-xl ${
-                  activeTab === id
-                    ? 'bg-gold-500 text-charcoal-900 shadow-[0_8px_24px_rgba(212,169,65,0.16)]'
-                    : dark ? 'text-charcoal-200 hover:text-white hover:bg-white/[0.04]' : 'text-gray-500 hover:text-gray-900 hover:bg-white'
-                }`}
+                className={`nav-link ${activeTab === id ? 'active' : ''}`}
               >
-                <Icon size={13} /> <span>{label}</span>
+                {label}
               </button>
             ))}
-          </div>
+          </nav>
 
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           {/* Join dropdown */}
+          {!user && (
           <div className="relative" ref={joinDropdownRef}>
             <button
               type="button"
               onClick={() => setShowJoinDropdown(d => !d)}
-              className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold transition-colors rounded-xl border ${
-                activeTab === 'register' || showJoinDropdown
-                  ? 'bg-gold-500 text-charcoal-900 border-gold-500'
-                  : dark ? 'border-gold-500/14 text-charcoal-300 hover:text-white hover:border-gold-500/32 hover:bg-white/[0.035]' : 'border-gray-200 text-gray-600 hover:text-gray-900'
-              }`}
+              className="btn-ghost"
             >
-              <UserPlus size={13} /> <span className="hidden sm:inline">Join</span>
+              Join
             </button>
             {showJoinDropdown && (
               <div className={`absolute right-0 top-full mt-2 w-56 rounded-xl border shadow-xl z-50 overflow-hidden ${
@@ -639,6 +634,7 @@ export default function App() {
               </div>
             )}
           </div>
+          )}
 
           {/* Calculator tools (only when on calculator tab) */}
           {activeTab === 'calculator' && (
@@ -711,61 +707,20 @@ export default function App() {
               </button>
               <button type="button" onClick={signOut}
                 aria-label="Sign out"
-                className={`p-3 md:p-2 rounded-xl transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
-                <LogOut size={14} />
+                className="btn-gold">
+                Sign Out
               </button>
             </div>
           ) : (
             <button type="button" onClick={() => openAuth('login')}
-              className={`flex items-center gap-1.5 px-4 py-3 md:px-3.5 md:py-2 rounded-xl border text-xs font-bold transition-all ${
-                dark ? 'border-gold-500/14 text-charcoal-300 hover:text-white hover:border-gold-500/32 hover:bg-white/[0.035]' : 'border-gray-200 text-gray-600 hover:text-gray-900'
-              }`}>
-              <LogIn size={13} /> Sign In
+              className="btn-gold">
+              Sign In
             </button>
           )}
+          </div>
 
-          {/* Dark mode */}
-          <button type="button" onClick={() => setDark(d => !d)}
-            aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-            className={`p-3 md:p-2.5 rounded-xl transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}
-          >
-            {dark ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
         </div>
       </header>
-
-      <nav className={`md:hidden sticky top-16 z-20 border-b backdrop-blur-xl ${dark ? 'bg-charcoal-950/90 border-gold-500/12' : 'bg-white/94 border-gray-200'}`}>
-        <div className="flex gap-2 overflow-x-auto px-5 py-2 no-scrollbar">
-          {[
-            { path: '/find',       id: 'directory',  icon: Search,   label: 'Find' },
-            { path: '/projects',   id: 'projects',   icon: Briefcase, label: 'Projects' },
-            { path: '/network',    id: 'network',    icon: Users,     label: 'Network' },
-            { path: '/calculator', id: 'calculator', icon: Zap,      label: 'Rates' },
-            { path: '/join-as-creator', id: 'join-as-creator', icon: UserPlus, label: 'Join' },
-            ...(user
-              ? authProfile?.role === 'creator'
-                ? [{ path: '/dashboard', id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' }]
-                : [{ path: '/client', id: 'client', icon: User, label: 'Dashboard' }]
-              : [])
-          ].map(({ path, id, icon: Icon, label }) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => navigate(path)}
-              className={`flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-2 text-[11px] font-bold transition-colors ${
-                activeTab === id || (id === 'join-as-creator' && location.pathname === '/join-as-creator')
-                  ? 'border-gold-500 bg-gold-500 text-charcoal-900'
-                  : dark
-                    ? 'border-white/[0.08] bg-white/[0.025] text-charcoal-300 hover:border-gold-500/28 hover:text-white'
-                    : 'border-gray-200 bg-white text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <Icon size={13} />
-              {label}
-            </button>
-          ))}
-        </div>
-      </nav>
 
       {/* ── Routes ── */}
       <main id="cb-main-content" tabIndex={-1} style={{ outline: 'none' }}>
@@ -1158,47 +1113,51 @@ export default function App() {
 
       {/* ── Footer ── */}
       {location.pathname === '/' || (activeTab !== 'calculator' && location.pathname.startsWith('/creator')) ? null : (
-        <footer className={`relative z-10 mt-20 border-t ${dark ? 'border-white/[0.06] bg-charcoal-950/40' : 'border-gray-200 bg-white/70'} py-12`}>
-          <div className="cb-home-wide mx-auto grid gap-10 px-5 sm:px-8 lg:grid-cols-[1.4fr_0.75fr_0.75fr_0.75fr] lg:px-14 2xl:px-16">
-            <div>
-              <BrandLogo className="h-12 max-w-[260px]" />
-              <p className={`mt-5 max-w-sm text-sm leading-7 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
-                CreatorBridge connects brands with verified US-based video production, photography, and post-production specialists.
-              </p>
-              <div className={`mt-5 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold ${dark ? 'border-gold-500/18 bg-gold-500/8 text-gold-300' : 'border-gold-200 bg-gold-50 text-gold-700'}`}>
-                <span className="h-1.5 w-1.5 rounded-full bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.7)]" />
-                Protected booking, verified talent, USD only
+        <footer className="site">
+          <div className="inner">
+            <div className="grid">
+              <div className="brand-col">
+                <button type="button" onClick={() => navigate('/')} className="logo-mark" style={{ marginBottom: '1.25rem' }}>
+                  <img src="/images/creatorbridge/handoff/logo.png" alt="CreatorBridge" className="logo-img" />
+                </button>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', maxWidth: '24rem', lineHeight: 1.6 }}>
+                  The verified US marketplace connecting brands with professional media specialists across three production pillars — without building an internal media department.
+                </p>
+                <div className="footer-pillar-row">
+                  <span className="footer-pill">Video Production</span>
+                  <span className="footer-pill">Photography</span>
+                  <span className="footer-pill">Post Production</span>
+                </div>
+              </div>
+              <div>
+                <h4>Platform</h4>
+                <button type="button" onClick={() => navigate('/find')}>Find Creators</button>
+                <button type="button" onClick={() => navigate('/projects')}>Project Board</button>
+                <button type="button" onClick={() => navigate('/network')}>Creator Network</button>
+                <button type="button" onClick={() => navigate('/calculator')}>Rate Calculator</button>
+              </div>
+              <div>
+                <h4>For Creators</h4>
+                <button type="button" onClick={() => navigate('/creator/demo')}>Sample profile</button>
+                <button type="button" onClick={() => navigate('/join-as-creator')}>Apply to join</button>
+                <button type="button" onClick={() => navigate('/creator-agreement')}>Creator Agreement</button>
+                <button type="button" onClick={() => navigate('/dispute-policy')}>Dispute Policy</button>
+              </div>
+              <div>
+                <h4>Company</h4>
+                <button type="button" onClick={() => navigate('/terms')}>Terms</button>
+                <button type="button" onClick={() => navigate('/privacy')}>Privacy</button>
+                <button type="button" onClick={() => user ? setShowSupportTicket(true) : setShowAuth(true)}>Contact Support</button>
               </div>
             </div>
-            <div>
-              <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.25em] text-gold-400">Platform</p>
-              <div className="grid gap-3 text-sm">
-                <Link to="/find" className={`${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Find Creators</Link>
-                <Link to="/projects" className={`${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Project Board</Link>
-                <Link to="/network" className={`${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Creator Network</Link>
-                <Link to="/calculator" className={`${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Rate Calculator</Link>
+            <div className="bottom">
+              <div>© 2026 CreatorBridge · US-only verified media marketplace · All bookings in USD.</div>
+              <div className="bottom-links">
+                <button type="button" onClick={() => navigate('/terms')}>Terms</button>
+                <button type="button" onClick={() => navigate('/privacy')}>Privacy</button>
+                <button type="button" onClick={() => user ? setShowSupportTicket(true) : setShowAuth(true)}>Support</button>
               </div>
             </div>
-            <div>
-              <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.25em] text-gold-400">For Creators</p>
-              <div className="grid gap-3 text-sm">
-                <Link to="/join-as-creator" className={`${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Apply to Join</Link>
-                <Link to="/creator-agreement" className={`${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Creator Agreement</Link>
-                <Link to="/dispute-policy" className={`${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Dispute Policy</Link>
-              </div>
-            </div>
-            <div>
-              <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.25em] text-gold-400">Company</p>
-              <div className="grid gap-3 text-sm">
-                <button type="button" onClick={() => user ? setShowSupportTicket(true) : setShowAuth(true)} className={`text-left ${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Contact Support</button>
-                <Link to="/terms" className={`${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Terms of Service</Link>
-                <Link to="/privacy" className={`${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Privacy Policy</Link>
-              </div>
-            </div>
-          </div>
-          <div className={`cb-home-wide mx-auto mt-10 flex flex-col gap-3 border-t px-5 pt-6 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-14 2xl:px-16 ${dark ? 'border-white/[0.06] text-charcoal-500' : 'border-gray-200 text-gray-400'}`}>
-            <span>© 2026 CreatorBridge. All rights reserved.</span>
-            <span>Video Production · Photography · Post Production</span>
           </div>
         </footer>
       )}
