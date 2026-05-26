@@ -182,7 +182,7 @@ export function CreatorAgreement({ dark }) {
             <Section id="profile-lock" title="5. Profile Information & 90-Day Lock" dark={dark}>
               <p>
                 To maintain a safe and reliable directory, all registered profiles must pass standard verification.
-                Your business name, location, primary service types, and full name are verified at signup.
+                Your business name, location, primary pillar, specialty selections, and full name are verified at signup.
               </p>
               <p>
                 <strong className={dark ? 'text-white' : 'text-gray-900'}>90-Day Profile Lock:</strong> Once approved and published, critical identity details (including business name, full name, and location) are locked for a period of 90 days. Minor modifications like bio, portfolio links, packages, and calendar availability are unlocked and editable at any time.

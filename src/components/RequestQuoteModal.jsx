@@ -568,9 +568,9 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
               {errorMsg('projectTitle')}
             </div>
 
-            {/* 2. Service Type */}
+            {/* 2. Primary Pillar */}
             <div>
-              <label className={labelCls}>Service Type *</label>
+              <label className={labelCls}>Primary Pillar *</label>
               <div className="flex flex-wrap gap-2">
                 {SERVICE_TYPES.map(svc => (
                   <button key={svc} type="button" onClick={() => set('serviceType', svc)}

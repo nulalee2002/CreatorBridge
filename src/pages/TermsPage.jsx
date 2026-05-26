@@ -82,8 +82,8 @@ export function TermsPage({ dark }) {
             <Section id="welcome" title="1. Welcome to CreatorBridge" dark={dark}>
               <p>
                 CreatorBridge is an online platform connecting content creators with brands and clients seeking
-                media production and digital content services. Our community includes videographers, photographers,
-                podcast producers, drone operators, and other creative professionals across every market and specialty.
+                media production and digital content services. Our community includes video production, photography,
+                and post-production specialists across US markets and specialty needs.
                 We provide the tools, infrastructure, and payment system to help creative work get done safely and professionally.
               </p>
               <p>

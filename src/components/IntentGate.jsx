@@ -1,21 +1,21 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Zap, X } from 'lucide-react';
-import { normalizeServiceId, SERVICE_TYPE_OPTIONS } from '../data/rates.js';
+import { normalizeServiceId } from '../data/rates.js';
+import { PILLARS, SUB_NICHES_BY_PILLAR } from '../data/taxonomy.js';
 
 // ── Static option sets (shared with RequestQuoteModal) ────────
 
-const SERVICE_TYPES = SERVICE_TYPE_OPTIONS;
+const SERVICE_TYPES = Object.values(PILLARS).map(pillar => pillar.name);
 
 const PROJECT_SUBTYPES = {
-  'Video Production':       ['Corporate', 'Wedding', 'Documentary', 'Music Video', 'Brand Commercial', 'Brand & Short-Form Content', 'Podcast', 'Birthday/Celebration', 'Anniversary', 'Graduation', 'Concert', 'Sports', 'Real Estate Tour', 'Other'],
-  'Photography':            ['Real Estate', 'Headshots', 'Wedding', 'Commercial', 'Event', 'Product', 'Brand', 'Birthday/Celebration', 'Anniversary', 'Graduation', 'Concert', 'Sports', 'Family Portrait', 'Maternity', 'Other'],
-  'Drone / Aerial':         ['Real Estate Aerial', 'Event Aerial', 'Mapping', 'Film/Video Support', 'Construction Progress', 'Other'],
-  'Brand & Short-Form Content': ['Reels/TikTok', 'YouTube', 'Brand Campaign', 'UGC', 'Behind the Scenes', 'Other'],
-  'Editing & Post':         ['Video Editing', 'Color Grading', 'Audio Mixing', 'Motion Graphics', 'Podcast Editing', 'Other'],
-  'Live Event Coverage':    ['Concert/Music', 'Sports', 'Corporate Event', 'Conference', 'Festival', 'Birthday/Celebration', 'Wedding Reception', 'Other'],
-  'Corporate Events':       ['Conference Coverage', 'Product Launch', 'Award Ceremony', 'Trade Show', 'Company Retreat', 'Executive Portraits at Events', 'Investor Presentation', 'Town Hall / All-Hands', 'Other'],
-  'Podcast Production':     ['Audio Only', 'Video Podcast', 'Remote Recording', 'In-Studio Recording', 'Show Launch Package', 'Monthly Retainer', 'Other'],
+  ...Object.values(PILLARS).reduce((acc, pillar) => {
+    acc[pillar.name] = [
+      ...(SUB_NICHES_BY_PILLAR[pillar.id] || []).map(subNiche => subNiche.label),
+      'Other',
+    ];
+    return acc;
+  }, {}),
 };
 
 const TIME_OPTIONS = [
@@ -128,8 +128,8 @@ export function IntentGate({ dark, onClose, prefillService, mode = 'modal' }) {
   function validate() {
     const e = {};
     if (!form.projectTitle.trim())       e.projectTitle       = 'Give your project a clear title so creators understand what this is.';
-    if (!form.serviceType)               e.serviceType        = 'Select the type of production service you need.';
-    if (!form.projectType)               e.projectType        = 'Select the specific type of project within your chosen service.';
+    if (!form.serviceType)               e.serviceType        = 'Select the primary pillar you need.';
+    if (!form.projectType)               e.projectType        = 'Select the specialty within your chosen pillar.';
     if (form.projectType === 'Other' && !form.otherProjectType.trim()) e.otherProjectType = 'Please describe your specific project type.';
     if (!form.projectDate)               e.projectDate        = 'Creators need to know when to show up or when this is due.';
     else if (form.projectDate <= today)  e.projectDate        = 'Project date must be in the future.';
@@ -216,9 +216,9 @@ export function IntentGate({ dark, onClose, prefillService, mode = 'modal' }) {
           {errorMsg('projectTitle')}
         </div>
 
-        {/* 2. Service Type */}
+        {/* 2. Primary Pillar */}
         <div>
-          <label className={labelCls}>Service Type *</label>
+          <label className={labelCls}>Primary Pillar *</label>
           <div className="flex flex-wrap gap-2">
             {SERVICE_TYPES.map(svc => (
               <button key={svc} type="button" onClick={() => set('serviceType', svc)}

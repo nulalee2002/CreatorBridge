@@ -24,7 +24,7 @@ export function JoinAsCreator({ dark }) {
           </span>
         </h1>
         <p className={`text-base sm:text-lg md:text-xl max-w-2xl mx-auto mb-8 font-light ${textSub}`}>
-          We connect videographers, podcast producers, event coverage crews, brand film directors, and social media content creators directly with clients in need of professional media production.
+          We connect video production, photography, and post-production specialists directly with clients who need professional media work.
         </p>
         <button
           onClick={() => navigate('/register')}

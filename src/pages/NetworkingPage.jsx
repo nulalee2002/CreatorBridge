@@ -90,7 +90,7 @@ const SEED_NETWORK_POSTS = [
     state_code: 'NY',
     user_display_name: 'SoundWave Podcast',
     user_verification_status: 'verified',
-    user_primary_service: 'Podcast Production',
+    user_primary_service: 'Video Production',
     post_type: 'industry_news',
     content: 'Spotify just released their 2026 podcast trends report. Short-form video podcasts are up 340% year over year. If you are not already offering a video podcast package to clients, now is the time.',
     likes_count: 8,
@@ -114,7 +114,7 @@ const SEED_NETWORK_POSTS = [
     state_code: 'AZ',
     user_display_name: 'Desert Sky Media',
     user_verification_status: 'verified',
-    user_primary_service: 'Drone / Aerial',
+    user_primary_service: 'Video Production',
     post_type: 'general',
     content: 'FAA just updated the Part 107 LAANC authorization zones around PHX Sky Harbor. If you are flying commercial jobs near the airport make sure your authorizations are current before your next shoot.',
     likes_count: 9,
@@ -1282,4 +1282,3 @@ export function NetworkingPage({ dark, user, profile }) {
     </div>
   );
 }
-
