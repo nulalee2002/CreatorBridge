@@ -212,8 +212,7 @@ footer.site .logo-img { height:48px; }
 .logo-mark { display:flex; align-items:center; gap:0.75rem; text-decoration:none; color:inherit; }
 .logo-icon { width:36px; height:36px; }
 .logo-icon svg { width:100%; height:100%; }
-.nav-links { display:none; }
-@media(min-width: 1024px){ .nav-links { display:flex; gap:0.25rem; align-items:center; } }
+.nav-links { display:flex; gap:0.25rem; align-items:center; }
 .nav-link {
   padding:0.5rem 0.85rem;
   font-size:0.75rem;
