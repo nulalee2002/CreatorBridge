@@ -25,14 +25,14 @@ const ORG_JSON_LD = {
 };
 
 const WORK_IMAGES = {
-  brandFilm: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=900&q=80',
-  photographer: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=700&q=80',
-  postSuite: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=700&q=80',
-  productPhoto: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=900&q=80',
-  musicVideo: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=600&q=80',
-  editorial: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&q=80',
-  fashion: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=600&q=80',
-  studio: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600&q=80',
+  brandFilm: '/images/creatorbridge/handoff/photo-1485846234645-a62644f84728.png',
+  photographer: '/images/creatorbridge/handoff/photo-1492691527719-9d1e07e534b4.png',
+  postSuite: '/images/creatorbridge/handoff/photo-1574717024653-61fd2cf4d44d.png',
+  productPhoto: '/images/creatorbridge/handoff/photo-1542038784456-1ea8e935640e.png',
+  musicVideo: '/images/creatorbridge/handoff/photo-1579584425555-c3ce17fd4351.png',
+  editorial: '/images/creatorbridge/handoff/photo-1516035069371-29a1b244cc32.png',
+  fashion: '/images/creatorbridge/handoff/photo-1539109136881-3be0616acf4b.png',
+  studio: '/images/creatorbridge/handoff/photo-1598488035139-bdbb2231ce04.png',
 };
 
 export function LandingPage({ dark }) {

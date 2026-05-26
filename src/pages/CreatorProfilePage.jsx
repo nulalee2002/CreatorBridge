@@ -394,11 +394,11 @@ export function CreatorProfilePage({ dark }) {
   const region = REGIONS[location.regionKey];
   const expLabel = { entry: '2-3 yrs', mid: '4-6 yrs', senior: '7+ yrs' }[creator.experience] || '';
   const creatorVisuals = {
-    video: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1400&q=85',
-    video_production: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1400&q=85',
-    photography: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=1400&q=85',
-    postProduction: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=1400&q=85',
-    post_production: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=1400&q=85',
+    video: '/images/creatorbridge/handoff/photo-1485846234645-a62644f84728.png',
+    video_production: '/images/creatorbridge/handoff/photo-1485846234645-a62644f84728.png',
+    photography: '/images/creatorbridge/handoff/photo-1542038784456-1ea8e935640e.png',
+    postProduction: '/images/creatorbridge/handoff/photo-1574717024653-61fd2cf4d44d.png',
+    post_production: '/images/creatorbridge/handoff/photo-1574717024653-61fd2cf4d44d.png',
   };
   const primaryPillar = getPillar(creator.primary_pillar);
   const primaryServiceId = services[0]?.serviceId || services[0]?.service_id || 'video';

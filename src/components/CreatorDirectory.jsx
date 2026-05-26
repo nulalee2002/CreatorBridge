@@ -94,26 +94,26 @@ function getCreatorCoverImage(creator) {
   if (portfolioImage) return portfolioImage.imageUrl || portfolioImage.image_url;
   const subNiche = creator.sub_niches?.[0];
   if (subNiche) {
-    if (subNiche.startsWith('ph_')) return 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=700&q=80';
-    if (subNiche.startsWith('pp_')) return 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=700&q=80';
-    return 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=700&q=80';
+    if (subNiche.startsWith('ph_')) return '/images/creatorbridge/handoff/photo-1542038784456-1ea8e935640e.png';
+    if (subNiche.startsWith('pp_')) return '/images/creatorbridge/handoff/photo-1574717024653-61fd2cf4d44d.png';
+    return '/images/creatorbridge/handoff/photo-1485846234645-a62644f84728.png';
   }
   const serviceId = creator.services?.[0]?.serviceId || creator.services?.[0]?.service_id || '';
   switch(serviceId) {
     case 'video':
-      return 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=700&q=80';
+      return '/images/creatorbridge/handoff/photo-1485846234645-a62644f84728.png';
     case 'photography':
-      return 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=700&q=80';
+      return '/images/creatorbridge/handoff/photo-1542038784456-1ea8e935640e.png';
     case 'drone':
-      return 'https://images.unsplash.com/photo-1506947411487-a56738267384?w=700&q=80';
+      return '/images/creatorbridge/handoff/photo-1506947411487-a56738267384.png';
     case 'podcast':
-      return 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=700&q=80';
+      return '/images/creatorbridge/handoff/photo-1590602847861-f357a9332bbc.png';
     case 'postProduction':
     case 'editor':
     case 'social':
-      return 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=700&q=80';
+      return '/images/creatorbridge/handoff/photo-1574717024653-61fd2cf4d44d.png';
     default:
-      return 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=700&q=80';
+      return '/images/creatorbridge/handoff/photo-1492691527719-9d1e07e534b4.png';
   }
 }
 

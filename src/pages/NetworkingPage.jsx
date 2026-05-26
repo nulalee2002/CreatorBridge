@@ -125,26 +125,26 @@ const SEED_NETWORK_POSTS = [
 
 const MOCK_CHAT = {
   general: [
-    { id: 'm-seed-1', name: "Naomi G.", time: "10:32", avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100&q=80", text: "Good morning ☕️ shooting a brand piece in Venice today, weather's perfect" },
-    { id: 'm-seed-2', name: "Aria V.", time: "10:35", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80", text: "Jealous. Miami's humid AF. Crew suiting up for an indoor shoot all day" },
-    { id: 'm-seed-3', name: "David P.", time: "10:38", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80", text: "Anyone tried the new Sony Burano on a real job? Considering renting for next week" },
-    { id: 'm-seed-4', name: "Mateo R.", time: "10:41", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80", text: "Cleared for Part 107 recertification today — back in the air next week" },
-    { id: 'm-seed-5', name: "Jordan M.", time: "10:44", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80", text: "Booked 4 podcast clients off the project board in May. CB scoring better than any cold outbound I've ever done" },
-    { id: 'm-seed-6', name: "Sofia P.", time: "10:48", avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=100&q=80", text: "Lighting test shots from yesterday — full client approval before we even broke for lunch" }
+    { id: 'm-seed-1', name: "Naomi G.", time: "10:32", avatar: "/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.png", text: "Good morning ☕️ shooting a brand piece in Venice today, weather's perfect" },
+    { id: 'm-seed-2', name: "Aria V.", time: "10:35", avatar: "/images/creatorbridge/handoff/photo-1494790108377-be9c29b29330.png", text: "Jealous. Miami's humid AF. Crew suiting up for an indoor shoot all day" },
+    { id: 'm-seed-3', name: "David P.", time: "10:38", avatar: "/images/creatorbridge/handoff/photo-1438761681033-6461ffad8d80.png", text: "Anyone tried the new Sony Burano on a real job? Considering renting for next week" },
+    { id: 'm-seed-4', name: "Mateo R.", time: "10:41", avatar: "/images/creatorbridge/handoff/photo-1500648767791-00dcc994a43e.png", text: "Cleared for Part 107 recertification today — back in the air next week" },
+    { id: 'm-seed-5', name: "Jordan M.", time: "10:44", avatar: "/images/creatorbridge/handoff/photo-1507003211169-0a1dd7228f2d.png", text: "Booked 4 podcast clients off the project board in May. CB scoring better than any cold outbound I've ever done" },
+    { id: 'm-seed-6', name: "Sofia P.", time: "10:48", avatar: "/images/creatorbridge/handoff/photo-1487412720507-e7ab37603c6f.png", text: "Lighting test shots from yesterday — full client approval before we even broke for lunch" }
   ],
   referrals: [
-    { id: 'm-seed-7', name: "Aria V.", time: "9:14", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80", text: "Boutique hotel rebrand looking for video — anyone California-based with hospitality reel?" },
-    { id: 'm-seed-8', name: "Naomi G.", time: "9:18", avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100&q=80", text: "I'll bite — DMing now" },
-    { id: 'm-seed-9', name: "David P.", time: "9:22", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80", text: "Aria solid pick, his Standard Hotels work was 10/10" }
+    { id: 'm-seed-7', name: "Aria V.", time: "9:14", avatar: "/images/creatorbridge/handoff/photo-1494790108377-be9c29b29330.png", text: "Boutique hotel rebrand looking for video — anyone California-based with hospitality reel?" },
+    { id: 'm-seed-8', name: "Naomi G.", time: "9:18", avatar: "/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.png", text: "I'll bite — DMing now" },
+    { id: 'm-seed-9', name: "David P.", time: "9:22", avatar: "/images/creatorbridge/handoff/photo-1438761681033-6461ffad8d80.png", text: "Aria solid pick, his Standard Hotels work was 10/10" }
   ],
   gear: [
-    { id: 'm-seed-10', name: "David P.", time: "8:52", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80", text: "Selling FX6, see today's main feed for details" },
-    { id: 'm-seed-11', name: "Sofia P.", time: "9:01", avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=100&q=80", text: "Renting Profoto B10 Plus duo · $80/day · Manhattan" },
-    { id: 'm-seed-12', name: "Mateo R.", time: "9:11", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80", text: "Anyone got an extra ND filter set in 4×5.65? Mine fell into Lake Travis on Saturday 🪦" }
+    { id: 'm-seed-10', name: "David P.", time: "8:52", avatar: "/images/creatorbridge/handoff/photo-1438761681033-6461ffad8d80.png", text: "Selling FX6, see today's main feed for details" },
+    { id: 'm-seed-11', name: "Sofia P.", time: "9:01", avatar: "/images/creatorbridge/handoff/photo-1487412720507-e7ab37603c6f.png", text: "Renting Profoto B10 Plus duo · $80/day · Manhattan" },
+    { id: 'm-seed-12', name: "Mateo R.", time: "9:11", avatar: "/images/creatorbridge/handoff/photo-1500648767791-00dcc994a43e.png", text: "Anyone got an extra ND filter set in 4×5.65? Mine fell into Lake Travis on Saturday 🪦" }
   ],
   leads: [
-    { id: 'm-seed-13', name: "Aria V.", time: "11:02", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80", text: "Routing 2 commercial photo briefs to FL/CA — see today's main feed" },
-    { id: 'm-seed-14', name: "Dre W.", time: "11:08", avatar: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=100&q=80", text: "Atlanta tech conf needs 2nd shooter, June 14-15. Posted to project board, applying via CB" }
+    { id: 'm-seed-13', name: "Aria V.", time: "11:02", avatar: "/images/creatorbridge/handoff/photo-1494790108377-be9c29b29330.png", text: "Routing 2 commercial photo briefs to FL/CA — see today's main feed" },
+    { id: 'm-seed-14', name: "Dre W.", time: "11:08", avatar: "/images/creatorbridge/handoff/photo-1607746882042-944635dfe10e.png", text: "Atlanta tech conf needs 2nd shooter, June 14-15. Posted to project board, applying via CB" }
   ]
 };
 
@@ -199,11 +199,11 @@ function linkifyText(text) {
 
 function getSeedAvatar(id) {
   const seedAvatars = {
-    'net-seed-1': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
-    'net-seed-2': 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=200&q=80',
-    'net-seed-3': 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80',
-    'net-seed-4': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80',
-    'net-seed-5': 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=200&q=80'
+    'net-seed-1': '/images/creatorbridge/handoff/photo-1507003211169-0a1dd7228f2d.png',
+    'net-seed-2': '/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.png',
+    'net-seed-3': '/images/creatorbridge/handoff/photo-1438761681033-6461ffad8d80.png',
+    'net-seed-4': '/images/creatorbridge/handoff/photo-1544005313-94ddf0286df2.png',
+    'net-seed-5': '/images/creatorbridge/handoff/photo-1502823403499-6ccfcf4fb453.png'
   };
   return seedAvatars[id] || null;
 }
