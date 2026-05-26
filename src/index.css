@@ -649,6 +649,81 @@
   transform: translateX(2px);
 }
 
+.primary-pillar-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(212,169,65,0.22);
+  background: rgba(212,169,65,0.08);
+  padding: 0.36rem 0.72rem;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.primary-pillar-badge .dot {
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 999px;
+  background: #d4a941;
+  box-shadow: 0 0 10px rgba(212,169,65,0.7);
+}
+
+.primary-pillar-badge .label {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(160,160,168,0.94);
+}
+
+.primary-pillar-badge .value {
+  font-family: 'Playfair Display', serif;
+  font-size: 12px;
+  color: #d4a941;
+}
+
+.specialty-chip-profile {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 0.45rem;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.04);
+  padding: 0.36rem 0.74rem;
+  color: rgba(245,245,246,0.92);
+  font-size: 11.5px;
+  letter-spacing: 0.01em;
+}
+
+.service-offer-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(20,20,24,0.5);
+  padding: 1.25rem 1.35rem;
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  transition: transform 0.35s cubic-bezier(0.23,1,0.32,1), border-color 0.35s, background 0.35s;
+}
+
+.service-offer-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 1.25rem;
+  bottom: 1.25rem;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, #d4a941, transparent);
+  opacity: 0.48;
+}
+
+.service-offer-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212,169,65,0.24);
+  background: rgba(20,20,24,0.66);
+}
+
 .marquee-track {
   display: flex;
   animation: marqueeMove 40s linear infinite;

@@ -379,15 +379,15 @@ export function CreatorProfilePage({ dark }) {
       video:            'Video Production',
       video_production: 'Video Production',
       photography:      'Photography',
-      drone:            'Drone / Aerial',
-      drone_aerial:     'Drone / Aerial',
-      podcast:          'Podcast Production',
-      social:           'Brand & Short-Form Content',
-      social_media:     'Brand & Short-Form Content',
-      post:             'Editing & Post',
-      post_production:  'Editing & Post',
-      events:           'Live Event Coverage',
-      live_events:      'Live Event Coverage',
+      drone:            'Video Production',
+      drone_aerial:     'Video Production',
+      podcast:          'Post Production',
+      social:           'Video Production',
+      social_media:     'Video Production',
+      post:             'Post Production',
+      post_production:  'Post Production',
+      events:           'Video Production',
+      live_events:      'Video Production',
     };
     return names[serviceId] || serviceId || 'Services';
   }
@@ -527,6 +527,18 @@ export function CreatorProfilePage({ dark }) {
                     <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
                       Verified production specialist
                     </p>
+                    <div className="mb-3 flex flex-wrap items-center gap-2">
+                      <span className="primary-pillar-badge">
+                        <span className="dot" />
+                        <span className="label">Primary pillar</span>
+                        <span className="value">{displayedPrimaryPillar?.name || 'Production'}</span>
+                      </span>
+                      {creator.availability === 'available' && (
+                        <span className="inline-flex items-center rounded-full border border-green-400/18 bg-green-400/8 px-2.5 py-1 text-[11px] font-semibold text-green-300">
+                          Available now
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <h1 className={`font-display font-bold text-3xl sm:text-4xl tracking-tight ${dark ? 'text-white' : 'text-gray-950'}`}>
                         {creator.businessName || creator.name}
@@ -554,11 +566,6 @@ export function CreatorProfilePage({ dark }) {
                       <span className={`text-xs px-2 py-0.5 rounded-full ${dark ? 'bg-white/[0.04] text-charcoal-300 ring-1 ring-white/[0.06]' : 'bg-gray-100 text-gray-500'}`}>
                         {expLabel}
                       </span>
-                      {creator.availability === 'available' && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-gold-500/10 text-gold-300 font-medium ring-1 ring-gold-500/15">
-                          Available Now
-                        </span>
-                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 mt-1">
@@ -619,7 +626,7 @@ export function CreatorProfilePage({ dark }) {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {displayedSpecialties.map(specialty => (
-                    <span key={specialty.id} className={`text-[11px] px-2.5 py-1 rounded-full ${dark ? 'bg-white/[0.025] text-charcoal-400 ring-1 ring-white/[0.045]' : 'bg-gray-50 text-gray-500 ring-1 ring-gray-200'}`}>
+                    <span key={specialty.id} className="specialty-chip-profile">
                       {specialty.label}
                     </span>
                   ))}
@@ -633,38 +640,35 @@ export function CreatorProfilePage({ dark }) {
           {/* Services and Packages */}
           {visibleServices.length > 0 && (
             <div className={`${cardCls} p-5 sm:p-6`}>
-              <h2 className={`font-display font-bold text-xl mb-1
-                ${dark ? 'text-white' : 'text-gray-900'}`}>
-                Service Offers
-              </h2>
-              <p className={`text-sm mb-5 ${textSub}`}>Review the creator's primary pillar, specialties, pricing structure, and included deliverables before requesting a quote.</p>
+              <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="mb-3 text-gold-400" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
+                    Service offers
+                  </p>
+                  <h2 className={`font-display text-2xl font-semibold leading-tight ${dark ? 'text-white' : 'text-gray-900'}`}>
+                    {displayedPrimaryPillar?.name || 'Production'} — {displayedSpecialties.length || 1} specialt{(displayedSpecialties.length || 1) === 1 ? 'y' : 'ies'}.
+                  </h2>
+                </div>
+                <p className={`max-w-sm text-xs leading-5 ${textSub}`}>
+                  One primary pillar per creator. Clients review focused specialties before opening a quote.
+                </p>
+              </div>
 
-              {/* Primary pillar only. Specialties are nested under the selected pillar. */}
-              <div className="flex flex-wrap gap-2 mb-6">
-                {visibleServices.map((svc, i) => {
-                  const sid = svc.serviceId || svc.service_id || '';
-                  const name = getServiceDisplayName(sid, svc);
-                  const isActive = activeNiche === i;
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setActiveNiche(i)}
-                      className={`px-4 py-2 rounded-full text-xs font-bold uppercase
-                        tracking-widest transition-all border
-                        ${isActive
-                          ? 'border-gold-500/55 bg-gold-500/12 text-gold-400 shadow-[0_0_24px_rgba(212,169,65,0.1)]'
-                          : `
-                            ${dark
-                              ? 'border-white/[0.07] text-charcoal-300 hover:text-white hover:border-gold-500/24'
-                              : 'border-gray-200 text-gray-500 hover:text-gray-900'
-                            }`
-                        }`}
-                    >
-                      {name}
-                    </button>
-                  );
-                })}
+              <div className="mb-6 grid gap-3 md:grid-cols-3">
+                {(displayedSpecialties.length ? displayedSpecialties : [{ id: displayedPrimaryPillar?.id || 'pillar', label: displayedPrimaryPillar?.name || 'Production' }]).map((specialty, i) => (
+                  <div key={specialty.id || specialty.label} className="service-offer-card">
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="font-display text-sm text-gold-400">{String(i + 1).padStart(2, '0')}</span>
+                      <span className="text-[10px] uppercase tracking-[0.2em] text-charcoal-500">{displayedPrimaryPillar?.name || 'Production'}</span>
+                    </div>
+                    <h3 className={`mb-2 font-display text-lg font-semibold leading-tight ${dark ? 'text-white' : 'text-gray-900'}`}>
+                      {specialty.label}
+                    </h3>
+                    <p className={`text-xs leading-6 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
+                      Focused client work inside {displayedPrimaryPillar?.name || 'the creator’s pillar'}, scoped through CreatorBridge before payment moves.
+                    </p>
+                  </div>
+                ))}
               </div>
 
               {/* Package cards for active niche only */}
@@ -910,11 +914,15 @@ export function CreatorProfilePage({ dark }) {
                   const previewImage = item.displayImageUrl || normalizeExternalUrl(item.image_url || item.imageUrl || '');
                   const projectLink = item.displayLink || normalizeExternalUrl(item.link || item.url || '');
                   return (
-                    <div key={i} className={`rounded-2xl border p-4 ${dark ? 'border-white/[0.07] bg-charcoal-950/42' : 'border-gray-200 bg-gray-50'}`}>
+                    <div key={i} className={`overflow-hidden rounded-2xl border ${dark ? 'border-white/[0.07] bg-charcoal-950/42' : 'border-gray-200 bg-gray-50'}`}>
                       {previewImage && (
-                        <img src={previewImage} alt={item.title}
-                          className="mb-3 aspect-video w-full rounded-2xl bg-charcoal-950/70 object-contain" />
+                        <div className="relative aspect-video overflow-hidden bg-charcoal-950/70">
+                          <img src={previewImage} alt={item.title}
+                            className="h-full w-full object-cover transition-transform duration-700 hover:scale-105" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                        </div>
                       )}
+                      <div className="p-4">
                       <div className="flex items-center gap-2 mb-1">
                         <span className={`flex h-7 w-7 items-center justify-center rounded-xl ${dark ? 'bg-gold-500/10 ring-1 ring-gold-500/18' : 'bg-white ring-1 ring-gray-200'}`}>{def?.icon || '🎬'}</span>
                         <p className={`text-sm font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>{item.title}</p>
@@ -929,6 +937,7 @@ export function CreatorProfilePage({ dark }) {
                           <ExternalLink size={10} /> View project
                         </a>
                       )}
+                      </div>
                     </div>
                   );
                 })}
