@@ -444,8 +444,7 @@ export default function App() {
           <div className={`hidden md:flex rounded-2xl border overflow-hidden p-1 ${dark ? 'bg-white/[0.025] border-gold-500/14' : 'bg-gray-50 border-gray-200'}`}>
             {[
               { path: '/find',       id: 'directory',  icon: Search,   label: 'Find Creators' },
-              { path: '/search',     id: 'search',     icon: Search,   label: 'Search' },
-              { path: '/projects',   id: 'projects',   icon: Briefcase, label: 'Projects' },
+              { path: '/projects',   id: 'projects',   icon: Briefcase, label: 'Project Board' },
               { path: '/network',    id: 'network',    icon: Users,     label: 'Network' },
               { path: '/calculator', id: 'calculator', icon: Zap,      label: 'Rate Calculator' },
             ].map(({ path, id, icon: Icon, label }) => (
@@ -624,7 +623,6 @@ export default function App() {
         <div className="flex gap-2 overflow-x-auto px-5 py-2 no-scrollbar">
           {[
             { path: '/find',       id: 'directory',  icon: Search,   label: 'Find' },
-            { path: '/search',     id: 'search',     icon: Search,   label: 'Search' },
             { path: '/projects',   id: 'projects',   icon: Briefcase, label: 'Projects' },
             { path: '/network',    id: 'network',    icon: Users,     label: 'Network' },
             { path: '/calculator', id: 'calculator', icon: Zap,      label: 'Rates' },
@@ -1035,35 +1033,47 @@ export default function App() {
 
       {/* ── Footer ── */}
       {location.pathname === '/' || (activeTab !== 'calculator' && location.pathname.startsWith('/creator')) ? null : (
-        <footer className={`mt-12 border-t ${dark ? 'border-charcoal-800' : 'border-gray-200'} py-6`}>
-          <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
-              CreatorBridge - connecting brands with verified video production, photography, and post-production specialists
-            </p>
-            <div className={`flex items-center gap-4 text-xs ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
-              <Link to="/terms"
-                className={`hover:text-gold-400 transition-colors ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
-                Terms of Service
-              </Link>
-              <span className={dark ? 'text-charcoal-500' : 'text-gray-300'}>|</span>
-              <Link to="/creator-agreement"
-                className={`hover:text-gold-400 transition-colors ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
-                Creator Agreement
-              </Link>
-              <span className={dark ? 'text-charcoal-500' : 'text-gray-300'}>|</span>
-              <Link to="/dispute-policy"
-                className={`hover:text-gold-400 transition-colors ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
-                Dispute Policy
-              </Link>
-              <span className={dark ? 'text-charcoal-500' : 'text-gray-300'}>|</span>
-              <button
-                type="button"
-                onClick={() => user ? setShowSupportTicket(true) : setShowAuth(true)}
-                className={`hover:text-gold-400 transition-colors ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}
-              >
-                Support
-              </button>
+        <footer className={`relative z-10 mt-20 border-t ${dark ? 'border-white/[0.06] bg-charcoal-950/40' : 'border-gray-200 bg-white/70'} py-12`}>
+          <div className="cb-home-wide mx-auto grid gap-10 px-5 sm:px-8 lg:grid-cols-[1.4fr_0.75fr_0.75fr_0.75fr] lg:px-14 2xl:px-16">
+            <div>
+              <BrandLogo className="h-12 max-w-[260px]" />
+              <p className={`mt-5 max-w-sm text-sm leading-7 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
+                CreatorBridge connects brands with verified US-based video production, photography, and post-production specialists.
+              </p>
+              <div className={`mt-5 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold ${dark ? 'border-gold-500/18 bg-gold-500/8 text-gold-300' : 'border-gold-200 bg-gold-50 text-gold-700'}`}>
+                <span className="h-1.5 w-1.5 rounded-full bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.7)]" />
+                Protected booking, verified talent, USD only
+              </div>
             </div>
+            <div>
+              <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.25em] text-gold-400">Platform</p>
+              <div className="grid gap-3 text-sm">
+                <Link to="/find" className={`${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Find Creators</Link>
+                <Link to="/projects" className={`${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Project Board</Link>
+                <Link to="/network" className={`${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Creator Network</Link>
+                <Link to="/calculator" className={`${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Rate Calculator</Link>
+              </div>
+            </div>
+            <div>
+              <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.25em] text-gold-400">For Creators</p>
+              <div className="grid gap-3 text-sm">
+                <Link to="/join-as-creator" className={`${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Apply to Join</Link>
+                <Link to="/creator-agreement" className={`${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Creator Agreement</Link>
+                <Link to="/dispute-policy" className={`${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Dispute Policy</Link>
+              </div>
+            </div>
+            <div>
+              <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.25em] text-gold-400">Company</p>
+              <div className="grid gap-3 text-sm">
+                <button type="button" onClick={() => user ? setShowSupportTicket(true) : setShowAuth(true)} className={`text-left ${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Contact Support</button>
+                <Link to="/terms" className={`${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Terms of Service</Link>
+                <Link to="/privacy" className={`${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Privacy Policy</Link>
+              </div>
+            </div>
+          </div>
+          <div className={`cb-home-wide mx-auto mt-10 flex flex-col gap-3 border-t px-5 pt-6 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-14 2xl:px-16 ${dark ? 'border-white/[0.06] text-charcoal-500' : 'border-gray-200 text-gray-400'}`}>
+            <span>© 2026 CreatorBridge. All rights reserved.</span>
+            <span>Video Production · Photography · Post Production</span>
           </div>
         </footer>
       )}

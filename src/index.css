@@ -201,14 +201,13 @@
     z-index: -1;
     pointer-events: none;
     overflow: hidden;
-    opacity: 0.72;
+    opacity: 0.62;
     background:
-      radial-gradient(circle at 20% 8%, rgba(255,255,255,0.045), transparent 23%),
-      radial-gradient(circle at 78% 6%, rgba(212,169,65,0.09), transparent 24%),
+      radial-gradient(ellipse 34vmax 24vmax at 50% 18%, rgba(212,169,65,0.045), transparent 62%),
       linear-gradient(120deg, rgba(212,169,65,0.038) 1px, transparent 1px),
       linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
-    background-size: auto, auto, 100% 360px, 280px 100%;
-    animation: cbGridDrift 34s linear infinite;
+    background-size: auto, 100% 360px, 280px 100%;
+    animation: cbGridDrift 72s linear infinite;
   }
 
   .cb-motion-field-subdued {
@@ -252,21 +251,21 @@
 
   .cb-pulse {
     position: absolute;
-    width: 145px;
-    height: 145px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(212,169,65,0.26), rgba(212,169,65,0.05) 35%, transparent 70%);
-    filter: blur(12px);
-    animation: cbFocusPulse 9s ease-in-out infinite;
+    background: #d4a941;
+    box-shadow: 0 0 12px rgba(212,169,65,0.62);
+    animation: cbFocusPulse 5.5s ease-in-out infinite;
   }
 
-  .cb-pulse-a { left: 9%; top: 17%; }
-  .cb-pulse-b { left: 52%; top: 62%; animation-delay: -3s; }
-  .cb-pulse-c { right: 12%; top: 28%; animation-delay: -6s; }
+  .cb-pulse-a { left: 14%; top: 19%; }
+  .cb-pulse-b { left: 53%; top: 63%; animation-delay: -2s; }
+  .cb-pulse-c { right: 16%; top: 31%; animation-delay: -4s; }
 
   @keyframes cbGridDrift {
-    from { background-position: 0 0, 0 0, 0 0, 0 0; }
-    to { background-position: 0 0, 0 0, 220px 360px, 280px 0; }
+    from { background-position: 0 0, 0 0, 0 0; }
+    to { background-position: 0 0, 220px 360px, 280px 0; }
   }
 
   @keyframes cbSignalSweepVertical {
@@ -280,8 +279,8 @@
   }
 
   @keyframes cbFocusPulse {
-    0%, 100% { transform: scale(0.85); opacity: 0.25; }
-    45% { transform: scale(1.12); opacity: 0.72; }
+    0%, 100% { transform: scale(0.8); opacity: 0.28; }
+    45% { transform: scale(1.45); opacity: 0.86; }
   }
 
   @media (prefers-reduced-motion: reduce) {
