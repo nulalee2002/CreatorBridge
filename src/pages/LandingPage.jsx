@@ -309,7 +309,7 @@ export function LandingPage({ dark }) {
                   Verified creative talent for brands that <span className="gold-text">need the work done right.</span>
                 </h1>
                 <p className="text-[#a0a0a8] text-sm max-w-md leading-relaxed reveal-up">
-                  CreatorBridge helps companies source vetted video, photo, podcast, drone, event, and post-production specialists without building an internal production department.
+                  CreatorBridge helps companies source vetted video production, photography, and post-production specialists without building an internal production department.
                 </p>
 
                 {/* Direct Search Bar */}
@@ -436,14 +436,14 @@ export function LandingPage({ dark }) {
                     </div>
                     <div className="text-[#c9a84c] font-semibold serif text-xl">$1,500+</div>
                   </div>
-                  <div onClick={() => navigate('/find?lane=podcast')} className="liquid-glass hover-lift rounded-xl p-5 flex items-center justify-between reveal-up cursor-pointer">
+                  <div onClick={() => navigate('/find?pillar=video_production')} className="liquid-glass hover-lift rounded-xl p-5 flex items-center justify-between reveal-up cursor-pointer">
                     <div className="flex items-center gap-4">
                       <div className="parallax-wrap w-12 h-12 rounded-lg overflow-hidden shrink-0">
                         <img src="/images/creatorbridge/podcast-producer-studio.png" alt="Podcast" className="w-full h-full object-cover" />
                       </div>
                       <div>
-                        <div className="font-medium text-sm text-white">Podcast Production</div>
-                        <div className="text-xs text-[#6a6a72]">Show launch, edits, hosting setup</div>
+                        <div className="font-medium text-sm text-white">Video podcast</div>
+                        <div className="text-xs text-[#6a6a72]">Show launch, capture, edits</div>
                       </div>
                     </div>
                     <div className="text-[#c9a84c] font-semibold serif text-xl">$350+</div>
@@ -725,7 +725,7 @@ export function LandingPage({ dark }) {
                   <span className="serif text-xl font-bold gold-text">CreatorBridge</span>
                 </div>
                 <p className="text-xs text-[#a0a0a8] max-w-sm leading-relaxed">
-                  The verified marketplace connecting brands with professional media specialists. Video, photo, podcast, drone, events, and post-production — without building an internal department.
+                  The verified marketplace connecting brands with professional media specialists across video production, photography, and post-production — without building an internal department.
                 </p>
                 <div className="mt-5">
                   <EmailCapture source="homepage_footer" compact />

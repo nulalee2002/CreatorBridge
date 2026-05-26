@@ -26,6 +26,12 @@ const PROJECT_SUBTYPES = Object.values(PILLARS).reduce((acc, pillar) => {
   return acc;
 }, {});
 
+const ONBOARDING_PROJECT_TYPES = [...SERVICE_TYPES, 'Not sure yet'];
+const ONBOARDING_CONTENT_TYPES = [
+  ...Object.values(SUB_NICHES_BY_PILLAR).flatMap(items => items.map(item => item.label)),
+  'Other',
+];
+
 // Reverse-lookup: pillar name → pillar id (used when writing primary_pillar to DB)
 const PILLAR_NAME_TO_ID = Object.values(PILLARS).reduce((acc, p) => {
   acc[p.name] = p.id;
@@ -488,7 +494,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
                   onChange={e => setOnboardingAnswers(a => ({ ...a, projectType: e.target.value }))}
                   className={selectCls('')}>
                   <option value="">Select...</option>
-                  {['Video Production','Photography','Drone and Aerial','Brand & Short-Form Content','Editing & Post','Live Event Coverage','Corporate Events','Podcast Production','Not sure yet'].map(o => (
+                  {ONBOARDING_PROJECT_TYPES.map(o => (
                     <option key={o} value={o}>{o}</option>
                   ))}
                 </select>
@@ -502,7 +508,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
                   onChange={e => setOnboardingAnswers(a => ({ ...a, contentType: e.target.value }))}
                   className={selectCls('')}>
                   <option value="">Select...</option>
-                  {['Commercial and Advertising','Wedding and Events','Real Estate','Brand & Short-Form Content','Brand Films','Podcast','Live Event Coverage','Personal Projects','Other'].map(o => (
+                  {ONBOARDING_CONTENT_TYPES.map(o => (
                     <option key={o} value={o}>{o}</option>
                   ))}
                 </select>

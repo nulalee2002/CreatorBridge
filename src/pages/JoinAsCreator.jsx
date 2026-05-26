@@ -54,15 +54,15 @@ export function JoinAsCreator({ dark }) {
             <div className="w-10 h-10 rounded-xl bg-gold-500/10 text-gold-400 flex items-center justify-center mb-4">
               <Mic size={20} />
             </div>
-            <h3 className={`font-bold text-base mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>Podcast Production</h3>
-            <p className={`text-xs leading-relaxed ${textSub}`}>Professional audio capture, editing, mastering, and episode formatting.</p>
+            <h3 className={`font-bold text-base mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>Post Production</h3>
+            <p className={`text-xs leading-relaxed ${textSub}`}>Editing, color, sound, motion, retouching, and polished final delivery.</p>
           </div>
           <div className={cardCls}>
             <div className="w-10 h-10 rounded-xl bg-gold-500/10 text-gold-400 flex items-center justify-center mb-4">
               <Calendar size={20} />
             </div>
-            <h3 className={`font-bold text-base mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>Corporate Event Coverage</h3>
-            <p className={`text-xs leading-relaxed ${textSub}`}>On-site photography and highlights to document summits, panels, and events.</p>
+            <h3 className={`font-bold text-base mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>Event Specialties</h3>
+            <p className={`text-xs leading-relaxed ${textSub}`}>Event video and event photography now live under the creator's chosen pillar.</p>
           </div>
           <div className={cardCls}>
             <div className="w-10 h-10 rounded-xl bg-gold-500/10 text-gold-400 flex items-center justify-center mb-4">

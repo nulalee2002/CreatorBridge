@@ -11,6 +11,7 @@ Updated: 2026-05-25
 - [x] Run `npm run verify:admin-support-search` to verify support ticket RLS, non-admin admin-data blocks, platform search 3-pillar fields, and admin finance/analytics source queries.
 - [ ] Run live browser QA for notification center: quote request notification, direct message notification, proposal accepted notification, and unread/read state.
 - [ ] Run `npm run verify:notifications` from a network-enabled terminal after notification deploys.
+- [ ] Run `npm run verify:launch-sweep` from a network-enabled terminal before UI redesign implementation. This runs build, notification QA, Resend, release-payment security, and admin/support/search in one pass.
 - [x] Run `npm run verify:email-provider` after Resend setup. It must return a Resend message id, not local mock mode.
 - [x] Confirm Supabase Edge Function secrets include `RESEND_API_KEY`, and optionally `RESEND_FROM_EMAIL` if the sender should differ from `CreatorBridge <drl33@creatorbridge.studio>`.
 - [x] Confirm Supabase Dashboard → Authentication → Emails uses the Resend/custom SMTP provider for Auth emails, not the default Supabase sender.
@@ -50,3 +51,6 @@ Updated: 2026-05-25
 - Supabase Data API grant/RLS audit passed with `issue_count = 0`.
 - `npm run verify:release-payment-security` passed: unauthenticated/fake-token calls are blocked, client/admin authorization is present, trusted job secret path exists, and creator payout email resolves through `creator_listings.user_id`.
 - `npm run verify:admin-support-search` passed: support ticket RLS, non-admin admin-data blocks, 3-pillar search fields, and admin finance/analytics source queries are working.
+- Added `npm run verify:launch-sweep` so the final automated pre-UI checks can be run as one command.
+- Request quote onboarding now uses the 3 primary pillars and taxonomy specialties instead of old standalone service lanes.
+- Current homepage/join/footer copy was adjusted to stop presenting podcast, drone, and events as standalone primary categories.

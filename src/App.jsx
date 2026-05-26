@@ -1038,7 +1038,7 @@ export default function App() {
         <footer className={`mt-12 border-t ${dark ? 'border-charcoal-800' : 'border-gray-200'} py-6`}>
           <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
-              CreatorBridge - connecting content creators with brands and clients seeking media production and digital content services
+              CreatorBridge - connecting brands with verified video production, photography, and post-production specialists
             </p>
             <div className={`flex items-center gap-4 text-xs ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
               <Link to="/terms"
