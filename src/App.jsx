@@ -589,7 +589,7 @@ export default function App() {
             ))}
           </nav>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           {/* Join dropdown */}
           {!user && !isPublicHandoffRoute && (
           <div className="relative" ref={joinDropdownRef}>

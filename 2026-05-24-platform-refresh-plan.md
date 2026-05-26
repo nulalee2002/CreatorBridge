@@ -309,6 +309,7 @@ Each step ships as one or two commits. Vercel auto-deploys. We watch for console
 - [ ] No console errors on any page
 - [ ] All images load (no broken Unsplash URLs)
 - [ ] Mobile responsive on iPhone-class viewport
+- [ ] Mobile UI optimization pass: compact top nav with all primary pages visible, smaller icons/Bridge assistant, reduced background motion, tighter cards/chips, no squished hero/footer layouts
 
 ### Pre-launch hardening still open (from May 20 handoff)
 - `release-payment` JWT verification (still `verify_jwt: false`)

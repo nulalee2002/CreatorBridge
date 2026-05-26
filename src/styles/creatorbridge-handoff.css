@@ -510,6 +510,227 @@ select.input { appearance:none; padding-right:2rem;
   .nav { padding:0.6rem 1rem; }
 }
 
+/* ===== MOBILE HANDOFF OPTIMIZATION =====
+   Phone view keeps the Claude Design language, but removes desktop crowding:
+   compact chrome, visible scrollable nav, smaller mascot, tighter cards,
+   quieter motion, and no overlapping hero float cards. */
+@media(max-width: 767px) {
+  body::before {
+    background:
+      radial-gradient(ellipse 40vmax 30vmax at 50% 18%, rgba(201,168,76,0.055) 0%, transparent 62%),
+      radial-gradient(ellipse 46vmax 36vmax at 85% 78%, rgba(201,168,76,0.02) 0%, transparent 60%);
+  }
+  .bg-grid {
+    background-size: 64px 64px;
+    opacity:0.32;
+  }
+  .bg-signals .sig {
+    width:170px;
+    filter: drop-shadow(0 0 3px rgba(201,168,76,0.28));
+  }
+  .bg-signals .sig.d1,
+  .bg-signals .sig.d2,
+  .bg-signals .sig.h4,
+  .bg-signals .sig.v3 {
+    display:none;
+  }
+
+  .nav {
+    padding:0.5rem 0.9rem 0.55rem;
+  }
+  .nav-inner {
+    flex-wrap:wrap;
+    gap:0.45rem 0.65rem;
+  }
+  .logo-img {
+    height:30px;
+  }
+  .nav-actions {
+    margin-left:auto;
+    gap:0.35rem !important;
+  }
+  .nav-actions .btn-gold,
+  .nav-actions .btn-ghost {
+    min-height:34px;
+    padding:0.45rem 0.8rem;
+    font-size:0.68rem;
+    border-radius:7px;
+  }
+  .nav-links {
+    order:3;
+    display:flex;
+    width:100%;
+    gap:0.25rem;
+    overflow-x:auto;
+    padding:0.25rem 0 0.05rem;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+    mask-image:linear-gradient(90deg, black 0%, black 88%, transparent 100%);
+    -webkit-mask-image:linear-gradient(90deg, black 0%, black 88%, transparent 100%);
+  }
+  .nav-links::-webkit-scrollbar { display:none; }
+  .nav-link {
+    flex:0 0 auto;
+    min-height:32px;
+    padding:0.42rem 0.62rem;
+    font-size:0.64rem;
+    letter-spacing:0.02em;
+    border:1px solid rgba(255,255,255,0.045);
+    background:rgba(255,255,255,0.025);
+  }
+  .nav-link::after {
+    left:0.62rem;
+    right:0.62rem;
+    bottom:0.22rem;
+  }
+
+  #cb-main-content main > section,
+  #cb-main-content .cb-handoff-page main > section,
+  #cb-main-content > div > main > section {
+    padding-left:1rem !important;
+    padding-right:1rem !important;
+  }
+  #cb-main-content main > section:first-child,
+  #cb-main-content .cb-handoff-page main > section:first-child,
+  #cb-main-content > div > main > section:first-child {
+    padding-top:7rem !important;
+  }
+  #cb-main-content h1.serif {
+    font-size:clamp(2.35rem, 12vw, 3.35rem) !important;
+    line-height:1.02 !important;
+    letter-spacing:0 !important;
+  }
+  #cb-main-content h2.serif {
+    font-size:clamp(1.8rem, 8vw, 2.45rem) !important;
+    line-height:1.08 !important;
+    letter-spacing:0 !important;
+  }
+  #cb-main-content h3.serif {
+    font-size:clamp(1.25rem, 6vw, 1.65rem) !important;
+  }
+  .eyebrow {
+    font-size:8.5px;
+    letter-spacing:0.18em;
+  }
+  .btn-gold,
+  .btn-ghost {
+    min-height:38px;
+    padding:0.58rem 0.9rem;
+    font-size:0.72rem;
+  }
+
+  .brand-plate {
+    font-size:1.02rem;
+    padding:0.45rem 0.9rem;
+  }
+  .ticker-pill {
+    font-size:0.64rem;
+    padding:0.36rem 0.7rem;
+    margin:0 0.25rem;
+  }
+  .ticker-pill strong {
+    font-size:0.74rem;
+  }
+  .marquee-track {
+    animation-duration:55s;
+  }
+  .marquee-track.reverse {
+    animation-duration:62s;
+  }
+
+  .float-card {
+    position:relative !important;
+    top:auto !important;
+    right:auto !important;
+    bottom:auto !important;
+    left:auto !important;
+    min-width:0 !important;
+    width:100%;
+    margin-top:0.7rem;
+    padding:0.85rem !important;
+    animation:none !important;
+  }
+  .liquid-glass {
+    backdrop-filter:blur(16px) saturate(1.25);
+    -webkit-backdrop-filter:blur(16px) saturate(1.25);
+  }
+  .liquid-glass.hover-lift:hover,
+  .lane-card:hover,
+  .pillar-card:hover,
+  .brief-card:hover {
+    transform:none;
+  }
+
+  .pillar-card,
+  .creator-card,
+  .brief-card,
+  .lane-card,
+  .service-offer-card {
+    border-radius:12px !important;
+  }
+  .pillar-body,
+  .creator-card .body,
+  .lane-content {
+    padding:0.85rem !important;
+  }
+  .pillar-cover {
+    min-height:150px;
+  }
+  .pillar-num {
+    font-size:2.4rem !important;
+  }
+  .pillar-chips,
+  .tier-chips {
+    gap:0.32rem;
+  }
+  .pillar-chips .chip,
+  .specialty-pill,
+  .specialty-chip,
+  .specialty-chip-profile,
+  .tag-gold,
+  .tag-green,
+  .tag-plain {
+    font-size:0.58rem;
+    line-height:1.25;
+    padding:0.22rem 0.48rem;
+  }
+  .filter-chip,
+  .filter-pill,
+  .spec-pick,
+  .seg-btn {
+    min-height:34px;
+    padding:0.45rem 0.62rem !important;
+    font-size:0.68rem !important;
+  }
+  .filter-chip .pkey {
+    min-width:auto;
+    margin-right:0.35rem;
+    font-size:8px;
+  }
+
+  table {
+    min-width:560px;
+  }
+  .stat-num {
+    font-size:clamp(2.55rem, 13vw, 3.8rem) !important;
+  }
+
+  footer.site {
+    padding:2.4rem 1rem 1.4rem;
+    margin-top:3rem;
+  }
+  footer.site .logo-img {
+    height:34px;
+  }
+  footer.site .bottom {
+    gap:0.75rem;
+  }
+  footer.site .bottom-links {
+    width:100%;
+    gap:1rem;
+  }
+}
+
 /* ===== FOOTER ===== */
 footer.site {
   padding:4rem 1.5rem 2rem;
@@ -1341,13 +1562,92 @@ a:not(.btn-gold):not(.btn-ghost):not(.nav-link):not(.logo-mark):not(.lane-card):
 /* Mobile: full-width panel anchored bottom */
 @media (max-width: 520px) {
   .cb-chat-panel {
-    bottom:5.5rem; right:1rem; left:1rem;
+    bottom:4.7rem; right:0.75rem; left:0.75rem;
     width:auto; max-width:none;
-    height:calc(100vh - 8rem);
+    height:min(560px, calc(100dvh - 7.4rem));
+    border-radius:16px;
   }
-  .cb-fab { bottom:1rem; right:1rem; width:54px; height:54px; }
-  .cb-fab-body { width:38px; height:54px; }
-  .cb-fab-body .cb-fab-icon { width:32px; height:48px; }
+  .cb-chat-header {
+    gap:0.6rem;
+    padding:0.75rem 0.8rem 0.65rem;
+  }
+  .cb-chat-mascot {
+    width:44px;
+    height:68px;
+  }
+  .cb-chat-mascot .status-dot {
+    top:12px;
+    right:3px;
+    width:8px;
+    height:8px;
+  }
+  .cb-chat-meta {
+    padding-top:0.35rem;
+  }
+  .cb-chat-name {
+    font-size:14px;
+  }
+  .cb-chat-tier {
+    font-size:7.5px;
+    letter-spacing:0.12em;
+  }
+  .cb-chat-sub,
+  .cb-chat-takeline {
+    font-size:9px;
+  }
+  .cb-chat-body {
+    padding:0.75rem 0.8rem 0.45rem;
+    gap:0.5rem;
+  }
+  .cb-chat-msg {
+    max-width:92%;
+    padding:0.55rem 0.68rem;
+    font-size:11.5px;
+    line-height:1.45;
+  }
+  .cb-chat-quick {
+    gap:0.28rem;
+  }
+  .cb-chat-path {
+    padding:0.5rem 0.65rem;
+    gap:0.5rem;
+    font-size:11px;
+    border-radius:9px;
+  }
+  .cb-chat-path .num {
+    min-width:1rem;
+    font-size:10px;
+  }
+  .cb-chat-input {
+    padding:0.6rem;
+  }
+  .cb-chat-input input {
+    min-width:0;
+    padding:0.55rem 0.68rem;
+    font-size:11.5px;
+  }
+  .cb-chat-send {
+    width:34px;
+    height:34px;
+  }
+  .cb-fab {
+    bottom:0.75rem;
+    right:0.75rem;
+    width:48px;
+    height:48px;
+  }
+  .cb-fab-body {
+    width:34px;
+    height:48px;
+    border-radius:20px;
+  }
+  .cb-fab-body .cb-fab-icon {
+    width:29px;
+    height:43px;
+  }
+  .cb-fab-ring {
+    inset:-4px;
+  }
 }
 
 /* Reduced motion */
