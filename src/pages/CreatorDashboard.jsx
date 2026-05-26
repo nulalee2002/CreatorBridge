@@ -8,6 +8,7 @@ import {
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { SERVICES, normalizeServiceId } from '../data/rates.js';
+import { PILLARS, LEGACY_SERVICE_TO_PILLAR, getPillar } from '../data/taxonomy.js';
 import { PackageBuilder } from '../components/PackageBuilder.jsx';
 import { AvailabilityEditor } from '../components/AvailabilityCalendar.jsx';
 import { GoogleCalendarConnect } from '../components/GoogleCalendarConnect.jsx';
@@ -100,6 +101,12 @@ function normalizeCreatorListing(listing) {
   };
 }
 
+function getPrimaryPillarName(value) {
+  if (PILLARS[value]) return PILLARS[value].name;
+  const pillarId = LEGACY_SERVICE_TO_PILLAR[normalizeServiceId(value)]?.pillar;
+  return getPillar(pillarId)?.name || 'Video Production';
+}
+
 // ── Creator fee tiers ────────────────────────────────────────────
 const CREATOR_TIERS = [
   {
@@ -151,6 +158,7 @@ function QuoteRow({ quote, dark, onMarkRead }) {
   const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
   const normalized = normalizeQuoteRequest(quote);
   const svc = SERVICES[normalized.serviceId];
+  const pillarName = getPrimaryPillarName(normalized.serviceId);
   const date = normalized.preferredDate
     ? new Date(normalized.preferredDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
@@ -169,7 +177,7 @@ function QuoteRow({ quote, dark, onMarkRead }) {
         <div className="flex items-center gap-2 flex-wrap">
           <p className={`text-sm font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>{normalized.clientName}</p>
           {!normalized.read && <span className="w-1.5 h-1.5 rounded-full bg-gold-400 shrink-0" />}
-          <span className={`text-xs ${textSub}`}>{svc?.name}</span>
+          <span className={`text-xs ${textSub}`}>{pillarName}</span>
         </div>
         <p className={`text-xs mt-0.5 line-clamp-2 ${textSub}`}>{normalized.description}</p>
         <div className="flex items-center gap-3 mt-1.5 flex-wrap">
@@ -489,10 +497,11 @@ export function CreatorDashboard({ dark }) {
                     {[
                       { label: 'Business Name', value: creator.businessName || creator.business_name || creator.name || '—' },
                       {
-                        label: 'Primary Niche',
+                        label: 'Primary Pillar',
                         value: (() => {
+                          const pillarId = creator.primary_pillar;
                           const svcId = creator.services?.[0]?.serviceId || creator.services?.[0]?.service_id;
-                          return SERVICES[svcId]?.name || svcId || '—';
+                          return getPrimaryPillarName(pillarId || svcId);
                         })(),
                       },
                       {
@@ -609,7 +618,7 @@ export function CreatorDashboard({ dark }) {
                 {[
                   { icon: Package,  label: 'Manage Packages',   sub: 'Edit your Basic/Standard/Premium tiers',  tab: 'packages'     },
                   { icon: Calendar, label: 'Set Availability',  sub: 'Mark days you are available for bookings', tab: 'availability' },
-                  { icon: Edit3,    label: 'Edit Listing',      sub: 'Update bio, services, portfolio',          path: '/register'   },
+                  { icon: Edit3,    label: 'Edit Listing',      sub: 'Update bio, primary pillar, portfolio',    path: '/register'   },
                   { icon: ExternalLink, label: 'View Public Profile', sub: 'See how clients see you',            profile: true       },
                 ].map(({ icon: Icon, label, sub, tab, path, profile: isProfile }) => (
                   <button key={label} type="button"
@@ -715,7 +724,7 @@ function ProfileCompletion({ creator, dark, navigate }) {
   const checks = [
     { label: 'Profile photo / avatar',      done: !!creator.avatar },
     { label: 'Bio written',                  done: !!(creator.bio?.length > 20) },
-    { label: 'At least one service added',   done: (creator.services?.length || 0) > 0 },
+    { label: 'Primary pillar selected',       done: !!(creator.primary_pillar || creator.services?.length) },
     { label: 'Portfolio item added',         done: (creator.portfolio?.length || 0) > 0 },
     { label: 'Contact info provided',        done: !!(creator.contact?.email || creator.email) },
     { label: 'Availability set',             done: false }, // would need to check localStorage

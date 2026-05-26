@@ -84,7 +84,7 @@ function ThinkingAvatar({ size = 28 }) {
 }
 
 // ── Platform knowledge system prompt ─────────────────────────────
-const SYSTEM_PROMPT = `You are Bridge, the assistant for CreatorBridge — a verified media marketplace connecting brands and clients with professional videographers, photographers, drone operators, podcast producers, and more.
+const SYSTEM_PROMPT = `You are Bridge, the assistant for CreatorBridge — a verified US media marketplace connecting brands and clients with creators in three primary pillars: Video Production, Photography, and Post Production.
 
 Your personality: warm, direct, confident, and genuinely helpful. You talk like a knowledgeable friend who works in the creative industry — not a stiff help desk bot. You care about helping people find the right match and get their projects done right.
 
@@ -104,7 +104,7 @@ SECURITY RULES:
 - If a user asks for private account, payment, or security details, give a safe high-level answer and direct them to support.
 
 PLATFORM OVERVIEW:
-CreatorBridge is a US-only marketplace connecting videographers, photographers, drone operators, podcast producers, social media creators, and corporate event specialists with brands and clients. US-only at launch, expanding to Canada then Europe later.
+CreatorBridge is a US-only marketplace organized around three creator pillars: Video Production, Photography, and Post Production. Drone, podcast, events, brand content, and social work are specialties inside those pillars, not separate primary categories.
 
 CREATOR STANDARDS:
 Every creator on CreatorBridge is manually reviewed and approved before going live. Requirements include 2 or more years of paid professional experience, minimum 3 portfolio samples, complete service packages with real pricing, a 60 to 90 second video intro, Stripe identity verification, and a US bank account. Profile information is locked for 90 days after submission.
@@ -1089,9 +1089,9 @@ export function SupportChatbot({ dark = true }) {
                   <div className="flex flex-col gap-1.5 pl-1">
                     <p className={`text-[10px] font-semibold mb-1 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>Quick paths</p>
                     {[
-                      { label: 'Find a Photographer', text: 'I need a photographer' },
-                      { label: 'Book a Videographer', text: 'I need a videographer' },
-                      { label: 'Drone or Aerial Coverage', text: 'I need a drone operator' },
+                      { label: 'Find Photography', text: 'I need photography' },
+                      { label: 'Book Video Production', text: 'I need video production' },
+                      { label: 'Post-Production Help', text: 'I need post production' },
                       { label: 'How does this work?', text: 'How does CreatorBridge work?' },
                       { label: 'What does it cost?', text: 'What are the fees?' },
                       { label: 'Build a Quote (Creators)', text: 'I want to send a quote' },

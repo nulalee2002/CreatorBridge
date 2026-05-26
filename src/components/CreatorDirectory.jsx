@@ -622,24 +622,13 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p className={labelCls}>Country</p>
-              <select value={form.location.country} onChange={e => setLocation('country', e.target.value)}
-                className={`w-full px-4 py-3 text-sm rounded-xl border outline-none transition-all ${inputCls}`}>
-                <option value="US">United States</option>
-                <option value="CA">Canada</option>
-                <option value="UK">United Kingdom</option>
-                <option value="DE">Germany</option>
-                <option value="FR">France</option>
-                <option value="ES">Spain</option>
-                <option value="IT">Italy</option>
-                <option value="SE">Scandinavia</option>
-                <option value="NL">Netherlands</option>
-              </select>
-              {form.location.country !== 'US' && (
-                <p className="mt-1 text-xs text-red-400">
-                  CreatorBridge is US-only at launch. Canada and Europe are later expansion markets.
-                </p>
-              )}
+              <p className={labelCls}>Launch Market</p>
+              <div className={`w-full px-4 py-3 text-sm rounded-xl border ${inputCls}`}>
+                United States
+              </div>
+              <p className="mt-1 text-xs text-gold-400">
+                CreatorBridge is US-only at launch.
+              </p>
             </div>
             <div>
               <p className={labelCls}>Experience Level</p>
@@ -1545,7 +1534,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
             Join <span className="text-gradient-gold">CreatorBridge</span>
           </h1>
           <p className={`text-sm md:text-base leading-7 ${textSub} max-w-2xl mx-auto`}>
-            Apply to list your services, set professional rates, and get reviewed for a curated marketplace built for US-based media creators.
+            Apply to claim one primary pillar, set professional rates, and get reviewed for a curated marketplace built for US-based media creators.
           </p>
         </div>
 
@@ -1560,8 +1549,8 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
         <div className={`mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center`}>
           {[
             { n: listings.filter(isApprovedCreator).length, label: 'Approved creators' },
-            { n: Object.keys(SERVICES).length, label: 'Service types' },
-            { n: new Set(listings.map(l => l.location?.country).filter(Boolean)).size, label: 'Countries' },
+            { n: Object.keys(PILLARS).length, label: 'Primary pillars' },
+            { n: MAX_SUB_NICHES, label: 'Specialties max' },
           ].map(({ n, label }) => (
             <div key={label} className={`rounded-2xl border p-4 ${dark ? 'border-white/[0.07] bg-white/[0.03]' : 'border-gray-200 bg-white'}`}>
               <p className="font-display text-xl font-bold text-gradient-gold">{n}</p>
@@ -1653,7 +1642,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                   onClick={() => { setPillarFilter('all'); setSubNicheFilter('all'); }}
                   className={`filter-chip ${pillarFilter === 'all' ? 'active' : ''}`}
                 >
-                  <span>All services</span>
+                  <span>All pillars</span>
                   <span className="count">
                     {listings.filter(isApprovedCreator).length}
                   </span>

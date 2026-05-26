@@ -8,7 +8,8 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { ClientVerification } from '../components/ClientVerification.jsx';
 import { ClientReputationBadge, loadClientReputation } from '../components/ClientReputationBadge.jsx';
-import { SERVICES, normalizeServiceId } from '../data/rates.js';
+import { normalizeServiceId } from '../data/rates.js';
+import { PILLARS, LEGACY_SERVICE_TO_PILLAR } from '../data/taxonomy.js';
 import { fromSupabaseProject, mergeProjects } from '../utils/projectStorage.js';
 import { getStorageDisplayUrl, isStorageReference, normalizeExternalUrl, uploadUserAsset } from '../utils/storage.js';
 
@@ -93,8 +94,10 @@ function projectDate(project) {
 }
 
 function serviceName(project) {
-  const id = normalizeServiceId(project.serviceId || project.service_id || project.service || project.serviceType);
-  return SERVICES[id]?.name || project.serviceType || 'Production';
+  const rawId = project.primary_pillar || project.serviceId || project.service_id || project.service || project.serviceType;
+  if (PILLARS[rawId]) return PILLARS[rawId].name;
+  const pillarId = LEGACY_SERVICE_TO_PILLAR[normalizeServiceId(rawId)]?.pillar;
+  return PILLARS[pillarId]?.name || 'Production';
 }
 
 function clientInitials(name = '') {
@@ -457,7 +460,7 @@ export function ClientProfilePage({ dark }) {
 
           <div className="grid gap-4 md:grid-cols-3">
             {[
-              { title: 'Find creators', copy: 'Browse verified media specialists by category, location, and fit.', icon: Search, action: () => navigate('/find') },
+              { title: 'Find creators', copy: 'Browse verified media specialists by primary pillar, location, and fit.', icon: Search, action: () => navigate('/find') },
               { title: 'Review messages', copy: 'Keep project questions and booking context inside CreatorBridge.', icon: MessageSquare, action: () => navigate('/messages') },
               { title: 'Post a project', copy: 'Create a brief and review Smart Match recommendations.', icon: Zap, action: () => navigate('/projects') },
             ].map(({ title, copy, icon: Icon, action }) => (
