@@ -7,7 +7,7 @@ import {
   Upload, AlertCircle, Timer, Clock,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
-import { SERVICES, MARKETPLACE_CATEGORIES, getMarketplaceServiceIds, normalizeServiceId } from '../data/rates.js';
+import { normalizeServiceId } from '../data/rates.js';
 import { PILLARS, LEGACY_SERVICE_TO_PILLAR } from '../data/taxonomy.js';
 import { PROJECT_STATUSES, statusBadgeClass } from '../config/fees.js';
 import { ProjectTimeline } from '../components/ProjectTimeline.jsx';
@@ -148,6 +148,16 @@ function updateApplicationStatus(applicationId, status) {
 
 function isUuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
+}
+
+function getProjectPillarId(project) {
+  const rawServiceId = project?.primary_pillar || project?.serviceId || project?.service_id || project?.serviceType;
+  if (PILLARS[rawServiceId]) return rawServiceId;
+  return LEGACY_SERVICE_TO_PILLAR[normalizeServiceId(rawServiceId)]?.pillar || 'video_production';
+}
+
+function getProjectPillar(project) {
+  return PILLARS[getProjectPillarId(project)] || PILLARS.video_production;
 }
 
 // ── Delivery Submit Modal ────────────────────────────────────────
@@ -412,7 +422,7 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
     const cleanTitle = sanitizePlainText(form.title, 120);
     const cleanDescription = sanitizeLongText(form.description, 4000);
     if (!cleanTitle) next.title = 'Add a clear project title.';
-    if (!form.serviceId) next.serviceId = 'Choose the production service you need.';
+    if (!form.serviceId) next.serviceId = 'Choose one primary pillar for this brief.';
     if (cleanDescription.length < 80) next.description = 'Add at least 80 characters so creators understand the scope.';
     if (!form.projectDuration) next.projectDuration = 'Select how long you need the creator or crew.';
     if (!form.budgetMin || !Number.isFinite(minBudget) || minBudget <= 0) next.budgetMin = 'Add a minimum budget above $0.';
@@ -512,21 +522,21 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
             </div>
 
             <div>
-              <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Service Type *</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {Object.entries(SERVICES).map(([id, svc]) => (
-                  <button key={id} type="button" onClick={() => set('serviceId', form.serviceId === id ? '' : id)}
+              <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Primary Pillar *</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {Object.values(PILLARS).map(pillar => (
+                  <button key={pillar.id} type="button" onClick={() => set('serviceId', form.serviceId === pillar.id ? '' : pillar.id)}
                     className={`flex items-start gap-3 px-3 py-3 rounded-xl border text-left transition-all ${
-                      form.serviceId === id
+                      form.serviceId === pillar.id
                         ? 'border-gold-500 bg-gold-500/10 text-gold-400'
                         : errors.serviceId
                           ? 'border-red-500/45 ' + (dark ? 'text-charcoal-300' : 'text-gray-500')
                           : dark ? 'border-white/[0.07] text-charcoal-300 hover:border-gold-500/35 hover:bg-white/[0.035]' : 'border-gray-200 text-gray-500 hover:border-gray-300'
                     }`}>
-                    <span className="text-xl leading-none">{svc.icon}</span>
+                    <span className="text-xl leading-none">{pillar.icon}</span>
                     <span>
-                      <span className="block text-xs font-bold">{svc.name}</span>
-                      <span className={`mt-1 block text-[10px] leading-4 ${form.serviceId === id ? 'text-gold-300' : textSub}`}>{svc.description}</span>
+                      <span className="block text-xs font-bold">{pillar.name}</span>
+                      <span className={`mt-1 block text-[10px] leading-4 ${form.serviceId === pillar.id ? 'text-gold-300' : textSub}`}>{pillar.description}</span>
                     </span>
                   </button>
                 ))}
@@ -588,7 +598,7 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
             <div>
               <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Required Skills (comma-separated)</p>
               <input type="text" value={form.skills} onChange={e => set('skills', e.target.value)}
-                placeholder="e.g. Adobe Lightroom, drone photography, product shots"
+                placeholder="e.g. product launch, color grade, conference coverage"
                 className={inputCls('skills')} />
             </div>
           </div>
@@ -899,8 +909,7 @@ function ProjectCard({ project, dark, onApply, myApplications, isClient, canAppl
   const [showDelivery, setShowDelivery] = useState(false);
   const [showRevision, setShowRevision] = useState(false);
   const [showDispute, setShowDispute] = useState(false);
-  const serviceId = normalizeServiceId(project.serviceId || project.service_id || project.serviceType);
-  const svc      = SERVICES[serviceId];
+  const pillar   = getProjectPillar(project);
   const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
   const applied  = myApplications.some(a => a.projectId === project.id);
 
@@ -919,7 +928,7 @@ function ProjectCard({ project, dark, onApply, myApplications, isClient, canAppl
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-3">
           <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 transition-all ${dark ? 'bg-white/[0.04] ring-1 ring-white/[0.07] group-hover:ring-gold-500/20' : 'bg-gray-100'}`}>
-            {svc?.icon || '📋'}
+            {pillar.icon}
           </div>
           <div>
             <h3 className={`font-display font-bold text-base leading-snug ${dark ? 'text-white' : 'text-gray-900'}`}>{project.title}</h3>
@@ -942,6 +951,9 @@ function ProjectCard({ project, dark, onApply, myApplications, isClient, canAppl
       <div className="flex flex-wrap gap-2 mb-4">
         <span className="flex items-center gap-1 text-xs font-bold text-gold-400">
           <DollarSign size={11} /> {budgetStr}
+        </span>
+        <span className={`flex items-center gap-1 text-xs ${textSub}`}>
+          <Briefcase size={10} /> {pillar.name}
         </span>
         {project.deadline && (
           <span className={`flex items-center gap-1 text-xs ${textSub}`}>
@@ -1028,21 +1040,14 @@ function ProjectCard({ project, dark, onApply, myApplications, isClient, canAppl
   );
 }
 
-// ── Creator Cover Helper for Project Board ────────────────────
-function getCreatorCoverImage(creator) {
-  const serviceId = creator.services?.[0]?.serviceId || creator.services?.[0]?.service_id || '';
-  switch(serviceId) {
-    case 'video':
+// ── Project Cover Helper ───────────────────────────────────────
+function getProjectCoverImage(project) {
+  switch(getProjectPillarId(project)) {
+    case 'video_production':
       return '/images/creatorbridge/camera-lens-event-reflection.png';
     case 'photography':
       return '/images/creatorbridge/commercial-photographer.png';
-    case 'drone':
-      return '/images/creatorbridge/drone-operator-golden-hour.png';
-    case 'podcast':
-      return '/images/creatorbridge/podcast-producer-studio.png';
-    case 'postProduction':
-    case 'editor':
-    case 'social':
+    case 'post_production':
       return '/images/creatorbridge/post-production-suite.png';
     default:
       return '/images/creatorbridge/creator-profile-cover-studio.jpg';
@@ -1053,8 +1058,7 @@ function getCreatorCoverImage(creator) {
 function ProjectDetailPane({ project, dark, onApply, myApplications, applications, isClient, canApply, onStatusChange }) {
   const navigate    = useNavigate();
   const { user } = useAuth();
-  const serviceId   = normalizeServiceId(project.serviceId || project.service_id || project.serviceType);
-  const svc         = SERVICES[serviceId];
+  const pillar      = getProjectPillar(project);
   const textSub     = dark ? 'text-charcoal-300' : 'text-gray-500';
   const applied     = myApplications.some(a => a.projectId === project.id);
   const projectApps = applications.filter(a => a.projectId === project.id);
@@ -1130,7 +1134,7 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
     onStatusChange?.(localProject.id, 'accepted', patch);
   }
 
-  const coverImage = getCreatorCoverImage({ services: [{ serviceId }] });
+  const coverImage = getProjectCoverImage(project);
 
   return (
     <div className="w-full space-y-5 text-sans">
@@ -1140,6 +1144,10 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
         <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950 via-charcoal-950/40 to-transparent" />
         <span className={`absolute bottom-3 left-3 text-[10px] font-bold px-2 py-1 rounded-full ${statusBadgeClass(localProject.status, dark)}`}>
           {PROJECT_STATUSES[localProject.status]?.label || 'Open'}
+        </span>
+        <span className="pillar-label">
+          <span className="dot" />
+          {pillar.name}
         </span>
       </div>
 
@@ -1152,6 +1160,7 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
       <div className={`grid grid-cols-2 gap-3 p-4 rounded-xl ${dark ? 'bg-charcoal-900/60 border border-white/[0.04]' : 'bg-gray-50'}`}>
         {[
           { icon: DollarSign, label: 'Budget Range', value: budgetStr, color: 'text-gold-400' },
+          { icon: Briefcase,  label: 'Primary Pillar', value: pillar.name, color: textSub },
           { icon: Users,      label: 'Applications', value: `${localProject.applications || 0} proposals`, color: textSub },
           ...(localProject.projectDuration ? [{ icon: Clock, label: 'Duration', value: localProject.projectDuration, color: textSub }] : []),
           ...(localProject.deadline ? [{ icon: Calendar, label: 'Deadline', value: new Date(localProject.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), color: textSub }] : []),
@@ -1557,13 +1566,13 @@ export function ProjectBoard({ dark }) {
             <div className="flex flex-col justify-between gap-6">
               <div>
                 <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
-                  Curated production work
+                  Curated briefs · US-only
                 </p>
                 <h1 className="font-display text-4xl md:text-5xl font-bold text-white">
-                  Project Board
+                  Scoped before creators apply.
                 </h1>
                 <p className={`text-sm md:text-base leading-7 mt-3 max-w-2xl ${textSub}`}>
-                  {isCreator ? 'Browse open briefs, submit proposals, and track milestone payments.' : 'Post a production brief, compare proposals, and keep project details organized.'}
+                  {isCreator ? 'Browse open briefs by primary pillar, submit proposals, and track milestone payments.' : 'Post one clear production brief, compare proposals, and keep project details organized.'}
                 </p>
               </div>
               
@@ -1621,13 +1630,13 @@ export function ProjectBoard({ dark }) {
         {tab === 'browse' && (
           <div className="flex flex-wrap gap-4 items-center bg-charcoal-950/30 border border-white/[0.06] rounded-2xl p-4 mb-6">
             <div className="flex flex-wrap gap-2 items-center w-full">
-              <span className={`text-[10px] uppercase tracking-wider font-bold ${textSub} mr-2`}>Specialty:</span>
+              <span className={`text-[10px] uppercase tracking-wider font-bold ${textSub} mr-2`}>Primary pillar:</span>
               <button 
                 type="button"
                 onClick={() => setFilterService('')}
                 className={`filter-pill ${filterService === '' ? 'active' : ''}`}
               >
-                All services
+                All pillars
               </button>
               {Object.values(PILLARS).map(pillar => (
                 <button
@@ -1669,7 +1678,7 @@ export function ProjectBoard({ dark }) {
                : "No briefs match your filters"}
             </p>
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 opacity-80">
-              {tab === 'browse' ? 'Try widening the service or budget range filters.' : 'Your active production briefs and applications will appear here.'}
+              {tab === 'browse' ? 'Try widening the pillar or budget range filters.' : 'Your active production briefs and applications will appear here.'}
             </p>
             {tab === 'my_projects' && user && (
               <button type="button" onClick={() => setShowPost(true)}
@@ -1682,8 +1691,7 @@ export function ProjectBoard({ dark }) {
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-8 items-start">
             <div className="space-y-4">
               {displayProjects.map(p => {
-                const serviceId = normalizeServiceId(p.serviceId || p.service_id || p.serviceType);
-                const svc      = SERVICES[serviceId];
+                const pillar = getProjectPillar(p);
                 const budgetStr = p.budgetMin && p.budgetMax
                   ? `$${Number(p.budgetMin).toLocaleString()} - $${Number(p.budgetMax).toLocaleString()}`
                   : p.budgetMax ? `Up to $${Number(p.budgetMax).toLocaleString()}`
@@ -1699,7 +1707,7 @@ export function ProjectBoard({ dark }) {
                     <div className="flex justify-between items-start gap-3 mb-2">
                       <div>
                         <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md ${dark ? 'bg-white/[0.05] text-gold-400' : 'bg-gray-100 text-gold-600'} mr-2`}>
-                          {svc?.name || 'Media'}
+                          {pillar.name}
                         </span>
                         <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${statusBadgeClass(p.status, dark)}`}>
                           {PROJECT_STATUSES[p.status]?.label || 'Open'}
