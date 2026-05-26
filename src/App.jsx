@@ -70,6 +70,128 @@ function LazyRoute({ dark, children }) {
   return <Suspense fallback={<RouteLoading dark={dark} />}>{children}</Suspense>;
 }
 
+function CreatorBridgeChromeEffects() {
+  const ringRef = useRef(null);
+  const dotRef = useRef(null);
+  const glowRef = useRef(null);
+  const progressRef = useRef(null);
+
+  useEffect(() => {
+    const ring = ringRef.current;
+    const dot = dotRef.current;
+    const glow = glowRef.current;
+    const progress = progressRef.current;
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const isMobile = window.innerWidth <= 768;
+
+    if (!ring || !dot || isMobile || reducedMotion) {
+      if (!progress) return undefined;
+      const handleProgressOnly = () => {
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        progress.style.transform = `scaleX(${max > 0 ? window.scrollY / max : 0})`;
+      };
+      window.addEventListener('scroll', handleProgressOnly, { passive: true });
+      handleProgressOnly();
+      return () => window.removeEventListener('scroll', handleProgressOnly);
+    }
+
+    ring.style.display = 'block';
+    dot.style.display = 'block';
+
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+    let ringX = mouseX;
+    let ringY = mouseY;
+    let glowX = mouseX;
+    let glowY = mouseY;
+    let frameId = 0;
+
+    const markHoverTargets = () => {
+      const targets = document.querySelectorAll('a, button, input, textarea, select, [role="button"], .liquid-glass, .lane-card, .pillar-card');
+      const addHover = () => ring.classList.add('hover');
+      const removeHover = () => ring.classList.remove('hover');
+      targets.forEach(target => {
+        target.addEventListener('mouseenter', addHover);
+        target.addEventListener('mouseleave', removeHover);
+      });
+      return () => {
+        targets.forEach(target => {
+          target.removeEventListener('mouseenter', addHover);
+          target.removeEventListener('mouseleave', removeHover);
+        });
+      };
+    };
+
+    let cleanupHoverTargets = markHoverTargets();
+    const observer = new MutationObserver(() => {
+      cleanupHoverTargets?.();
+      cleanupHoverTargets = markHoverTargets();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    const handleMouseMove = event => {
+      mouseX = event.clientX;
+      mouseY = event.clientY;
+      dot.style.left = `${mouseX}px`;
+      dot.style.top = `${mouseY}px`;
+      document.body.classList.add('mouse-active');
+      document.body.style.setProperty('--mx', `${(mouseX / window.innerWidth) * 100}%`);
+      document.body.style.setProperty('--my', `${(mouseY / window.innerHeight) * 100}%`);
+    };
+
+    const handleMouseLeave = () => {
+      document.body.classList.remove('mouse-active');
+      ring.classList.remove('hover');
+    };
+
+    const handleScroll = () => {
+      if (!progress) return;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      progress.style.transform = `scaleX(${max > 0 ? window.scrollY / max : 0})`;
+    };
+
+    const tick = () => {
+      ringX += (mouseX - ringX) * 0.38;
+      ringY += (mouseY - ringY) * 0.38;
+      glowX += (mouseX - glowX) * 0.28;
+      glowY += (mouseY - glowY) * 0.28;
+
+      ring.style.left = `${ringX}px`;
+      ring.style.top = `${ringY}px`;
+      if (glow) {
+        glow.style.left = `${glowX}px`;
+        glow.style.top = `${glowY}px`;
+      }
+      frameId = requestAnimationFrame(tick);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseleave', handleMouseLeave);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    frameId = requestAnimationFrame(tick);
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      observer.disconnect();
+      cleanupHoverTargets?.();
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+      window.removeEventListener('scroll', handleScroll);
+      document.body.classList.remove('mouse-active');
+    };
+  }, []);
+
+  return (
+    <>
+      <div className="scroll-progress" ref={progressRef} />
+      <div className="cursor-ring" ref={ringRef} style={{ display: 'none' }} />
+      <div className="cursor-dot" ref={dotRef} style={{ display: 'none' }} />
+      <div className="mouse-glow" ref={glowRef} />
+    </>
+  );
+}
+
 function AuthRequired({ dark, user, loading, role = 'client', title, copy, children }) {
   if (loading) return <RouteLoading dark={dark} />;
   if (user) return children;
@@ -423,6 +545,7 @@ export default function App() {
 
     <div className={`min-h-screen ${bgMain} font-body transition-colors duration-200`} style={{ position: 'relative', zIndex: 1 }}>
       <CircuitBackground subdued={softFocusBackground} />
+      <CreatorBridgeChromeEffects />
       {softFocusBackground && <div className="cb-page-depth-veil" />}
 
       {/* ── Top Nav ── */}

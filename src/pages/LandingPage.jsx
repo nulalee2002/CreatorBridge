@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ArrowRight, Star, Video, Camera, Mic, Radio, Award, Sliders, Play, Compass, CheckCircle2, Zap } from 'lucide-react';
 import { SEO } from '../components/SEO.jsx';
@@ -39,106 +39,8 @@ export function LandingPage({ dark }) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Refs for tracking elements
-  const ringRef = useRef(null);
-  const dotRef = useRef(null);
-  const glowRef = useRef(null);
-  const progRef = useRef(null);
-
   // States for interactive count-up stats
   const [stats, setStats] = useState({ creators: 0, projects: 0, satisfaction: 0 });
-
-  // Custom mouse-spotlight + cursor ring with optimized fast lerps and reduced flare
-  useEffect(() => {
-    const ring = ringRef.current;
-    const dot = dotRef.current;
-    const glow = glowRef.current;
-    const prog = progRef.current;
-    if (!ring || !dot) return;
-
-    if (window.innerWidth <= 768) return;
-
-    ring.style.display = 'block';
-    dot.style.display = 'block';
-
-    let mx = window.innerWidth / 2;
-    let my = window.innerHeight / 2;
-    let rx = mx;
-    let ry = my;
-    let gx = mx;
-    let gy = my;
-    let active = false;
-
-    const onMouseMove = (e) => {
-      mx = e.clientX;
-      my = e.clientY;
-      dot.style.left = `${mx}px`;
-      dot.style.top = `${my}px`;
-      if (!active) {
-        active = true;
-        document.body.classList.add('mouse-active');
-      }
-      document.body.style.setProperty('--mx', `${(mx / window.innerWidth) * 100}%`);
-      document.body.style.setProperty('--my', `${(my / window.innerHeight) * 100}%`);
-    };
-
-    const onMouseLeave = () => {
-      document.body.classList.remove('mouse-active');
-      active = false;
-    };
-
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseleave', onMouseLeave);
-
-    // Fast lerp speeds
-    let frameId;
-    const tick = () => {
-      rx += (mx - rx) * 0.30; // Responsive cursor tracking
-      ry += (my - ry) * 0.30;
-      gx += (mx - gx) * 0.20; // Spotlight tracking, faster follow
-      gy += (my - gy) * 0.20;
-
-      ring.style.left = `${rx}px`;
-      ring.style.top = `${ry}px`;
-      if (glow) {
-        glow.style.left = `${gx}px`;
-        glow.style.top = `${gy}px`;
-      }
-      frameId = requestAnimationFrame(tick);
-    };
-    frameId = requestAnimationFrame(tick);
-
-    // Hover effect expansions
-    const hovers = document.querySelectorAll('a, button, .liquid-glass, .lane-card, .parallax-wrap, input, textarea, select');
-    const addHover = () => ring.classList.add('hover');
-    const removeHover = () => ring.classList.remove('hover');
-    hovers.forEach(el => {
-      el.addEventListener('mouseenter', addHover);
-      el.addEventListener('mouseleave', removeHover);
-    });
-
-    // Scroll progress bar
-    const handleScroll = () => {
-      const top = window.scrollY;
-      const h = document.documentElement.scrollHeight - window.innerHeight;
-      if (prog) {
-        prog.style.transform = `scaleX(${h > 0 ? top / h : 0})`;
-      }
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseleave', onMouseLeave);
-      cancelAnimationFrame(frameId);
-      document.body.classList.remove('mouse-active');
-      hovers.forEach(el => {
-        el.removeEventListener('mouseenter', addHover);
-        el.removeEventListener('mouseleave', removeHover);
-      });
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
 
   // IntersectionObserver for elements reveals (.reveal-up)
   useEffect(() => {
@@ -267,16 +169,6 @@ export function LandingPage({ dark }) {
         url="https://www.creatorbridge.studio"
         jsonLd={ORG_JSON_LD}
       />
-
-      {/* Scroll Progress Indicator */}
-      <div className="scroll-progress" ref={progRef} />
-
-      {/* Custom Cursor Elements */}
-      <div className="cursor-ring" ref={ringRef} style={{ display: 'none' }} />
-      <div className="cursor-dot" ref={dotRef} style={{ display: 'none' }} />
-
-      {/* Mouse Tracked Spotlight Glow */}
-      <div className="mouse-glow" ref={glowRef} />
 
       <main className="relative z-10 text-[#f0f0f0]">
 
