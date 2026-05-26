@@ -494,16 +494,16 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
         </button>
         <div className="p-6">
           <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
-            Client production brief
+            Post a production brief · US only
           </p>
-          <h3 className={`font-display font-bold text-2xl mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>Post a project</h3>
+          <h3 className={`font-display font-bold text-2xl mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>Tell us what you're producing</h3>
           <p className={`text-sm leading-6 mb-6 ${textSub}`}>
-            Give creators enough context to judge fit, timeline, and budget before they apply. Strong briefs get better matches.
+            Share one clear primary pillar, budget, timeline, and production context so verified creators can judge fit before they apply.
           </p>
 
           <div className="space-y-4">
             <div>
-              <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Project Title *</p>
+              <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Project title *</p>
               <input type="text" value={form.title} onChange={e => set('title', e.target.value)}
                 placeholder="e.g. Brand photography for new product launch"
                 className={inputCls('title')} />
@@ -511,7 +511,7 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
             </div>
 
             <div>
-              <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Description *</p>
+              <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Brief *</p>
               <textarea rows={4} value={form.description} onChange={e => set('description', e.target.value)}
                 placeholder="Describe what needs to be created, the style or usage, must-have shots, deliverables, and anything the creator needs to know."
                 className={`${inputCls('description')} resize-none`} />
@@ -522,7 +522,7 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
             </div>
 
             <div>
-              <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Primary Pillar *</p>
+              <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Primary pillar *</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {Object.values(PILLARS).map(pillar => (
                   <button key={pillar.id} type="button" onClick={() => set('serviceId', form.serviceId === pillar.id ? '' : pillar.id)}
@@ -546,13 +546,13 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Min Budget ($) *</p>
+                <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Budget min · USD *</p>
                 <input type="number" min={0} value={form.budgetMin} onChange={e => set('budgetMin', e.target.value)}
                   placeholder="Enter minimum" className={inputCls('budgetMin')} />
                 {errors.budgetMin && <p className="mt-1 text-xs text-red-400">{errors.budgetMin}</p>}
               </div>
               <div>
-                <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Max Budget ($) *</p>
+                <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Budget max · USD *</p>
                 <input type="number" min={0} value={form.budgetMax} onChange={e => set('budgetMax', e.target.value)}
                   placeholder="Enter maximum" className={inputCls('budgetMax')} />
                 {errors.budgetMax && <p className="mt-1 text-xs text-red-400">{errors.budgetMax}</p>}
@@ -561,7 +561,7 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Project Duration *</p>
+                <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Project duration *</p>
                 <select value={form.projectDuration} onChange={e => set('projectDuration', e.target.value)}
                   className={inputCls('projectDuration')}>
                   <option value="">Select duration...</option>
@@ -581,7 +581,7 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
                   className={inputCls('deadline')} />
               </div>
               <div>
-                <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Location</p>
+                <p className={`text-xs font-medium mb-1.5 ${textSub}`}>US location</p>
                 <input type="text" value={form.location} onChange={e => set('location', e.target.value)}
                   placeholder="New York, NY" className={inputCls('location')} />
               </div>
@@ -1558,21 +1558,26 @@ export function ProjectBoard({ dark }) {
   return (
     <div className={`min-h-screen ${dark ? 'bg-transparent' : 'bg-gray-55'} text-sans`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-        <div className={`relative overflow-hidden rounded-[28px] border p-6 md:p-8 mb-6 ${
-          dark ? 'bg-charcoal-900/70 border-white/[0.08] shadow-[0_28px_90px_rgba(0,0,0,0.28)]' : 'bg-white border-gray-200'
+        <div className={`relative overflow-hidden rounded-[28px] border p-6 md:p-8 mb-6 liquid-glass ${
+          dark ? 'border-white/[0.08] shadow-[0_28px_90px_rgba(0,0,0,0.28)]' : 'bg-white border-gray-200'
         }`}>
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/60 to-transparent" />
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-6 items-stretch">
             <div className="flex flex-col justify-between gap-6">
               <div>
-                <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
-                  Curated briefs · US-only
+                <p className={`mb-5 text-xs ${textSub}`}>
+                  <button type="button" onClick={() => navigate('/')} className="hover:text-gold-300 transition-colors">Home</button>
+                  <span className="mx-2 text-gold-500/70">/</span>
+                  <span className={dark ? 'text-white' : 'text-gray-900'}>Project Board</span>
                 </p>
-                <h1 className="font-display text-4xl md:text-5xl font-bold text-white">
-                  Scoped before creators apply.
+                <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+                  Open production briefs · US only
+                </p>
+                <h1 className={`font-display text-4xl md:text-6xl font-bold leading-tight ${dark ? 'text-white' : 'text-gray-900'}`}>
+                  Curated work. <span className="gold-text">Scoped</span> before money moves.
                 </h1>
                 <p className={`text-sm md:text-base leading-7 mt-3 max-w-2xl ${textSub}`}>
-                  {isCreator ? 'Browse open briefs by primary pillar, submit proposals, and track milestone payments.' : 'Post one clear production brief, compare proposals, and keep project details organized.'}
+                  Every brief is reviewed by the CreatorBridge team and tagged by pillar, budget, location, and timeline before verified creators apply.
                 </p>
               </div>
               
@@ -1580,12 +1585,12 @@ export function ProjectBoard({ dark }) {
                 {user && (
                   <button type="button" onClick={() => setShowPost(true)}
                     className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold transition-all shadow-md">
-                    <Plus size={14} /> Post a Brief
+                    <Plus size={14} /> Post a brief
                   </button>
                 )}
                 <button type="button" onClick={() => navigate('/find')}
                   className="flex items-center gap-2 px-5 py-3 rounded-xl border border-white/[0.1] hover:border-white/[0.2] text-white text-sm font-bold transition-all bg-white/[0.02]">
-                  Browse Creators
+                  Browse creators
                 </button>
               </div>
             </div>
@@ -1598,7 +1603,7 @@ export function ProjectBoard({ dark }) {
                   Production brief
                 </p>
                 <p className="max-w-sm text-sm font-bold leading-6 text-white">
-                  Scope the work before creators apply.
+                  One pillar, clear budget, verified creators.
                 </p>
               </div>
             </div>
@@ -1628,31 +1633,31 @@ export function ProjectBoard({ dark }) {
         </div>
 
         {tab === 'browse' && (
-          <div className="flex flex-wrap gap-4 items-center bg-charcoal-950/30 border border-white/[0.06] rounded-2xl p-4 mb-6">
+          <div className="flex flex-wrap gap-4 items-center bg-charcoal-950/30 border border-white/[0.06] rounded-2xl p-4 mb-6 liquid-glass">
             <div className="flex flex-wrap gap-2 items-center w-full">
-              <span className={`text-[10px] uppercase tracking-wider font-bold ${textSub} mr-2`}>Primary pillar:</span>
+              <span className={`text-[10px] uppercase tracking-wider font-bold ${textSub} mr-2`}>Pillar</span>
               <button 
                 type="button"
                 onClick={() => setFilterService('')}
                 className={`filter-pill ${filterService === '' ? 'active' : ''}`}
               >
-                All pillars
+                All briefs
               </button>
-              {Object.values(PILLARS).map(pillar => (
+              {Object.values(PILLARS).map((pillar, index) => (
                 <button
                   key={pillar.id}
                   type="button"
                   onClick={() => setFilterService(pillar.id)}
                   className={`filter-pill ${filterService === pillar.id ? 'active' : ''}`}
                 >
-                  <span>{pillar.icon}</span>
+                  <span className="font-mono text-[9px] opacity-70">{String(index + 1).padStart(2, '0')}</span>
                   <span>{pillar.name}</span>
                 </button>
               ))}
             </div>
 
             <div className="flex flex-wrap gap-2 items-center w-full border-t border-white/[0.04] pt-3 mt-1">
-              <span className={`text-[10px] uppercase tracking-wider font-bold ${textSub} mr-2`}>Budget Range:</span>
+              <span className={`text-[10px] uppercase tracking-wider font-bold ${textSub} mr-2`}>Budget · USD</span>
               {BUDGET_RANGES.map(r => (
                 <button
                   key={r.id}
@@ -1742,7 +1747,7 @@ export function ProjectBoard({ dark }) {
               })}
             </div>
 
-            <aside className="lg:sticky lg:top-24 bg-charcoal-900/50 border border-white/[0.08] p-6 rounded-2xl shadow-xl">
+            <aside className="detail-pane liquid-glass border border-white/[0.08] p-6 rounded-2xl shadow-xl">
               {activeProject ? (
                 <ProjectDetailPane
                   project={activeProject}
