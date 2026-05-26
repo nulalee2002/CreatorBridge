@@ -30,7 +30,6 @@ const HealthWidget = lazy(() => import('./components/HealthWidget.jsx').then(m =
 const PackageComparison = lazy(() => import('./components/PackageComparison.jsx').then(m => ({ default: m.PackageComparison })));
 const SeasonalDemand = lazy(() => import('./components/SeasonalDemand.jsx').then(m => ({ default: m.SeasonalDemand })));
 const PresetManager = lazy(() => import('./components/PresetManager.jsx').then(m => ({ default: m.PresetManager })));
-const CurrencySettings = lazy(() => import('./components/CurrencySettings.jsx').then(m => ({ default: m.CurrencySettings })));
 const ProfileSettings = lazy(() => import('./components/ProfileSettings.jsx').then(m => ({ default: m.ProfileSettings })));
 const CreatorProfilePage = lazy(() => import('./pages/CreatorProfilePage.jsx').then(m => ({ default: m.CreatorProfilePage })));
 const CreatorDashboard = lazy(() => import('./pages/CreatorDashboard.jsx').then(m => ({ default: m.CreatorDashboard })));
@@ -526,17 +525,10 @@ export default function App() {
                   dark ? 'border-white/[0.09] text-charcoal-300 hover:text-white hover:border-charcoal-500' : 'border-gray-200 text-gray-500 hover:text-gray-900'
                 }`}
               >
-                <Zap size={12} className="text-gold-400" /> Quick Quote
+              <Zap size={12} className="text-gold-400" /> Quick Quote
               </button>
               <ProfileSettings profile={profile} onChange={setProfile} dark={dark} />
               <PresetManager currentState={state} onLoad={handleLoadPreset} dark={dark} />
-              <CurrencySettings
-                currency={state.currency}
-                exchangeRates={state.exchangeRates}
-                onCurrencyChange={v => dispatch({ type: 'SET_FIELD', field: 'currency', value: v })}
-                onRatesChange={v => dispatch({ type: 'SET_FIELD', field: 'exchangeRates', value: v })}
-                dark={dark}
-              />
               <button type="button" onClick={() => dispatch({ type: 'RESET' })}
                 className={`p-2 rounded-xl transition-colors ${dark ? 'text-charcoal-500 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}
                 title="Reset calculator"
@@ -817,7 +809,7 @@ export default function App() {
           {/* Service selector */}
           <div className={`${cardCls} p-4`}>
             <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
-              Service Type
+              Primary Pillar
             </p>
             <ServiceSelector
               value={state.serviceId}

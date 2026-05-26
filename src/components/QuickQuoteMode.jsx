@@ -1,15 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, ArrowLeft, Zap, Calendar, FileText, Package } from 'lucide-react';
-import { SERVICES, PACKAGE_TIERS, RATES } from '../data/rates.js';
+import { SERVICES, PACKAGE_TIERS } from '../data/rates.js';
+import { PILLARS, getSubNichesForPillar } from '../data/taxonomy.js';
 import { getRate, formatCurrency } from '../utils/pricing.js';
+import { PILLAR_TO_LEGACY_SERVICE } from './ServiceSelector.jsx';
 import { StateCitySelector } from './StateCitySelector.jsx';
 
-const STEPS = ['Service', 'Project Details', 'Review & Submit'];
-
-const SERVICE_SUBTYPES = Object.fromEntries(
-  Object.entries(SERVICES).map(([id, svc]) => [id, svc.subtypes || []])
-);
+const STEPS = ['Pillar', 'Project Details', 'Review & Submit'];
 
 const HOURS_OPTIONS = [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24, 32, 40];
 const DELIVERABLE_OPTIONS = [1, 2, 3, 4, 5, 6, 8, 10, 15, 20];
@@ -45,10 +43,11 @@ export function QuickQuoteMode({ dark = true, onFullMode }) {
 
   const [step, setStep] = useState(0);
 
-  const service     = SERVICES[serviceId];
+  const selectedPillar = Object.values(PILLARS).find(pillar => PILLAR_TO_LEGACY_SERVICE[pillar.id] === serviceId) || null;
+  const service     = selectedPillar ? { ...selectedPillar, name: selectedPillar.name } : SERVICES[serviceId];
   const tiers       = serviceId ? PACKAGE_TIERS[serviceId] : null;
   const regionKey   = location?.regionKey || 'us-tier1';
-  const subtypes    = serviceId ? (SERVICE_SUBTYPES[serviceId] || []) : [];
+  const subtypes    = selectedPillar ? getSubNichesForPillar(selectedPillar.id).map(sn => sn.label) : [];
 
   const calcTierTotal = (tierKey) => {
     const tierDef = tiers?.[tierKey];
@@ -93,6 +92,7 @@ export function QuickQuoteMode({ dark = true, onFullMode }) {
     const quote = {
       id,
       serviceId,
+      primaryPillar: selectedPillar?.id || serviceId,
       serviceName: service?.name,
       projectType,
       location,
@@ -152,21 +152,26 @@ export function QuickQuoteMode({ dark = true, onFullMode }) {
         {/* Step 0: Service */}
         {step === 0 && (
           <div className="space-y-3">
-            <h2 className={`font-display font-bold text-xl ${textMain}`}>What are you looking for?</h2>
-            <div className="grid grid-cols-2 gap-3">
-              {Object.values(SERVICES).map(svc => (
-                <button key={svc.id} type="button" onClick={() => setServiceId(svc.id)}
+            <h2 className={`font-display font-bold text-xl ${textMain}`}>Choose one primary pillar</h2>
+            <p className={`text-xs leading-5 ${textSub}`}>
+              Start with the main type of work, then narrow the request by specialty.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {Object.values(PILLARS).map(pillar => {
+                const legacyId = PILLAR_TO_LEGACY_SERVICE[pillar.id];
+                return (
+                <button key={pillar.id} type="button" onClick={() => setServiceId(legacyId)}
                   className={`flex flex-col items-start gap-2 p-4 rounded-2xl border text-left transition-all ${
-                    serviceId === svc.id
+                    serviceId === legacyId
                       ? 'border-gold-500 bg-gold-500/10'
                       : dark ? 'border-white/[0.07] bg-charcoal-900/72' : 'border-gray-200 bg-white'
                   }`}
                 >
-                  <span className="text-2xl">{svc.icon}</span>
-                  <span className={`text-sm font-semibold ${serviceId === svc.id ? 'text-gold-400' : textMain}`}>{svc.name}</span>
-                  <span className={`text-[11px] leading-tight ${textSub}`}>{svc.description}</span>
+                  <span className="text-2xl">{pillar.icon}</span>
+                  <span className={`text-sm font-semibold ${serviceId === legacyId ? 'text-gold-400' : textMain}`}>{pillar.name}</span>
+                  <span className={`text-[11px] leading-tight ${textSub}`}>{pillar.description}</span>
                 </button>
-              ))}
+              );})}
             </div>
           </div>
         )}
@@ -185,7 +190,7 @@ export function QuickQuoteMode({ dark = true, onFullMode }) {
             {/* Project type / subtype */}
             {subtypes.length > 0 && (
               <div>
-                <p className={labelCls}>Project Type</p>
+                <p className={labelCls}>Specialty</p>
                 <div className="flex flex-wrap gap-2">
                   {subtypes.map(st => (
                     <button key={st} type="button" onClick={() => setProjectType(st === projectType ? '' : st)}
