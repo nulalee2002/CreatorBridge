@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, ChevronDown } from 'lucide-react';
+import { X, Send } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
@@ -9,78 +9,72 @@ import { fromSupabaseProject, upsertLocalProject } from '../utils/projectStorage
 import { clampNumber, sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
 import { checkMessage, logFilterEvent } from '../utils/messageFilter.js';
 
-// ── Animated avatar components ───────────────────────────────────
-function ChatAvatar({ size = 28, animate = true }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <style>{`
-        @keyframes blink {
-          0%, 90%, 100% { transform: scaleY(1); }
-          95% { transform: scaleY(0.1); }
-        }
-        @keyframes pulse-ring {
-          0% { opacity: 0.6; transform: scale(1); }
-          100% { opacity: 0; transform: scale(1.4); }
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-2px); }
-        }
-        .eye-left { animation: blink 4s ease-in-out infinite; transform-origin: 14px 18px; }
-        .eye-right { animation: blink 4s ease-in-out infinite 0.1s; transform-origin: 26px 18px; }
-        .face-float { animation: float 3s ease-in-out infinite; }
-        .signal-line { stroke-dasharray: 4 5; animation: pulse-ring 2.6s ease-out infinite; }
-      `}</style>
-      <circle cx="20" cy="20" r="18" fill="#0d0d18" opacity="0.55" />
-      <path className="signal-line" d="M9 11 C15 5 25 5 31 11" stroke="#d4a941" strokeWidth="1" strokeLinecap="round" opacity="0.55" />
-      <path className="signal-line" d="M7 29 C14 36 26 36 33 29" stroke="#d4a941" strokeWidth="1" strokeLinecap="round" opacity="0.35" />
-      <g className={animate ? 'face-float' : ''}>
-        <circle cx="20" cy="20" r="16" fill="#d4a941" />
-        <circle cx="20" cy="20" r="13" fill="url(#avatarGlow)" opacity="0.32" />
-        <circle cx="20" cy="10" r="3" fill="#0d0d18" opacity="0.4" />
-        <circle cx="20" cy="10" r="1.5" fill="#d4a941" opacity="0.6" />
-        <ellipse className="eye-left" cx="14" cy="18" rx="2.5" ry="3" fill="#0d0d18" />
-        <ellipse className="eye-right" cx="26" cy="18" rx="2.5" ry="3" fill="#0d0d18" />
-        <circle cx="15" cy="17" r="0.8" fill="white" opacity="0.8" />
-        <circle cx="27" cy="17" r="0.8" fill="white" opacity="0.8" />
-        <path d="M14 25 Q20 30 26 25" stroke="#0d0d18" strokeWidth="1.8" strokeLinecap="round" fill="none" />
-        <path d="M6 18 Q6 8 20 8 Q34 8 34 18" stroke="#0d0d18" strokeWidth="2" fill="none" strokeLinecap="round" />
-        <rect x="4" y="17" width="4" height="7" rx="2" fill="#0d0d18" />
-        <rect x="32" y="17" width="4" height="7" rx="2" fill="#0d0d18" />
+const BRIDGE_BODY_SVG = `
+<svg viewBox="0 0 72 110" fill="none" class="bridge-face bridge-body-svg" aria-hidden="true">
+  <line x1="36" y1="4" x2="36" y2="11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.6"/>
+  <circle cx="36" cy="4" r="1.8" fill="currentColor" class="antenna-dot"/>
+  <g class="bridge-head-group">
+    <circle cx="36" cy="24" r="13.5" fill="rgba(13,13,15,0.96)" stroke="currentColor" stroke-width="1.1"/>
+    <rect x="28" y="14.5" width="16" height="1.1" rx="0.55" fill="currentColor" opacity="0.25"/>
+    <g class="bridge-eyes">
+      <circle cx="30.5" cy="23" r="3.2" fill="rgba(255,255,255,0.05)" stroke="currentColor" stroke-width="0.55" opacity="0.85"/>
+      <circle cx="41.5" cy="23" r="3.2" fill="rgba(255,255,255,0.05)" stroke="currentColor" stroke-width="0.55" opacity="0.85"/>
+      <g class="bridge-pupils">
+        <circle cx="30.5" cy="23" r="1.85" fill="currentColor" class="pupil pupil-left"/>
+        <circle cx="41.5" cy="23" r="1.85" fill="currentColor" class="pupil pupil-right"/>
+        <circle cx="31.2" cy="22.3" r="0.55" fill="rgba(255,255,255,0.9)" class="glint"/>
+        <circle cx="42.2" cy="22.3" r="0.55" fill="rgba(255,255,255,0.9)" class="glint"/>
       </g>
-      <defs>
-        <radialGradient id="avatarGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(15 13) rotate(45) scale(22)">
-          <stop stopColor="#fff4c5" />
-          <stop offset="1" stopColor="#d4a941" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-    </svg>
-  );
-}
+    </g>
+    <path d="M31.5 30 Q36 32.5 40.5 30" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none" class="bridge-mouth"/>
+    <circle cx="24" cy="28" r="1.3" fill="currentColor" opacity="0.18"/>
+    <circle cx="48" cy="28" r="1.3" fill="currentColor" opacity="0.18"/>
+  </g>
+  <line x1="36" y1="37.5" x2="36" y2="42" stroke="currentColor" stroke-width="0.9" opacity="0.45"/>
+  <g class="bridge-torso">
+    <rect x="24" y="42" width="24" height="26" rx="6" fill="rgba(20,20,24,0.94)" stroke="currentColor" stroke-width="1"/>
+    <line x1="27" y1="47" x2="45" y2="47" stroke="currentColor" stroke-width="0.4" opacity="0.4"/>
+    <circle cx="29" cy="47" r="1.2" fill="#ef4444" class="rec-dot"/>
+    <text x="36" y="60" font-family="Playfair Display, Georgia, serif" font-size="7.5" fill="currentColor" text-anchor="middle" letter-spacing="0.5">CB</text>
+  </g>
+  <g class="bridge-arm-left">
+    <path d="M25 47 Q19 54 18 64" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" fill="none"/>
+    <circle cx="18" cy="64.5" r="2.3" fill="currentColor"/>
+  </g>
+  <g class="bridge-arm-right">
+    <path d="M47 49 Q53 53 58 58" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" fill="none"/>
+    <circle cx="58" cy="58" r="2.3" fill="currentColor"/>
+  </g>
+  <g class="bridge-clapper" transform="translate(50 56)">
+    <rect x="0" y="3" width="20" height="13" rx="1.5" fill="rgba(13,13,15,0.96)" stroke="currentColor" stroke-width="0.9"/>
+    <line x1="2.5" y1="7" x2="17.5" y2="7" stroke="currentColor" stroke-width="0.4" opacity="0.5"/>
+    <line x1="2.5" y1="10" x2="17.5" y2="10" stroke="currentColor" stroke-width="0.4" opacity="0.45"/>
+    <text x="10" y="14.4" font-family="'Playfair Display', Georgia, serif" font-size="3.6" fill="currentColor" text-anchor="middle" opacity="0.85">BRIDGE</text>
+    <g class="bridge-clapper-stick">
+      <rect x="0" y="-2" width="20" height="5" rx="1" fill="rgba(13,13,15,0.96)" stroke="currentColor" stroke-width="0.9"/>
+      <g stroke="currentColor" stroke-width="0.7" opacity="0.85">
+        <line x1="2" y1="-2" x2="4.5" y2="3"/>
+        <line x1="6" y1="-2" x2="8.5" y2="3"/>
+        <line x1="10" y1="-2" x2="12.5" y2="3"/>
+        <line x1="14" y1="-2" x2="16.5" y2="3"/>
+        <line x1="18" y1="-2" x2="20" y2="0.5"/>
+      </g>
+    </g>
+  </g>
+  <g class="bridge-legs">
+    <line x1="30" y1="68" x2="30" y2="82" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" class="leg leg-left"/>
+    <line x1="42" y1="68" x2="42" y2="82" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" class="leg leg-right"/>
+    <ellipse cx="30" cy="84" rx="4" ry="1.6" fill="currentColor" class="foot foot-left"/>
+    <ellipse cx="42" cy="84" rx="4" ry="1.6" fill="currentColor" class="foot foot-right"/>
+  </g>
+  <ellipse cx="36" cy="91" rx="14" ry="2" fill="rgba(0,0,0,0.5)" class="bridge-shadow"/>
+</svg>`;
 
-function ThinkingAvatar({ size = 28 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <style>{`
-        @keyframes look-up {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-2px); }
-        }
-        .think-eye { animation: look-up 1s ease-in-out infinite; }
-      `}</style>
-      <circle cx="20" cy="20" r="16" fill="#d4a941" />
-      <circle cx="20" cy="10" r="3" fill="#0d0d18" opacity="0.4" />
-      <circle cx="20" cy="10" r="1.5" fill="#d4a941" opacity="0.6" />
-      <ellipse className="think-eye" cx="14" cy="16" rx="2.5" ry="2" fill="#0d0d18" />
-      <ellipse className="think-eye" cx="26" cy="16" rx="2.5" ry="2" fill="#0d0d18" />
-      <circle cx="15" cy="15.5" r="0.8" fill="white" opacity="0.8" />
-      <circle cx="27" cy="15.5" r="0.8" fill="white" opacity="0.8" />
-      <path d="M15 26 Q20 24 25 26" stroke="#0d0d18" strokeWidth="1.8" strokeLinecap="round" fill="none" />
-      <path d="M6 18 Q6 8 20 8 Q34 8 34 18" stroke="#0d0d18" strokeWidth="2" fill="none" strokeLinecap="round" />
-      <rect x="4" y="17" width="4" height="7" rx="2" fill="#0d0d18" />
-      <rect x="32" y="17" width="4" height="7" rx="2" fill="#0d0d18" />
-    </svg>
-  );
+function BridgeBody({ className = '' }) {
+  const svg = className
+    ? BRIDGE_BODY_SVG.replace('class="bridge-face bridge-body-svg"', `class="bridge-face bridge-body-svg ${className}"`)
+    : BRIDGE_BODY_SVG;
+  return <span className="bridge-body-wrap" dangerouslySetInnerHTML={{ __html: svg }} />;
 }
 
 // ── Platform knowledge system prompt ─────────────────────────────
@@ -560,15 +554,19 @@ export function SupportChatbot({ dark = true }) {
   const [input, setInput]       = useState('');
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
+  const [bridgeWave, setBridgeWave] = useState(false);
   const bottomRef               = useRef(null);
   const inputRef                = useRef(null);
 
   useEffect(() => {
     if (open) {
+      setBridgeWave(true);
+      const waveTimer = setTimeout(() => setBridgeWave(false), 950);
       setTimeout(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
         inputRef.current?.focus();
       }, 50);
+      return () => clearTimeout(waveTimer);
     }
   }, [open, messages]);
 
@@ -939,7 +937,7 @@ export function SupportChatbot({ dark = true }) {
     ? (isOptionsStep ? 'Select an option above...' : (BOOKING_STEPS[bookingStep - 1]?.placeholder || 'Type your answer...'))
     : quoteMode === 'active'
     ? (isOptionsStep ? 'Select an option above...' : (CREATOR_STEPS[quoteStep - 1]?.placeholder || 'Type your answer...'))
-    : 'Ask a question...';
+    : 'Ask Bridge about creators, briefs, rates…';
 
   // Only show interactive elements on the last message of each kind
   const lastOf = (kind) => messages.map((m, i) => m.kind === kind ? i : -1).filter(i => i >= 0).at(-1) ?? -1;
@@ -956,11 +954,6 @@ export function SupportChatbot({ dark = true }) {
   const lastWelcomeIdx = lastOf('welcome-prompts');
 
   // ── Styles ────────────────────────────────────────────────────
-  const bgPanel  = dark ? 'bg-charcoal-950/96 border-gold-500/18 shadow-[0_32px_110px_rgba(0,0,0,0.55)] backdrop-blur-xl' : 'bg-white border-gray-200';
-  const bgUser   = 'bg-gold-500 text-charcoal-900';
-  const bgAssist = dark ? 'bg-white/[0.06] text-charcoal-100 ring-1 ring-white/[0.06]' : 'bg-gray-100 text-gray-800';
-  const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
-
   const btnOpt  = `px-2.5 py-1.5 rounded-xl text-[11px] font-semibold transition-all border ${
     dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/45 hover:text-gold-300 hover:bg-gold-500/10'
          : 'border-gray-200 text-gray-600 hover:border-gold-500 hover:text-gold-600 hover:bg-gold-50'
@@ -974,42 +967,35 @@ export function SupportChatbot({ dark = true }) {
     <>
       {/* ── Chat panel ─────────────────────────────────────────── */}
       {open && (
-        <div
-          className={`cb-chatbot-panel border flex flex-col overflow-hidden ${bgPanel}`}
-        >
-          <div className="h-px bg-gradient-to-r from-transparent via-gold-400/70 to-transparent shrink-0" />
+        <div className="cb-chat-panel open">
           {/* Header */}
-          <div className={`relative flex items-center justify-between px-4 py-3 border-b shrink-0 overflow-hidden ${dark ? 'border-white/[0.07] bg-charcoal-950/82' : 'border-gray-200 bg-gray-50'}`}>
-            <div className="pointer-events-none absolute -right-6 -top-10 h-24 w-24 rounded-full bg-gold-500/10 blur-2xl" />
-            <div className="flex items-center gap-2">
-              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-[0_14px_34px_rgba(0,0,0,0.2)] ${dark ? 'bg-gold-500/10 ring-1 ring-gold-500/28' : 'bg-gold-50 ring-1 ring-gold-200'}`}>
-                <ChatAvatar size={30} animate={false} />
-              </div>
-              <div>
-                <p className={`text-xs font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>Bridge Assistant</p>
-                <p className={`text-[10px] ${textSub}`}>
-                  {bookingMode ? 'Booking path active' : quoteMode ? 'Quote builder active' : 'Booking, quotes, platform help'}
-                </p>
-              </div>
+          <div className="cb-chat-header">
+            <div className="cb-chat-mascot">
+              <BridgeBody className={`${loading ? 'mood-thinking' : ''} ${bridgeWave ? 'wave' : ''}`} />
+              <span className="status-dot" />
             </div>
-            <button type="button" onClick={() => setOpen(false)}
-              className={`p-2.5 sm:p-1 rounded-lg transition-colors ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.08]' : 'text-gray-400 hover:text-gray-900'}`}>
-              <ChevronDown size={20} className="sm:w-4 sm:h-4" />
+            <div className="cb-chat-meta">
+              <div className="cb-chat-name">
+                Bridge <span className="cb-chat-tier">Concierge</span>
+              </div>
+              <div className="cb-chat-sub">
+                {bookingMode ? 'Booking path active' : quoteMode ? 'Quote builder active' : 'Verified production talent · US'}
+              </div>
+              <div className="cb-chat-takeline"><span className="cb-take-num">Take 01</span> · ready when you are</div>
+            </div>
+            <button type="button" onClick={() => setOpen(false)} className="cb-chat-close-btn" aria-label="Close Bridge Assistant">
+              <X />
             </button>
           </div>
 
           {/* Messages */}
-          <div className={`cb-chatbot-messages flex-1 overflow-y-auto p-4 space-y-3 min-h-0 ${dark ? 'bg-[radial-gradient(circle_at_30%_0%,rgba(212,169,65,0.1),transparent_34%)]' : ''}`}>
+          <div className="cb-chat-body cb-chatbot-messages">
             {messages.map((msg, i) => (
               <div key={i} className="space-y-1.5">
 
                 {/* Bubble */}
-                <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[86%] rounded-2xl px-3 py-2 text-xs leading-relaxed shadow-[0_10px_28px_rgba(0,0,0,0.14)] ${
-                    msg.role === 'user' ? bgUser : bgAssist
-                  } ${msg.role === 'user' ? 'rounded-br-sm' : 'rounded-bl-sm'}`}>
-                    {msg.content}
-                  </div>
+                <div className={`cb-chat-msg ${msg.role === 'user' ? 'user' : 'bot'}`}>
+                  {msg.content}
                 </div>
 
                 {/* Option buttons — current booking question only */}
@@ -1086,16 +1072,16 @@ export function SupportChatbot({ dark = true }) {
 
                 {/* Welcome prompt buttons */}
                 {msg.kind === 'welcome-prompts' && i === lastWelcomeIdx && !bookingMode && !quoteMode && (
-                  <div className="flex flex-col gap-1.5 pl-1">
-                    <p className={`text-[10px] font-semibold mb-1 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>Quick paths</p>
+                  <div className="cb-chat-quick">
+                    <p className="cb-chat-quick-label">Quick paths</p>
                     {[
-                      { label: 'Find Photography', text: 'I need photography' },
-                      { label: 'Book Video Production', text: 'I need video production' },
-                      { label: 'Post-Production Help', text: 'I need post production' },
-                      { label: 'How does this work?', text: 'How does CreatorBridge work?' },
-                      { label: 'What does it cost?', text: 'What are the fees?' },
-                      { label: 'Build a Quote (Creators)', text: 'I want to send a quote' },
-                    ].map(({ label, text }) => (
+                      { label: 'Find video production', text: 'I need video production' },
+                      { label: 'Find photography', text: 'I need photography' },
+                      { label: 'Find post production', text: 'I need post production' },
+                      { label: 'Post a production brief', text: 'I want to post a production brief' },
+                      { label: 'Calculate a rate', text: 'I want to send a quote' },
+                      { label: 'How CreatorBridge works', text: 'How does CreatorBridge work?' },
+                    ].map(({ label, text }, index) => (
                       <button key={text} type="button"
                         onClick={() => {
                           setInput(text);
@@ -1108,12 +1094,11 @@ export function SupportChatbot({ dark = true }) {
                             if (isCreatorIntent(syntheticInput)) { startQuote(); return; }
                           }, 100);
                         }}
-                        className={`text-left px-3 py-2 rounded-xl text-[11px] font-semibold border transition-all ${
-                          dark
-                            ? 'border-white/[0.09] bg-charcoal-900/55 text-charcoal-300 hover:border-gold-500/45 hover:text-gold-300 hover:bg-gold-500/10'
-                            : 'border-gray-200 text-gray-600 hover:border-gold-500 hover:text-gold-600 hover:bg-gold-50'
-                        }`}>
-                        {label}
+                        className="cb-chat-path"
+                        style={{ animationDelay: `${index * 0.04}s` }}>
+                        <span className="num">{String(index + 1).padStart(2, '0')}</span>
+                        <span className="label">{label}</span>
+                        <span className="arrow">→</span>
                       </button>
                     ))}
                   </div>
@@ -1167,11 +1152,10 @@ export function SupportChatbot({ dark = true }) {
             ))}
 
             {loading && (
-              <div className="flex justify-start">
-                <div className={`rounded-2xl rounded-bl-sm px-3 py-2 flex items-center gap-1.5 ${bgAssist}`}>
-                  <ThinkingAvatar size={20} />
-                  <span className="text-xs">Thinking...</span>
-                </div>
+              <div className="cb-chat-typing" aria-label="Bridge is typing">
+                <span />
+                <span />
+                <span />
               </div>
             )}
             {error && <p className="text-[11px] text-red-400 text-center">{error}</p>}
@@ -1179,7 +1163,7 @@ export function SupportChatbot({ dark = true }) {
           </div>
 
           {/* Input */}
-          <div className={`px-3 py-3 border-t shrink-0 flex gap-2 ${dark ? 'border-white/[0.07] bg-charcoal-950/90' : 'border-gray-200'}`}>
+          <div className="cb-chat-input">
             <input
               ref={inputRef}
               type="text"
@@ -1188,20 +1172,11 @@ export function SupportChatbot({ dark = true }) {
               onKeyDown={handleKey}
               disabled={isOptionsStep}
               placeholder={inputPlaceholder}
-              className={`flex-1 text-xs px-3 py-3 sm:py-2 rounded-xl border outline-none transition-all ${
-                isOptionsStep
-                  ? dark
-                    ? 'bg-white/[0.04] border-white/[0.06] text-charcoal-600 cursor-not-allowed'
-                    : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
-                  : dark
-                    ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
-                    : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:border-gold-500'
-              }`}
             />
             <button type="button" onClick={handleSend}
               disabled={!input.trim() || loading || isOptionsStep}
-              className="w-11 h-11 sm:w-8 sm:h-8 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 flex items-center justify-center transition-all shrink-0 shadow-[0_10px_28px_rgba(212,169,65,0.22)]">
-              <Send size={16} className="text-charcoal-900" />
+              className="cb-chat-send">
+              <Send />
             </button>
           </div>
         </div>
@@ -1217,7 +1192,7 @@ export function SupportChatbot({ dark = true }) {
           }`}
           style={{ position: 'fixed', bottom: '5.5rem', right: '1rem', zIndex: 9999, maxWidth: '210px' }}
         >
-          <ChatAvatar size={22} animate={false} />
+          <div className="w-8 h-10 shrink-0"><BridgeBody /></div>
           <button
             type="button"
             onClick={() => { setShowNudge(false); setMobileNudge(false); setOpen(true); }}
@@ -1243,17 +1218,16 @@ export function SupportChatbot({ dark = true }) {
           setMobileNudge(false);
           setOpen(o => !o);
         }}
-        className="z-50 w-14 h-14 rounded-2xl bg-gold-500 hover:bg-gold-600 shadow-[0_20px_52px_rgba(0,0,0,0.38)] ring-1 ring-gold-300/45 flex items-center justify-center transition-all hover:scale-105 active:scale-95 relative"
-        style={{ position: 'fixed', bottom: '1.25rem', right: '1rem', zIndex: 9999 }}
-        aria-label="Open support chat"
+        className={`cb-fab cb-fab-body ${open ? 'open' : ''}`}
+        aria-label={open ? 'Close Bridge Assistant' : 'Open Bridge Assistant'}
       >
         {hasDraft && !open && (
           <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-gold-300 border-2 border-charcoal-900 z-10" />
         )}
-        {open
-          ? <X size={22} className="text-charcoal-900" />
-          : <ChatAvatar size={38} animate={true} />
-        }
+        <span className="cb-fab-ring" />
+        <span className="cb-fab-ring" />
+        <span className="cb-fab-icon"><BridgeBody /></span>
+        <span className="cb-fab-close"><X /></span>
       </button>
     </>
   );
