@@ -295,21 +295,21 @@ export function LandingPage({ dark }) {
             <div className="marquee-track reverse">
               <div className="flex items-center">
                 <span className="ticker-pill"><span className="ticker-dot"></span> <strong>Aria V.</strong> booked a 2-day hotel campaign · <em>Miami</em></span>
-                <span className="ticker-pill"><span class="ticker-dot gold"></span> <strong>$3,400</strong> released to <em>LensCraft Studios</em></span>
-                <span className="ticker-pill"><span class="ticker-dot"></span> New verified creator: <strong>Mateo R.</strong> · <em>Austin</em></span>
-                <span className="ticker-pill"><span class="ticker-dot"></span> <strong>Jordan M.</strong> delivered 4 podcast eps · <em>NYC</em></span>
-                <span className="ticker-pill"><span class="ticker-dot gold"></span> <strong>$1,200</strong> retainer held · <em>Aritzia × Sofia P.</em></span>
-                <span className="ticker-pill"><span class="ticker-dot"></span> <strong>Naomi G.</strong> awarded a brand film · <em>LA</em></span>
-                <span className="ticker-pill"><span class="ticker-dot"></span> 3 new briefs posted to <strong>Project Board</strong> · <em>last hr</em></span>
-                <span className="ticker-pill"><span class="ticker-dot gold"></span> <strong>5★ review</strong> for <em>SoundWave Podcast Co.</em></span>
-                <span className="ticker-pill"><span class="ticker-dot"></span> <strong>Dre W.</strong> shortlisted for conference recap · <em>Atlanta</em></span>
+                <span className="ticker-pill"><span className="ticker-dot gold"></span> <strong>$3,400</strong> released to <em>LensCraft Studios</em></span>
+                <span className="ticker-pill"><span className="ticker-dot"></span> New verified creator: <strong>Mateo R.</strong> · <em>Austin</em></span>
+                <span className="ticker-pill"><span className="ticker-dot"></span> <strong>Jordan M.</strong> delivered 4 podcast eps · <em>NYC</em></span>
+                <span className="ticker-pill"><span className="ticker-dot gold"></span> <strong>$1,200</strong> retainer held · <em>Aritzia × Sofia P.</em></span>
+                <span className="ticker-pill"><span className="ticker-dot"></span> <strong>Naomi G.</strong> awarded a brand film · <em>LA</em></span>
+                <span className="ticker-pill"><span className="ticker-dot"></span> 3 new briefs posted to <strong>Project Board</strong> · <em>last hr</em></span>
+                <span className="ticker-pill"><span className="ticker-dot gold"></span> <strong>5★ review</strong> for <em>SoundWave Podcast Co.</em></span>
+                <span className="ticker-pill"><span className="ticker-dot"></span> <strong>Dre W.</strong> shortlisted for conference recap · <em>Atlanta</em></span>
 
                 {/* Seamless loop duplicates */}
                 <span className="ticker-pill"><span className="ticker-dot"></span> <strong>Aria V.</strong> booked a 2-day campaign · <em>Miami</em></span>
-                <span className="ticker-pill"><span class="ticker-dot gold"></span> <strong>$3,400</strong> released to <em>LensCraft Studios</em></span>
-                <span className="ticker-pill"><span class="ticker-dot"></span> New creator: <strong>Mateo R.</strong> · <em>Austin</em></span>
-                <span className="ticker-pill"><span class="ticker-dot"></span> <strong>Jordan M.</strong> delivered podcast eps · <em>NYC</em></span>
-                <span className="ticker-pill"><span class="ticker-dot gold"></span> <strong>$1,200</strong> retainer held · <em>Aritzia × Sofia P.</em></span>
+                <span className="ticker-pill"><span className="ticker-dot gold"></span> <strong>$3,400</strong> released to <em>LensCraft Studios</em></span>
+                <span className="ticker-pill"><span className="ticker-dot"></span> New creator: <strong>Mateo R.</strong> · <em>Austin</em></span>
+                <span className="ticker-pill"><span className="ticker-dot"></span> <strong>Jordan M.</strong> delivered podcast eps · <em>NYC</em></span>
+                <span className="ticker-pill"><span className="ticker-dot gold"></span> <strong>$1,200</strong> retainer held · <em>Aritzia × Sofia P.</em></span>
               </div>
             </div>
           </div>
@@ -502,18 +502,18 @@ export function LandingPage({ dark }) {
                     <div className="grid sm:grid-cols-3 gap-6 mb-8">
                       <div>
                         <div className="serif text-4xl text-[#c9a84c] mb-3">01</div>
-                        <h3 class="font-semibold text-sm mb-2 text-white">Define the need</h3>
-                        <p class="text-xs text-[#a0a0a8] leading-relaxed">Choose service type, market, budget range, and delivery expectations.</p>
+                        <h3 className="font-semibold text-sm mb-2 text-white">Define the need</h3>
+                        <p className="text-xs text-[#a0a0a8] leading-relaxed">Choose primary pillar, market, budget range, and delivery expectations.</p>
                       </div>
                       <div>
                         <div className="serif text-4xl text-[#c9a84c] mb-3">02</div>
-                        <h3 class="font-semibold text-sm mb-2 text-white">Review curated fit</h3>
-                        <p class="text-xs text-[#a0a0a8] leading-relaxed">Browse verified media specialists instead of sorting through general gig profiles.</p>
+                        <h3 className="font-semibold text-sm mb-2 text-white">Review curated fit</h3>
+                        <p className="text-xs text-[#a0a0a8] leading-relaxed">Browse verified media specialists instead of sorting through general gig profiles.</p>
                       </div>
                       <div>
                         <div className="serif text-4xl text-[#c9a84c] mb-3">03</div>
-                        <h3 class="font-semibold text-sm mb-2 text-white">Book protected</h3>
-                        <p class="text-xs text-[#a0a0a8] leading-relaxed">50% retainer and 50% delivery structure keeps both sides accountable.</p>
+                        <h3 className="font-semibold text-sm mb-2 text-white">Book protected</h3>
+                        <p className="text-xs text-[#a0a0a8] leading-relaxed">50% retainer and 50% delivery structure keeps both sides accountable.</p>
                       </div>
                     </div>
                   </div>
@@ -612,17 +612,17 @@ export function LandingPage({ dark }) {
               <div className="liquid-glass hover-lift rounded-2xl p-6 reveal-up">
                 <div className="gold-line mb-4"></div>
                 <h3 className="font-semibold text-base mb-2 text-white">Production talent on demand</h3>
-                <p class="text-xs text-[#a0a0a8] leading-relaxed">A flexible production bench without hiring a full internal media department.</p>
+                <p className="text-xs text-[#a0a0a8] leading-relaxed">A flexible production bench without hiring a full internal media department.</p>
               </div>
               <div className="liquid-glass hover-lift rounded-2xl p-6 reveal-up">
                 <div className="gold-line mb-4"></div>
-                <h3 class="font-semibold text-base mb-2 text-white">Cleaner client decisions</h3>
-                <p class="text-xs text-[#a0a0a8] leading-relaxed">Compare focused creator profiles, service fit, availability, packages, and proof.</p>
+                <h3 className="font-semibold text-base mb-2 text-white">Cleaner client decisions</h3>
+                <p className="text-xs text-[#a0a0a8] leading-relaxed">Compare focused creator profiles, service fit, availability, packages, and proof.</p>
               </div>
               <div className="liquid-glass hover-lift rounded-2xl p-6 reveal-up">
                 <div className="gold-line mb-4"></div>
-                <h3 class="font-semibold text-base mb-2 text-white">Standards before booking</h3>
-                <p class="text-xs text-[#a0a0a8] leading-relaxed">Profiles are gated by experience, portfolio, verification, and platform rules.</p>
+                <h3 className="font-semibold text-base mb-2 text-white">Standards before booking</h3>
+                <p className="text-xs text-[#a0a0a8] leading-relaxed">Profiles are gated by experience, portfolio, verification, and platform rules.</p>
               </div>
             </div>
 
