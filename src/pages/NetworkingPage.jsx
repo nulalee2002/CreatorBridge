@@ -3,6 +3,8 @@ import { MapPin, Send, Flag, Heart, MessageSquare, ChevronDown, Users, Lock } fr
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
 import { checkMessage, logFilterEvent } from '../utils/messageFilter.js';
+import { HandoffPage } from '../components/HandoffPage.jsx';
+import { handoffPages } from '../data/handoffPages.js';
 
 const US_STATES = [
   { code: 'AL', name: 'Alabama' }, { code: 'AK', name: 'Alaska' },
@@ -483,6 +485,8 @@ function PostCard({ post, dark, isVerified, onLike, onReport, onReply }) {
 }
 
 export function NetworkingPage({ dark, user, profile }) {
+  return <HandoffPage page={handoffPages.creatorNetwork} />;
+
   const [selectedState, setSelectedState] = useState('CA');
   const [selectedChannel, setSelectedChannel] = useState('general');
   const [filterType, setFilterType] = useState('all');

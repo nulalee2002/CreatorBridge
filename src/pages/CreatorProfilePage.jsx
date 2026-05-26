@@ -1,1123 +1,800 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Star, Globe, Mail, Phone, Instagram, Heart, Share2, Check, ExternalLink, MessageSquare, FileText, BadgeCheck, X, Search } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { SEO } from '../components/SEO.jsx';
-import { VerificationBadge } from '../components/VerificationFlow.jsx';
-import { LoyaltyBadge } from '../components/LoyaltyBadge.jsx';
-import { TierBadge } from '../components/TierBadge.jsx';
-import { SERVICES, RATES } from '../data/rates.js';
-import { getPillar, getSubNiche, LEGACY_SERVICE_TO_PILLAR } from '../data/taxonomy.js';
-import { REGIONS } from '../data/regions.js';
-import { supabase, supabaseConfigured } from '../lib/supabase.js';
-import { useAuth } from '../contexts/AuthContext.jsx';
-import { RequestQuoteModal } from '../components/RequestQuoteModal.jsx';
-import { ReviewsSection } from '../components/ReviewsSection.jsx';
-import { AvailabilityMini, AvailabilityEditor } from '../components/AvailabilityCalendar.jsx';
-import { SimilarCreators } from '../components/SimilarCreators.jsx';
-import { getStorageDisplayUrl, normalizeExternalUrl } from '../utils/storage.js';
 
-function loadAllListings() {
-  try { return JSON.parse(localStorage.getItem('creator-directory') || '[]'); } catch { return []; }
-}
+const useTweaks = (defaults) => [defaults, () => {}];
+const TweaksPanel = () => null;
+const TweakSection = () => null;
+const TweakRadio = () => null;
 
-function isApprovedCreator(creator) {
-  return !!(
-    creator?.verified ||
-    creator?.verification_status === 'verified' ||
-    creator?.verification_status === 'pro_verified' ||
-    creator?.id?.startsWith?.('seed-')
+
+// ---------- DATA ----------
+const creator = {
+  studio: "Aria Visual Studio",
+  name: "Aria Vasquez",
+  city: "Miami, FL",
+  years: "7+ yrs",
+  rating: 4.9,
+  reviews: 64,
+  responseTime: "~2 hrs",
+  onTime: 96,
+  repeat: 48,
+  projects: 142,
+  tagline: "Editorial commercial photography with a bold, narrative eye.",
+  bio: "I shoot for brands that want their work to feel deliberate. Studio and on-location, with a small reliable crew. Based in Miami, working nationally across the US.",
+  featuredIn: ["Vogue Business", "Harper's Bazaar", "Hypebeast", "Soho House Magazine"],
+  // ONE primary pillar — never multiple. 1–3 specialties inside it.
+  pillar: { key: "photo", label: "Photography" },
+  specialties: ["Brand & Commercial Photography", "Editorial & Press", "Headshots & Portraits"],
+  gear: ["Hasselblad H6D-100c", "Phase One IQ4", "Profoto B10s × 4", "DJI Ronin 4D"],
+  languages: ["English", "Spanish"],
+  crew: "2-person core team + on-call stylists & assistants",
+  tiers: ["Verified", "Elite"],
+  avatar: "/images/creatorbridge/handoff/photo-1494790108377-be9c29b29330.png",
+  reel: "/images/creatorbridge/handoff/photo-1485846234645-a62644f84728.png"
+};
+
+const verification = [
+  { label: "Profile Gate", value: "7 yrs verified" },
+  { label: "Proof Layer", value: "12 published" },
+  { label: "Intro Check", value: "Passed 03/24" },
+  { label: "ID & Tax", value: "On file" }
+];
+
+const portfolio = [
+  { id: 1, cat: "Editorial & Press",                ratio: "aspect-[4/5]",  src: "/images/creatorbridge/handoff/photo-1492691527719-9d1e07e534b4.png", title: "Spring drop · Aritzia" },
+  { id: 2, cat: "Brand & Commercial Photography",   ratio: "aspect-[16/10]",src: "/images/creatorbridge/handoff/photo-1542038784456-1ea8e935640e.png", title: "Soho House · Miami" },
+  { id: 3, cat: "Headshots & Portraits",            ratio: "aspect-[4/5]",  src: "/images/creatorbridge/handoff/photo-1554384645-13eab165c24b.png", title: "Equinox · Member series" },
+  { id: 4, cat: "Brand & Commercial Photography",   ratio: "aspect-[16/10]",src: "/images/creatorbridge/handoff/photo-1502672260266-1c1ef2d93688.png", title: "The Standard · Property" },
+  { id: 5, cat: "Editorial & Press",                ratio: "aspect-[4/5]",  src: "/images/creatorbridge/handoff/photo-1496217590455-aa63a8350eea.png", title: "Vogue Business · Resort" },
+  { id: 6, cat: "Brand & Commercial Photography",   ratio: "aspect-[16/10]",src: "/images/creatorbridge/handoff/photo-1539109136881-3be0616acf4b.png", title: "Horizon Rebrand" },
+  { id: 7, cat: "Headshots & Portraits",            ratio: "aspect-[4/5]",  src: "/images/creatorbridge/handoff/photo-1531123897727-8f129e1688ce.png", title: "Founder portraits" },
+  { id: 8, cat: "Brand & Commercial Photography",   ratio: "aspect-[16/10]",src: "/images/creatorbridge/handoff/photo-1516035069371-29a1b244cc32.png", title: "Editorial campaign" },
+  { id: 9, cat: "Editorial & Press",                ratio: "aspect-[4/5]",  src: "/images/creatorbridge/handoff/photo-1600585154340-be6161a56a0c.png", title: "Coral Gables · feature" }
+];
+
+const packages = [
+  {
+    id: "essential", name: "Essential", price: 850, popular: false,
+    tagline: "For focused single-deliverable shoots.",
+    items: ["Half-day shoot · up to 4 hrs", "25 edited high-res images", "1 location", "7-day delivery", "1 revision round", "Personal use license"]
+  },
+  {
+    id: "signature", name: "Signature", price: 1950, popular: true,
+    tagline: "The right fit for most brand campaigns.",
+    items: ["Full-day shoot · up to 8 hrs", "60 edited high-res images", "Up to 2 locations", "5-day delivery", "3 revision rounds", "RAW files included", "Commercial license · 1 year"]
+  },
+  {
+    id: "editorial", name: "Editorial", price: 4500, popular: false,
+    tagline: "Multi-day, crew-supported productions.",
+    items: ["2-day production · crew + stylist", "120 edited images + behind-the-scenes", "Up to 4 locations", "3-day priority delivery", "Unlimited revisions", "RAW + uncompressed deliverables", "Buyout-eligible usage rights"]
+  }
+];
+
+const reviews = [
+  { id: 1, client: "Soho House Miami", role: "Brand Lead", rating: 5, project: "Hotel campaign · Signature", date: "Mar 2026",
+    body: "Aria's team showed up prepared, ran a tight schedule, and the deliverables read like they belong in a magazine. Booking again for Q3." },
+  { id: 2, client: "Aritzia", role: "Creative Director", rating: 5, project: "Editorial · Spring drop", date: "Feb 2026",
+    body: "Honestly the easiest editorial shoot we've done all year. Strong creative POV but knew when to defer to the brief." },
+  { id: 3, client: "Equinox Coral Gables", role: "Marketing Manager", rating: 5, project: "Portrait series · Essential", date: "Jan 2026",
+    body: "Made our members feel comfortable. Edits came back ahead of schedule with consistent grading across all 12 sitters." },
+  { id: 4, client: "The Standard Hotels", role: "Property GM", rating: 4, project: "Property feature · Editorial", date: "Dec 2025",
+    body: "Premium output. Loved the final cut. The only note was on revision pacing — small thing, communicated and resolved." }
+];
+
+// ---------- HELPERS ----------
+const Star = ({ filled = true, size = 14 }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.2">
+    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+  </svg>
+);
+
+const Eyebrow = ({ children }) => (
+  <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--gold)] mb-3">{children}</div>
+);
+
+const Pill = ({ children, tone = "gold" }) => (
+  <span className={tone === "gold" ? "tag-gold" : "tag-green"}>{children}</span>
+);
+
+const fmt = (n) => "$" + n.toLocaleString();
+
+// ---------- SUB-COMPONENTS ----------
+
+function Breadcrumb() {
+  return (
+    <div className="flex items-center gap-2 text-[11px] text-[var(--text-dim)] mb-6">
+      <a href="/" className="hover:text-[var(--text)] transition-colors">Home</a>
+      <span className="opacity-40">/</span>
+      <a href="/find" className="hover:text-[var(--text)] transition-colors">Find Creators</a>
+      <span className="opacity-40">/</span>
+      <a href="/find?pillar=photo" className="hover:text-[var(--text)] transition-colors">{creator.pillar.label}</a>
+      <span className="opacity-40">/</span>
+      <span className="text-[var(--text)]">Aria Visual Studio</span>
+    </div>
   );
 }
 
-function recordGuestProfileView(profileId) {
-  try {
-    const key = 'cb-guest-profile-views';
-    const views = JSON.parse(localStorage.getItem(key) || '[]');
-    const next = Array.from(new Set([...views, profileId])).slice(-3);
-    localStorage.setItem(key, JSON.stringify(next));
-    return views.includes(profileId) || views.length < 3;
-  } catch {
-    return true;
-  }
-}
-
-/** Returns true if `clientId` has a paid retainer (or completed project) with `creatorId`. */
-async function hasActiveBooking(clientId, creatorId) {
-  if (!clientId || !creatorId) return false;
-  try {
-    if (supabaseConfigured) {
-      const { data } = await supabase
-        .from('transactions')
-        .select('id')
-        .eq('client_id', clientId)
-        .eq('creator_id', creatorId)
-        .or('retainer_status.in.(paid,released),final_status.in.(paid,released)')
-        .limit(1);
-      if (data?.length > 0) return true;
-    }
-    // localStorage fallback
-    const txns = JSON.parse(localStorage.getItem('cm-transactions') || '[]');
-    return txns.some(t =>
-      t.clientId === clientId &&
-      t.creatorId === creatorId &&
-      (
-        ['paid', 'released'].includes(t.retainerStatus || t.retainer_status) ||
-        ['paid', 'released'].includes(t.finalStatus || t.final_status) ||
-        ['retainer', 'final'].includes(t.paymentType)
-      )
-    );
-  } catch { return false; }
-}
-
-/** Converts share URLs to embed URLs for YouTube, Vimeo, and Loom. */
-function toEmbedUrl(url) {
-  if (!url) return null;
-  if (url.includes('/embed/')) return url;
-  // YouTube: youtube.com/watch?v=ID or youtu.be/ID
-  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
-  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
-  // Vimeo: vimeo.com/ID
-  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
-  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
-  // Loom: loom.com/share/ID
-  const loomMatch = url.match(/loom\.com\/share\/([A-Za-z0-9]+)/);
-  if (loomMatch) return `https://www.loom.com/embed/${loomMatch[1]}`;
-  return url;
-}
-
-function normalizeMediaUrl(url = '') {
-  return normalizeExternalUrl(url);
-}
-
-export function CreatorProfilePage({ dark }) {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const { user } = useAuth();
-
-  const [creator, setCreator]           = useState(null);
-  const [loading, setLoading]           = useState(true);
-  const [isFav, setIsFav]               = useState(false);
-  const [showQuote, setShowQuote]       = useState(false);
-  const [copied, setCopied]             = useState(false);
-  const [activeNiche, setActiveNiche] = useState(0);
-  const [quoteDate, setQuoteDate]       = useState('');
-  const [contactUnlocked, setContactUnlocked] = useState(false);
-  const [showContactGate, setShowContactGate] = useState(false);
-  const [guestLimitReached, setGuestLimitReached] = useState(false);
-  const [resolvedCoverImage, setResolvedCoverImage] = useState('');
-  const [resolvedPortfolio, setResolvedPortfolio] = useState([]);
-
-  const isOwnProfile = user && creator && creator.user_id === user.id;
-
-  useEffect(() => {
-    loadCreator();
-    checkFavorite();
-  }, [id]);
-
-  useEffect(() => {
-    let active = true;
-
-    async function resolveProfileMedia() {
-      if (!creator) {
-        setResolvedCoverImage('');
-        setResolvedPortfolio([]);
-        return;
-      }
-
-      const coverSource = creator.cover_image_url || creator.coverImageUrl || creator.banner_url || creator.bannerUrl || '';
-      const nextCover = await getStorageDisplayUrl(coverSource);
-      const nextPortfolio = await Promise.all((creator.portfolio || []).map(async (item) => {
-        const rawImage = item.image_url || item.imageUrl || '';
-        const rawLink = item.link || item.url || '';
-        const [displayImageUrl, displayLink] = await Promise.all([
-          getStorageDisplayUrl(rawImage),
-          getStorageDisplayUrl(rawLink),
-        ]);
-
-        return {
-          ...item,
-          displayImageUrl,
-          displayLink: displayLink || normalizeExternalUrl(rawLink),
-        };
-      }));
-
-      if (!active) return;
-      setResolvedCoverImage(nextCover || normalizeExternalUrl(coverSource));
-      setResolvedPortfolio(nextPortfolio);
-    }
-
-    resolveProfileMedia();
-    return () => { active = false; };
-  }, [creator]);
-
-  async function loadCreator() {
-    setLoading(true);
-    // Seed creators (id starts with "seed-") only exist in localStorage -
-    // never query Supabase for them even when Supabase is configured.
-    const isSeed = id.startsWith('seed-');
-    if (supabaseConfigured && !isSeed) {
-      const { data } = await supabase
-        .from('creator_listings')
-        .select(`*, creator_services(*), portfolio_items(*), packages(*), reviews(*)`)
-        .eq('id', id)
-        .single();
-      if (data) {
-        // Prefer the 3-pillar model on public profiles. Legacy creator_services
-        // rows can still exist, but they must not render as multiple primary
-        // lanes now that each creator owns one pillar and 1-3 specialties.
-        const legacyFromCreatorServices = data.creator_services?.map(s => ({ ...s, serviceId: s.service_id, rates: s.rates || {} })) || [];
-        const PILLAR_TO_LEGACY = { video_production: 'video', photography: 'photography', post_production: 'postProduction' };
-        const pillar = getPillar(data.primary_pillar);
-        const synthesizedFromPillar = data.primary_pillar
-          ? [{
-              serviceId: PILLAR_TO_LEGACY[data.primary_pillar] || 'video',
-              service_id: PILLAR_TO_LEGACY[data.primary_pillar] || 'video',
-              pillarId: data.primary_pillar,
-              displayName: pillar?.name || 'Primary Pillar',
-              rates: {},
-              subtypes: (data.sub_niches || []).map(id => getSubNiche(id)?.label || id),
-            }]
-          : [];
-        const services = synthesizedFromPillar.length > 0 ? synthesizedFromPillar : legacyFromCreatorServices;
-
-        // Normalize to same shape as localStorage format
-        const normalized = {
-          ...data,
-          location: { city: data.city, state: data.state, country: data.country, zip: data.zip, regionKey: data.region_key },
-          contact: { email: data.email, phone: data.phone, website: data.website, instagram: data.instagram },
-          primary_pillar: data.primary_pillar,
-          sub_niches: data.sub_niches || [],
-          services,
-          portfolio: data.portfolio_items || [],
-          tags: data.tags || [],
-        };
-        setCreator(normalized);
-        if (!user && !recordGuestProfileView(normalized.id)) {
-          setGuestLimitReached(true);
-        }
-        // Increment view count
-        supabase.from('creator_listings').update({ view_count: (data.view_count || 0) + 1 }).eq('id', id);
-        // Check booking status
-        if (user) {
-          hasActiveBooking(user.id, id).then(setContactUnlocked);
-        }
-      }
-    } else {
-      // Seed creators or no Supabase - always use localStorage
-      const all = loadAllListings();
-      const found = all.find(c => c.id === id);
-      setCreator(found || null);
-      if (!user && found && !recordGuestProfileView(found.id)) {
-        setGuestLimitReached(true);
-      }
-      if (user && found) {
-        hasActiveBooking(user.id, id).then(setContactUnlocked);
-      }
-    }
-    setLoading(false);
-  }
-
-  async function checkFavorite() {
-    if (!user || !supabaseConfigured || id.startsWith('seed-')) {
-      const favs = JSON.parse(localStorage.getItem('creator-favorites') || '[]');
-      setIsFav(favs.includes(id));
-      return;
-    }
-    const { data } = await supabase.from('favorites').select('id').eq('user_id', user.id).eq('listing_id', id).single();
-    setIsFav(!!data);
-  }
-
-  async function toggleFavorite() {
-    if (supabaseConfigured && user && !id.startsWith('seed-')) {
-      if (isFav) {
-        await supabase.from('favorites').delete().eq('user_id', user.id).eq('listing_id', id);
-      } else {
-        await supabase.from('favorites').insert({ user_id: user.id, listing_id: id });
-      }
-    } else {
-      const favs = JSON.parse(localStorage.getItem('creator-favorites') || '[]');
-      const updated = isFav ? favs.filter(f => f !== id) : [...favs, id];
-      localStorage.setItem('creator-favorites', JSON.stringify(updated));
-    }
-    setIsFav(f => !f);
-  }
-
-  function hasActiveProject() {
-    try {
-      const all = JSON.parse(localStorage.getItem('cm-projects') || '[]');
-      return all.some(p => p.clientId === user?.id && p.status === 'open');
-    } catch { return false; }
-  }
-
-  function handleQuoteClick() {
-    // Always open the direct quote form when on a creator's profile page.
-    // IntentGate/SmartMatch is only for homepage/directory, never from a profile page.
-    if (!user) {
-      setShowContactGate(true);
-      return;
-    }
-    if (!isOwnProfile) {
-      setShowQuote(true);
-    }
-  }
-
-  function openClientAuth(tab = 'signup') {
-    setShowContactGate(false);
-    window.dispatchEvent(new CustomEvent('open-auth', { detail: { tab, role: 'client' } }));
-  }
-
-  function handleMessageClick() {
-    if (!user) {
-      setShowContactGate(true);
-      return;
-    }
-    navigate(`/messages?with=${creator.user_id || creator.id}`);
-  }
-
-  function handleLockedContactClick() {
-    setShowContactGate(true);
-  }
-
-  function shareProfile() {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  if (loading) {
+function Hero({ onPlayReel, onJumpBook, layout, saved, setSaved }) {
+  if (layout === "banner") {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${dark ? 'bg-transparent' : 'bg-gray-50'}`}>
-        <div className="animate-spin w-8 h-8 border-2 border-gold-500 border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
-  if (!creator) {
-    return (
-      <div className={`min-h-screen flex items-center justify-center px-5 ${dark ? 'bg-transparent text-white' : 'bg-gray-50 text-gray-900'}`}>
-        <div className={`w-full max-w-md rounded-2xl border p-8 text-center ${dark ? 'bg-charcoal-900/76 border-white/[0.08]' : 'bg-white border-gray-200 shadow-sm'}`}>
-          <div className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl ${dark ? 'bg-gold-500/10 text-gold-300 ring-1 ring-gold-500/20' : 'bg-gold-50 text-gold-600'}`}>
-            <Search size={20} />
+      <section>
+        <div className="relative rounded-2xl overflow-hidden mb-6 parallax-wrap">
+          <div className="aspect-[21/9] relative">
+            <img src={creator.reel} alt="Reel" className="absolute inset-0 w-full h-full object-cover scale-105"/>
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/60 to-transparent"></div>
+            <button onClick={onPlayReel} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-[var(--gold)]/90 hover:bg-[var(--gold-light)] transition-all flex items-center justify-center hover:scale-110">
+              <svg className="w-6 h-6 text-[var(--bg)] ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <div className="absolute bottom-0 left-0 right-0 p-8">
+              <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--gold)] mb-3">Featured Reel · 02:14</div>
+              <div className="text-lg serif">2024–25 selected work</div>
+            </div>
           </div>
-          <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '2.2px', textTransform: 'uppercase' }}>
-            Profile unavailable
-          </p>
-          <h2 className="font-display text-xl font-bold mb-2">Creator not found</h2>
-          <p className={`text-sm leading-6 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
-            This creator may be under review, hidden, or no longer listed.
-          </p>
-        <button type="button" onClick={() => navigate('/find')}
-          className="mt-5 px-5 py-2.5 rounded-xl bg-gold-500 text-charcoal-900 font-bold text-sm">
-          Back to Directory
-        </button>
+        </div>
+        <HeroInfo onJumpBook={onJumpBook} saved={saved} setSaved={setSaved}/>
+      </section>
+    );
+  }
+  return (
+    <section className="grid lg:grid-cols-12 gap-8 lg:gap-10 mb-12">
+      <div className="lg:col-span-7">
+        <HeroInfo onJumpBook={onJumpBook} saved={saved} setSaved={setSaved}/>
+      </div>
+      <div className="lg:col-span-5">
+        <div className="relative rounded-2xl overflow-hidden parallax-wrap group cursor-pointer" onClick={onPlayReel}>
+          <div className="aspect-[4/5] relative">
+            <img src={creator.reel} alt="Reel" className="absolute inset-0 w-full h-full object-cover scale-105 group-hover:scale-110 transition-transform duration-700"/>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20"></div>
+            <button className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-[var(--gold)]/90 group-hover:bg-[var(--gold-light)] transition-all flex items-center justify-center group-hover:scale-110">
+              <svg className="w-6 h-6 text-[var(--bg)] ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <div className="absolute bottom-0 left-0 right-0 p-6">
+              <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--gold)] mb-2">Featured Reel · 02:14</div>
+              <div className="text-base serif font-medium">2024–25 selected work</div>
+            </div>
+          </div>
         </div>
       </div>
+    </section>
+  );
+}
+
+function HeroInfo({ onJumpBook, saved, setSaved }) {
+  return (
+    <div className="space-y-5">
+      <div className="flex items-start gap-4">
+        <div className="parallax-wrap w-16 h-16 rounded-2xl overflow-hidden shrink-0 ring-1 ring-[var(--border)]">
+          <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover"/>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <span className="primary-pillar-badge">
+              <span className="dot"></span>
+              <span className="label">Primary pillar</span>
+              <span className="value">{creator.pillar.label}</span>
+            </span>
+            {creator.tiers.map(t => <Pill key={t}>{t}</Pill>)}
+            <Pill tone="green">Available now</Pill>
+          </div>
+          <h1 className="text-3xl md:text-4xl lg:text-5xl serif font-medium leading-[1.05] mb-1">
+            {creator.studio}
+          </h1>
+          <div className="text-sm text-[var(--text-dim)]">{creator.name} · {creator.city} · {creator.years}</div>
+        </div>
+      </div>
+
+      <p className="text-base text-[var(--text)]/90 leading-relaxed max-w-xl serif italic">
+        "{creator.tagline}"
+      </p>
+
+      <div className="flex flex-wrap gap-1.5">
+        {creator.specialties.map(s => (
+          <span key={s} className="specialty-chip-profile">{s}</span>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-6 text-xs">
+        <div className="flex items-center gap-1.5">
+          <div className="flex text-[var(--gold)]">
+            {[1,2,3,4,5].map(i => <Star key={i} filled={i <= Math.round(creator.rating)}/>)}
+          </div>
+          <span className="font-semibold text-sm">{creator.rating}</span>
+          <span className="text-[var(--text-dim)]">({creator.reviews})</span>
+        </div>
+        <span className="text-[var(--text-dim)]">Replies in {creator.responseTime}</span>
+      </div>
+
+      <div className="flex flex-wrap gap-2 pt-2">
+        <button onClick={onJumpBook} className="btn-gold">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          Check availability
+        </button>
+        <button className="btn-ghost">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+          Message
+        </button>
+        <button onClick={() => setSaved(!saved)} className="btn-ghost" style={saved ? { borderColor: 'var(--gold)', color: 'var(--gold)', background: 'var(--gold-dim)' } : {}}>
+          <svg className="w-3.5 h-3.5" fill={saved ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+          {saved ? "Saved" : "Save"}
+        </button>
+      </div>
+
+      <div className="liquid-glass rounded-xl p-4 grid grid-cols-2 gap-x-6 gap-y-2 max-w-md">
+        <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--gold)] col-span-2 mb-1">Verification Ledger</div>
+        {verification.map(v => (
+          <div key={v.label} className="flex items-center justify-between text-xs py-1">
+            <span className="text-[var(--text-dim)]">{v.label}</span>
+            <span className="text-[var(--text)] flex items-center gap-1.5">
+              <svg className="w-3 h-3 text-[var(--gold)]" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+              {v.value}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StatStrip() {
+  const stats = [
+    { v: creator.rating.toFixed(1), l: "Star Rating", sub: `${creator.reviews} verified reviews` },
+    { v: creator.projects, l: "Projects Delivered", sub: `across ${creator.specialties.length} photography specialties` },
+    { v: creator.onTime + "%", l: "On-time Delivery", sub: "last 12 months" },
+    { v: creator.repeat + "%", l: "Repeat Clients", sub: "book again within 90 days" }
+  ];
+  return (
+    <section className="grid grid-cols-2 md:grid-cols-4 liquid-glass rounded-2xl divide-x divide-[var(--border)] mb-16 overflow-hidden">
+      {stats.map((s, i) => (
+        <div key={i} className="p-5 md:p-6">
+          <div className="text-3xl md:text-4xl serif gold-text stat-num leading-none mb-2">{s.v}</div>
+          <div className="text-[10px] tracking-[0.2em] uppercase text-[var(--text)] mb-0.5">{s.l}</div>
+          <div className="text-[10px] text-[var(--text-dim)]">{s.sub}</div>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+// ===== SERVICE OFFERS =====
+// Shows the single primary pillar + 1–3 specialties as a clean section.
+// Replaces any old "service lane" tabbed UI.
+const SPECIALTY_BLURB = {
+  "Brand & Commercial Photography": "Campaign stills + commercial work for brand-led shoots — studio or on-location, deliverables sized for digital, OOH, and print.",
+  "Editorial & Press": "Editorial-eye photography for magazines, press features, and brand storytelling. Strong creative POV with on-brief restraint.",
+  "Headshots & Portraits": "Founder, team, and member portraits. Consistent grading across sitters, quick turnarounds, premium retouching."
+};
+
+function ServiceOffers() {
+  return (
+    <section className="mb-16">
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-6">
+        <div>
+          <Eyebrow>Service offers</Eyebrow>
+          <h2 className="text-2xl md:text-3xl serif font-medium leading-tight">{creator.pillar.label} — {creator.specialties.length} specialties.</h2>
+        </div>
+        <div className="text-xs text-[var(--text-dim)] max-w-sm">One primary pillar per creator on CreatorBridge. Aria works exclusively within {creator.pillar.label}.</div>
+      </div>
+      <div className="grid md:grid-cols-3 gap-4">
+        {creator.specialties.map((s, i) => (
+          <div key={s} className="service-offer-card">
+            <div className="flex items-center justify-between mb-3">
+              <span className="serif text-[var(--gold)] text-sm">{String(i + 1).padStart(2, '0')}</span>
+              <span className="text-[10px] tracking-[0.2em] uppercase text-[var(--text-dim)]">{creator.pillar.label}</span>
+            </div>
+            <h3 className="serif text-lg font-medium mb-2 leading-tight">{s}</h3>
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+              {SPECIALTY_BLURB[s] || `Specialty work within ${creator.pillar.label}.`}
+            </p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function About() {
+  return (
+    <section className="grid lg:grid-cols-12 gap-8 mb-16">
+      <div className="lg:col-span-7">
+        <Eyebrow>About the studio</Eyebrow>
+        <h2 className="text-2xl md:text-3xl serif font-medium mb-4 leading-tight">A small studio built to deliver editorial work at commercial pace.</h2>
+        <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-4">{creator.bio}</p>
+        <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+          Past clients include Aritzia, Soho House, The Standard Hotels, Equinox, and Hypebeast. I work nationally — based in Miami, comfortable on shoots in NYC, LA, and Mexico City.
+        </p>
+        <div className="grid sm:grid-cols-2 gap-x-6 gap-y-4 mt-6">
+          <Meta label="Specialties" items={creator.specialties}/>
+          <Meta label="Featured in" items={creator.featuredIn}/>
+          <Meta label="Gear" items={creator.gear}/>
+          <Meta label="Languages" items={creator.languages}/>
+        </div>
+      </div>
+      <div className="lg:col-span-5">
+        <div className="liquid-glass rounded-2xl p-6">
+          <Eyebrow>Crew & approach</Eyebrow>
+          <div className="text-sm font-medium mb-2">{creator.crew}</div>
+          <p className="text-xs text-[var(--text-secondary)] leading-relaxed mb-5">
+            Pre-production call within 48 hrs of booking. Detailed shot list and call sheet shared 5 days before shoot. Edits delivered through CreatorBridge with watermarked previews and final downloads.
+          </p>
+          <div className="space-y-2.5 text-xs">
+            <Step n="01" t="Brief & call" d="Scope, references, locations, deliverables."/>
+            <Step n="02" t="50% retainer" d="Held in CreatorBridge escrow until shoot day."/>
+            <Step n="03" t="Production" d="On-location or studio, with shot list."/>
+            <Step n="04" t="Review & deliver" d="Watermarked previews, then final delivery + remaining 50%."/>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Meta({ label, items }) {
+  return (
+    <div>
+      <div className="text-[10px] tracking-[0.2em] uppercase text-[var(--text-dim)] mb-2">{label}</div>
+      <div className="flex flex-wrap gap-1.5">
+        {items.map(x => <span key={x} className="px-2 py-1 rounded bg-white/[0.04] text-[11px] text-[var(--text)]/85 border border-[var(--border)]">{x}</span>)}
+      </div>
+    </div>
+  );
+}
+
+function Step({ n, t, d }) {
+  return (
+    <div className="flex gap-3 items-start">
+      <div className="serif text-[var(--gold)] text-sm w-6 shrink-0">{n}</div>
+      <div className="flex-1 border-t border-[var(--border)] pt-2">
+        <div className="font-medium text-xs mb-0.5">{t}</div>
+        <div className="text-[11px] text-[var(--text-dim)] leading-relaxed">{d}</div>
+      </div>
+    </div>
+  );
+}
+
+function Portfolio({ onOpen }) {
+  // Filter categories pulled from the creator's specialties — no old generic service lanes.
+  const cats = ["All", ...creator.specialties];
+  const [active, setActive] = useState("All");
+  const items = active === "All" ? portfolio : portfolio.filter(p => p.cat === active);
+  return (
+    <section className="mb-16">
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
+        <div>
+          <Eyebrow>Portfolio</Eyebrow>
+          <h2 className="text-2xl md:text-3xl serif font-medium leading-tight">Selected work — last 18 months.</h2>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {cats.map(c => (
+            <button key={c} onClick={() => setActive(c)}
+              className={"px-3 py-1.5 rounded-lg text-[11px] transition-all border " +
+                (active === c
+                  ? "bg-[var(--gold)] text-[var(--bg)] border-[var(--gold)] font-semibold"
+                  : "bg-transparent text-[var(--text-dim)] border-[var(--border)] hover:border-[var(--gold)] hover:text-[var(--gold)]")
+              }>
+              {c}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+        {items.map(p => (
+          <div key={p.id} onClick={() => onOpen(p)} className={"lane-card cursor-pointer " + p.ratio}>
+            <img src={p.src} alt={p.title}/>
+            <div className="lane-content">
+              <div className="text-[9px] uppercase tracking-[0.2em] text-[var(--gold)] mb-1">{p.cat}</div>
+              <div className="text-sm font-medium">{p.title}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Packages({ selected, setSelected, style, onBook }) {
+  if (style === "table") {
+    return (
+      <section className="mb-16" id="packages-section">
+        <div className="mb-6">
+          <Eyebrow>Packages</Eyebrow>
+          <h2 className="text-2xl md:text-3xl serif font-medium leading-tight">Choose a package to start a booking.</h2>
+        </div>
+        <div className="liquid-glass rounded-2xl overflow-hidden">
+          {packages.map((p, i) => {
+            const isSel = selected === p.id;
+            return (
+              <div key={p.id} onClick={() => setSelected(p.id)}
+                className={"grid lg:grid-cols-12 gap-4 p-5 md:p-6 cursor-pointer transition-colors " +
+                  (i > 0 ? "border-t border-[var(--border)] " : "") +
+                  (isSel ? "bg-[var(--gold-dim)]" : "hover:bg-white/[0.02]")}>
+                <div className="lg:col-span-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="serif text-xl font-medium">{p.name}</div>
+                    {p.popular && <Pill>Most booked</Pill>}
+                  </div>
+                  <div className="text-xs text-[var(--text-dim)]">{p.tagline}</div>
+                </div>
+                <div className="lg:col-span-6 text-xs text-[var(--text-secondary)] leading-relaxed">
+                  {p.items.slice(0, 4).join(" · ")}
+                </div>
+                <div className="lg:col-span-3 flex items-center lg:justify-end gap-4">
+                  <div className="text-right">
+                    <div className="text-[10px] text-[var(--text-dim)] uppercase tracking-wider">from</div>
+                    <div className="text-2xl serif gold-text leading-none">{fmt(p.price)}</div>
+                  </div>
+                  <button onClick={(e) => { e.stopPropagation(); setSelected(p.id); onBook(); }}
+                    className={isSel ? "btn-gold text-[11px]" : "btn-ghost text-[11px]"}>
+                    {isSel ? "Continue" : "Select"}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
     );
   }
+  return (
+    <section className="mb-16" id="packages-section">
+      <div className="mb-6">
+        <Eyebrow>Packages</Eyebrow>
+        <h2 className="text-2xl md:text-3xl serif font-medium leading-tight">Choose a package to start a booking.</h2>
+        <p className="text-sm text-[var(--text-secondary)] max-w-md mt-2">Every booking includes CreatorBridge's 50/50 escrow split. Custom scopes are negotiable after first call.</p>
+      </div>
+      <div className="grid md:grid-cols-3 gap-4">
+        {packages.map(p => {
+          const isSel = selected === p.id;
+          return (
+            <div key={p.id} onClick={() => setSelected(p.id)}
+              className={"relative liquid-glass rounded-2xl p-6 cursor-pointer transition-all " +
+                (isSel ? "ring-1 ring-[var(--gold)] -translate-y-1 shadow-[0_0_40px_rgba(201,168,76,0.12)]" : "")}>
+              {p.popular && (
+                <div className="absolute -top-2 left-6">
+                  <Pill>Most booked</Pill>
+                </div>
+              )}
+              <div className="text-xs tracking-[0.25em] uppercase text-[var(--text-dim)] mb-2">{p.name}</div>
+              <div className="flex items-baseline gap-1.5 mb-3">
+                <span className="text-[10px] text-[var(--text-dim)] uppercase tracking-wider">from</span>
+                <span className="text-4xl serif gold-text">{fmt(p.price)}</span>
+              </div>
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed mb-5">{p.tagline}</p>
+              <ul className="space-y-2 mb-6">
+                {p.items.map(it => (
+                  <li key={it} className="flex items-start gap-2 text-xs text-[var(--text)]/85 leading-relaxed">
+                    <svg className="w-3 h-3 text-[var(--gold)] mt-1 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    {it}
+                  </li>
+                ))}
+              </ul>
+              <button onClick={(e) => { e.stopPropagation(); setSelected(p.id); onBook(); }}
+                className={"w-full justify-center " + (isSel ? "btn-gold text-xs" : "btn-ghost text-xs")}>
+                {isSel ? "Continue with " + p.name : "Select " + p.name}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 
-  if (!isApprovedCreator(creator) && !isOwnProfile) {
-    return (
-      <div className={`min-h-screen flex items-center justify-center px-5 ${dark ? 'bg-transparent text-white' : 'bg-gray-50 text-gray-900'}`}>
-        <div className={`w-full max-w-md rounded-2xl border p-8 text-center ${dark ? 'bg-charcoal-900/76 border-white/[0.08]' : 'bg-white border-gray-200 shadow-sm'}`}>
-          <div className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl ${dark ? 'bg-gold-500/10 text-gold-300 ring-1 ring-gold-500/20' : 'bg-gold-50 text-gold-600'}`}>
-            <Search size={20} />
+function Reviews() {
+  const [showAll, setShowAll] = useState(false);
+  const items = showAll ? reviews : reviews.slice(0, 2);
+  return (
+    <section className="mb-16">
+      <div className="flex items-end justify-between mb-6">
+        <div>
+          <Eyebrow>Client reviews</Eyebrow>
+          <h2 className="text-2xl md:text-3xl serif font-medium leading-tight">{creator.rating} · {creator.reviews} verified reviews</h2>
+        </div>
+        <button onClick={() => setShowAll(!showAll)} className="btn-ghost text-[11px]">
+          {showAll ? "Show fewer" : "Show all"}
+        </button>
+      </div>
+      <div className="grid md:grid-cols-2 gap-4">
+        {items.map(r => (
+          <div key={r.id} className="liquid-glass rounded-2xl p-5">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <div className="font-semibold text-sm">{r.client}</div>
+                <div className="text-[11px] text-[var(--text-dim)]">{r.role} · {r.date}</div>
+              </div>
+              <div className="flex text-[var(--gold)]">
+                {[1,2,3,4,5].map(i => <Star key={i} filled={i <= r.rating} size={12}/>)}
+              </div>
+            </div>
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed mb-3">"{r.body}"</p>
+            <div className="flex items-center justify-between pt-3 border-t border-[var(--border)]">
+              <div className="text-[10px] text-[var(--text-dim)]">{r.project}</div>
+              <Pill tone="green">Verified booking</Pill>
+            </div>
           </div>
-          <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '2.2px', textTransform: 'uppercase' }}>
-            Profile under review
-          </p>
-          <h2 className="font-display text-xl font-bold mb-2">This creator is not public yet</h2>
-          <p className={`text-sm leading-6 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
-            CreatorBridge profiles are hidden until manual review is complete.
-          </p>
-          <button type="button" onClick={() => navigate('/find')}
-            className="mt-5 px-5 py-2.5 rounded-xl bg-gold-500 text-charcoal-900 font-bold text-sm">
-            Back to Directory
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ReelModal({ open, onClose }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md" onClick={onClose}>
+      <div className="max-w-5xl w-full liquid-glass rounded-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="aspect-video relative bg-black">
+          <img src={creator.reel} alt="Reel" className="absolute inset-0 w-full h-full object-cover opacity-80"/>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-20 h-20 rounded-full bg-[var(--gold)]/90 flex items-center justify-center">
+              <svg className="w-8 h-8 text-[var(--bg)] ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+          </div>
+          <button onClick={onClose} className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
-      </div>
-    );
-  }
-
-  if (guestLimitReached && !user) {
-    return (
-      <div className={`min-h-screen flex items-center justify-center px-5 ${dark ? 'bg-transparent text-white' : 'bg-gray-50 text-gray-900'}`}>
-        <div className={`w-full max-w-md rounded-2xl border p-8 text-center ${dark ? 'bg-charcoal-900/76 border-white/[0.08]' : 'bg-white border-gray-200 shadow-sm'}`}>
-          <div className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl ${dark ? 'bg-gold-500/10 text-gold-300 ring-1 ring-gold-500/20' : 'bg-gold-50 text-gold-600'}`}>
-            <Search size={20} />
+        <div className="p-5 flex items-center justify-between">
+          <div>
+            <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--gold)] mb-1">Featured Reel · 02:14</div>
+            <div className="text-base serif">2024–25 selected work · {creator.studio}</div>
           </div>
-          <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '2.2px', textTransform: 'uppercase' }}>
-            Guest preview complete
+          <button className="btn-ghost text-xs">Share</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LightboxModal({ item, onClose }) {
+  if (!item) return null;
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/85 backdrop-blur-md" onClick={onClose}>
+      <div className="max-w-6xl w-full liquid-glass rounded-2xl overflow-hidden grid md:grid-cols-3" onClick={e => e.stopPropagation()}>
+        <div className="md:col-span-2 bg-black">
+          <img src={item.src} alt={item.title} className="w-full h-full object-cover max-h-[80vh]"/>
+        </div>
+        <div className="p-6 flex flex-col">
+          <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--gold)] mb-3">{item.cat}</div>
+          <h3 className="text-2xl serif font-medium mb-3 leading-tight">{item.title}</h3>
+          <p className="text-xs text-[var(--text-secondary)] leading-relaxed mb-4">
+            Selected frame from a recent {item.cat.toLowerCase()} production. Full case studies available after booking.
           </p>
-          <h2 className="font-display text-xl font-bold mb-2">Create a free account to keep browsing.</h2>
-          <p className={`text-sm leading-6 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
-            Guests can preview up to 3 creator profiles. Accounts unlock full browsing, saved creators, quotes, and project requests.
-          </p>
-          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button type="button" onClick={() => openClientAuth('signup')}
-              className="rounded-xl bg-gold-500 px-4 py-3 text-sm font-bold text-charcoal-900 hover:bg-gold-600 transition-colors">
-              Create Account
-            </button>
-            <button type="button" onClick={() => openClientAuth('login')}
-              className={`rounded-xl border px-4 py-3 text-sm font-bold transition-colors ${dark ? 'border-gold-500/25 text-charcoal-200 hover:text-white hover:border-gold-500/45' : 'border-gray-200 text-gray-700 hover:text-gray-900'}`}>
-              Sign In
-            </button>
+          <div className="mt-auto flex items-center justify-between pt-4 border-t border-[var(--border)]">
+            <button onClick={onClose} className="btn-ghost text-xs">Close</button>
+            <button className="btn-gold text-xs">Book similar</button>
           </div>
         </div>
       </div>
-    );
-  }
-
-  const location = creator.location || {};
-  const contact  = creator.contact || {};
-  const services = creator.services || [];
-  const portfolio = creator.portfolio || [];
-  const locationStr = [location.city, location.state, location.country].filter(Boolean).join(', ');
-
-  function getServiceDisplayName(serviceId, service = null) {
-    if (service?.displayName) return service.displayName;
-    const names = {
-      video:            'Video Production',
-      video_production: 'Video Production',
-      photography:      'Photography',
-      drone:            'Video Production',
-      drone_aerial:     'Video Production',
-      podcast:          'Post Production',
-      social:           'Video Production',
-      social_media:     'Video Production',
-      post:             'Post Production',
-      post_production:  'Post Production',
-      events:           'Video Production',
-      live_events:      'Video Production',
-    };
-    return names[serviceId] || serviceId || 'Services';
-  }
-  const region = REGIONS[location.regionKey];
-  const expLabel = { entry: '2-3 yrs', mid: '4-6 yrs', senior: '7+ yrs' }[creator.experience] || '';
-  const creatorVisuals = {
-    video: '/images/creatorbridge/handoff/photo-1485846234645-a62644f84728.png',
-    video_production: '/images/creatorbridge/handoff/photo-1485846234645-a62644f84728.png',
-    photography: '/images/creatorbridge/handoff/photo-1542038784456-1ea8e935640e.png',
-    postProduction: '/images/creatorbridge/handoff/photo-1574717024653-61fd2cf4d44d.png',
-    post_production: '/images/creatorbridge/handoff/photo-1574717024653-61fd2cf4d44d.png',
-  };
-  const primaryPillar = getPillar(creator.primary_pillar);
-  const primaryServiceId = services[0]?.serviceId || services[0]?.service_id || 'video';
-  const legacyPrimary = LEGACY_SERVICE_TO_PILLAR[primaryServiceId] || LEGACY_SERVICE_TO_PILLAR.video;
-  const displayedPrimaryPillar = primaryPillar || getPillar(legacyPrimary?.pillar || 'video_production');
-  const displayedSubNicheIds = (creator.sub_niches?.length ? creator.sub_niches : [legacyPrimary?.sub_niche]).filter(Boolean).slice(0, 3);
-  const displayedSpecialties = displayedSubNicheIds.map(id => getSubNiche(id)).filter(Boolean);
-  const displayedService = {
-    ...(services[0] || {}),
-    serviceId: primaryServiceId,
-    service_id: primaryServiceId,
-    pillarId: displayedPrimaryPillar?.id || legacyPrimary?.pillar || 'video_production',
-    displayName: displayedPrimaryPillar?.name || getServiceDisplayName(primaryServiceId, services[0]),
-    description: `${displayedPrimaryPillar?.name || 'Production'} specialist focused on ${displayedSpecialties.map(s => s.label).join(', ') || 'verified client work'}.`,
-    subtypes: displayedSpecialties.map(s => s.label),
-  };
-  const visibleServices = displayedPrimaryPillar ? [displayedService] : [];
-  const avatarUrl = normalizeExternalUrl(creator.avatar || creator.avatar_url || creator.logo_url || '');
-  const customCoverImage = normalizeMediaUrl(
-    creator.cover || creator.cover_image_url || creator.coverImageUrl || creator.banner_url || creator.bannerUrl
+    </div>
   );
-  const profileVisual = resolvedCoverImage || customCoverImage || creatorVisuals[displayedPrimaryPillar?.id] || creatorVisuals[primaryServiceId] || creatorVisuals.video_production;
-  const introEmbedUrl = toEmbedUrl(creator.video_intro_url);
+}
 
-  const textSub = dark ? 'text-charcoal-400' : 'text-gray-500';
-  const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.08]' : 'bg-white border-gray-200 shadow-sm'}`;
+function BookingSheet({ open, onClose, selectedPkg }) {
+  const [brief, setBrief] = useState("");
+  const [date, setDate] = useState("");
+  const [location, setLocation] = useState("Miami, FL");
+  const [submitted, setSubmitted] = useState(false);
+  const pkg = packages.find(p => p.id === selectedPkg) || packages[1];
+  const subtotal = pkg.price;
+  const fee = Math.round(subtotal * 0.05);
+  const total = subtotal + fee;
+  const retainer = Math.round(total / 2);
+  const remainder = total - retainer;
 
-  // ── SEO + JSON-LD for this creator profile ──────────────────────────────
-  const creatorPageUrl = `https://www.creatorbridge.studio/creator/${id}`;
-  const creatorNameForMeta = creator?.businessName || creator?.business_name || creator?.display_name || creator?.name || 'Creator';
-  const creatorLocationForMeta = locationStr || [creator?.city, creator?.state].filter(Boolean).join(', ');
-  const creatorTitle   = creator
-    ? `${creatorNameForMeta} — ${creator.tier || 'Creator'} on CreatorBridge`
-    : 'Creator Profile | CreatorBridge';
-  const creatorDesc    = creator
-    ? `${creatorNameForMeta}${creatorLocationForMeta ? ` (${creatorLocationForMeta})` : ''} is a verified media creator on CreatorBridge. ${creator.bio ? creator.bio.slice(0, 140) : ''}`
-    : 'View this verified creator profile on CreatorBridge.';
-  const creatorJsonLd  = creator ? {
-    '@context': 'https://schema.org',
-    '@type': 'Person',
-    name: creatorNameForMeta,
-    url: creatorPageUrl,
-    description: creator.bio || '',
-    address: creatorLocationForMeta ? { '@type': 'PostalAddress', addressLocality: creatorLocationForMeta } : undefined,
-    worksFor: { '@type': 'Organization', name: 'CreatorBridge', url: 'https://www.creatorbridge.studio' },
-  } : null;
+  if (!open) return null;
 
   return (
-    <div className={`min-h-screen ${dark ? 'bg-transparent' : 'bg-gray-50'}`}>
-      {creator && (
-        <SEO
-          title={creatorTitle}
-          description={creatorDesc}
-          url={creatorPageUrl}
-          jsonLd={creatorJsonLd}
-        />
-      )}
-      {/* Back button */}
-      <div className="mx-auto w-full max-w-[1520px] px-5 sm:px-8 lg:px-12 pt-5">
-        <button type="button" onClick={() => navigate(-1)}
-          className={`flex items-center gap-2 text-sm font-bold transition-colors ${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}>
-          <ArrowLeft size={16} /> Back to directory
-        </button>
-      </div>
-
-      <div className="mx-auto w-full max-w-[1520px] px-5 sm:px-8 lg:px-12 py-6 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-6">
-
-        {/* ── LEFT COLUMN ── */}
-        <div className="space-y-5">
-
-          {/* Profile header */}
-          <div className={`${cardCls} relative overflow-hidden p-6 sm:p-8`} style={{ boxShadow: dark ? '0 28px 90px rgba(0,0,0,0.24)' : '0 22px 70px rgba(0,0,0,0.08)' }}>
-            <div
-              className="absolute inset-x-0 top-0 h-1"
-              style={{ background: 'linear-gradient(90deg, transparent, rgba(212,169,65,0.85), transparent)' }}
-            />
-            <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-gold-500/10 blur-3xl" />
-            <div className="relative grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-              <div className="group relative aspect-[16/10] overflow-hidden rounded-[1.35rem] border border-gold-500/18 bg-charcoal-950/70 shadow-[0_24px_90px_rgba(0,0,0,0.28)] sm:aspect-video xl:aspect-[9/16]">
-                {introEmbedUrl ? (
-                  <iframe
-                    src={introEmbedUrl}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="absolute inset-0 h-full w-full bg-black"
-                    title={`${creator.businessName || creator.name} intro video`}
-                  />
-                ) : (
-                  <>
-                    <img src={profileVisual} alt="" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-35 blur-xl" />
-                    <img src={profileVisual} alt="" className="absolute inset-0 h-full w-full object-contain p-2 opacity-90 transition-transform duration-700 group-hover:scale-[1.01]" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/20 to-transparent" />
-                  </>
-                )}
-                <div className={`pointer-events-none absolute inset-x-0 bottom-0 p-4 ${introEmbedUrl ? 'bg-gradient-to-t from-black/82 via-black/20 to-transparent' : ''}`}>
-                  <p className="mb-2 text-gold-400" style={{ fontSize: '10px', letterSpacing: '2.6px', textTransform: 'uppercase' }}>
-                    {introEmbedUrl ? 'Required creator intro' : 'Intro video fallback'}
-                  </p>
-                  <h2 className="font-display text-xl font-bold text-white">
-                    {introEmbedUrl ? 'Meet the creator before booking.' : 'Creator intro video slot.'}
-                  </h2>
-                  {!introEmbedUrl && (
-                    <p className="mt-2 text-xs leading-5 text-charcoal-200">
-                      Once approved, this area should show the required 60 to 90 second intro video.
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="min-w-0">
-            <div className="relative flex flex-col gap-6 md:flex-row md:items-start">
-              <div className="relative shrink-0">
-                <div
-                  className={`w-24 h-24 rounded-[1.35rem] border flex items-center justify-center text-5xl shadow-[0_20px_60px_rgba(0,0,0,0.22)] ${dark ? 'bg-white/[0.04] border-gold-500/22' : 'bg-gray-100 border-gray-200'}`}
-                  title="Creator logo or profile mark"
-                >
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt="" className="h-full w-full rounded-[1.35rem] object-cover" />
-                  ) : (
-                    creator.avatar || '🎬'
-                  )}
-                </div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2 flex-wrap">
-                  <div>
-                    <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
-                      Verified production specialist
-                    </p>
-                    <div className="mb-3 flex flex-wrap items-center gap-2">
-                      <span className="primary-pillar-badge">
-                        <span className="dot" />
-                        <span className="label">Primary pillar</span>
-                        <span className="value">{displayedPrimaryPillar?.name || 'Production'}</span>
-                      </span>
-                      {creator.availability === 'available' && (
-                        <span className="inline-flex items-center rounded-full border border-green-400/18 bg-green-400/8 px-2.5 py-1 text-[11px] font-semibold text-green-300">
-                          Available now
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h1 className={`font-display font-bold text-3xl sm:text-4xl tracking-tight ${dark ? 'text-white' : 'text-gray-950'}`}>
-                        {creator.businessName || creator.name}
-                      </h1>
-                      {creator.verification_status && creator.verification_status !== 'unverified' ? (
-                        <VerificationBadge status={creator.verification_status} />
-                      ) : creator.verified ? (
-                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-gold-500/10 text-gold-300 text-[10px] font-bold ring-1 ring-gold-500/20">
-                          <BadgeCheck size={11} /> Verified
-                        </span>
-                      ) : null}
-                      {creator.tier && <TierBadge tierId={creator.tier} />}
-                      {creator.completed_projects > 0 && (
-                        <LoyaltyBadge completedProjects={creator.completed_projects} />
-                      )}
-                    </div>
-                    {creator.businessName && creator.name && (
-                      <p className={`text-sm ${textSub}`}>{creator.name}</p>
-                    )}
-                    <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                      <span className={`text-sm flex items-center gap-1 ${textSub}`}>
-                        <MapPin size={13} /> {locationStr}
-                        {region && <span className="ml-1">{region.flag}</span>}
-                      </span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${dark ? 'bg-white/[0.04] text-charcoal-300 ring-1 ring-white/[0.06]' : 'bg-gray-100 text-gray-500'}`}>
-                        {expLabel}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <button type="button" onClick={toggleFavorite}
-                      className={`p-2 rounded-xl border transition-all ${
-                        isFav
-                          ? 'border-gold-500/45 bg-gold-500/10 text-gold-400'
-                          : dark ? 'border-charcoal-600 text-charcoal-400 hover:text-gold-400' : 'border-gray-200 text-gray-400 hover:text-gold-500'
-                      }`} title={isFav ? 'Remove from favorites' : 'Save to favorites'}>
-                      <Heart size={16} className={isFav ? 'fill-current' : ''} />
-                    </button>
-                    <button type="button" onClick={shareProfile}
-                      className={`p-2 rounded-xl border transition-all ${dark ? 'border-charcoal-600 text-charcoal-400 hover:text-white' : 'border-gray-200 text-gray-400 hover:text-gray-900'}`}
-                      title="Copy profile link">
-                      {copied ? <Check size={16} className="text-gold-400" /> : <Share2 size={16} />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Rating */}
-                {creator.rating && (
-                  <div className="flex items-center gap-2 mt-3">
-                    <div className="flex">
-                      {[1,2,3,4,5].map(s => (
-                        <Star key={s} size={14}
-                          className={s <= Math.round(creator.rating) ? 'text-gold-400 fill-gold-400' : dark ? 'text-charcoal-600' : 'text-gray-300'} />
-                      ))}
-                    </div>
-                    <span className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{creator.rating}</span>
-                    <span className={`text-sm ${textSub}`}>({creator.reviewCount || creator.review_count || 0} reviews)</span>
-                  </div>
-                )}
-              </div>
+    <div className="fixed inset-0 z-[200] flex justify-end bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-xl h-full overflow-y-auto bg-[var(--bg)] border-l border-[var(--border)]" onClick={e => e.stopPropagation()}>
+        <div className="p-6 lg:p-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--gold)] mb-1">Book {creator.studio}</div>
+              <h3 className="text-xl serif">Reserve your shoot</h3>
             </div>
-
-            {/* Bio */}
-            <p className={`relative mt-6 max-w-4xl text-base leading-8 ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>{creator.bio}</p>
-
-            <div className="relative mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {[
-                { label: 'Primary pillar', value: displayedPrimaryPillar?.name || 'Production' },
-                { label: 'Work samples', value: portfolio.length || 0 },
-                { label: 'Experience', value: expLabel || 'Reviewed' },
-                { label: 'Payment path', value: 'Protected' },
-              ].map(({ label, value }) => (
-                <div key={label} className={`rounded-2xl border px-4 py-3 ${dark ? 'border-white/[0.07] bg-charcoal-950/50' : 'border-gray-200 bg-gray-50'}`}>
-                  <p className={`text-[10px] uppercase tracking-widest ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>{label}</p>
-                  <p className={`mt-1 text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{value}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Tags */}
-            {displayedSpecialties.length > 0 && (
-              <div className={`relative mt-5 border-t pt-4 ${dark ? 'border-white/[0.06]' : 'border-gray-200'}`}>
-                <p className={`mb-2 text-[10px] font-bold uppercase tracking-[0.2em] ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
-                  Production Focus
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {displayedSpecialties.map(specialty => (
-                    <span key={specialty.id} className="specialty-chip-profile">
-                      {specialty.label}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-              </div>
-            </div>
-          </div>
-
-          {/* Services and Packages */}
-          {visibleServices.length > 0 && (
-            <div className={`${cardCls} p-5 sm:p-6`}>
-              <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-                <div>
-                  <p className="mb-3 text-gold-400" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
-                    Service offers
-                  </p>
-                  <h2 className={`font-display text-2xl font-semibold leading-tight ${dark ? 'text-white' : 'text-gray-900'}`}>
-                    {displayedPrimaryPillar?.name || 'Production'} — {displayedSpecialties.length || 1} specialt{(displayedSpecialties.length || 1) === 1 ? 'y' : 'ies'}.
-                  </h2>
-                </div>
-                <p className={`max-w-sm text-xs leading-5 ${textSub}`}>
-                  One primary pillar per creator. Clients review focused specialties before opening a quote.
-                </p>
-              </div>
-
-              <div className="mb-6 grid gap-3 md:grid-cols-3">
-                {(displayedSpecialties.length ? displayedSpecialties : [{ id: displayedPrimaryPillar?.id || 'pillar', label: displayedPrimaryPillar?.name || 'Production' }]).map((specialty, i) => (
-                  <div key={specialty.id || specialty.label} className="service-offer-card">
-                    <div className="mb-3 flex items-center justify-between">
-                      <span className="font-display text-sm text-gold-400">{String(i + 1).padStart(2, '0')}</span>
-                      <span className="text-[10px] uppercase tracking-[0.2em] text-charcoal-500">{displayedPrimaryPillar?.name || 'Production'}</span>
-                    </div>
-                    <h3 className={`mb-2 font-display text-lg font-semibold leading-tight ${dark ? 'text-white' : 'text-gray-900'}`}>
-                      {specialty.label}
-                    </h3>
-                    <p className={`text-xs leading-6 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
-                      Focused client work inside {displayedPrimaryPillar?.name || 'the creator’s pillar'}, scoped through CreatorBridge before payment moves.
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Package cards for active niche only */}
-              {(() => {
-                const svcList = visibleServices;
-                const activeSvc = svcList[activeNiche];
-                if (!activeSvc) return null;
-
-                const sid = activeSvc.serviceId || activeSvc.service_id;
-                const serviceDef = SERVICES[sid] || {};
-
-                // Try structured packages first
-                const activePillarId = activeSvc.pillarId || creator.primary_pillar || LEGACY_SERVICE_TO_PILLAR[sid]?.pillar;
-                const pkgs = (creator.packages || []).filter(p => {
-                  const packageServiceId = p.serviceId || p.service_id;
-                  if (!activePillarId) return packageServiceId === sid;
-                  return LEGACY_SERVICE_TO_PILLAR[packageServiceId]?.pillar === activePillarId;
-                });
-
-                if (pkgs.length > 0) {
-                  return (
-                    <div className="grid gap-3 lg:grid-cols-3">
-                      {(serviceDef.description || activeSvc.description || activeSvc.subtypes?.length > 0) && (
-                        <div className={`rounded-2xl border p-4 lg:col-span-3 ${dark ? 'border-gold-500/18 bg-gold-500/[0.055]' : 'border-gold-200 bg-gold-50'}`}>
-                          <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase' }}>
-                            Selected specialties
-                          </p>
-                          <p className={`text-sm leading-6 ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>
-                            {activeSvc.description || serviceDef.description}
-                          </p>
-                          {activeSvc.subtypes?.length > 0 && (
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              {activeSvc.subtypes.slice(0, 8).map(subtype => (
-                                <span key={subtype} className={`rounded-full px-3 py-1 text-[11px] font-semibold ${dark ? 'bg-charcoal-950/65 text-charcoal-300 ring-1 ring-white/[0.06]' : 'bg-white text-gray-600 ring-1 ring-gray-200'}`}>
-                                  {subtype}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      {pkgs.map((pkg, pi) => {
-                        const isStandard = pkg.tier === 'standard'
-                          || pkg.name?.toLowerCase().includes('standard')
-                          || pi === 1;
-                        return (
-                          <div key={pi} className={`rounded-2xl border p-4
-                            ${isStandard
-                              ? 'border-gold-500/38 '
-                                + (dark
-                                  ? 'bg-gold-500/10'
-                                  : 'border-gray-200 bg-gold-50')
-                              : dark
-                                ? 'border-white/[0.07] bg-white/[0.025]'
-                                : 'border-gray-200 bg-gray-50'
-                            }`}>
-                            {isStandard && (
-                              <p className="text-[10px] font-bold text-gold-400
-                                uppercase tracking-wider mb-1">
-                                Most Popular
-                              </p>
-                            )}
-                            <p className={`text-[10px] font-bold uppercase
-                              tracking-wider mb-1
-                              ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
-                              {pkg.tier || pkg.name || `Package ${pi + 1}`}
-                            </p>
-                            <p className="font-display text-2xl font-bold
-                              text-gold-400 mb-1">
-                              ${Number(pkg.price || 0).toLocaleString()}
-                            </p>
-                            <p className={`text-xs mb-3
-                              ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
-                              {(pkg.deliveryDays || pkg.turnaroundDays || pkg.turnaround_days) && `${pkg.deliveryDays || pkg.turnaroundDays || pkg.turnaround_days} day delivery`}
-                              {pkg.revisions && `${(pkg.deliveryDays || pkg.turnaroundDays || pkg.turnaround_days) ? ' · ' : ''}${pkg.revisions} revision${
-                                pkg.revisions !== 1 ? 's' : ''} included`}
-                            </p>
-                            {(pkg.features || pkg.deliverables || []).length > 0 && (
-                              <ul className="space-y-1.5 mb-4">
-                                {(pkg.features || pkg.deliverables || []).slice(0, 3)
-                                  .map((f, fi) => (
-                                  <li key={fi} className={`flex items-start
-                                    gap-2 text-xs
-                                    ${dark
-                                      ? 'text-charcoal-300'
-                                      : 'text-gray-600'}`}>
-                                    <span className="text-gold-400 mt-0.5
-                                      shrink-0">
-                                      <Check size={13} />
-                                    </span>
-                                    {f}
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                            {(pkg.features || pkg.deliverables || []).length > 3 && (
-                              <p className={`mb-4 text-[11px] ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
-                                +{(pkg.features || pkg.deliverables || []).length - 3} more included
-                              </p>
-                            )}
-                            {pkg.description && (
-                              <p className={`text-xs italic mb-4
-                                ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
-                                {pkg.description}
-                              </p>
-                            )}
-                            <button
-                              type="button"
-                              onClick={handleQuoteClick}
-                              className="w-full py-2.5 rounded-xl bg-gold-500
-                                hover:bg-gold-600 text-charcoal-900 text-xs
-                                font-bold transition-all">
-                              Get This Package
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                }
-
-                // Fallback: build Basic/Standard/Premium from rates
-                const rates = Object.entries(activeSvc.rates || {});
-                if (rates.length === 0) return (
-                  <div className={`rounded-2xl border p-5 text-sm ${dark
-                    ? 'border-white/[0.07] bg-charcoal-950/45 text-charcoal-300' : 'border-gray-200 bg-gray-50 text-gray-600'}`}>
-                    Pricing is reviewed through a custom quote for this pillar.
-                  </div>
-                );
-
-                const sorted = rates.sort(([,a],[,b]) => Number(a) - Number(b));
-                const third = Math.ceil(sorted.length / 3);
-                const tiers = [
-                  {
-                    name: 'Basic',
-                    rates: sorted.slice(0, third),
-                    isStandard: false,
-                  },
-                  {
-                    name: 'Standard',
-                    rates: sorted.slice(third, third * 2),
-                    isStandard: true,
-                  },
-                  {
-                    name: 'Premium',
-                    rates: sorted.slice(third * 2),
-                    isStandard: false,
-                  },
-                ].filter(t => t.rates.length > 0);
-
-                return (
-                  <div className="grid gap-3 lg:grid-cols-3">
-                    {tiers.map((tier) => {
-                      const minPrice = Math.min(
-                        ...tier.rates.map(([,v]) => Number(v))
-                      );
-                      return (
-                        <div key={tier.name}
-                          className={`rounded-2xl border p-4
-                          ${tier.isStandard
-                            ? 'border-gold-500/38 '
-                              + (dark
-                                ? 'bg-gold-500/10'
-                                : 'border-gray-200 bg-gold-50')
-                            : dark
-                              ? 'border-white/[0.07] bg-white/[0.025]'
-                              : 'border-gray-200 bg-gray-50'
-                          }`}>
-                          {tier.isStandard && (
-                            <p className="text-[10px] font-bold text-gold-400
-                              uppercase tracking-wider mb-1">
-                              Most Popular
-                            </p>
-                          )}
-                          <p className={`text-[10px] font-bold uppercase
-                            tracking-wider mb-1
-                            ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
-                            {tier.name}
-                          </p>
-                          <p className="font-display text-2xl font-bold
-                            text-gold-400 mb-3">
-                            from ${minPrice.toLocaleString()}
-                          </p>
-                          <ul className="space-y-1.5 mb-4">
-                            {tier.rates.slice(0, 4).map(([key, val]) => {
-                              const meta = RATES[sid]?.[key];
-                              return (
-                                <li key={key}
-                                  className={`flex items-center justify-between
-                                  gap-4 text-xs
-                                  ${dark
-                                    ? 'text-charcoal-300'
-                                    : 'text-gray-600'}`}>
-                                  <span className="flex items-center gap-1.5">
-                                    <Check size={13} className="text-gold-400 shrink-0" />
-                                    {meta?.label || key}
-                                    {meta?.unit && (
-                                      <span className={dark
-                                        ? 'text-charcoal-500'
-                                        : 'text-gray-400'}>
-                                        / {meta.unit}
-                                      </span>
-                                    )}
-                                  </span>
-                                  <span className={`font-semibold shrink-0
-                                    ${dark ? 'text-white' : 'text-gray-900'}`}>
-                                    ${Number(val).toLocaleString()}
-                                  </span>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                          {tier.rates.length > 4 && (
-                            <p className={`mb-4 text-[11px] ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
-                              +{tier.rates.length - 4} more rate options
-                            </p>
-                          )}
-                          <button
-                            type="button"
-                            onClick={handleQuoteClick}
-                            className="w-full py-2.5 rounded-xl bg-gold-500
-                              hover:bg-gold-600 text-charcoal-900 text-xs
-                              font-bold transition-all">
-                            Get This Package
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
-            </div>
-          )}
-
-          {/* Portfolio */}
-          {portfolio.length > 0 && (
-            <div className={`${cardCls} p-5 sm:p-6`}>
-              <h2 className={`font-display font-bold text-xl mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>Proof of Work</h2>
-              <p className={`text-sm mb-5 ${textSub}`}>Selected samples clients can review before opening a project.</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {(resolvedPortfolio.length ? resolvedPortfolio : portfolio).map((item, i) => {
-                  const def = SERVICES[item.serviceId || item.service_id];
-                  const previewImage = item.displayImageUrl || normalizeExternalUrl(item.image_url || item.imageUrl || '');
-                  const projectLink = item.displayLink || normalizeExternalUrl(item.link || item.url || '');
-                  return (
-                    <div key={i} className={`overflow-hidden rounded-2xl border ${dark ? 'border-white/[0.07] bg-charcoal-950/42' : 'border-gray-200 bg-gray-50'}`}>
-                      {previewImage && (
-                        <div className="relative aspect-video overflow-hidden bg-charcoal-950/70">
-                          <img src={previewImage} alt={item.title}
-                            className="h-full w-full object-cover transition-transform duration-700 hover:scale-105" />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                        </div>
-                      )}
-                      <div className="p-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`flex h-7 w-7 items-center justify-center rounded-xl ${dark ? 'bg-gold-500/10 ring-1 ring-gold-500/18' : 'bg-white ring-1 ring-gray-200'}`}>{def?.icon || '🎬'}</span>
-                        <p className={`text-sm font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>{item.title}</p>
-                      </div>
-                      {def?.name && (
-                        <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-gold-400">{def.name}</p>
-                      )}
-                      <p className={`text-xs ${textSub}`}>{item.description}</p>
-                      {projectLink && (
-                        <a href={projectLink} target="_blank" rel="noreferrer"
-                          className={`mt-3 inline-flex items-center gap-1 text-xs font-semibold text-gold-400 hover:text-gold-300 transition-colors`}>
-                          <ExternalLink size={10} /> View project
-                        </a>
-                      )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Reviews */}
-          <ReviewsSection creator={creator} dark={dark} />
-
-          {/* Similar Creators */}
-          <SimilarCreators creator={creator} dark={dark} />
-        </div>
-
-        {/* ── RIGHT COLUMN (sticky) ── */}
-        <div className="space-y-4">
-          <div className="lg:sticky lg:top-20 space-y-4">
-
-            {/* CTA card */}
-            <div className={`${cardCls} relative overflow-hidden p-5`}>
-              <div
-                className="absolute inset-x-0 top-0 h-1"
-                style={{ background: 'linear-gradient(90deg, transparent, rgba(212,169,65,0.8), transparent)' }}
-              />
-              <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '2.2px', textTransform: 'uppercase' }}>
-                Start a project
-              </p>
-              <button type="button" onClick={handleQuoteClick}
-                className="w-full py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold transition-all flex items-center justify-center gap-2 mb-2 shadow-[0_16px_38px_rgba(212,169,65,0.16)]">
-                <FileText size={15} /> {quoteDate ? `Book for ${new Date(quoteDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'Request a Quote'}
-              </button>
-              {!isOwnProfile && (
-                <button type="button"
-                  onClick={handleMessageClick}
-                  className={`w-full py-2.5 rounded-xl border text-sm font-semibold transition-all flex items-center justify-center gap-2 mb-3 ${
-                    dark ? 'border-gold-500/20 text-charcoal-300 hover:border-gold-500/40 hover:text-white hover:bg-white/[0.035]' : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:text-gray-900'
-                  }`}>
-                  <MessageSquare size={15} /> Message
-                </button>
-              )}
-              <div className={`rounded-2xl border px-3 py-2 ${dark ? 'border-white/[0.06] bg-white/[0.025]' : 'border-gray-200 bg-gray-50'}`}>
-                <p className={`text-center text-[10px] ${textSub}`}>Free to request. No payment until you hire.</p>
-                <p className={`text-center text-[10px] mt-1 ${textSub}`}>Confirm insurance directly when a project requires coverage.</p>
-              </div>
-
-              {/* Contact links */}
-              <div className={`mt-4 border-t pt-4 space-y-2 ${dark ? 'border-charcoal-700' : 'border-gray-200'}`}>
-                {/* Email: only visible after booking */}
-                {contact.email && (isOwnProfile || contactUnlocked) ? (
-                  <a href={`mailto:${contact.email}`}
-                    className={`flex items-center gap-2 text-xs transition-colors ${dark ? 'text-charcoal-400 hover:text-gold-400' : 'text-gray-500 hover:text-gold-500'}`}>
-                    <Mail size={13} /> {contact.email}
-                  </a>
-                ) : contact.email ? (
-                  <button type="button" onClick={handleLockedContactClick}
-                    className={`flex items-center gap-2 text-xs italic text-left ${dark ? 'text-charcoal-500 hover:text-gold-400' : 'text-gray-400 hover:text-gold-600'}`}>
-                    <Mail size={13} /> {user ? 'Book through CreatorBridge to contact' : 'Sign in to contact'}
-                  </button>
-                ) : null}
-
-                {/* Phone: only visible after booking */}
-                {contact.phone && (isOwnProfile || contactUnlocked) ? (
-                  <a href={`tel:${contact.phone}`}
-                    className={`flex items-center gap-2 text-xs transition-colors ${dark ? 'text-charcoal-400 hover:text-gold-400' : 'text-gray-500 hover:text-gold-500'}`}>
-                    <Phone size={13} /> {contact.phone}
-                  </a>
-                ) : contact.phone ? (
-                  <button type="button" onClick={handleLockedContactClick}
-                    className={`flex items-center gap-2 text-xs italic text-left ${dark ? 'text-charcoal-500 hover:text-gold-400' : 'text-gray-400 hover:text-gold-600'}`}>
-                    <Phone size={13} /> {user ? 'Available after booking' : 'Sign in to contact'}
-                  </button>
-                ) : null}
-
-                {/* Website: only visible after booking or own profile */}
-                {contact.website && (isOwnProfile || contactUnlocked) ? (
-                  <a href={contact.website.startsWith('http') ? contact.website : `https://${contact.website}`}
-                    target="_blank" rel="noreferrer"
-                    className={`flex items-center gap-2 text-xs transition-colors ${dark ? 'text-charcoal-400 hover:text-gold-400' : 'text-gray-500 hover:text-gold-500'}`}>
-                    <Globe size={13} /> {contact.website}
-                  </a>
-                ) : contact.website ? (
-                  <button type="button" onClick={handleLockedContactClick}
-                    className={`flex items-center gap-2 text-xs italic text-left ${dark ? 'text-charcoal-500 hover:text-gold-400' : 'text-gray-400 hover:text-gold-600'}`}>
-                    <Globe size={13} /> {user ? 'Available after booking' : 'Sign in to contact'}
-                  </button>
-                ) : null}
-                {/* Instagram: only visible after booking or own profile */}
-                {contact.instagram && (isOwnProfile || contactUnlocked) ? (
-                  <a href={`https://instagram.com/${contact.instagram.replace('@','')}`}
-                    target="_blank" rel="noreferrer"
-                    className={`flex items-center gap-2 text-xs transition-colors ${dark ? 'text-charcoal-400 hover:text-gold-400' : 'text-gray-500 hover:text-gold-500'}`}>
-                    <Instagram size={13} /> {contact.instagram}
-                  </a>
-                ) : contact.instagram ? (
-                  <button type="button" onClick={handleLockedContactClick}
-                    className={`flex items-center gap-2 text-xs italic text-left ${dark ? 'text-charcoal-500 hover:text-gold-400' : 'text-gray-400 hover:text-gold-600'}`}>
-                    <Instagram size={13} /> {user ? 'Available after booking' : 'Sign in to contact'}
-                  </button>
-                ) : null}
-              </div>
-            </div>
-
-            {/* Availability calendar */}
-            {isOwnProfile ? (
-              <AvailabilityEditor creatorId={creator.id} dark={dark} />
-            ) : (
-              <AvailabilityMini
-                creatorId={creator.id}
-                dark={dark}
-                selectedDate={quoteDate}
-                onSelectDate={(d) => { setQuoteDate(d); setShowQuote(true); }}
-              />
-            )}
-
-            {/* Quick stats */}
-            <div className={`${cardCls} p-5`}>
-              <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '2.2px', textTransform: 'uppercase' }}>Quick Stats</p>
-              <div className="space-y-2">
-                {[
-                  { label: 'Experience', value: expLabel },
-                  { label: 'Location', value: locationStr },
-                  { label: 'Pillar', value: displayedPrimaryPillar?.name || 'Production' },
-                  { label: 'Portfolio', value: `${portfolio.length} project${portfolio.length !== 1 ? 's' : ''}` },
-                  ...(creator.view_count ? [{ label: 'Profile Views', value: creator.view_count.toLocaleString() }] : []),
-                ].map(({ label, value }) => (
-                  <div key={label} className={`flex items-center justify-between rounded-2xl px-3 py-2 ${dark ? 'bg-white/[0.025]' : 'bg-gray-50'}`}>
-                    <span className={`text-xs ${textSub}`}>{label}</span>
-                    <span className={`text-xs font-medium ${dark ? 'text-white' : 'text-gray-900'}`}>{value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-
-      {/* Quote modal */}
-      {showQuote && <RequestQuoteModal creator={creator} dark={dark} initialDate={quoteDate} onClose={() => setShowQuote(false)} />}
-
-      {showContactGate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="cb-modal-backdrop" onClick={() => setShowContactGate(false)} />
-          <div className={`relative w-full max-w-md rounded-2xl border p-6 shadow-2xl ${dark ? 'bg-charcoal-950/95 border-gold-500/20' : 'bg-white border-gray-200'}`}>
-            <button type="button" onClick={() => setShowContactGate(false)}
-              className={`absolute right-4 top-4 p-1.5 rounded-lg transition-colors ${dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.05]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
-              <X size={16} />
+            <button onClick={onClose} className="w-9 h-9 rounded-full border border-[var(--border)] flex items-center justify-center hover:border-[var(--gold)] hover:text-[var(--gold)] transition-colors">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
-            <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '2.2px', textTransform: 'uppercase' }}>
-              Creator contact is protected
-            </p>
-            <h3 className={`font-display text-2xl font-bold mb-3 ${dark ? 'text-white' : 'text-gray-900'}`}>
-              {user ? 'Book through CreatorBridge to unlock direct contact.' : 'Create a free client account to contact creators.'}
-            </h3>
-            <p className={`text-sm leading-6 mb-5 ${textSub}`}>
-              {user
-                ? 'Direct contact details unlock after a paid retainer or completed booking path. Until then, keep communication and quote requests inside CreatorBridge.'
-                : 'Guests can review creator work, services, and availability. Messaging, quote requests, and direct contact details stay inside CreatorBridge until an account and booking path are in place.'}
-            </p>
-            {user ? (
-              <button type="button" onClick={handleQuoteClick}
-                className="w-full rounded-xl bg-gold-500 px-4 py-3 text-sm font-bold text-charcoal-900 hover:bg-gold-600 transition-colors">
-                Request a Quote
-              </button>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button type="button" onClick={() => openClientAuth('signup')}
-                  className="rounded-xl bg-gold-500 px-4 py-3 text-sm font-bold text-charcoal-900 hover:bg-gold-600 transition-colors">
-                  Create Free Account
-                </button>
-                <button type="button" onClick={() => openClientAuth('login')}
-                  className={`rounded-xl border px-4 py-3 text-sm font-bold transition-colors ${dark ? 'border-gold-500/25 text-charcoal-200 hover:text-white hover:border-gold-500/45' : 'border-gray-200 text-gray-700 hover:text-gray-900'}`}>
-                  Sign In
-                </button>
-              </div>
-            )}
           </div>
-        </div>
-      )}
 
+          {submitted ? (
+            <div className="text-center py-10">
+              <div className="w-16 h-16 rounded-full bg-[var(--gold-dim)] border border-[var(--gold)]/30 mx-auto mb-4 flex items-center justify-center">
+                <svg className="w-7 h-7 text-[var(--gold)]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <div className="text-xl serif mb-2">Reservation request sent</div>
+              <p className="text-sm text-[var(--text-secondary)] max-w-sm mx-auto mb-6">
+                Aria will reply within ~2 hrs to confirm shoot details. Your 50% retainer of <span className="text-[var(--gold)] font-semibold">{fmt(retainer)}</span> is on hold and will only be charged once both sides confirm.
+              </p>
+              <button onClick={onClose} className="btn-gold text-xs">Back to profile</button>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              <div className="liquid-glass rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--text-dim)] mb-0.5">Package</div>
+                  <div className="font-medium text-sm">{pkg.name} · {pkg.items[0]}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] text-[var(--text-dim)] uppercase tracking-wider">from</div>
+                  <div className="text-2xl serif gold-text leading-none">{fmt(pkg.price)}</div>
+                </div>
+              </div>
+
+              <Field label="Preferred shoot date">
+                <input type="date" value={date} onChange={e => setDate(e.target.value)}
+                  className="w-full bg-transparent border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--gold)] transition-colors"/>
+              </Field>
+
+              <Field label="Location / scope">
+                <input type="text" value={location} onChange={e => setLocation(e.target.value)}
+                  placeholder="City, neighborhood, or studio"
+                  className="w-full bg-transparent border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text)] placeholder:text-[var(--text-dim)] focus:outline-none focus:border-[var(--gold)] transition-colors"/>
+              </Field>
+
+              <Field label="Brief">
+                <textarea value={brief} onChange={e => setBrief(e.target.value)} rows={4}
+                  placeholder="What are we shooting? Mood, references, deliverables, deadlines…"
+                  className="w-full bg-transparent border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text)] placeholder:text-[var(--text-dim)] focus:outline-none focus:border-[var(--gold)] transition-colors resize-none"/>
+              </Field>
+
+              <div className="liquid-glass rounded-xl p-5 space-y-2.5">
+                <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--gold)] mb-1">Escrow split · 50 / 50</div>
+                <Row k={`${pkg.name} package`} v={fmt(subtotal)} />
+                <Row k="Client booking fee · 5%" v={fmt(fee)} tone="dim"/>
+                <div className="border-t border-[var(--border)] pt-2.5">
+                  <Row k="Total" v={fmt(total)} bold/>
+                </div>
+                <div className="border-t border-[var(--border)] pt-2.5 space-y-2.5">
+                  <Row k="Held now (50% retainer)" v={fmt(retainer)} tone="gold"/>
+                  <Row k="Released on delivery" v={fmt(remainder)} tone="gold"/>
+                </div>
+                <p className="text-[10px] text-[var(--text-dim)] pt-1 leading-relaxed">
+                  Funds sit in CreatorBridge escrow. Retainer releases to creator only when shoot is confirmed. Final balance releases on your approval of deliverables.
+                </p>
+              </div>
+
+              <button onClick={() => setSubmitted(true)} disabled={!date || !brief}
+                className="btn-gold w-full justify-center py-3 text-sm disabled:opacity-40 disabled:cursor-not-allowed">
+                Reserve · hold {fmt(retainer)}
+              </button>
+              <p className="text-[10px] text-[var(--text-dim)] text-center">You won't be charged until Aria accepts the booking.</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <label className="block">
+      <div className="text-[10px] tracking-[0.2em] uppercase text-[var(--text-dim)] mb-1.5">{label}</div>
+      {children}
+    </label>
+  );
+}
+
+function Row({ k, v, tone, bold }) {
+  return (
+    <div className="flex justify-between items-baseline text-xs">
+      <span className={tone === "dim" ? "text-[var(--text-dim)]" : "text-[var(--text)]/85"}>{k}</span>
+      <span className={
+        (tone === "gold" ? "text-[var(--gold)]" : "text-[var(--text)]") +
+        (bold ? " font-semibold text-sm" : "") +
+        " serif"
+      }>{v}</span>
+    </div>
+  );
+}
+
+function StickyBook({ selectedPkg, onBook, show }) {
+  const pkg = packages.find(p => p.id === selectedPkg) || packages[1];
+  if (!show) return null;
+  return (
+    <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[80] liquid-glass rounded-2xl px-5 py-3 flex items-center gap-5 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-lg overflow-hidden">
+          <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover"/>
+        </div>
+        <div>
+          <div className="text-[10px] text-[var(--text-dim)] leading-none mb-0.5">{pkg.name} package</div>
+          <div className="text-sm serif gold-text leading-none">{fmt(pkg.price)}</div>
+        </div>
+      </div>
+      <div className="h-8 w-px bg-[var(--border)]"></div>
+      <div className="text-[10px] text-[var(--text-dim)] hidden sm:block">
+        <div>50% held in escrow</div>
+        <div className="text-[var(--gold)]">{fmt(Math.round(pkg.price * 1.05 / 2))} due now</div>
+      </div>
+      <button onClick={onBook} className="btn-gold text-xs">Reserve</button>
+    </div>
+  );
+}
+
+// ---------- MAIN APP ----------
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "density": "regular",
+  "heroLayout": "split",
+  "packageStyle": "cards",
+  "accent": "subtle"
+}/*EDITMODE-END*/;
+
+function HandoffCreatorProfile() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [selectedPkg, setSelectedPkg] = useState("signature");
+  const [reelOpen, setReelOpen] = useState(false);
+  const [lightbox, setLightbox] = useState(null);
+  const [bookOpen, setBookOpen] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [showSticky, setShowSticky] = useState(false);
+
+  // Sticky book bar appears after hero scroll
+  useEffect(() => {
+    const onScroll = () => setShowSticky(window.scrollY > 600 && !bookOpen);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [bookOpen]);
+
+  // Density → padding scale
+  const padScale = t.density === "compact" ? "py-8 md:py-10" : t.density === "comfy" ? "py-16 md:py-24" : "py-12 md:py-16";
+
+  // Accent → animated gold body wash
+  useEffect(() => {
+    document.body.classList.toggle("accent-bold", t.accent === "bold");
+  }, [t.accent]);
+
+  const jumpToBook = () => setBookOpen(true);
+
+  return (
+    <>
+      <main className={"relative z-10 px-6 lg:px-16 pt-24 " + padScale}>
+        <div className="max-w-[1400px] mx-auto">
+          <Breadcrumb/>
+          <Hero onPlayReel={() => setReelOpen(true)} onJumpBook={jumpToBook}
+                layout={t.heroLayout} saved={saved} setSaved={setSaved}/>
+          <StatStrip/>
+          <About/>
+          <ServiceOffers/>
+          <Portfolio onOpen={setLightbox}/>
+          <Packages selected={selectedPkg} setSelected={setSelectedPkg}
+                    style={t.packageStyle} onBook={jumpToBook}/>
+          <Reviews/>
+        </div>
+      </main>
+
+      <StickyBook selectedPkg={selectedPkg} onBook={jumpToBook} show={showSticky}/>
+      <ReelModal open={reelOpen} onClose={() => setReelOpen(false)}/>
+      <LightboxModal item={lightbox} onClose={() => setLightbox(null)}/>
+      <BookingSheet open={bookOpen} onClose={() => setBookOpen(false)} selectedPkg={selectedPkg}/>
+
+      <TweaksPanel>
+        <TweakSection label="Layout"/>
+        <TweakRadio label="Density" value={t.density}
+          options={["compact", "regular", "comfy"]}
+          onChange={(v) => setTweak("density", v)}/>
+        <TweakRadio label="Hero" value={t.heroLayout}
+          options={["split", "banner"]}
+          onChange={(v) => setTweak("heroLayout", v)}/>
+        <TweakRadio label="Packages" value={t.packageStyle}
+          options={["cards", "table"]}
+          onChange={(v) => setTweak("packageStyle", v)}/>
+        <TweakSection label="Treatment"/>
+        <TweakRadio label="Accent" value={t.accent}
+          options={["subtle", "bold"]}
+          onChange={(v) => setTweak("accent", v)}/>
+      </TweaksPanel>
+    </>
+  );
+}
+
+export function CreatorProfilePage() {
+  return (
+    <>
+      <SEO title="Aria Visual Studio | CreatorBridge" description="Verified CreatorBridge photography profile with packages, portfolio, reviews, and booking details." />
+      <HandoffCreatorProfile />
+    </>
   );
 }

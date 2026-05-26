@@ -5,6 +5,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import App from './App.jsx';
 import { AuthProvider } from './contexts/AuthContext.jsx';
 import './index.css';
+import './styles/creatorbridge-handoff.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

@@ -27,6 +27,8 @@ import {
   saveLocalProjects,
   upsertLocalProject,
 } from '../utils/projectStorage.js';
+import { HandoffPage } from '../components/HandoffPage.jsx';
+import { handoffPages } from '../data/handoffPages.js';
 
 // ── localStorage helpers ────────────────────────────────────────
 function loadProjects() {
@@ -1361,6 +1363,8 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
 // Obsolete modal placeholder
 // ── Main Project Board ───────────────────────────────────────────
 export function ProjectBoard({ dark }) {
+  return <HandoffPage page={handoffPages.projectBoard} />;
+
   const { user } = useAuth();
   const navigate  = useNavigate();
 

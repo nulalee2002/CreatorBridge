@@ -11,6 +11,8 @@ import { TermsModal } from './components/TermsModal.jsx';
 import { PrivacyModal } from './components/PrivacyModal.jsx';
 import { captureReferralCode } from './components/ReferralSection.jsx';
 import { SupportChatbot } from './components/SupportChatbot.jsx';
+import { HandoffPage } from './components/HandoffPage.jsx';
+import { handoffPages } from './data/handoffPages.js';
 import { NotificationBell } from './components/NotificationBell.jsx';
 
 import { SERVICES, RATES, PACKAGE_TIERS } from './data/rates.js';
@@ -637,7 +639,7 @@ export default function App() {
           )}
 
           {/* Calculator tools (only when on calculator tab) */}
-          {activeTab === 'calculator' && (
+          {false && activeTab === 'calculator' && (
             <Suspense fallback={null}>
               <button type="button" onClick={() => setQuickMode(true)}
                 className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
@@ -785,12 +787,12 @@ export default function App() {
         <Route path="/join-as-creator" element={<LazyRoute dark={dark}><JoinAsCreator dark={dark} /></LazyRoute>} />
         <Route path="/privacy" element={<LazyRoute dark={dark}><TermsPage dark={dark} /></LazyRoute>} />
         <Route path="/reset-password" element={<LazyRoute dark={dark}><ResetPasswordPage dark={dark} /></LazyRoute>} />
-        <Route path="/calculator" element={null} />
+        <Route path="/calculator" element={<HandoffPage page={handoffPages.rateCalculator} />} />
       </Routes>
       </main>
 
       {/* ── Calculator (rendered outside Routes to preserve state) ── */}
-      {activeTab === 'calculator' && (
+      {false && activeTab === 'calculator' && (
       <Suspense fallback={<RouteLoading dark={dark} />}>
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-10 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6">
 
