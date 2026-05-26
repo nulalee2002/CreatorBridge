@@ -3,7 +3,7 @@ import { getNewCreatorSpotlight } from '../utils/matchingAlgorithm.js';
 import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Star, X, Plus, Trash2, ArrowRight, Filter, UserPlus, Heart, ExternalLink, BadgeCheck, AlertCircle } from 'lucide-react';
 import { SERVICES, RATES, MARKETPLACE_CATEGORIES, getMarketplaceServiceIds, serviceMatchesMarketplaceCategory } from '../data/rates.js';
-import { PILLARS, SUB_NICHES_BY_PILLAR, getSubNiche, MAX_SUB_NICHES } from '../data/taxonomy.js';
+import { PILLARS, SUB_NICHES_BY_PILLAR, getPillar, getSubNiche, LEGACY_SERVICE_TO_PILLAR, MAX_SUB_NICHES } from '../data/taxonomy.js';
 import { REGIONS } from '../data/regions.js';
 import { SEED_CREATORS, initSeedData, SHOW_DEMO_CREATORS } from '../data/seedCreators.js';
 import { zipToRegion, zipToCity } from '../data/zipCodes.js';
@@ -154,6 +154,10 @@ function CreatorCard({ creator, dark, onDelete, onViewProfile }) {
 
   const coverImage = getCreatorCoverImage(creator);
   const lowestRate = getLowestRate(creator);
+  const legacyServiceId = creator.services?.[0]?.serviceId || creator.services?.[0]?.service_id;
+  const displayedPillar = getPillar(creator.primary_pillar)
+    || getPillar(LEGACY_SERVICE_TO_PILLAR[legacyServiceId]?.pillar)
+    || getPillar('video_production');
   const specialtyTags = creator.sub_niches?.length
     ? creator.sub_niches.map(id => getSubNiche(id)?.label).filter(Boolean)
     : (creator.tags || []);
@@ -167,6 +171,13 @@ function CreatorCard({ creator, dark, onDelete, onViewProfile }) {
     >
       <div className="cover">
         <img src={coverImage} alt={creator.businessName || creator.name} loading="lazy" />
+
+        {displayedPillar && (
+          <span className="pillar-label">
+            <span className="dot" />
+            {displayedPillar.name}
+          </span>
+        )}
         
         {/* Tier Badges + Availability Overlay */}
         <div className="tier-chips">
@@ -244,7 +255,7 @@ function CreatorCard({ creator, dark, onDelete, onViewProfile }) {
         {specialtyTags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-4 mt-auto">
             {specialtyTags.slice(0, 3).map(tag => (
-              <span key={tag} className={`text-[9px] px-2 py-0.5 rounded-md font-medium tracking-wide ${dark ? 'bg-white/[0.04] text-charcoal-300' : 'bg-gray-100 text-gray-600'}`}>
+              <span key={tag} className="specialty-pill">
                 {tag}
               </span>
             ))}
@@ -1570,13 +1581,13 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 border-b border-white/[0.08] pb-8">
           <div>
             <p className="text-gold-400 mb-2 font-semibold" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
-              Curated Production Network
+              Browse the network · US-only
             </p>
             <h1 className="font-display text-4xl md:text-5xl font-bold text-white mb-2 leading-tight">
-              Find Verified Creators
+              Verified creators, sorted by what matters.
             </h1>
             <p className="text-sm text-charcoal-400 max-w-2xl">
-              Browse professional media production specialists, verify their real-time availability, and view standardized packages.
+              Filter by primary pillar — Video Production, Photography, or Post Production — then narrow by specialty. Every creator commits to one pillar and 1–3 specialties.
             </p>
           </div>
           
@@ -1615,7 +1626,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Search by creator name, business name, tags, or locations..."
+            placeholder="Search by name, studio, specialty, city..."
             className="w-full pl-12 pr-4 py-4 text-sm bg-transparent outline-none text-white placeholder-charcoal-500"
           />
           {searchQuery && (
@@ -1830,7 +1841,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                   No creators found
                 </p>
                 <p className="text-xs text-charcoal-400 mt-1 max-w-sm mx-auto">
-                  Try adjusting your search query, selecting "All Categories", or clearing the search filters.
+                  Try selecting another pillar, clearing the specialty filter, or widening your search.
                 </p>
                 <button
                   type="button"
@@ -1858,10 +1869,10 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                   Are you a content creator?
                 </p>
                 <h3 className="font-display text-xl font-bold text-white mb-1">
-                  List your professional services & set your rates
+                  Claim your primary pillar and set your rates
                 </h3>
                 <p className="text-xs text-charcoal-400 max-w-xl">
-                  CreatorBridge matches verified filmmakers, photographers, and podcast editors with serious corporate projects. Keep 90% of your earnings.
+                  CreatorBridge matches verified video production, photography, and post-production specialists with serious client projects. Keep 90% of your earnings.
                 </p>
               </div>
               <button
