@@ -1640,11 +1640,29 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
           </div>
         </div>
 
+        {/* Mobile-only Filters toggle. On phones the filter sidebar is long
+            and pushes creator cards far down the page. Collapse it by default
+            and let the user reveal it on demand. Desktop always shows the
+            sidebar via the lg:block override below. */}
+        <button
+          type="button"
+          onClick={() => setShowFilters(s => !s)}
+          className="lg:hidden mt-6 w-full flex items-center justify-between px-4 py-3 rounded-xl border border-white/[0.08] bg-charcoal-950/60 text-white text-xs font-semibold"
+        >
+          <span className="flex items-center gap-2">
+            <span className="text-gold-400">{showFilters ? '×' : '＋'}</span>
+            {showFilters ? 'Hide Filters' : 'Show Filters'}
+          </span>
+          <span className="text-[10px] uppercase tracking-wider text-charcoal-400">
+            {pillarFilter !== 'all' || subNicheFilter !== 'all' || tierFilter !== 'all' || budgetFilter !== 'all' || availFilter !== 'all' || zip ? 'Active' : ''}
+          </span>
+        </button>
+
         {/* Main Grid: Sidebar Filters + Creator Cards */}
-        <div className="mt-8 grid grid-cols-1 items-start gap-8 lg:grid-cols-[280px_1fr]">
-          
+        <div className="mt-4 lg:mt-8 grid grid-cols-1 items-start gap-8 lg:grid-cols-[280px_1fr]">
+
           {/* Left Column: Sticky Filters Sidebar */}
-          <aside className="liquid-glass space-y-5 rounded-2xl p-5 lg:sticky lg:top-24">
+          <aside className={`liquid-glass space-y-5 rounded-2xl p-5 lg:sticky lg:top-24 ${showFilters ? 'block' : 'hidden'} lg:block`}>
             <div className="mb-4 flex items-center justify-between">
               <div className="eyebrow">Filters</div>
               <button
