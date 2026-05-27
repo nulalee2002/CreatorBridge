@@ -1360,11 +1360,8 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
   );
 }
 
-// Obsolete modal placeholder
 // ── Main Project Board ───────────────────────────────────────────
 export function ProjectBoard({ dark }) {
-  return <HandoffPage page={handoffPages.projectBoard} />;
-
   const { user } = useAuth();
   const navigate  = useNavigate();
 
@@ -1374,6 +1371,20 @@ export function ProjectBoard({ dark }) {
   const [showPost, setShowPost]         = useState(false);
   const [applyTarget, setApplyTarget]   = useState(null);
   const [activeProjectId, setActiveProjectId] = useState(null);
+  const detailPaneRef = useRef(null);
+
+  // On mobile (under the lg breakpoint, 1024px), the detail panel sits below
+  // the brief list. Tapping a brief silently selects it, so the user thinks
+  // nothing happened. Smooth-scroll the panel into view so the selection is
+  // visible immediately.
+  function selectBrief(id) {
+    setActiveProjectId(id);
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      requestAnimationFrame(() => {
+        detailPaneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  }
 
   function handleStatusChange(projectId, newStatus, patch = {}) {
     const cleanPatch = { ...(patch || {}) };
@@ -1472,25 +1483,111 @@ export function ProjectBoard({ dark }) {
     return () => { cancelled = true; };
   }, [user]);
 
-  // Seed some demo projects if empty
+  // Seed demo projects if empty. The 10 below mirror the original prototype
+  // briefs so the live board feels populated from the first visit. Each uses
+  // the canonical 3-pillar taxonomy (primary_pillar) plus a specialty.
   useEffect(() => {
     const existing = loadProjects();
     if (existing.length === 0) {
       const demos = [
         {
           id: 'demo-1', title: 'Product Photography for E-Commerce Launch',
-          description: 'We\'re launching a new skincare line and need a professional photographer to shoot 30+ products with clean white backgrounds and lifestyle shots for our website and marketing materials.',
-          serviceId: 'photography', budgetMin: 800, budgetMax: 1500, deadline: '2026-05-01',
-          location: 'New York, NY', remote: false, skills: ['product photography', 'Adobe Lightroom', 'white background'],
+          description: 'We\'re launching a new skincare line and need a US-based product photographer to shoot 30+ items on clean white backgrounds plus 12 lifestyle composition frames.',
+          primary_pillar: 'photography', serviceId: 'photography', specialty: 'Product & Still Life',
+          budgetMin: 800, budgetMax: 1500, deadline: '2026-05-30',
+          location: 'New York, NY', remote: false,
+          skills: ['product photography', 'Adobe Lightroom', 'white background', 'skincare'],
           clientId: 'client-1', clientName: 'BeautyBrand Co', status: 'open', applications: 3,
           createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
         },
         {
-          id: 'demo-2', title: 'YouTube Channel Intro Video (30 sec)',
-          description: 'Looking for a motion graphics designer to create a punchy 30-second intro animation for a tech review YouTube channel. Should include logo animation, sound effects, and a modern aesthetic.',
-          serviceId: 'video', budgetMin: 300, budgetMax: 600, deadline: '2026-04-20',
-          location: '', remote: true, skills: ['After Effects', 'motion graphics', 'logo animation'],
+          id: 'demo-2', title: 'YouTube Channel Intro Animation (30 sec)',
+          description: 'Need a motion designer for a punchy 30-second intro animation for a tech review channel. Bold typography, kinetic energy, tech-forward.',
+          primary_pillar: 'post_production', serviceId: 'post_production', specialty: 'Motion Graphics & VFX',
+          budgetMin: 300, budgetMax: 600, deadline: '2026-06-12',
+          location: '', remote: true,
+          skills: ['After Effects', 'motion graphics', 'logo animation', 'kinetic type'],
           clientId: 'client-2', clientName: 'TechReviewPro', status: 'open', applications: 7,
+          createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+        },
+        {
+          id: 'demo-3', title: 'Monthly Social Video Package — Real Estate',
+          description: 'Boutique real estate agency needs a monthly social-first video package: 4 Reels, 8 Stories, captions and strategy. Looking for a long-term partner in LA.',
+          primary_pillar: 'video_production', serviceId: 'video_production', specialty: 'Short-Form & Social (Reels/TikTok/UGC)',
+          budgetMin: 1200, budgetMax: 2500, deadline: '2026-07-15',
+          location: 'Los Angeles, CA', remote: false,
+          skills: ['Instagram', 'Reels', 'real estate', 'monthly retainer'],
+          clientId: 'client-3', clientName: 'LuxRealty Group', status: 'open', applications: 12,
+          createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
+        },
+        {
+          id: 'demo-4', title: 'Weekly Podcast Audio Editing — Long-Term',
+          description: 'Established weekly business podcast (200+ episodes) seeking a reliable audio editor. ~45 min raw audio per week. Long-term preferred.',
+          primary_pillar: 'post_production', serviceId: 'post_production', specialty: 'Podcast Audio Editing',
+          budgetMin: 150, budgetMax: 300, deadline: '',
+          location: '', remote: true,
+          skills: ['Adobe Audition', 'podcast editing', 'Descript', 'long-term'],
+          clientId: 'client-4', clientName: 'The Business Pod', status: 'open', applications: 5,
+          createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+        },
+        {
+          id: 'demo-5', title: 'Aerial Video for Luxury Property Listings',
+          description: 'Need a Part 107 licensed drone operator for aerial footage of 4 waterfront properties. 4K footage + edited 30-second listing reels.',
+          primary_pillar: 'video_production', serviceId: 'video_production', specialty: 'Drone & Aerial Video',
+          budgetMin: 400, budgetMax: 800, deadline: '2026-06-05',
+          location: 'Miami, FL', remote: false,
+          skills: ['Part 107', 'DJI Mavic', 'real estate', '4K'],
+          clientId: 'client-5', clientName: 'Sunset Realty Miami', status: 'open', applications: 2,
+          createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+        },
+        {
+          id: 'demo-6', title: 'Conference Recap Video · Annual Summit',
+          description: 'Two-day tech conference (~2000 attendees) needs a recap video team: keynote captures, hallway b-roll, attendee interviews, 3-minute hype edit.',
+          primary_pillar: 'video_production', serviceId: 'video_production', specialty: 'Event & Conference Video',
+          budgetMin: 3000, budgetMax: 5000, deadline: '2026-07-01',
+          location: 'San Francisco, CA', remote: false,
+          skills: ['multi-cam', 'live event', 'interviews', 'social'],
+          clientId: 'client-6', clientName: 'Verge Conference', status: 'open', applications: 9,
+          createdAt: new Date(Date.now() - 86400000 * 6).toISOString(),
+        },
+        {
+          id: 'demo-7', title: 'Restaurant Menu Photography',
+          description: 'Modern Vietnamese restaurant launching new spring menu, need 24 hero dishes shot. Natural light preferred, moody-but-clean aesthetic.',
+          primary_pillar: 'photography', serviceId: 'photography', specialty: 'Food & Hospitality',
+          budgetMin: 600, budgetMax: 1200, deadline: '2026-06-20',
+          location: 'Chicago, IL', remote: false,
+          skills: ['food photography', 'natural light', 'restaurant', 'editorial'],
+          clientId: 'client-7', clientName: 'Saigon Sky', status: 'open', applications: 4,
+          createdAt: new Date(Date.now() - 86400000 * 4).toISOString(),
+        },
+        {
+          id: 'demo-8', title: 'Documentary Short for Nonprofit',
+          description: '12-minute documentary short profiling 3 program beneficiaries across NYC, Detroit, and Atlanta. Interviews + verite + supporting footage.',
+          primary_pillar: 'video_production', serviceId: 'video_production', specialty: 'Documentary & Interviews',
+          budgetMin: 4000, budgetMax: 8000, deadline: '2026-08-15',
+          location: 'Multi-city · NYC, Detroit, ATL', remote: false,
+          skills: ['documentary', 'interviews', 'verite', 'travel'],
+          clientId: 'client-8', clientName: 'Hope Foundation', status: 'shortlisting', applications: 11,
+          createdAt: new Date(Date.now() - 86400000 * 14).toISOString(),
+        },
+        {
+          id: 'demo-9', title: 'Editorial Headshots — Founder Series',
+          description: 'Magazine feature on 8 founders, editorial portraits, studio + on-location. Need a photographer with strong editorial sensibility.',
+          primary_pillar: 'photography', serviceId: 'photography', specialty: 'Editorial & Press',
+          budgetMin: 1500, budgetMax: 2500, deadline: '2026-06-28',
+          location: 'Brooklyn, NY', remote: false,
+          skills: ['editorial', 'portrait', 'magazine', 'founders'],
+          clientId: 'client-9', clientName: 'Stride Magazine', status: 'open', applications: 6,
+          createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+        },
+        {
+          id: 'demo-10', title: 'Brand Color Pass · Spring Campaign',
+          description: 'Color grading pass on a 90-second spring campaign film. Moody warm palette, two-pass workflow with editorial team.',
+          primary_pillar: 'post_production', serviceId: 'post_production', specialty: 'Color Grading',
+          budgetMin: 800, budgetMax: 1600, deadline: '2026-06-08',
+          location: '', remote: true,
+          skills: ['DaVinci Resolve', 'editorial', 'warm grade', 'campaign'],
+          clientId: 'client-10', clientName: 'Northgrade · Aesop', status: 'open', applications: 4,
           createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
         }
       ];
@@ -1708,10 +1805,10 @@ export function ProjectBoard({ dark }) {
                   : 'Budget TBD';
                 
                 return (
-                  <div 
+                  <div
                     key={p.id}
                     className={`brief-card ${activeProject?.id === p.id ? 'active' : ''}`}
-                    onClick={() => setActiveProjectId(p.id)}
+                    onClick={() => selectBrief(p.id)}
                   >
                     <div className="flex justify-between items-start gap-3 mb-2">
                       <div>
@@ -1751,7 +1848,7 @@ export function ProjectBoard({ dark }) {
               })}
             </div>
 
-            <aside className="detail-pane liquid-glass border border-white/[0.08] p-6 rounded-2xl shadow-xl">
+            <aside ref={detailPaneRef} className="detail-pane liquid-glass border border-white/[0.08] p-6 rounded-2xl shadow-xl scroll-mt-20">
               {activeProject ? (
                 <ProjectDetailPane
                   project={activeProject}
