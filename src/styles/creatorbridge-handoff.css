@@ -818,17 +818,12 @@ select.input { appearance:none; padding-right:2rem;
     min-width:max-content;
   }
 
+  /* Hero floating cards (Marketplace Pulse, Production Standards) lose
+     their anchor when the image grid stacks on mobile. Hide them here so
+     the mobile hero stays clean. They reappear at >=768px where the
+     image composition gives them somewhere natural to sit. */
   .float-card {
-    position:relative !important;
-    top:auto !important;
-    right:auto !important;
-    bottom:auto !important;
-    left:auto !important;
-    min-width:0 !important;
-    width:100%;
-    margin-top:0.7rem;
-    padding:0.65rem !important;
-    animation:none !important;
+    display:none !important;
   }
   .liquid-glass {
     backdrop-filter:blur(16px) saturate(1.25);
@@ -1012,14 +1007,12 @@ select.input { appearance:none; padding-right:2rem;
   .eyebrow {
     letter-spacing:0.15em;
   }
+  /* Buttons stay inline on mobile by default, matching the desktop hero
+     composition. Specific contexts (search input bar, forms) can still opt
+     into full-width through their own selectors. */
   .btn-gold,
   .btn-ghost {
-    width:100%;
     justify-content:center;
-  }
-  .nav-actions .btn-gold,
-  .nav-actions .btn-ghost {
-    width:auto;
   }
   .liquid-glass:has(#search-input) {
     display:grid !important;
