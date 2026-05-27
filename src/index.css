@@ -805,7 +805,29 @@ footer.site h4 {
 
 footer.site a,
 footer.site button {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 0.3rem 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: left;
   text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+footer.site a:hover,
+footer.site button:hover {
+  color: var(--gold);
+}
+
+footer.site .bottom-links a,
+footer.site .bottom-links button {
+  display: inline;
+  width: auto;
+  padding: 0;
 }
 
 footer.site .bottom {
