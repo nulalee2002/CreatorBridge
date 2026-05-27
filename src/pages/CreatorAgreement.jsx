@@ -83,8 +83,8 @@ export function CreatorAgreement({ dark }) {
 
             <Section id="introduction" title="1. Introduction & Scope" dark={dark}>
               <p>
-                This Creator Agreement ("Agreement") governs your status as a registered service provider on the CreatorBridge platform
-                ("Platform"). By submitting your application, creating a creator profile, or listing services, you enter into a legally
+                This Creator Agreement governs your status as a registered service provider on the CreatorBridge platform.
+                By submitting your application, creating a creator profile, or listing services, you enter into a legally
                 binding contract with CreatorBridge Inc.
               </p>
               <p>

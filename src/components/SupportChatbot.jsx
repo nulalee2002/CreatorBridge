@@ -500,18 +500,23 @@ function buildBookingRecords(bookingData, user, profile) {
 }
 
 function makeInitialMessages(draft) {
-  const welcome = {
+  const hello = {
     role: 'assistant',
-    content: "Hi — I'm <strong>Bridge</strong>, your concierge for verified US production talent.",
+    content: "Hi, I'm Bridge.",
+  };
+  const intro = {
+    role: 'assistant',
+    content: "I'm your concierge for verified US production talent.",
   };
   const prompts = {
     role: 'assistant',
     kind: 'welcome-prompts',
-    content: 'Tell me what you\'re producing and I\'ll route you to the right pillar — <span class="g">Video Production</span>, <span class="g">Photography</span>, or <span class="g">Post Production</span> — or help you post a brief.',
+    content: "Tell me what you're producing, and I'll route you to the right pillar (Video Production, Photography, or Post Production) or help you post a brief.",
   };
-  if (!draft) return [welcome, prompts];
+  if (!draft) return [hello, intro, prompts];
   return [
-    welcome,
+    hello,
+    intro,
     prompts,
     {
       role: 'assistant',

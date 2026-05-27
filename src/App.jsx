@@ -70,11 +70,23 @@ function LazyRoute({ dark, children }) {
   return <Suspense fallback={<RouteLoading dark={dark} />}>{children}</Suspense>;
 }
 
+// Long-form routes where a scroll-progress bar is genuinely useful.
+// Everywhere else the bar reads as a half-drawn border, so it stays hidden.
+const SCROLL_PROGRESS_ROUTES = [
+  '/creator-agreement',
+  '/terms',
+  '/terms-of-service',
+  '/dispute-policy',
+  '/privacy',
+];
+
 function CreatorBridgeChromeEffects() {
   const ringRef = useRef(null);
   const dotRef = useRef(null);
   const glowRef = useRef(null);
   const progressRef = useRef(null);
+  const location = useLocation();
+  const showProgress = SCROLL_PROGRESS_ROUTES.includes(location.pathname);
 
   useEffect(() => {
     const ring = ringRef.current;
@@ -180,11 +192,11 @@ function CreatorBridgeChromeEffects() {
       window.removeEventListener('scroll', handleScroll);
       document.body.classList.remove('mouse-active');
     };
-  }, []);
+  }, [location.pathname]);
 
   return (
     <>
-      <div className="scroll-progress" ref={progressRef} />
+      {showProgress && <div className="scroll-progress" ref={progressRef} />}
       <div className="cursor-ring" ref={ringRef} style={{ display: 'none' }} />
       <div className="cursor-dot" ref={dotRef} style={{ display: 'none' }} />
       <div className="mouse-glow" ref={glowRef} />
