@@ -486,8 +486,6 @@ function PostCard({ post, dark, isVerified, onLike, onReport, onReply }) {
 }
 
 export function NetworkingPage({ dark, user, profile }) {
-  return <HandoffPage page={handoffPages.creatorNetwork} />;
-
   const [selectedState, setSelectedState] = useState('CA');
   const [selectedChannel, setSelectedChannel] = useState('general');
   const [filterType, setFilterType] = useState('all');
