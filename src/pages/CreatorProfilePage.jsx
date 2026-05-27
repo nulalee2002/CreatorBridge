@@ -238,7 +238,7 @@ function HeroInfo({ onJumpBook, saved, setSaved }) {
 function StatStrip() {
   const stats = [
     { v: creator.rating.toFixed(1), l: "Star Rating", sub: `${creator.reviews} verified reviews` },
-    { v: creator.projects, l: "Projects Delivered", sub: `across ${creator.specialties.length} photography specialties` },
+    { v: creator.projects, l: "Projects Delivered", sub: `across ${creator.specialties.length} ${creator.pillar.label.toLowerCase()} specialties` },
     { v: creator.onTime + "%", l: "On-time Delivery", sub: "last 12 months" },
     { v: creator.repeat + "%", l: "Repeat Clients", sub: "book again within 90 days" }
   ];

@@ -213,6 +213,7 @@ function getSeedAvatar(id) {
 function getPostTypeLabel(type) {
   switch (type) {
     case 'looking_for_creator': return 'Gig Lead';
+    case 'general': return 'Gear swap';
     case 'collab': return 'Collab';
     case 'portfolio': return 'Referral';
     case 'industry_news': return 'Industry News';

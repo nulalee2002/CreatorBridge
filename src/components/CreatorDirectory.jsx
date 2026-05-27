@@ -650,7 +650,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
           <div>
             <p className={labelCls}>Tags (comma-separated)</p>
             <input type="text" value={form.tags} onChange={e => set('tags', e.target.value)}
-              placeholder="Corporate, Wedding, Drone, UGC, Real Estate"
+              placeholder="Brand Films, Wedding Photography, Drone & Aerial Video, Short-Form Editing, Real Estate"
               className={`w-full px-4 py-3 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
           </div>
         </div>
