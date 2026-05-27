@@ -308,6 +308,7 @@ Each step ships as one or two commits. Vercel auto-deploys. We watch for console
 - [ ] Creator Profile page renders with all sections (verification ledger, stats, packages, reviews)
 - [ ] No console errors on any page
 - [ ] All images load (no broken Unsplash URLs)
+- [ ] Image licensing audit complete: every public placeholder/work image has a known source, commercial-use license, and replacement note where needed
 - [ ] Mobile responsive on iPhone-class viewport
 - [ ] Mobile UI optimization pass: compact top nav with all primary pages visible, smaller icons/Bridge assistant, reduced background motion, tighter cards/chips, no squished hero/footer layouts
 
@@ -345,3 +346,4 @@ See chat for the paste-ready prompt. Once you have the updated Claude Design fil
 - 2026-05-24: Added section 4A (background and motion effects) based on Claude Design review feedback. Updated file change list and rollout sequence to match. Plan approved by Lee, ready to execute.
 - 2026-05-24: Phase 1 complete (migration applied, backfill ran, verify passed).
 - 2026-05-24: Phase 2 partial: registration Step 3 rewritten to pillar + sub-niche picker, Step 4 portfolio dropdown uses sub-niches, validation gates updated, Supabase insert writes primary_pillar + sub_niches, creator_services insert deprecated. CreatorProfilePage has compat shim. FULL Claude Design profile visual rebuild deferred to Phase 5 alongside marketing pages.
+- 2026-05-26: Mobile UI optimization added as a pre-image-swap priority. Image licensing audit remains a mandatory pre-launch item after final page polish locks the exact asset set.

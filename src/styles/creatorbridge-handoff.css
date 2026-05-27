@@ -514,6 +514,12 @@ select.input { appearance:none; padding-right:2rem;
    compact chrome, visible scrollable nav, smaller mascot, tighter cards,
    quieter motion, and no overlapping hero float cards. */
 @media(max-width: 767px) {
+  html {
+    scroll-padding-top:6.2rem;
+  }
+  body {
+    font-size:14px;
+  }
   body::before {
     background:
       radial-gradient(ellipse 40vmax 30vmax at 50% 18%, rgba(201,168,76,0.055) 0%, transparent 62%),
@@ -583,6 +589,12 @@ select.input { appearance:none; padding-right:2rem;
     bottom:0.22rem;
   }
 
+  .cb-handoff-page > main[style*="padding-top"] {
+    padding-top:5.7rem !important;
+  }
+  .cb-handoff-page > main[style*="padding-top"] > section:first-child {
+    padding-top:1.15rem !important;
+  }
   #cb-main-content main > section,
   #cb-main-content .cb-handoff-page main > section,
   #cb-main-content > div > main > section {
@@ -593,6 +605,12 @@ select.input { appearance:none; padding-right:2rem;
   #cb-main-content .cb-handoff-page main > section:first-child,
   #cb-main-content > div > main > section:first-child {
     padding-top:7rem !important;
+  }
+  #cb-main-content .cb-handoff-page main > section:first-child {
+    padding-top:1.15rem !important;
+  }
+  #cb-main-content main {
+    overflow-x:hidden;
   }
   #cb-main-content h1.serif {
     font-size:clamp(2.35rem, 12vw, 3.35rem) !important;
@@ -617,6 +635,15 @@ select.input { appearance:none; padding-right:2rem;
     padding:0.58rem 0.9rem;
     font-size:0.72rem;
   }
+  .btn-gold svg,
+  .btn-ghost svg {
+    width:0.88rem !important;
+    height:0.88rem !important;
+  }
+  .flex.flex-wrap.gap-3,
+  .flex.flex-col.sm\:flex-row.gap-3 {
+    gap:0.55rem !important;
+  }
 
   .brand-plate {
     font-size:1.02rem;
@@ -635,6 +662,112 @@ select.input { appearance:none; padding-right:2rem;
   }
   .marquee-track.reverse {
     animation-duration:62s;
+  }
+
+  .grid {
+    min-width:0;
+  }
+  .grid.lg\:grid-cols-12,
+  .grid.lg\:grid-cols-2,
+  .grid.md\:grid-cols-2,
+  .grid.md\:grid-cols-3,
+  .grid.xl\:grid-cols-3 {
+    gap:1rem !important;
+  }
+  .grid.md\:grid-cols-2,
+  .grid.md\:grid-cols-3,
+  #results-grid,
+  #brief-list,
+  #package-list,
+  #portfolio-grid {
+    grid-template-columns:1fr !important;
+  }
+  .lg\:col-span-3,
+  .lg\:col-span-4,
+  .lg\:col-span-5,
+  .lg\:col-span-7,
+  .lg\:col-span-8,
+  .lg\:col-span-9 {
+    min-width:0;
+  }
+  [class*="aspect-"] {
+    max-width:100%;
+  }
+  .rounded-2xl {
+    border-radius:14px !important;
+  }
+  .rounded-xl {
+    border-radius:12px !important;
+  }
+  .p-8,
+  .md\:p-8 {
+    padding:1rem !important;
+  }
+  .p-6 {
+    padding:0.95rem !important;
+  }
+  .p-5 {
+    padding:0.9rem !important;
+  }
+  .px-6 {
+    padding-left:1rem !important;
+    padding-right:1rem !important;
+  }
+  .py-24 {
+    padding-top:4rem !important;
+    padding-bottom:4rem !important;
+  }
+  .py-16 {
+    padding-top:3rem !important;
+    padding-bottom:3rem !important;
+  }
+  .pb-24 {
+    padding-bottom:4rem !important;
+  }
+  .mb-12 {
+    margin-bottom:2rem !important;
+  }
+  .mb-10 {
+    margin-bottom:1.5rem !important;
+  }
+
+  .liquid-glass:has(#search-input) {
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  #search-input {
+    min-width:0;
+    font-size:0.78rem !important;
+  }
+  #search-input + .btn-gold {
+    min-height:34px;
+    padding:0.45rem 0.75rem !important;
+  }
+  #sort-select {
+    max-width:130px;
+    font-size:0.7rem !important;
+  }
+  aside .liquid-glass {
+    position:relative !important;
+    top:auto !important;
+  }
+  aside [data-filter-group],
+  #pillar-rail {
+    flex-direction:row !important;
+    gap:0.38rem !important;
+    overflow-x:auto;
+    padding-bottom:0.25rem;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+  }
+  aside [data-filter-group]::-webkit-scrollbar,
+  #pillar-rail::-webkit-scrollbar {
+    display:none;
+  }
+  aside .filter-chip,
+  #pillar-rail .filter-chip {
+    flex:0 0 auto;
+    min-width:max-content;
   }
 
   .float-card {
@@ -675,6 +808,19 @@ select.input { appearance:none; padding-right:2rem;
   .pillar-cover {
     min-height:150px;
   }
+  .lane-card {
+    min-height:0;
+  }
+  .lane-card.aspect-\[3\/4\],
+  .aspect-\[3\/4\] {
+    aspect-ratio:4 / 3 !important;
+  }
+  .aspect-video {
+    aspect-ratio:16 / 10 !important;
+  }
+  img {
+    max-width:100%;
+  }
   .pillar-num {
     font-size:2.4rem !important;
   }
@@ -696,7 +842,11 @@ select.input { appearance:none; padding-right:2rem;
   .filter-chip,
   .filter-pill,
   .spec-pick,
-  .seg-btn {
+  .seg-btn,
+  .lane-pick,
+  .pillar-pick,
+  .chat-channel,
+  .state-tile {
     min-height:34px;
     padding:0.45rem 0.62rem !important;
     font-size:0.68rem !important;
@@ -705,6 +855,41 @@ select.input { appearance:none; padding-right:2rem;
     min-width:auto;
     margin-right:0.35rem;
     font-size:8px;
+  }
+
+  .creator-card,
+  .brief-card,
+  .post-card,
+  .state-tile,
+  .chat-msg {
+    min-width:0;
+  }
+  .creator-card .avatar,
+  .post-avatar,
+  .av {
+    flex-shrink:0;
+  }
+  .creator-pillar-mini,
+  .post-meta,
+  .chat-msg {
+    overflow-wrap:anywhere;
+  }
+  .state-grid,
+  #state-grid {
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+    gap:0.55rem !important;
+  }
+  .state-tile .abbr {
+    font-size:1.2rem !important;
+  }
+  .post-card {
+    padding:0.9rem !important;
+  }
+  #chat-stream {
+    max-height:280px;
+  }
+  .chat-channel {
+    white-space:nowrap;
   }
 
   table {
@@ -727,6 +912,56 @@ select.input { appearance:none; padding-right:2rem;
   footer.site .bottom-links {
     width:100%;
     gap:1rem;
+  }
+}
+
+@media(max-width: 430px) {
+  .nav {
+    padding-left:0.7rem;
+    padding-right:0.7rem;
+  }
+  .logo-img {
+    height:28px;
+  }
+  .nav-actions .btn-gold,
+  .nav-actions .btn-ghost {
+    padding:0.42rem 0.65rem;
+    font-size:0.64rem;
+  }
+  .nav-link {
+    min-height:30px;
+    padding:0.38rem 0.54rem;
+    font-size:0.6rem;
+  }
+  #cb-main-content h1.serif {
+    font-size:clamp(2.1rem, 11vw, 2.8rem) !important;
+  }
+  #cb-main-content h2.serif {
+    font-size:clamp(1.55rem, 8vw, 2.1rem) !important;
+  }
+  .eyebrow {
+    letter-spacing:0.15em;
+  }
+  .btn-gold,
+  .btn-ghost {
+    width:100%;
+    justify-content:center;
+  }
+  .nav-actions .btn-gold,
+  .nav-actions .btn-ghost {
+    width:auto;
+  }
+  .liquid-glass:has(#search-input) {
+    display:grid !important;
+    grid-template-columns:auto minmax(0, 1fr);
+  }
+  .liquid-glass:has(#search-input) .btn-gold {
+    grid-column:1 / -1;
+    width:100%;
+  }
+  .state-grid,
+  #state-grid {
+    grid-template-columns:1fr !important;
   }
 }
 
