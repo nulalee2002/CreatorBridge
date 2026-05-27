@@ -1566,10 +1566,6 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
   }
 
   // ── Search mode (default) ──
-  if (mode === 'search') {
-    return <HandoffPage page={handoffPages.findCreators} />;
-  }
-
   return (
     <div className="w-full">
       <div className="cb-home-wide mx-auto w-full px-5 sm:px-8 lg:px-14 2xl:px-16 py-10 md:py-14">

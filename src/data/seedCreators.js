@@ -9,7 +9,7 @@ export const SHOW_DEMO_CREATORS = true;
 // and forces a full re-write when the version is out of date.
 // This is what guarantees the profile-page "Creator not found" bug
 // cannot happen from stale localStorage.
-const SEED_VERSION = 8;
+const SEED_VERSION = 9;
 
 // ── Three demo creators: filmmaker, photographer, podcast producer ─
 export const SEED_CREATORS = [
@@ -434,6 +434,196 @@ export const SEED_CREATORS = [
         revisions: 3,
       },
     ],
+  },
+
+  // ── 4. David Park — Video Production, LA ───────────────────────
+  {
+    id: 'seed-4', user_id: null,
+    name: 'David Park', businessName: 'LensCraft Studios',
+    avatar: '/images/creatorbridge/handoff/photo-1438761681033-6461ffad8d80.png',
+    cover: '/images/creatorbridge/handoff/photo-1485846234645-a62644f84728.png',
+    primary_pillar: 'video_production',
+    sub_niches: ['vp_brand_films', 'vp_music_video', 'vp_corporate_video'],
+    bio: 'Cinematic brand films. RED-certified cinematography with a small crew.',
+    experience: 'mid', yearsExperience: 5,
+    availability: 'within_2_weeks',
+    verified: true, verification_status: 'verified',
+    tier: 'elite',
+    rating: 5.0, reviewCount: 31, plan: 'pro',
+    tags: ['Brand Films & Commercials', 'Music Videos', 'Corporate & Internal Video'],
+    location: { city: 'Los Angeles', state: 'CA', country: 'US', regionKey: 'us-tier1' },
+    services: [{ serviceId: 'video', rates: { fullDay: 2500 } }],
+  },
+
+  // ── 5. Mateo Reyes — Drone & Aerial Video, Austin ──────────────
+  {
+    id: 'seed-5', user_id: null,
+    name: 'Mateo Reyes', businessName: 'Skyframe Aerial',
+    avatar: '/images/creatorbridge/handoff/photo-1500648767791-00dcc994a43e.png',
+    cover: '/images/creatorbridge/handoff/photo-1506947411487-a56738267384.png',
+    primary_pillar: 'video_production',
+    sub_niches: ['vp_drone_video', 'vp_real_estate_video'],
+    bio: 'Part 107 certified. Aerial cinematography for real estate, hospitality, brand.',
+    experience: 'mid', yearsExperience: 4,
+    availability: 'available',
+    verified: true, verification_status: 'verified',
+    tier: 'verified',
+    rating: 4.7, reviewCount: 22, plan: 'pro',
+    tags: ['Drone & Aerial Video', 'Real Estate Video'],
+    location: { city: 'Austin', state: 'TX', country: 'US', regionKey: 'us-tier2' },
+    services: [{ serviceId: 'video', rates: { fullDay: 650 } }],
+  },
+
+  // ── 6. Maya Chen — Short-form Social, Chicago ──────────────────
+  {
+    id: 'seed-6', user_id: null,
+    name: 'Maya Chen', businessName: 'Bondi Studio',
+    avatar: '/images/creatorbridge/handoff/photo-1573497019940-1c28c88b4f3e.png',
+    cover: '/images/creatorbridge/handoff/photo-1516035069371-29a1b244cc32.png',
+    primary_pillar: 'video_production',
+    sub_niches: ['vp_short_form', 'vp_brand_films'],
+    bio: 'Monthly social-first video for boutique brands. Reels, UGC, short-form ads.',
+    experience: 'mid', yearsExperience: 6,
+    availability: 'within_2_weeks',
+    verified: true, verification_status: 'verified',
+    tier: 'verified',
+    rating: 4.8, reviewCount: 48, plan: 'pro',
+    tags: ['Short-Form & Social (Reels/TikTok/UGC)', 'Brand Films & Commercials'],
+    location: { city: 'Chicago', state: 'IL', country: 'US', regionKey: 'us-tier2' },
+    services: [{ serviceId: 'video', rates: { fullDay: 1200 } }],
+  },
+
+  // ── 7. Aaron Wei — Color Grading, Seattle ──────────────────────
+  {
+    id: 'seed-7', user_id: null,
+    name: 'Aaron Wei', businessName: 'Northgrade Color',
+    avatar: '/images/creatorbridge/handoff/photo-1463453091185-61582044d556.png',
+    cover: '/images/creatorbridge/handoff/photo-1574717024653-61fd2cf4d44d.png',
+    primary_pillar: 'post_production',
+    sub_niches: ['pp_color_grading', 'pp_video_editing_long'],
+    bio: 'DaVinci-certified colorist. Editorial commercials and music videos.',
+    experience: 'senior', yearsExperience: 8,
+    availability: 'within_4_weeks',
+    verified: true, verification_status: 'verified',
+    tier: 'elite',
+    rating: 4.9, reviewCount: 41, plan: 'pro',
+    tags: ['Color Grading', 'Video Editing (Long-Form)'],
+    location: { city: 'Seattle', state: 'WA', country: 'US', regionKey: 'us-tier2' },
+    services: [{ serviceId: 'post-production', rates: { editHourly: 95, fullDay: 400 } }],
+  },
+
+  // ── 8. Naomi Greene — Brand films, Brooklyn ────────────────────
+  {
+    id: 'seed-8', user_id: null,
+    name: 'Naomi Greene', businessName: 'Greene Street Films',
+    avatar: '/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.png',
+    cover: '/images/creatorbridge/handoff/photo-1492691527719-9d1e07e534b4.png',
+    primary_pillar: 'video_production',
+    sub_niches: ['vp_brand_films', 'vp_documentary', 'vp_event_video'],
+    bio: 'Narrative-driven brand films. Past clients: Equinox, Aesop, Tribeca Film Fest.',
+    experience: 'senior', yearsExperience: 9,
+    availability: 'within_4_weeks',
+    verified: true, verification_status: 'pro_verified',
+    tier: 'elite',
+    rating: 4.9, reviewCount: 28, plan: 'pro',
+    tags: ['Brand Films & Commercials', 'Documentary & Interviews', 'Event & Conference Video'],
+    location: { city: 'Brooklyn', state: 'NY', country: 'US', regionKey: 'us-tier1' },
+    services: [{ serviceId: 'video', rates: { fullDay: 3500 } }],
+  },
+
+  // ── 9. Iris Patel — Hospitality photography, Phoenix ───────────
+  {
+    id: 'seed-9', user_id: null,
+    name: 'Iris Patel', businessName: 'Studio Mojave',
+    avatar: '/images/creatorbridge/handoff/photo-1544005313-94ddf0286df2.png',
+    cover: '/images/creatorbridge/handoff/photo-1502672260266-1c1ef2d93688.png',
+    primary_pillar: 'photography',
+    sub_niches: ['ph_food_hospitality', 'ph_real_estate', 'ph_lifestyle_fashion'],
+    bio: 'Hospitality + interiors photography. Hotels, restaurants, resorts.',
+    experience: 'mid', yearsExperience: 5,
+    availability: 'available',
+    verified: true, verification_status: 'verified',
+    tier: 'proven',
+    rating: 4.6, reviewCount: 19, plan: 'pro',
+    tags: ['Food & Hospitality', 'Real Estate Photography', 'Lifestyle & Fashion'],
+    location: { city: 'Phoenix', state: 'AZ', country: 'US', regionKey: 'us-tier3' },
+    services: [{ serviceId: 'photography', rates: { fullDay: 750 } }],
+  },
+
+  // ── 10. Dre Williams — Event coverage, Atlanta ─────────────────
+  {
+    id: 'seed-10', user_id: null,
+    name: 'Dre Williams', businessName: 'Cumulus Events Co',
+    avatar: '/images/creatorbridge/handoff/photo-1607746882042-944635dfe10e.png',
+    cover: '/images/creatorbridge/handoff/photo-1540575467063-178a50c2df87.png',
+    primary_pillar: 'video_production',
+    sub_niches: ['vp_event_video', 'vp_short_form'],
+    bio: 'Conference and corporate event coverage. Same-day social cutdowns.',
+    experience: 'mid', yearsExperience: 6,
+    availability: 'within_2_weeks',
+    verified: true, verification_status: 'verified',
+    tier: 'verified',
+    rating: 4.8, reviewCount: 36, plan: 'pro',
+    tags: ['Event & Conference Video', 'Short-Form & Social (Reels/TikTok/UGC)'],
+    location: { city: 'Atlanta', state: 'GA', country: 'US', regionKey: 'us-tier2' },
+    services: [{ serviceId: 'video', rates: { fullDay: 900 } }],
+  },
+
+  // ── 11. Sofia Pellizzari — Editorial fashion, Boston ───────────
+  {
+    id: 'seed-11', user_id: null,
+    name: 'Sofia Pellizzari', businessName: 'Pellizzari Editorial',
+    avatar: '/images/creatorbridge/handoff/photo-1487412720507-e7ab37603c6f.png',
+    cover: '/images/creatorbridge/handoff/photo-1496217590455-aa63a8350eea.png',
+    primary_pillar: 'photography',
+    sub_niches: ['ph_editorial', 'ph_lifestyle_fashion', 'ph_headshots'],
+    bio: 'Editorial fashion + portrait. Featured in Harper\'s, Vogue Italia.',
+    experience: 'senior', yearsExperience: 8,
+    availability: 'available',
+    verified: true, verification_status: 'pro_verified',
+    tier: 'elite',
+    rating: 4.9, reviewCount: 52, plan: 'pro',
+    tags: ['Editorial & Press', 'Lifestyle & Fashion', 'Headshots & Portraits'],
+    location: { city: 'Boston', state: 'MA', country: 'US', regionKey: 'us-tier2' },
+    services: [{ serviceId: 'photography', rates: { fullDay: 1100 } }],
+  },
+
+  // ── 12. Marcus Bell — Motion + edit, Portland ──────────────────
+  {
+    id: 'seed-12', user_id: null,
+    name: 'Marcus Bell', businessName: 'Crosscut Edit Room',
+    avatar: '/images/creatorbridge/handoff/photo-1633332755192-727a05c4013d.png',
+    cover: '/images/creatorbridge/handoff/photo-1633419461186-7d40a38105ec.png',
+    primary_pillar: 'post_production',
+    sub_niches: ['pp_motion_vfx', 'pp_short_form_edit', 'pp_video_editing_long'],
+    bio: 'Motion + edit suite. After Effects, kinetic typography, brand-channel cutdowns.',
+    experience: 'mid', yearsExperience: 6,
+    availability: 'available',
+    verified: true, verification_status: 'verified',
+    tier: 'proven',
+    rating: 4.7, reviewCount: 33, plan: 'pro',
+    tags: ['Motion Graphics & VFX', 'Short-Form Editing', 'Video Editing (Long-Form)'],
+    location: { city: 'Portland', state: 'OR', country: 'US', regionKey: 'us-tier2' },
+    services: [{ serviceId: 'post-production', rates: { editHourly: 115, fullDay: 550 } }],
+  },
+
+  // ── 13. Reese Sterling — Product photography, Denver ───────────
+  {
+    id: 'seed-13', user_id: null,
+    name: 'Reese Sterling', businessName: 'Sterling Product Studio',
+    avatar: '/images/creatorbridge/handoff/photo-1502823403499-6ccfcf4fb453.png',
+    cover: '/images/creatorbridge/handoff/photo-1556228720-195a672e8a03.png',
+    primary_pillar: 'photography',
+    sub_niches: ['ph_product', 'ph_brand_commercial'],
+    bio: 'Tabletop + product photography for DTC brands. Clean white + lifestyle composition.',
+    experience: 'mid', yearsExperience: 6,
+    availability: 'available',
+    verified: true, verification_status: 'verified',
+    tier: 'proven',
+    rating: 4.8, reviewCount: 27, plan: 'pro',
+    tags: ['Product & Still Life', 'Brand & Commercial Photography'],
+    location: { city: 'Denver', state: 'CO', country: 'US', regionKey: 'us-tier2' },
+    services: [{ serviceId: 'photography', rates: { fullDay: 950 } }],
   },
 ];
 
