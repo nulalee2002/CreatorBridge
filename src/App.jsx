@@ -430,6 +430,11 @@ export default function App() {
   const navigate  = useNavigate();
   const location  = useLocation();
 
+  useEffect(() => {
+    if (location.hash) return;
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [location.pathname, location.hash]);
+
   const [state, dispatch] = useReducer(reducer, DEFAULT_STATE, (init) => {
     try {
       const saved = JSON.parse(localStorage.getItem('creator-calc-state') || 'null');
