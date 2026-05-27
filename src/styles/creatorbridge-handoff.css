@@ -514,11 +514,15 @@ select.input { appearance:none; padding-right:2rem;
    compact chrome, visible scrollable nav, smaller mascot, tighter cards,
    quieter motion, and no overlapping hero float cards. */
 @media(max-width: 767px) {
+  :root {
+    --text-secondary:#c5c5cc;
+    --text-dim:#85858d;
+  }
   html {
-    scroll-padding-top:6.2rem;
+    scroll-padding-top:5.25rem;
   }
   body {
-    font-size:14px;
+    font-size:12.5px;
   }
   body::before {
     background:
@@ -541,14 +545,14 @@ select.input { appearance:none; padding-right:2rem;
   }
 
   .nav {
-    padding:0.5rem 0.9rem 0.55rem;
+    padding:0.42rem 0.65rem 0.46rem;
   }
   .nav-inner {
     flex-wrap:wrap;
-    gap:0.45rem 0.65rem;
+    gap:0.35rem 0.45rem;
   }
   .logo-img {
-    height:30px;
+    height:24px;
   }
   .nav-actions {
     margin-left:auto;
@@ -556,10 +560,10 @@ select.input { appearance:none; padding-right:2rem;
   }
   .nav-actions .btn-gold,
   .nav-actions .btn-ghost {
-    min-height:34px;
-    padding:0.45rem 0.8rem;
-    font-size:0.68rem;
-    border-radius:7px;
+    min-height:30px;
+    padding:0.34rem 0.6rem;
+    font-size:0.58rem;
+    border-radius:6px;
   }
   .nav-links {
     order:3;
@@ -576,24 +580,24 @@ select.input { appearance:none; padding-right:2rem;
   .nav-links::-webkit-scrollbar { display:none; }
   .nav-link {
     flex:0 0 auto;
-    min-height:32px;
-    padding:0.42rem 0.62rem;
-    font-size:0.64rem;
+    min-height:28px;
+    padding:0.32rem 0.48rem;
+    font-size:0.55rem;
     letter-spacing:0.02em;
     border:1px solid rgba(255,255,255,0.045);
     background:rgba(255,255,255,0.025);
   }
   .nav-link::after {
-    left:0.62rem;
-    right:0.62rem;
+    left:0.48rem;
+    right:0.48rem;
     bottom:0.22rem;
   }
 
   .cb-handoff-page > main[style*="padding-top"] {
-    padding-top:5.7rem !important;
+    padding-top:4.75rem !important;
   }
   .cb-handoff-page > main[style*="padding-top"] > section:first-child {
-    padding-top:1.15rem !important;
+    padding-top:0.7rem !important;
   }
   #cb-main-content main > section,
   #cb-main-content .cb-handoff-page main > section,
@@ -604,41 +608,85 @@ select.input { appearance:none; padding-right:2rem;
   #cb-main-content main > section:first-child,
   #cb-main-content .cb-handoff-page main > section:first-child,
   #cb-main-content > div > main > section:first-child {
-    padding-top:7rem !important;
+    padding-top:5.4rem !important;
   }
   #cb-main-content .cb-handoff-page main > section:first-child {
-    padding-top:1.15rem !important;
+    padding-top:0.7rem !important;
   }
   #cb-main-content main {
     overflow-x:hidden;
   }
   #cb-main-content h1.serif {
-    font-size:clamp(2.35rem, 12vw, 3.35rem) !important;
+    font-size:clamp(1.85rem, 9vw, 2.55rem) !important;
     line-height:1.02 !important;
     letter-spacing:0 !important;
   }
   #cb-main-content h2.serif {
-    font-size:clamp(1.8rem, 8vw, 2.45rem) !important;
+    font-size:clamp(1.35rem, 6.8vw, 1.9rem) !important;
     line-height:1.08 !important;
     letter-spacing:0 !important;
   }
   #cb-main-content h3.serif {
-    font-size:clamp(1.25rem, 6vw, 1.65rem) !important;
+    font-size:clamp(1.05rem, 5vw, 1.35rem) !important;
+  }
+  #cb-main-content .text-7xl,
+  #cb-main-content .text-6xl,
+  #cb-main-content .text-5xl,
+  #cb-main-content .xl\:text-\[5\.5rem\] {
+    font-size:2.25rem !important;
+    line-height:1.04 !important;
+  }
+  #cb-main-content .text-4xl {
+    font-size:1.75rem !important;
+    line-height:1.08 !important;
+  }
+  #cb-main-content .text-3xl {
+    font-size:1.35rem !important;
+    line-height:1.12 !important;
+  }
+  #cb-main-content .text-2xl {
+    font-size:1.12rem !important;
+    line-height:1.18 !important;
+  }
+  #cb-main-content .text-xl {
+    font-size:1rem !important;
+    line-height:1.25 !important;
+  }
+  #cb-main-content .text-lg {
+    font-size:0.9rem !important;
+    line-height:1.45 !important;
+  }
+  #cb-main-content .text-sm {
+    font-size:0.72rem !important;
+    line-height:1.45 !important;
+  }
+  #cb-main-content .text-xs {
+    font-size:0.64rem !important;
+    line-height:1.4 !important;
+  }
+  #cb-main-content .text-\[11px\] {
+    font-size:9px !important;
+  }
+  #cb-main-content .text-\[10px\] {
+    font-size:8.5px !important;
+  }
+  #cb-main-content .text-\[9px\] {
+    font-size:8px !important;
   }
   .eyebrow {
-    font-size:8.5px;
-    letter-spacing:0.18em;
+    font-size:7.5px;
+    letter-spacing:0.15em;
   }
   .btn-gold,
   .btn-ghost {
-    min-height:38px;
-    padding:0.58rem 0.9rem;
-    font-size:0.72rem;
+    min-height:32px;
+    padding:0.42rem 0.7rem;
+    font-size:0.64rem;
   }
   .btn-gold svg,
   .btn-ghost svg {
-    width:0.88rem !important;
-    height:0.88rem !important;
+    width:0.76rem !important;
+    height:0.76rem !important;
   }
   .flex.flex-wrap.gap-3,
   .flex.flex-col.sm\:flex-row.gap-3 {
@@ -646,16 +694,16 @@ select.input { appearance:none; padding-right:2rem;
   }
 
   .brand-plate {
-    font-size:1.02rem;
-    padding:0.45rem 0.9rem;
+    font-size:0.86rem;
+    padding:0.36rem 0.72rem;
   }
   .ticker-pill {
-    font-size:0.64rem;
-    padding:0.36rem 0.7rem;
+    font-size:0.56rem;
+    padding:0.28rem 0.55rem;
     margin:0 0.25rem;
   }
   .ticker-pill strong {
-    font-size:0.74rem;
+    font-size:0.64rem;
   }
   .marquee-track {
     animation-duration:55s;
@@ -701,34 +749,34 @@ select.input { appearance:none; padding-right:2rem;
   }
   .p-8,
   .md\:p-8 {
-    padding:1rem !important;
+    padding:0.75rem !important;
   }
   .p-6 {
-    padding:0.95rem !important;
+    padding:0.72rem !important;
   }
   .p-5 {
-    padding:0.9rem !important;
+    padding:0.68rem !important;
   }
   .px-6 {
-    padding-left:1rem !important;
-    padding-right:1rem !important;
+    padding-left:0.75rem !important;
+    padding-right:0.75rem !important;
   }
   .py-24 {
-    padding-top:4rem !important;
-    padding-bottom:4rem !important;
+    padding-top:2.8rem !important;
+    padding-bottom:2.8rem !important;
   }
   .py-16 {
-    padding-top:3rem !important;
-    padding-bottom:3rem !important;
+    padding-top:2.1rem !important;
+    padding-bottom:2.1rem !important;
   }
   .pb-24 {
-    padding-bottom:4rem !important;
+    padding-bottom:3rem !important;
   }
   .mb-12 {
-    margin-bottom:2rem !important;
+    margin-bottom:1.25rem !important;
   }
   .mb-10 {
-    margin-bottom:1.5rem !important;
+    margin-bottom:1rem !important;
   }
 
   .liquid-glass:has(#search-input) {
@@ -737,15 +785,15 @@ select.input { appearance:none; padding-right:2rem;
   }
   #search-input {
     min-width:0;
-    font-size:0.78rem !important;
+    font-size:0.68rem !important;
   }
   #search-input + .btn-gold {
-    min-height:34px;
-    padding:0.45rem 0.75rem !important;
+    min-height:30px;
+    padding:0.36rem 0.6rem !important;
   }
   #sort-select {
     max-width:130px;
-    font-size:0.7rem !important;
+    font-size:0.62rem !important;
   }
   aside .liquid-glass {
     position:relative !important;
@@ -779,7 +827,7 @@ select.input { appearance:none; padding-right:2rem;
     min-width:0 !important;
     width:100%;
     margin-top:0.7rem;
-    padding:0.85rem !important;
+    padding:0.65rem !important;
     animation:none !important;
   }
   .liquid-glass {
@@ -798,31 +846,31 @@ select.input { appearance:none; padding-right:2rem;
   .brief-card,
   .lane-card,
   .service-offer-card {
-    border-radius:12px !important;
+    border-radius:10px !important;
   }
   .pillar-body,
   .creator-card .body,
   .lane-content {
-    padding:0.85rem !important;
+    padding:0.62rem !important;
   }
   .pillar-cover {
-    min-height:150px;
+    min-height:105px;
   }
   .lane-card {
     min-height:0;
   }
   .lane-card.aspect-\[3\/4\],
   .aspect-\[3\/4\] {
-    aspect-ratio:4 / 3 !important;
+    aspect-ratio:5 / 3 !important;
   }
   .aspect-video {
-    aspect-ratio:16 / 10 !important;
+    aspect-ratio:16 / 9 !important;
   }
   img {
     max-width:100%;
   }
   .pillar-num {
-    font-size:2.4rem !important;
+    font-size:1.65rem !important;
   }
   .pillar-chips,
   .tier-chips {
@@ -835,9 +883,9 @@ select.input { appearance:none; padding-right:2rem;
   .tag-gold,
   .tag-green,
   .tag-plain {
-    font-size:0.58rem;
+    font-size:0.5rem;
     line-height:1.25;
-    padding:0.22rem 0.48rem;
+    padding:0.16rem 0.36rem;
   }
   .filter-chip,
   .filter-pill,
@@ -847,9 +895,9 @@ select.input { appearance:none; padding-right:2rem;
   .pillar-pick,
   .chat-channel,
   .state-tile {
-    min-height:34px;
-    padding:0.45rem 0.62rem !important;
-    font-size:0.68rem !important;
+    min-height:28px;
+    padding:0.32rem 0.48rem !important;
+    font-size:0.58rem !important;
   }
   .filter-chip .pkey {
     min-width:auto;
@@ -877,13 +925,34 @@ select.input { appearance:none; padding-right:2rem;
   .state-grid,
   #state-grid {
     grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
-    gap:0.55rem !important;
+    gap:0.45rem !important;
   }
   .state-tile .abbr {
-    font-size:1.2rem !important;
+    font-size:0.98rem !important;
   }
   .post-card {
-    padding:0.9rem !important;
+    padding:0.72rem !important;
+  }
+  .brief-card {
+    padding:0.75rem !important;
+  }
+  .brief-card svg,
+  .post-card svg,
+  .state-tile svg {
+    width:16px !important;
+    height:16px !important;
+  }
+  .brief-card .text-2xl,
+  .brief-card .text-xl {
+    font-size:1rem !important;
+  }
+  .brief-card .text-sm {
+    font-size:0.68rem !important;
+  }
+  .post-avatar,
+  .av {
+    width:28px !important;
+    height:28px !important;
   }
   #chat-stream {
     max-height:280px;
@@ -896,15 +965,15 @@ select.input { appearance:none; padding-right:2rem;
     min-width:560px;
   }
   .stat-num {
-    font-size:clamp(2.55rem, 13vw, 3.8rem) !important;
+    font-size:clamp(1.8rem, 9vw, 2.7rem) !important;
   }
 
   footer.site {
-    padding:2.4rem 1rem 1.4rem;
-    margin-top:3rem;
+    padding:1.9rem 0.75rem 1.1rem;
+    margin-top:2.25rem;
   }
   footer.site .logo-img {
-    height:34px;
+    height:26px;
   }
   footer.site .bottom {
     gap:0.75rem;
@@ -917,27 +986,28 @@ select.input { appearance:none; padding-right:2rem;
 
 @media(max-width: 430px) {
   .nav {
-    padding-left:0.7rem;
-    padding-right:0.7rem;
+    padding-left:0.55rem;
+    padding-right:0.55rem;
   }
   .logo-img {
-    height:28px;
+    height:22px;
   }
   .nav-actions .btn-gold,
   .nav-actions .btn-ghost {
-    padding:0.42rem 0.65rem;
-    font-size:0.64rem;
+    min-height:28px;
+    padding:0.32rem 0.52rem;
+    font-size:0.55rem;
   }
   .nav-link {
-    min-height:30px;
-    padding:0.38rem 0.54rem;
-    font-size:0.6rem;
+    min-height:27px;
+    padding:0.3rem 0.44rem;
+    font-size:0.52rem;
   }
   #cb-main-content h1.serif {
-    font-size:clamp(2.1rem, 11vw, 2.8rem) !important;
+    font-size:clamp(1.7rem, 8.5vw, 2.2rem) !important;
   }
   #cb-main-content h2.serif {
-    font-size:clamp(1.55rem, 8vw, 2.1rem) !important;
+    font-size:clamp(1.25rem, 6.5vw, 1.65rem) !important;
   }
   .eyebrow {
     letter-spacing:0.15em;
@@ -1796,88 +1866,89 @@ a:not(.btn-gold):not(.btn-ghost):not(.nav-link):not(.logo-mark):not(.lane-card):
 /* Mobile: full-width panel anchored bottom */
 @media (max-width: 520px) {
   .cb-chat-panel {
-    bottom:4.7rem; right:0.75rem; left:0.75rem;
+    bottom:3.9rem; right:0.5rem; left:0.5rem;
     width:auto; max-width:none;
-    height:min(560px, calc(100dvh - 7.4rem));
-    border-radius:16px;
+    height:min(500px, calc(100dvh - 6rem));
+    border-radius:14px;
   }
   .cb-chat-header {
-    gap:0.6rem;
-    padding:0.75rem 0.8rem 0.65rem;
+    gap:0.5rem;
+    padding:0.6rem 0.65rem 0.5rem;
   }
   .cb-chat-mascot {
-    width:44px;
-    height:68px;
+    width:36px;
+    height:56px;
   }
   .cb-chat-mascot .status-dot {
-    top:12px;
+    top:10px;
     right:3px;
-    width:8px;
-    height:8px;
+    width:7px;
+    height:7px;
   }
   .cb-chat-meta {
     padding-top:0.35rem;
   }
   .cb-chat-name {
-    font-size:14px;
+    font-size:12px;
   }
   .cb-chat-tier {
-    font-size:7.5px;
+    font-size:7px;
     letter-spacing:0.12em;
   }
   .cb-chat-sub,
   .cb-chat-takeline {
-    font-size:9px;
+    font-size:8.5px;
   }
   .cb-chat-body {
-    padding:0.75rem 0.8rem 0.45rem;
-    gap:0.5rem;
+    padding:0.6rem 0.65rem 0.4rem;
+    gap:0.42rem;
   }
   .cb-chat-msg {
     max-width:92%;
-    padding:0.55rem 0.68rem;
-    font-size:11.5px;
+    padding:0.45rem 0.55rem;
+    font-size:10.5px;
     line-height:1.45;
   }
   .cb-chat-quick {
     gap:0.28rem;
   }
   .cb-chat-path {
-    padding:0.5rem 0.65rem;
-    gap:0.5rem;
-    font-size:11px;
+    min-height:30px;
+    padding:0.42rem 0.55rem;
+    gap:0.42rem;
+    font-size:10px;
     border-radius:9px;
   }
   .cb-chat-path .num {
     min-width:1rem;
-    font-size:10px;
+    font-size:9px;
   }
   .cb-chat-input {
-    padding:0.6rem;
+    padding:0.48rem;
   }
   .cb-chat-input input {
     min-width:0;
-    padding:0.55rem 0.68rem;
-    font-size:11.5px;
+    padding:0.48rem 0.55rem;
+    font-size:10.5px;
   }
   .cb-chat-send {
-    width:34px;
-    height:34px;
+    width:30px;
+    height:30px;
   }
   .cb-fab {
-    bottom:0.75rem;
-    right:0.75rem;
-    width:48px;
-    height:48px;
+    bottom:0.55rem;
+    right:0.55rem;
+    width:40px;
+    height:40px;
   }
   .cb-fab-body {
-    width:34px;
-    height:48px;
+    width:28px;
+    height:40px;
     border-radius:20px;
   }
   .cb-fab-body .cb-fab-icon {
-    width:29px;
-    height:43px;
+    width:24px;
+    height:36px;
   }
   .cb-fab-ring {
     inset:-4px;
