@@ -92,13 +92,18 @@ function CreatorBridgeChromeEffects() {
     const ring = ringRef.current;
     const dot = dotRef.current;
     const glow = glowRef.current;
-    const progress = progressRef.current;
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     const isMobile = window.innerWidth <= 768;
 
     if (!ring || !dot || isMobile || reducedMotion) {
-      if (!progress) return undefined;
+      // Mobile/reduced-motion path: only wire up the scroll-progress bar if
+      // we are on a route that renders it. progressRef is read lazily inside
+      // the handler so that navigating into or out of a long-form route
+      // (where the element mounts/unmounts) just no-ops without re-running
+      // this entire effect.
       const handleProgressOnly = () => {
+        const progress = progressRef.current;
+        if (!progress) return;
         const max = document.documentElement.scrollHeight - window.innerHeight;
         progress.style.transform = `scaleX(${max > 0 ? window.scrollY / max : 0})`;
       };
@@ -157,6 +162,8 @@ function CreatorBridgeChromeEffects() {
     };
 
     const handleScroll = () => {
+      // Read progressRef lazily so the handler is route-agnostic.
+      const progress = progressRef.current;
       if (!progress) return;
       const max = document.documentElement.scrollHeight - window.innerHeight;
       progress.style.transform = `scaleX(${max > 0 ? window.scrollY / max : 0})`;
@@ -192,7 +199,7 @@ function CreatorBridgeChromeEffects() {
       window.removeEventListener('scroll', handleScroll);
       document.body.classList.remove('mouse-active');
     };
-  }, [location.pathname]);
+  }, []);
 
   return (
     <>
