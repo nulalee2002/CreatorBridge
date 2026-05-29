@@ -1372,18 +1372,23 @@ export function ProjectBoard({ dark }) {
   const [applyTarget, setApplyTarget]   = useState(null);
   const [activeProjectId, setActiveProjectId] = useState(null);
   const detailPaneRef = useRef(null);
+  const [mobileShowDetail, setMobileShowDetail] = useState(false);
 
-  // On mobile (under the lg breakpoint, 1024px), the detail panel sits below
-  // the brief list. Tapping a brief silently selects it, so the user thinks
-  // nothing happened. Smooth-scroll the panel into view so the selection is
-  // visible immediately.
+  // On mobile (under the lg breakpoint, 1024px), use a master/detail
+  // navigation pattern. Tapping a brief replaces the list with the detail
+  // view (proper iOS/Android UX). The "Back to briefs" button returns to
+  // the list. On desktop, both stay visible side by side.
   function selectBrief(id) {
     setActiveProjectId(id);
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-      requestAnimationFrame(() => {
-        detailPaneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
+      setMobileShowDetail(true);
+      window.scrollTo({ top: 0, behavior: 'auto' });
     }
+  }
+
+  function backToBriefList() {
+    setMobileShowDetail(false);
+    window.scrollTo({ top: 0, behavior: 'auto' });
   }
 
   function handleStatusChange(projectId, newStatus, patch = {}) {
@@ -1795,7 +1800,9 @@ export function ProjectBoard({ dark }) {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-8 items-start">
-            <div className="space-y-4">
+            {/* Brief list. Hidden on mobile when a brief is open in detail
+                view, always visible on lg+. */}
+            <div className={`space-y-4 ${mobileShowDetail ? 'hidden lg:block' : ''}`}>
               {displayProjects.map(p => {
                 const pillar = getProjectPillar(p);
                 const budgetStr = p.budgetMin && p.budgetMax
@@ -1848,7 +1855,21 @@ export function ProjectBoard({ dark }) {
               })}
             </div>
 
-            <aside ref={detailPaneRef} className="detail-pane liquid-glass border border-white/[0.08] p-6 rounded-2xl shadow-xl scroll-mt-20">
+            {/* Detail pane. Hidden on mobile by default; tapping a brief
+                shows it as the only visible content. Always visible on lg+. */}
+            <aside
+              ref={detailPaneRef}
+              className={`detail-pane liquid-glass border border-white/[0.08] p-6 rounded-2xl shadow-xl scroll-mt-20 ${mobileShowDetail ? '' : 'hidden lg:block'}`}
+            >
+              {activeProject && mobileShowDetail && (
+                <button
+                  type="button"
+                  onClick={backToBriefList}
+                  className="lg:hidden flex items-center gap-1.5 mb-4 text-xs font-bold text-gold-400 hover:text-gold-300 transition-colors"
+                >
+                  <span aria-hidden="true">←</span> Back to briefs
+                </button>
+              )}
               {activeProject ? (
                 <ProjectDetailPane
                   project={activeProject}
