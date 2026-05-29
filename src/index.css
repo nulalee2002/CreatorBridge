@@ -854,12 +854,60 @@ footer.site .bottom {
 
 @media (max-width: 520px) {
   footer.site {
-    padding: 3rem 1.25rem 1.5rem;
+    padding: 1.75rem 1.25rem 1rem !important;
   }
 
   footer.site .grid {
-    grid-template-columns: 1fr;
-    gap: 2rem;
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* Tighten the brand column on mobile so it does not eat the whole viewport */
+  footer.site .brand-col p {
+    font-size: 11px !important;
+    line-height: 1.5 !important;
+    margin-bottom: 0.6rem !important;
+  }
+  footer.site .footer-pillar-row {
+    gap: 0.3rem !important;
+  }
+  footer.site .footer-pill {
+    font-size: 9px !important;
+    padding: 0.22rem 0.5rem !important;
+  }
+
+  /* Section headings sit right above their link rows on mobile */
+  footer.site h4 {
+    margin-bottom: 0.25rem !important;
+    font-size: 9.5px !important;
+    letter-spacing: 0.16em !important;
+  }
+
+  /* Link rows are dense. About 22px per row instead of ~50. */
+  footer.site a,
+  footer.site button {
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 12px !important;
+    line-height: 1.9 !important;
+    min-height: 0 !important;
+  }
+
+  /* Bottom copyright + Terms/Privacy/Support row */
+  footer.site .bottom {
+    padding-top: 0.75rem !important;
+    gap: 0.4rem !important;
+    font-size: 10px !important;
+  }
+  footer.site .bottom-links {
+    gap: 0.9rem !important;
+  }
+  footer.site .bottom-links a,
+  footer.site .bottom-links button {
+    padding: 0 !important;
+    display: inline !important;
+    width: auto !important;
   }
 }
 
