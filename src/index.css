@@ -857,10 +857,21 @@ footer.site .bottom {
     padding: 1.75rem 1.25rem 1rem !important;
   }
 
+  /* Two-column mobile layout: brand spans full width on top, then
+     Platform and For Creators sit side by side, then Company spans
+     full width below. Much tighter than the previous 1-column stack. */
   footer.site .grid {
-    grid-template-columns: 1fr !important;
-    gap: 1rem !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 1.25rem 1.5rem !important;
     margin-bottom: 1rem !important;
+  }
+  footer.site .grid > .brand-col {
+    grid-column: 1 / -1 !important;
+  }
+  /* Company section (4th div, after brand+platform+for-creators)
+     spans full width on its own row below. */
+  footer.site .grid > div:nth-child(4) {
+    grid-column: 1 / -1 !important;
   }
 
   /* Tighten the brand column on mobile so it does not eat the whole viewport */

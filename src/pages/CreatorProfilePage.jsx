@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import { SEO } from '../components/SEO.jsx';
+import { SEED_CREATORS } from '../data/seedCreators.js';
 
 const useTweaks = (defaults) => [defaults, () => {}];
 const TweaksPanel = () => null;
@@ -8,7 +10,10 @@ const TweakRadio = () => null;
 
 
 // ---------- DATA ----------
-const creator = {
+// These are the rich defaults for the Aria Visual Studio sample profile.
+// They are switched to `let` so CreatorProfilePage can swap them based on
+// the URL :id param before HandoffCreatorProfile and its children read them.
+let creator = {
   studio: "Aria Visual Studio",
   name: "Aria Vasquez",
   city: "Miami, FL",
@@ -33,14 +38,14 @@ const creator = {
   reel: "/images/creatorbridge/handoff/photo-1485846234645-a62644f84728.png"
 };
 
-const verification = [
+let verification = [
   { label: "Profile Gate", value: "7 yrs verified" },
   { label: "Proof Layer", value: "12 published" },
   { label: "Intro Check", value: "Passed 03/24" },
   { label: "ID & Tax", value: "On file" }
 ];
 
-const portfolio = [
+let portfolio = [
   { id: 1, cat: "Editorial & Press",                ratio: "aspect-[4/5]",  src: "/images/creatorbridge/handoff/photo-1492691527719-9d1e07e534b4.png", title: "Spring drop · Aritzia" },
   { id: 2, cat: "Brand & Commercial Photography",   ratio: "aspect-[16/10]",src: "/images/creatorbridge/handoff/photo-1542038784456-1ea8e935640e.png", title: "Soho House · Miami" },
   { id: 3, cat: "Headshots & Portraits",            ratio: "aspect-[4/5]",  src: "/images/creatorbridge/handoff/photo-1554384645-13eab165c24b.png", title: "Equinox · Member series" },
@@ -52,7 +57,7 @@ const portfolio = [
   { id: 9, cat: "Editorial & Press",                ratio: "aspect-[4/5]",  src: "/images/creatorbridge/handoff/photo-1600585154340-be6161a56a0c.png", title: "Coral Gables · feature" }
 ];
 
-const packages = [
+let packages = [
   {
     id: "essential", name: "Essential", price: 850, popular: false,
     tagline: "For focused single-deliverable shoots.",
@@ -70,7 +75,7 @@ const packages = [
   }
 ];
 
-const reviews = [
+let reviews = [
   { id: 1, client: "Soho House Miami", role: "Brand Lead", rating: 5, project: "Hotel campaign · Signature", date: "Mar 2026",
     body: "Aria's team showed up prepared, ran a tight schedule, and the deliverables read like they belong in a magazine. Booking again for Q3." },
   { id: 2, client: "Aritzia", role: "Creative Director", rating: 5, project: "Editorial · Spring drop", date: "Feb 2026",
@@ -790,10 +795,137 @@ function HandoffCreatorProfile() {
   );
 }
 
+// Default data captured once on module load. Used as the rich fallback when
+// looking at the Aria sample profile (seed-2) or any creator we lack data for.
+const ARIA_CREATOR = creator;
+const ARIA_PORTFOLIO = portfolio;
+const ARIA_PACKAGES = packages;
+const ARIA_REVIEWS = reviews;
+const ARIA_VERIFICATION = verification;
+
+// Map a SEED_CREATORS row into the rich shape expected by HandoffCreatorProfile.
+// Falls back to Aria for any missing slots so the layout stays intact.
+function adaptSeedCreator(seed) {
+  const pillarLabel =
+    seed.primary_pillar === 'video_production' ? 'Video Production' :
+    seed.primary_pillar === 'post_production' ? 'Post Production' :
+    'Photography';
+  const pillarKey =
+    seed.primary_pillar === 'video_production' ? 'video' :
+    seed.primary_pillar === 'post_production' ? 'post' :
+    'photo';
+  const expLabel = { entry: '2-3 yrs', mid: '4-6 yrs', senior: '7+ yrs' }[seed.experience] || `${seed.yearsExperience || 5}+ yrs`;
+  const cityState = seed.location?.city && seed.location?.state
+    ? `${seed.location.city}, ${seed.location.state}`
+    : seed.location?.city || 'United States';
+  const lowestRate = (() => {
+    const rates = seed.services?.[0]?.rates || {};
+    const nums = Object.values(rates).map(Number).filter(n => n > 0);
+    return nums.length ? Math.min(...nums) : 1000;
+  })();
+  return {
+    studio: seed.businessName || seed.name,
+    name: seed.name,
+    city: cityState,
+    years: expLabel,
+    rating: seed.rating || 4.8,
+    reviews: seed.reviewCount || 12,
+    responseTime: '~2 hrs',
+    onTime: 94,
+    repeat: 38,
+    projects: (seed.reviewCount || 12) * 2,
+    tagline: seed.bio || ARIA_CREATOR.tagline,
+    bio: seed.bio || ARIA_CREATOR.bio,
+    featuredIn: ARIA_CREATOR.featuredIn,
+    pillar: { key: pillarKey, label: pillarLabel },
+    specialties: seed.tags?.slice(0, 3) || ARIA_CREATOR.specialties,
+    gear: ARIA_CREATOR.gear,
+    languages: ARIA_CREATOR.languages,
+    crew: ARIA_CREATOR.crew,
+    tiers: [seed.tier ? seed.tier.charAt(0).toUpperCase() + seed.tier.slice(1) : 'Verified'],
+    avatar: seed.avatar || ARIA_CREATOR.avatar,
+    reel: seed.cover || ARIA_CREATOR.reel,
+    __lowestRate: lowestRate,
+  };
+}
+
+function getCreatorData(id) {
+  // Aria sample profile keeps its full rich payload.
+  if (!id || id === 'demo' || id === 'seed-2') {
+    return {
+      creator: ARIA_CREATOR,
+      portfolio: ARIA_PORTFOLIO,
+      packages: ARIA_PACKAGES,
+      reviews: ARIA_REVIEWS,
+      verification: ARIA_VERIFICATION,
+    };
+  }
+  const seed = SEED_CREATORS.find(s => s.id === id);
+  if (!seed) {
+    // Unknown id, fall back to the Aria sample so the page still renders.
+    return {
+      creator: ARIA_CREATOR,
+      portfolio: ARIA_PORTFOLIO,
+      packages: ARIA_PACKAGES,
+      reviews: ARIA_REVIEWS,
+      verification: ARIA_VERIFICATION,
+    };
+  }
+  const adapted = adaptSeedCreator(seed);
+  // Generate verification entries based on what the seed actually has
+  const adaptedVerification = [
+    { label: 'Profile Gate', value: `${seed.yearsExperience || 5} yrs verified` },
+    { label: 'Proof Layer', value: `${seed.reviewCount || 0} reviews` },
+    { label: 'Intro Check', value: 'Passed' },
+    { label: 'ID & Tax', value: 'On file' },
+  ];
+  // Build packages using the lowest rate as a baseline (cheap × 1, mid × 2.3, top × 5.3)
+  const base = adapted.__lowestRate;
+  const adaptedPackages = [
+    {
+      id: 'essential', name: 'Essential', price: Math.round(base / 50) * 50, popular: false,
+      tagline: 'For focused single-deliverable bookings.',
+      items: ['Half-day or short project', 'Core deliverables', '1 location or remote', '7-day delivery', '1 revision round', 'Personal use license'],
+    },
+    {
+      id: 'signature', name: 'Signature', price: Math.round((base * 2.3) / 50) * 50, popular: true,
+      tagline: 'The standard package for most projects.',
+      items: ['Full-day production', 'Expanded deliverables', 'Up to 2 locations', '5-day delivery', '3 revision rounds', 'Source files included', 'Commercial license · 1 year'],
+    },
+    {
+      id: 'editorial', name: 'Editorial', price: Math.round((base * 5.3) / 50) * 50, popular: false,
+      tagline: 'Multi-day, crew-supported productions.',
+      items: ['Multi-day production', 'Premium deliverables', 'Up to 4 locations', 'Priority delivery', 'Unlimited revisions', 'Full source deliverables', 'Buyout-eligible rights'],
+    },
+  ];
+  // Reuse Aria's portfolio and reviews as placeholders — seed creators do not ship with rich portfolio data yet.
+  return {
+    creator: adapted,
+    portfolio: ARIA_PORTFOLIO,
+    packages: adaptedPackages,
+    reviews: ARIA_REVIEWS,
+    verification: adaptedVerification,
+  };
+}
+
 export function CreatorProfilePage() {
+  const { id } = useParams();
+  const data = useMemo(() => getCreatorData(id), [id]);
+
+  // Module-level vars used by HandoffCreatorProfile and its child components.
+  // Swap them in for this render before mounting the tree.
+  creator = data.creator;
+  portfolio = data.portfolio;
+  packages = data.packages;
+  reviews = data.reviews;
+  verification = data.verification;
+
   return (
     <>
-      <SEO title="Aria Visual Studio | CreatorBridge" description="Verified CreatorBridge photography profile with packages, portfolio, reviews, and booking details." />
+      <SEO
+        title={`${data.creator.studio} | CreatorBridge`}
+        description={`Verified CreatorBridge ${data.creator.pillar.label.toLowerCase()} profile with packages, portfolio, reviews, and booking details.`}
+      />
       <HandoffCreatorProfile />
     </>
   );
