@@ -588,12 +588,18 @@ export function SupportChatbot({ dark = true }) {
     }
   }, [autoOpened]);
 
-  // Auto-dismiss nudge after 6 seconds
+  // Auto-dismiss nudge after 6 seconds (both desktop and mobile variants)
   useEffect(() => {
     if (!showNudge) return;
     const dismiss = setTimeout(() => setShowNudge(false), 6000);
     return () => clearTimeout(dismiss);
   }, [showNudge]);
+
+  useEffect(() => {
+    if (!mobileNudge) return;
+    const dismiss = setTimeout(() => setMobileNudge(false), 6000);
+    return () => clearTimeout(dismiss);
+  }, [mobileNudge]);
 
   const push = (msg) => setMessages(prev => [...prev, msg]);
 
