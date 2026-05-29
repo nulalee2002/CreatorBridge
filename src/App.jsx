@@ -1,5 +1,18 @@
-import { lazy, Suspense, useReducer, useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
+import { lazy, Suspense, useReducer, useEffect, useMemo, useState, useCallback, useRef, startTransition } from 'react';
+import { Routes, Route, Link, useNavigate as useRouterNavigate, useLocation } from 'react-router-dom';
+
+// Wrap react-router's navigate in React.startTransition so that navigating to a
+// lazy-loaded route (anything under <LazyRoute>) does not blank the page with
+// 'A component suspended while responding to synchronous input'. This is the
+// React 18 idiomatic fix for Suspense + sync nav.
+function useNavigate() {
+  const routerNavigate = useRouterNavigate();
+  return useCallback((to, opts) => {
+    startTransition(() => {
+      routerNavigate(to, opts);
+    });
+  }, [routerNavigate]);
+}
 import { formatCurrency } from './utils/pricing.js';
 import { Moon, Sun, Zap, RotateCcw, Search, UserPlus, LogIn, LogOut, User, MessageSquare, Briefcase, LayoutDashboard, Users } from 'lucide-react';
 import { v4 as uuid } from 'uuid';
