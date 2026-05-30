@@ -1645,7 +1645,7 @@ export function ProjectBoard({ dark }) {
       ...(isCreator ? [{ id: 'my_applications', label: `Applied (${myApplications.length})` }] : []),
     ] : []),
   ];
-  const projectBoardImage = '/images/creatorbridge/Background%20and%20sitewide%20images/thisisengineering-ATeFbve78Zo-unsplash.jpg';
+  const projectBoardImage = '/images/creatorbridge/backgrounds/thisisengineering-ATeFbve78Zo-unsplash.jpg';
 
   useEffect(() => {
     if (displayProjects.length > 0) {
