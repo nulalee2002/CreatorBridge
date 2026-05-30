@@ -9,7 +9,7 @@ export const SHOW_DEMO_CREATORS = true;
 // and forces a full re-write when the version is out of date.
 // This is what guarantees the profile-page "Creator not found" bug
 // cannot happen from stale localStorage.
-const SEED_VERSION = 9;
+const SEED_VERSION = 10;
 
 // ── Three demo creators: filmmaker, photographer, podcast producer ─
 export const SEED_CREATORS = [
@@ -21,7 +21,7 @@ export const SEED_CREATORS = [
     name: 'Marcus Chen',
     businessName: 'Elevation Films',
     avatar: '/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.png',
-    cover: '/images/creatorbridge/handoff/photo-1485846234645-a62644f84728.png',
+    cover: '/images/creatorbridge/Background%20and%20sitewide%20images/jakob-owens-ycExgCMRggc-unsplash.jpg',
     primary_pillar: 'video_production',
     sub_niches: ['vp_brand_films', 'vp_documentary', 'vp_drone_video'],
     bio: 'Award-winning cinematographer and director with 12 years producing brand films, corporate stories, and documentary content for Fortune 500 clients. RED and ARRI certified. Available for single-day shoots, full campaigns, and long-term production partnerships.',
@@ -302,7 +302,7 @@ export const SEED_CREATORS = [
     name: 'Jordan Mitchell',
     businessName: 'SoundWave Podcast Co.',
     avatar: '/images/creatorbridge/handoff/photo-1507003211169-0a1dd7228f2d.png',
-    cover: '/images/creatorbridge/handoff/photo-1590602847861-f357a9332bbc.png',
+    cover: '/images/creatorbridge/Background%20and%20sitewide%20images/elijah-merrell--qFWOJEEQh4-unsplash.jpg',
     primary_pillar: 'post_production',
     sub_niches: ['pp_podcast_audio', 'pp_sound_design', 'pp_short_form_edit'],
     bio: 'Full-service podcast production studio in NYC. We\'ve launched over 200 shows from scratch and taken dozens of existing podcasts from hobbyist recordings to top-charting. Our team handles recording, editing, mastering, show notes, and distribution setup — you just show up and talk.',
@@ -441,7 +441,7 @@ export const SEED_CREATORS = [
     id: 'seed-4', user_id: null,
     name: 'David Park', businessName: 'LensCraft Studios',
     avatar: '/images/creatorbridge/handoff/photo-1438761681033-6461ffad8d80.png',
-    cover: '/images/creatorbridge/handoff/photo-1485846234645-a62644f84728.png',
+    cover: '/images/creatorbridge/Background%20and%20sitewide%20images/luigi-ritchie-d4bQC7yVyoE-unsplash.jpg',
     primary_pillar: 'video_production',
     sub_niches: ['vp_brand_films', 'vp_music_video', 'vp_corporate_video'],
     bio: 'Cinematic brand films. RED-certified cinematography with a small crew.',
@@ -479,7 +479,7 @@ export const SEED_CREATORS = [
     id: 'seed-6', user_id: null,
     name: 'Maya Chen', businessName: 'Bondi Studio',
     avatar: '/images/creatorbridge/handoff/photo-1573497019940-1c28c88b4f3e.png',
-    cover: '/images/creatorbridge/handoff/photo-1516035069371-29a1b244cc32.png',
+    cover: '/images/creatorbridge/Background%20and%20sitewide%20images/rob-wingate-UG9LOi8BJWQ-unsplash.jpg',
     primary_pillar: 'video_production',
     sub_niches: ['vp_short_form', 'vp_brand_films'],
     bio: 'Monthly social-first video for boutique brands. Reels, UGC, short-form ads.',
@@ -498,7 +498,7 @@ export const SEED_CREATORS = [
     id: 'seed-7', user_id: null,
     name: 'Aaron Wei', businessName: 'Northgrade Color',
     avatar: '/images/creatorbridge/handoff/photo-1463453091185-61582044d556.png',
-    cover: '/images/creatorbridge/handoff/photo-1574717024653-61fd2cf4d44d.png',
+    cover: '/images/creatorbridge/Background%20and%20sitewide%20images/bas-peperzak-hY07uZBVrGo-unsplash.jpg',
     primary_pillar: 'post_production',
     sub_niches: ['pp_color_grading', 'pp_video_editing_long'],
     bio: 'DaVinci-certified colorist. Editorial commercials and music videos.',
@@ -517,7 +517,7 @@ export const SEED_CREATORS = [
     id: 'seed-8', user_id: null,
     name: 'Naomi Greene', businessName: 'Greene Street Films',
     avatar: '/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.png',
-    cover: '/images/creatorbridge/handoff/photo-1492691527719-9d1e07e534b4.png',
+    cover: '/images/creatorbridge/Background%20and%20sitewide%20images/jose-p-ortiz-tzhZ_Py70xA-unsplash.jpg',
     primary_pillar: 'video_production',
     sub_niches: ['vp_brand_films', 'vp_documentary', 'vp_event_video'],
     bio: 'Narrative-driven brand films. Past clients: Equinox, Aesop, Tribeca Film Fest.',
@@ -555,7 +555,7 @@ export const SEED_CREATORS = [
     id: 'seed-10', user_id: null,
     name: 'Dre Williams', businessName: 'Cumulus Events Co',
     avatar: '/images/creatorbridge/handoff/photo-1607746882042-944635dfe10e.png',
-    cover: '/images/creatorbridge/handoff/photo-1540575467063-178a50c2df87.png',
+    cover: '/images/creatorbridge/Background%20and%20sitewide%20images/gordon-cowie-JbcOtH0W6UQ-unsplash.jpg',
     primary_pillar: 'video_production',
     sub_niches: ['vp_event_video', 'vp_short_form'],
     bio: 'Conference and corporate event coverage. Same-day social cutdowns.',
@@ -593,7 +593,7 @@ export const SEED_CREATORS = [
     id: 'seed-12', user_id: null,
     name: 'Marcus Bell', businessName: 'Crosscut Edit Room',
     avatar: '/images/creatorbridge/handoff/photo-1633332755192-727a05c4013d.png',
-    cover: '/images/creatorbridge/handoff/photo-1633419461186-7d40a38105ec.png',
+    cover: '/images/creatorbridge/Background%20and%20sitewide%20images/jj-rocha-NqPUto5vS10-unsplash.jpg',
     primary_pillar: 'post_production',
     sub_niches: ['pp_motion_vfx', 'pp_short_form_edit', 'pp_video_editing_long'],
     bio: 'Motion + edit suite. After Effects, kinetic typography, brand-channel cutdowns.',
