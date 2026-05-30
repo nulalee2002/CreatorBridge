@@ -10,10 +10,11 @@ supabase/.temp/
 .vercel
 .env*.local
 
-# Local AI/design handoff artifacts
+# Local AI/design handoff artifacts (only the root-level folders, not
+# nested paths like public/images/creatorbridge/ which DOES ship)
 .agents/
-creatorbridge/
-creatorbridge-new-assets/
+/creatorbridge/
+/creatorbridge-new-assets/
 video/
 landing_design.html
 creatorbridge-ui-overview.html
