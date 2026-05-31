@@ -861,7 +861,11 @@ export function NetworkingPage({ dark, user, profile }) {
             <span className="text-[var(--text)] font-medium">Creator Network</span>
           </div>
           
-          <div className="grid lg:grid-cols-12 gap-8 items-end">
+          <div className="relative overflow-hidden rounded-3xl border border-white/[0.08]">
+          <img src="/images/creatorbridge/backgrounds/gordon-cowie-JbcOtH0W6UQ-unsplash.jpg" alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover" style={{ opacity: 0.5, filter: 'brightness(0.78) saturate(1.05)' }} loading="lazy" />
+          <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(13,13,15,0.92) 0%, rgba(13,13,15,0.78) 45%, rgba(13,13,15,0.5) 100%)' }} />
+          <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(13,13,15,0.15) 0%, rgba(13,13,15,0.08) 55%, rgba(13,13,15,0.55) 100%)' }} />
+          <div className="relative z-10 grid lg:grid-cols-12 gap-8 items-end p-6 md:p-10">
             <div className="lg:col-span-7">
               <div className="eyebrow mb-2">State creator networks</div>
               <h1 className="text-4xl md:text-5xl font-display font-medium leading-[1.05] serif">
@@ -887,6 +891,7 @@ export function NetworkingPage({ dark, user, profile }) {
                 <div className="text-[9px] uppercase tracking-wider text-[var(--text-dim)] mt-1">Active now</div>
               </div>
             </div>
+          </div>
           </div>
         </div>
 
