@@ -352,7 +352,7 @@ export function ClientProfilePage({ dark }) {
             </div>
           </div>
           <div className="relative min-h-[280px] overflow-hidden rounded-2xl border border-gold-500/18 bg-charcoal-950/75">
-            <img src={clientHeroImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-76" />
+            <img src={clientHeroImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-76" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/jakob-owens-ntqaFfrDdEA-unsplash.jpg'; } }}/>
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/28 to-black/12" />
             <div className="absolute bottom-0 left-0 right-0 p-4">
               <p className="mb-2 text-gold-400" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
@@ -367,7 +367,7 @@ export function ClientProfilePage({ dark }) {
               <div className="flex min-w-0 items-center gap-3">
                 <div className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border text-sm font-black ${dark ? 'border-gold-500/25 bg-charcoal-950/65 text-gold-300' : 'border-gold-200 bg-white text-gold-700'}`}>
                   {clientAvatar ? (
-                    <img src={clientAvatar} alt="" className="h-full w-full object-cover" />
+                    <img src={clientAvatar} alt="" className="h-full w-full object-cover" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.png'; } }}/>
                   ) : clientInitials(clientName)}
                 </div>
                 <div className="min-w-0">
@@ -476,7 +476,7 @@ export function ClientProfilePage({ dark }) {
 
         <aside className="space-y-6">
           <div className="relative min-h-[260px] overflow-hidden rounded-2xl border border-gold-500/18 bg-charcoal-950/70">
-            <img src={clientSupportImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" />
+            <img src={clientSupportImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/jakob-owens-ntqaFfrDdEA-unsplash.jpg'; } }}/>
             <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/22 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-5">
               <p className="mb-2 text-gold-400" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
@@ -520,7 +520,7 @@ export function ClientProfilePage({ dark }) {
                 <div className={`mb-2 flex items-center gap-3 rounded-2xl border p-3 ${dark ? 'border-white/[0.07] bg-charcoal-950/45' : 'border-gray-200 bg-gray-50'}`}>
                   <div className={`flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border text-xs font-black ${dark ? 'border-gold-500/25 bg-charcoal-950/70 text-gold-300' : 'border-gold-200 bg-white text-gold-700'}`}>
                     {clientAvatar ? (
-                      <img src={clientAvatar} alt="" className="h-full w-full object-cover" />
+                      <img src={clientAvatar} alt="" className="h-full w-full object-cover" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.png'; } }}/>
                     ) : clientInitials(clientName)}
                   </div>
                   <div className="min-w-0 flex-1">

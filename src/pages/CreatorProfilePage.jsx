@@ -125,7 +125,7 @@ function Hero({ onPlayReel, onJumpBook, layout, saved, setSaved }) {
       <section>
         <div className="relative rounded-2xl overflow-hidden mb-6 parallax-wrap">
           <div className="aspect-[21/9] relative">
-            <img src={creator.reel} alt="Reel" className="absolute inset-0 w-full h-full object-cover scale-105"/>
+            <img src={creator.reel} alt="Reel" className="absolute inset-0 w-full h-full object-cover scale-105" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/jakob-owens-ntqaFfrDdEA-unsplash.jpg'; } }}/>
             <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/60 to-transparent"></div>
             <button onClick={onPlayReel} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-[var(--gold)]/90 hover:bg-[var(--gold-light)] transition-all flex items-center justify-center hover:scale-110">
               <svg className="w-6 h-6 text-[var(--bg)] ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -148,7 +148,7 @@ function Hero({ onPlayReel, onJumpBook, layout, saved, setSaved }) {
       <div className="lg:col-span-5">
         <div className="relative rounded-2xl overflow-hidden parallax-wrap group cursor-pointer" onClick={onPlayReel}>
           <div className="aspect-[4/5] relative">
-            <img src={creator.reel} alt="Reel" className="absolute inset-0 w-full h-full object-cover scale-105 group-hover:scale-110 transition-transform duration-700"/>
+            <img src={creator.reel} alt="Reel" className="absolute inset-0 w-full h-full object-cover scale-105 group-hover:scale-110 transition-transform duration-700" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/jakob-owens-ntqaFfrDdEA-unsplash.jpg'; } }}/>
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20"></div>
             <button className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-[var(--gold)]/90 group-hover:bg-[var(--gold-light)] transition-all flex items-center justify-center group-hover:scale-110">
               <svg className="w-6 h-6 text-[var(--bg)] ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -169,7 +169,7 @@ function HeroInfo({ onJumpBook, saved, setSaved }) {
     <div className="space-y-5">
       <div className="flex items-start gap-4">
         <div className="parallax-wrap w-16 h-16 rounded-2xl overflow-hidden shrink-0 ring-1 ring-[var(--border)]">
-          <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover"/>
+          <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.png'; } }}/>
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -384,7 +384,7 @@ function Portfolio({ onOpen }) {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
         {items.map(p => (
           <div key={p.id} onClick={() => onOpen(p)} className={"lane-card cursor-pointer " + p.ratio}>
-            <img src={p.src} alt={p.title}/>
+            <img src={p.src} alt={p.title} onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/jakob-owens-ntqaFfrDdEA-unsplash.jpg'; } }}/>
             <div className="lane-content">
               <div className="text-[9px] uppercase tracking-[0.2em] text-[var(--gold)] mb-1">{p.cat}</div>
               <div className="text-sm font-medium">{p.title}</div>
@@ -528,7 +528,7 @@ function ReelModal({ open, onClose }) {
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md" onClick={onClose}>
       <div className="max-w-5xl w-full liquid-glass rounded-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
         <div className="aspect-video relative bg-black">
-          <img src={creator.reel} alt="Reel" className="absolute inset-0 w-full h-full object-cover opacity-80"/>
+          <img src={creator.reel} alt="Reel" className="absolute inset-0 w-full h-full object-cover opacity-80" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/jakob-owens-ntqaFfrDdEA-unsplash.jpg'; } }}/>
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-20 h-20 rounded-full bg-[var(--gold)]/90 flex items-center justify-center">
               <svg className="w-8 h-8 text-[var(--bg)] ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -556,7 +556,7 @@ function LightboxModal({ item, onClose }) {
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/85 backdrop-blur-md" onClick={onClose}>
       <div className="max-w-6xl w-full liquid-glass rounded-2xl overflow-hidden grid md:grid-cols-3" onClick={e => e.stopPropagation()}>
         <div className="md:col-span-2 bg-black">
-          <img src={item.src} alt={item.title} className="w-full h-full object-cover max-h-[80vh]"/>
+          <img src={item.src} alt={item.title} className="w-full h-full object-cover max-h-[80vh]" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/jakob-owens-ntqaFfrDdEA-unsplash.jpg'; } }}/>
         </div>
         <div className="p-6 flex flex-col">
           <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--gold)] mb-3">{item.cat}</div>
@@ -701,7 +701,7 @@ function StickyBook({ selectedPkg, onBook, show }) {
     <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[80] liquid-glass rounded-2xl px-5 py-3 flex items-center gap-5 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
       <div className="flex items-center gap-3">
         <div className="w-9 h-9 rounded-lg overflow-hidden">
-          <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover"/>
+          <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.png'; } }}/>
         </div>
         <div>
           <div className="text-[10px] text-[var(--text-dim)] leading-none mb-0.5">{pkg.name} package</div>
