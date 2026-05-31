@@ -172,7 +172,7 @@ function CreatorCard({ creator, dark, onDelete, onViewProfile }) {
       onClick={handleCardClick}
     >
       <div className="cover">
-        <img src={coverImage} alt={creator.businessName || creator.name} loading="lazy" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/jakob-owens-ntqaFfrDdEA-unsplash.jpg'; } }} />
+        <img src={coverImage} alt={creator.businessName || creator.name} loading="lazy" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/fallback-default-cover.jpg'; } }} />
 
         {displayedPillar && (
           <span className="pillar-label">
@@ -1576,7 +1576,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
         </div>
 
         <div className="relative mb-8 overflow-hidden rounded-3xl border border-white/[0.08]">
-          <img src="/images/creatorbridge/backgrounds/oscar-ivan-esquivel-arteaga-7ggVlsBGruY-unsplash.jpg" alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover" style={{ opacity: 0.6, filter: 'brightness(0.8) saturate(1.05)' }} loading="lazy" />
+          <img src="/images/creatorbridge/backgrounds/header-findcreators-onset-crew.jpg" alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover" style={{ opacity: 0.6, filter: 'brightness(0.8) saturate(1.05)' }} loading="lazy" />
           <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(13,13,15,0.94) 0%, rgba(13,13,15,0.8) 40%, rgba(13,13,15,0.5) 74%, rgba(13,13,15,0.32) 100%)' }} />
           <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(13,13,15,0.2) 0%, rgba(13,13,15,0.08) 55%, rgba(13,13,15,0.55) 100%)' }} />
           <div className="relative z-10 grid gap-6 p-6 md:p-10 lg:grid-cols-12 lg:items-end">

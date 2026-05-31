@@ -402,7 +402,7 @@ export function CreatorDashboard({ dark }) {
 
         <section className="mb-6 grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)_360px]">
           <div className="relative min-h-[260px] overflow-hidden rounded-2xl border border-gold-500/18 bg-charcoal-950/72">
-            <img src={dashboardVisual} alt="" className="absolute inset-0 h-full w-full object-cover opacity-72" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/jakob-owens-ntqaFfrDdEA-unsplash.jpg'; } }}/>
+            <img src={dashboardVisual} alt="" className="absolute inset-0 h-full w-full object-cover opacity-72" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/fallback-default-cover.jpg'; } }}/>
             <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/22 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-5">
               <h2 className="font-display text-2xl font-bold text-white">Creator identity</h2>
@@ -429,7 +429,7 @@ export function CreatorDashboard({ dark }) {
             </div>
           </div>
           <div className="relative min-h-[260px] overflow-hidden rounded-2xl border border-gold-500/18 bg-charcoal-950/72">
-            <img src={productionMathVisual} alt="" className="absolute inset-0 h-full w-full object-cover opacity-68" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/jakob-owens-ntqaFfrDdEA-unsplash.jpg'; } }}/>
+            <img src={productionMathVisual} alt="" className="absolute inset-0 h-full w-full object-cover opacity-68" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/fallback-default-cover.jpg'; } }}/>
             <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/22 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-5">
               <h2 className="font-display text-2xl font-bold text-white">Production math</h2>

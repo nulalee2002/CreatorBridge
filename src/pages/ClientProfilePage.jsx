@@ -352,7 +352,7 @@ export function ClientProfilePage({ dark }) {
             </div>
           </div>
           <div className="relative min-h-[280px] overflow-hidden rounded-2xl border border-gold-500/18 bg-charcoal-950/75">
-            <img src={clientHeroImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-76" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/jakob-owens-ntqaFfrDdEA-unsplash.jpg'; } }}/>
+            <img src={clientHeroImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-76" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/fallback-default-cover.jpg'; } }}/>
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/28 to-black/12" />
             <div className="absolute bottom-0 left-0 right-0 p-4">
               <p className="mb-2 text-gold-400" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
@@ -476,7 +476,7 @@ export function ClientProfilePage({ dark }) {
 
         <aside className="space-y-6">
           <div className="relative min-h-[260px] overflow-hidden rounded-2xl border border-gold-500/18 bg-charcoal-950/70">
-            <img src={clientSupportImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/jakob-owens-ntqaFfrDdEA-unsplash.jpg'; } }}/>
+            <img src={clientSupportImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/fallback-default-cover.jpg'; } }}/>
             <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/22 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-5">
               <p className="mb-2 text-gold-400" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
