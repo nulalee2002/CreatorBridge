@@ -9,7 +9,7 @@ export const SHOW_DEMO_CREATORS = true;
 // and forces a full re-write when the version is out of date.
 // This is what guarantees the profile-page "Creator not found" bug
 // cannot happen from stale localStorage.
-const SEED_VERSION = 11;
+const SEED_VERSION = 12;
 
 // ── Three demo creators: filmmaker, photographer, podcast producer ─
 export const SEED_CREATORS = [
@@ -302,7 +302,7 @@ export const SEED_CREATORS = [
     name: 'Jordan Mitchell',
     businessName: 'SoundWave Podcast Co.',
     avatar: '/images/creatorbridge/handoff/photo-1507003211169-0a1dd7228f2d.png',
-    cover: '/images/creatorbridge/backgrounds/03-featured-work/featured-horizon-photographer.jpg',
+    cover: '/images/creatorbridge/backgrounds/08-sitewide/bg-podcast-home-studio.jpg',
     primary_pillar: 'post_production',
     sub_niches: ['pp_podcast_audio', 'pp_sound_design', 'pp_short_form_edit'],
     bio: 'Full-service podcast production studio in NYC. We\'ve launched over 200 shows from scratch and taken dozens of existing podcasts from hobbyist recordings to top-charting. Our team handles recording, editing, mastering, show notes, and distribution setup — you just show up and talk.',
@@ -555,7 +555,7 @@ export const SEED_CREATORS = [
     id: 'seed-10', user_id: null,
     name: 'Dre Williams', businessName: 'Cumulus Events Co',
     avatar: '/images/creatorbridge/handoff/photo-1607746882042-944635dfe10e.png',
-    cover: '/images/creatorbridge/backgrounds/02-pillars/pillar-photo-studio-subjects.jpg',
+    cover: '/images/creatorbridge/backgrounds/03-featured-work/featured-documentary-rooftop-crew.jpg',
     primary_pillar: 'video_production',
     sub_niches: ['vp_event_video', 'vp_short_form'],
     bio: 'Conference and corporate event coverage. Same-day social cutdowns.',
@@ -593,7 +593,7 @@ export const SEED_CREATORS = [
     id: 'seed-12', user_id: null,
     name: 'Marcus Bell', businessName: 'Crosscut Edit Room',
     avatar: '/images/creatorbridge/handoff/photo-1633332755192-727a05c4013d.png',
-    cover: '/images/creatorbridge/backgrounds/03-featured-work/featured-documentary-rooftop-crew.jpg',
+    cover: '/images/creatorbridge/backgrounds/02-pillars/pillar-post-editing-monitor.jpg',
     primary_pillar: 'post_production',
     sub_niches: ['pp_motion_vfx', 'pp_short_form_edit', 'pp_video_editing_long'],
     bio: 'Motion + edit suite. After Effects, kinetic typography, brand-channel cutdowns.',
