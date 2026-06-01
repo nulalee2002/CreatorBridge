@@ -80,8 +80,8 @@ export function HandoffPage({ page, bgImage }) {
     return (
       <div className="relative min-h-screen">
         <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
-          <img src={bgImage} alt="" className="h-full w-full object-cover" style={{ opacity: 0.18, filter: 'brightness(0.7) saturate(1.05)' }} />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(13,13,15,0.82) 0%, rgba(13,13,15,0.9) 50%, rgba(13,13,15,0.95) 100%)' }} />
+          <img src={bgImage} alt="" className="h-full w-full object-cover" style={{ opacity: 0.4, filter: 'brightness(0.85) saturate(1.1)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(13,13,15,0.62) 0%, rgba(13,13,15,0.72) 50%, rgba(13,13,15,0.82) 100%)' }} />
         </div>
         <div
           ref={rootRef}
