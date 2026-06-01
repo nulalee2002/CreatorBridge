@@ -12,11 +12,18 @@ export function AuthProvider({ children }) {
     if (!supabaseConfigured) { setLoading(false); return; }
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user.id);
-      else setLoading(false);
-    });
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        setUser(session?.user ?? null);
+        if (session?.user) fetchProfile(session.user.id);
+        else setLoading(false);
+      })
+      .catch(error => {
+        console.warn('CreatorBridge auth session load failed:', error?.message || error);
+        setUser(null);
+        setProfile(null);
+        setLoading(false);
+      });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -29,13 +36,20 @@ export function AuthProvider({ children }) {
   }, []);
 
   async function fetchProfile(userId) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    setProfile(data);
-    setLoading(false);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      if (error) throw error;
+      setProfile(data);
+    } catch (error) {
+      console.warn('CreatorBridge profile load failed:', error?.message || error);
+      setProfile(null);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function signUp({ email, password, fullName, role, captchaToken }) {

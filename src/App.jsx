@@ -510,6 +510,10 @@ export default function App() {
     location.pathname.startsWith('/calculator') ||
     location.pathname.startsWith('/creator/')
   );
+  const accountDestination = authProfile?.role === 'creator' ? '/dashboard' : '/client';
+  const publicAccountLabel = user
+    ? (authProfile?.role === 'creator' ? 'Dashboard' : 'My Profile')
+    : 'Sign In';
 
   // Persist state
   useEffect(() => {
@@ -706,9 +710,9 @@ export default function App() {
 
           {/* Auth buttons */}
           {isPublicHandoffRoute ? (
-            <button type="button" onClick={() => user ? navigate(authProfile?.role === 'creator' ? '/dashboard' : '/client') : openAuth('login')}
+            <button type="button" onClick={() => user ? navigate(accountDestination) : openAuth('login')}
               className="btn-gold">
-              Sign In
+              {publicAccountLabel}
             </button>
           ) : user ? (
             <div className="flex items-center gap-1">
@@ -747,7 +751,7 @@ export default function App() {
               {/* Avatar — clickable, shows photo if available. w-11 h-11 is exactly 44x44px. */}
               <button
                 type="button"
-                onClick={() => navigate(authProfile?.role === 'creator' ? '/dashboard' : '/client')}
+                onClick={() => navigate(accountDestination)}
                 aria-label="Go to my profile"
                 className={`w-8 h-8 md:w-7 md:h-7 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold transition-opacity hover:opacity-80 ${dark ? 'bg-gold-500/20 text-gold-400' : 'bg-gold-100 text-gold-600'}`}
               >

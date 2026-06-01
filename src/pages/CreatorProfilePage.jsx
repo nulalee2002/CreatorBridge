@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { SEO } from '../components/SEO.jsx';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import { SEED_CREATORS } from '../data/seedCreators.js';
 
 const useTweaks = (defaults) => [defaults, () => {}];
@@ -8,6 +9,7 @@ const TweaksPanel = () => null;
 const TweakSection = () => null;
 const TweakRadio = () => null;
 
+const CLIENT_ACCOUNT_PROMPT = 'Create a free client account to contact creators';
 
 // ---------- DATA ----------
 // These are the rich defaults for the Aria Visual Studio sample profile.
@@ -15,6 +17,7 @@ const TweakRadio = () => null;
 // the URL :id param before HandoffCreatorProfile and its children read them.
 let creator = {
   studio: "Aria Visual Studio",
+  userId: null,
   name: "Aria Vasquez",
   city: "Miami, FL",
   years: "7+ yrs",
@@ -106,20 +109,26 @@ const fmt = (n) => "$" + n.toLocaleString();
 // ---------- SUB-COMPONENTS ----------
 
 function Breadcrumb() {
+  const pillarParam = {
+    video: 'video_production',
+    photo: 'photography',
+    post: 'post_production',
+  }[creator.pillar.key] || creator.pillar.key;
+
   return (
     <div className="flex items-center gap-2 text-[11px] text-[var(--text-dim)] mb-6">
       <a href="/" className="hover:text-[var(--text)] transition-colors">Home</a>
       <span className="opacity-40">/</span>
       <a href="/find" className="hover:text-[var(--text)] transition-colors">Find Creators</a>
       <span className="opacity-40">/</span>
-      <a href="/find?pillar=photo" className="hover:text-[var(--text)] transition-colors">{creator.pillar.label}</a>
+      <a href={`/find?pillar=${pillarParam}`} className="hover:text-[var(--text)] transition-colors">{creator.pillar.label}</a>
       <span className="opacity-40">/</span>
-      <span className="text-[var(--text)]">Aria Visual Studio</span>
+      <span className="text-[var(--text)]">{creator.studio}</span>
     </div>
   );
 }
 
-function Hero({ onPlayReel, onJumpBook, layout, saved, setSaved }) {
+function Hero({ onPlayReel, onJumpBook, onMessage, layout, saved, setSaved }) {
   if (layout === "banner") {
     return (
       <section>
@@ -136,14 +145,14 @@ function Hero({ onPlayReel, onJumpBook, layout, saved, setSaved }) {
             </div>
           </div>
         </div>
-        <HeroInfo onJumpBook={onJumpBook} saved={saved} setSaved={setSaved}/>
+        <HeroInfo onJumpBook={onJumpBook} onMessage={onMessage} saved={saved} setSaved={setSaved}/>
       </section>
     );
   }
   return (
     <section className="grid lg:grid-cols-12 gap-8 lg:gap-10 mb-12">
       <div className="lg:col-span-7">
-        <HeroInfo onJumpBook={onJumpBook} saved={saved} setSaved={setSaved}/>
+        <HeroInfo onJumpBook={onJumpBook} onMessage={onMessage} saved={saved} setSaved={setSaved}/>
       </div>
       <div className="lg:col-span-5">
         <div className="relative rounded-2xl overflow-hidden parallax-wrap group cursor-pointer" onClick={onPlayReel}>
@@ -164,7 +173,7 @@ function Hero({ onPlayReel, onJumpBook, layout, saved, setSaved }) {
   );
 }
 
-function HeroInfo({ onJumpBook, saved, setSaved }) {
+function HeroInfo({ onJumpBook, onMessage, saved, setSaved }) {
   return (
     <div className="space-y-5">
       <div className="flex items-start gap-4">
@@ -214,7 +223,7 @@ function HeroInfo({ onJumpBook, saved, setSaved }) {
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           Check availability
         </button>
-        <button className="btn-ghost">
+        <button onClick={onMessage} className="btn-ghost" aria-label={CLIENT_ACCOUNT_PROMPT}>
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
           Message
         </button>
@@ -277,7 +286,7 @@ function ServiceOffers() {
           <Eyebrow>Service offers</Eyebrow>
           <h2 className="text-2xl md:text-3xl serif font-medium leading-tight">{creator.pillar.label} — {creator.specialties.length} specialties.</h2>
         </div>
-        <div className="text-xs text-[var(--text-dim)] max-w-sm">One primary pillar per creator on CreatorBridge. Aria works exclusively within {creator.pillar.label}.</div>
+        <div className="text-xs text-[var(--text-dim)] max-w-sm">One primary pillar per creator on CreatorBridge. {creator.studio} works exclusively within {creator.pillar.label}.</div>
       </div>
       <div className="grid md:grid-cols-3 gap-4">
         {creator.specialties.map((s, i) => (
@@ -609,7 +618,7 @@ function BookingSheet({ open, onClose, selectedPkg }) {
               </div>
               <div className="text-xl serif mb-2">Reservation request sent</div>
               <p className="text-sm text-[var(--text-secondary)] max-w-sm mx-auto mb-6">
-                Aria will reply within ~2 hrs to confirm shoot details. Your 50% retainer of <span className="text-[var(--gold)] font-semibold">{fmt(retainer)}</span> is on hold and will only be charged once both sides confirm.
+                {creator.studio} will reply within ~2 hrs to confirm shoot details. Your 50% retainer of <span className="text-[var(--gold)] font-semibold">{fmt(retainer)}</span> is on hold and will only be charged once both sides confirm.
               </p>
               <button onClick={onClose} className="btn-gold text-xs">Back to profile</button>
             </div>
@@ -663,7 +672,7 @@ function BookingSheet({ open, onClose, selectedPkg }) {
                 className="btn-gold w-full justify-center py-3 text-sm disabled:opacity-40 disabled:cursor-not-allowed">
                 Reserve · hold {fmt(retainer)}
               </button>
-              <p className="text-[10px] text-[var(--text-dim)] text-center">You won't be charged until Aria accepts the booking.</p>
+              <p className="text-[10px] text-[var(--text-dim)] text-center">You won't be charged until {creator.studio} accepts the booking.</p>
             </div>
           )}
         </div>
@@ -728,6 +737,8 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 }/*EDITMODE-END*/;
 
 function HandoffCreatorProfile() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const [selectedPkg, setSelectedPkg] = useState("signature");
   const [reelOpen, setReelOpen] = useState(false);
@@ -751,14 +762,35 @@ function HandoffCreatorProfile() {
     document.body.classList.toggle("accent-bold", t.accent === "bold");
   }, [t.accent]);
 
-  const jumpToBook = () => setBookOpen(true);
+  const contactUnlocked = Boolean(user);
+  const openClientAuth = () => {
+    window.dispatchEvent(new CustomEvent('open-auth', {
+      detail: { tab: 'signup', role: 'client', reason: CLIENT_ACCOUNT_PROMPT },
+    }));
+  };
+  const requireClientContact = (next) => {
+    if (!contactUnlocked) {
+      openClientAuth();
+      return;
+    }
+    next();
+  };
+
+  const jumpToBook = () => requireClientContact(() => setBookOpen(true));
+  const startMessage = () => requireClientContact(() => {
+    if (creator.userId) {
+      navigate(`/messages?with=${creator.userId}`);
+      return;
+    }
+    setBookOpen(true);
+  });
 
   return (
     <>
       <main className={"relative z-10 px-6 lg:px-16 pt-24 " + padScale}>
         <div className="max-w-[1400px] mx-auto">
           <Breadcrumb/>
-          <Hero onPlayReel={() => setReelOpen(true)} onJumpBook={jumpToBook}
+          <Hero onPlayReel={() => setReelOpen(true)} onJumpBook={jumpToBook} onMessage={startMessage}
                 layout={t.heroLayout} saved={saved} setSaved={setSaved}/>
           <StatStrip/>
           <About/>
@@ -825,6 +857,7 @@ function adaptSeedCreator(seed) {
   })();
   return {
     studio: seed.businessName || seed.name,
+    userId: seed.user_id || null,
     name: seed.name,
     city: cityState,
     years: expLabel,
@@ -847,6 +880,26 @@ function adaptSeedCreator(seed) {
     reel: seed.cover || ARIA_CREATOR.reel,
     __lowestRate: lowestRate,
   };
+}
+
+function buildAdaptedPortfolio(adaptedCreator) {
+  const specialties = adaptedCreator.specialties?.length
+    ? adaptedCreator.specialties
+    : [adaptedCreator.pillar.label];
+  const titlePrefix = {
+    video: 'Production study',
+    photo: 'Campaign study',
+    post: 'Post workflow',
+  }[adaptedCreator.pillar.key] || 'Project study';
+
+  return ARIA_PORTFOLIO.map((item, index) => {
+    const cat = specialties[index % specialties.length];
+    return {
+      ...item,
+      cat,
+      title: `${titlePrefix} · ${cat}`,
+    };
+  });
 }
 
 function getCreatorData(id) {
@@ -898,10 +951,10 @@ function getCreatorData(id) {
       items: ['Multi-day production', 'Premium deliverables', 'Up to 4 locations', 'Priority delivery', 'Unlimited revisions', 'Full source deliverables', 'Buyout-eligible rights'],
     },
   ];
-  // Reuse Aria's portfolio and reviews as placeholders — seed creators do not ship with rich portfolio data yet.
+  // Seed creators use placeholder imagery, but labels must match their actual pillar/specialties.
   return {
     creator: adapted,
-    portfolio: ARIA_PORTFOLIO,
+    portfolio: buildAdaptedPortfolio(adapted),
     packages: adaptedPackages,
     reviews: ARIA_REVIEWS,
     verification: adaptedVerification,
