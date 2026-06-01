@@ -1567,8 +1567,12 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
 
   // ── Search mode (default) ──
   return (
-    <div className="w-full">
-      <div className="cb-home-wide mx-auto w-full px-5 sm:px-8 lg:px-14 2xl:px-16 py-10 md:py-14">
+    <div className="relative w-full min-h-screen">
+      <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
+        <img src="/images/creatorbridge/backgrounds/08-sitewide/bg-cinematic-set.jpg" alt="" className="h-full w-full object-cover" style={{ opacity: 0.18, filter: 'brightness(0.7) saturate(1.05)' }} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(13,13,15,0.82) 0%, rgba(13,13,15,0.9) 50%, rgba(13,13,15,0.95) 100%)' }} />
+      </div>
+      <div className="cb-home-wide relative z-0 mx-auto w-full px-5 sm:px-8 lg:px-14 2xl:px-16 py-10 md:py-14">
         <div className="mb-4 flex items-center gap-2 text-[11px] text-charcoal-500">
           <button type="button" onClick={() => navigate('/')} className="transition-colors hover:text-white">Home</button>
           <span className="opacity-40">/</span>

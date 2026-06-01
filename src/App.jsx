@@ -837,7 +837,7 @@ export default function App() {
         <Route path="/join-as-creator" element={<LazyRoute dark={dark}><JoinAsCreator dark={dark} /></LazyRoute>} />
         <Route path="/privacy" element={<LazyRoute dark={dark}><TermsPage dark={dark} /></LazyRoute>} />
         <Route path="/reset-password" element={<LazyRoute dark={dark}><ResetPasswordPage dark={dark} /></LazyRoute>} />
-        <Route path="/calculator" element={<HandoffPage page={handoffPages.rateCalculator} />} />
+        <Route path="/calculator" element={<HandoffPage page={handoffPages.rateCalculator} bgImage="/images/creatorbridge/backgrounds/08-sitewide/bg-audio-workstation.jpg" />} />
       </Routes>
       </main>
 

@@ -62,7 +62,7 @@ function ensureHandoffGlobals() {
   window.CB.pillarByLabel = (label) => window.CB.PILLARS.find((pillar) => pillar.label === label);
 }
 
-export function HandoffPage({ page }) {
+export function HandoffPage({ page, bgImage }) {
   const rootRef = useRef(null);
 
   useEffect(() => {
@@ -75,6 +75,22 @@ export function HandoffPage({ page }) {
     const run = new Function('root', page.script);
     run(root);
   }, [page]);
+
+  if (bgImage) {
+    return (
+      <div className="relative min-h-screen">
+        <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
+          <img src={bgImage} alt="" className="h-full w-full object-cover" style={{ opacity: 0.18, filter: 'brightness(0.7) saturate(1.05)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(13,13,15,0.82) 0%, rgba(13,13,15,0.9) 50%, rgba(13,13,15,0.95) 100%)' }} />
+        </div>
+        <div
+          ref={rootRef}
+          className="cb-handoff-page relative z-0"
+          dangerouslySetInnerHTML={{ __html: page.html }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div

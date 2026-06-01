@@ -851,6 +851,10 @@ export function NetworkingPage({ dark, user, profile }) {
 
   return (
     <div className="min-h-screen text-[var(--text)] relative z-10 pb-20">
+      <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
+        <img src="/images/creatorbridge/backgrounds/08-sitewide/bg-urban-creative.jpg" alt="" className="h-full w-full object-cover" style={{ opacity: 0.18, filter: 'brightness(0.7) saturate(1.05)' }} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(13,13,15,0.82) 0%, rgba(13,13,15,0.9) 50%, rgba(13,13,15,0.95) 100%)' }} />
+      </div>
       <div className="cb-home-wide mx-auto w-full px-5 sm:px-8 lg:px-14 2xl:px-16 pt-24">
         
         {/* ===== BREADCRUMB + PAGE HEADER ===== */}
