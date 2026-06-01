@@ -852,7 +852,7 @@ export function NetworkingPage({ dark, user, profile }) {
   return (
     <div className="min-h-screen text-[var(--text)] relative z-10 pb-20">
       <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
-        <img src="/images/creatorbridge/backgrounds/08-sitewide/bg-urban-creative.jpg" alt="" className="h-full w-full object-cover" style={{ opacity: 0.18, filter: 'brightness(0.7) saturate(1.05)' }} />
+        <img src="/images/creatorbridge/backgrounds/06-page-headers/header-network-crew-monitor.jpg" alt="" className="h-full w-full object-cover" style={{ opacity: 0.18, filter: 'brightness(0.7) saturate(1.05)' }} />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(13,13,15,0.82) 0%, rgba(13,13,15,0.9) 50%, rgba(13,13,15,0.95) 100%)' }} />
       </div>
       <div className="cb-home-wide mx-auto w-full px-5 sm:px-8 lg:px-14 2xl:px-16 pt-24">
@@ -866,7 +866,7 @@ export function NetworkingPage({ dark, user, profile }) {
           </div>
           
           <div className="relative overflow-hidden rounded-3xl border border-white/[0.08]">
-          <img src="/images/creatorbridge/backgrounds/02-pillars/pillar-photo-studio-subjects.jpg" alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover" style={{ opacity: 0.5, filter: 'brightness(0.78) saturate(1.05)' }} loading="lazy" />
+          <img src="/images/creatorbridge/backgrounds/06-page-headers/header-network-warehouse-crew.jpg" alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover" style={{ opacity: 0.5, filter: 'brightness(0.78) saturate(1.05)' }} loading="lazy" />
           <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(13,13,15,0.92) 0%, rgba(13,13,15,0.78) 45%, rgba(13,13,15,0.5) 100%)' }} />
           <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(13,13,15,0.15) 0%, rgba(13,13,15,0.08) 55%, rgba(13,13,15,0.55) 100%)' }} />
           <div className="relative z-10 grid lg:grid-cols-12 gap-8 items-end p-6 md:p-10">
