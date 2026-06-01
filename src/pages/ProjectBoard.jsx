@@ -1142,7 +1142,7 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
     <div className="w-full space-y-5 text-sans">
       {/* Cover Banner */}
       <div className="relative h-32 rounded-xl overflow-hidden">
-        <img src={coverImage} alt="" className="w-full h-full object-cover" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/fallback-default-cover.jpg'; } }} />
+        <img src={coverImage} alt="" className="w-full h-full object-cover" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg'; } }} />
         <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950 via-charcoal-950/40 to-transparent" />
         <span className={`absolute bottom-3 left-3 text-[10px] font-bold px-2 py-1 rounded-full ${statusBadgeClass(localProject.status, dark)}`}>
           {PROJECT_STATUSES[localProject.status]?.label || 'Open'}
@@ -1645,7 +1645,7 @@ export function ProjectBoard({ dark }) {
       ...(isCreator ? [{ id: 'my_applications', label: `Applied (${myApplications.length})` }] : []),
     ] : []),
   ];
-  const projectBoardImage = '/images/creatorbridge/backgrounds/fallback-default-cover.jpg';
+  const projectBoardImage = '/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg';
 
   useEffect(() => {
     if (displayProjects.length > 0) {
@@ -1702,7 +1702,7 @@ export function ProjectBoard({ dark }) {
             </div>
             
             <div className={`relative hidden min-h-[230px] overflow-hidden rounded-2xl border lg:block ${dark ? 'border-gold-500/18 bg-charcoal-950/70' : 'border-gray-200 bg-gray-50'}`}>
-              <img src={projectBoardImage} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/hero-landing-camera-dolly-alt.jpg'; } }} />
+              <img src={projectBoardImage} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/01-hero/hero-landing-camera-dolly-alt.jpg'; } }} />
               <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950/78 via-charcoal-950/25 to-charcoal-950/8" />
               <div className="absolute bottom-0 left-0 right-0 p-5">
                 <p className="text-gold-300 mb-2" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
