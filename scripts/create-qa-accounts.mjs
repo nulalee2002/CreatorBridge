@@ -38,13 +38,13 @@ const admin = createClient(supabaseUrl, serviceRoleKey, {
 const accounts = {
   creator: {
     email: 'drl33+creator@creatorbridge.studio',
-    password: password('Creator'),
+    password: env.CREATORBRIDGE_QA_CREATOR_PASSWORD || env.QA_CREATOR_PASS || password('Creator'),
     fullName: 'Marcus Reed',
     role: 'creator',
   },
   client: {
     email: 'drl33+client@creatorbridge.studio',
-    password: password('Client'),
+    password: env.CREATORBRIDGE_QA_CLIENT_PASSWORD || env.QA_CLIENT_PASS || password('Client'),
     fullName: 'Avery Thompson',
     role: 'client',
   },
@@ -261,7 +261,7 @@ for (const [kind, account] of Object.entries(accounts)) {
   await upsertProfile(user, account);
   output[kind] = {
     email: account.email,
-    password: account.password,
+    passwordConfigured: Boolean(account.password),
     userId: user.id,
   };
   if (kind === 'client') await upsertClient(user);

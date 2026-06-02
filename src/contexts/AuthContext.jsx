@@ -78,7 +78,12 @@ export function AuthProvider({ children }) {
   }
 
   async function signOut() {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) return { error };
+    setUser(null);
+    setProfile(null);
+    setLoading(false);
+    return { error: null };
   }
 
   async function signInWithGoogle() {
