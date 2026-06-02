@@ -95,7 +95,7 @@ const SCROLL_PROGRESS_ROUTES = [
 
 function getRouteBackdrop(pathname) {
   if (pathname === '/') return '/images/creatorbridge/backgrounds/01-hero/hero-landing-camera-rig.jpg';
-  if (pathname.startsWith('/calculator')) return '/images/creatorbridge/backgrounds/08-sitewide/bg-audio-workstation.jpg';
+  if (pathname.startsWith('/calculator') || pathname.startsWith('/rate-calculator')) return '/images/creatorbridge/backgrounds/08-sitewide/bg-audio-workstation.jpg';
   if (pathname.startsWith('/find') || pathname.startsWith('/register')) return '/images/creatorbridge/backgrounds/06-page-headers/header-findcreators-onset-crew.jpg';
   if (pathname.startsWith('/projects')) return '/images/creatorbridge/backgrounds/06-page-headers/projectboard-crew-at-console.jpg';
   if (pathname.startsWith('/network')) return '/images/creatorbridge/backgrounds/03-featured-work/featured-documentary-rooftop-crew.jpg';
