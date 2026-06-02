@@ -1570,7 +1570,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
     <div className="relative w-full min-h-screen">
       <div className="cb-home-wide relative z-0 mx-auto w-full px-5 sm:px-8 lg:px-14 2xl:px-16 py-10 md:py-14">
         <div className="mb-4 flex items-center gap-2 text-[11px] text-charcoal-500">
-          <button type="button" onClick={() => navigate('/')} className="transition-colors hover:text-white">Home</button>
+          <button type="button" onClick={() => navigate('/')} className="inline-flex min-h-[34px] items-center transition-colors hover:text-white">Home</button>
           <span className="opacity-40">/</span>
           <span className="text-charcoal-200">Find Creators</span>
         </div>

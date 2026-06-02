@@ -194,7 +194,7 @@ function linkifyText(text) {
   const parts = text.split(urlRegex);
   return parts.map((part, i) =>
     urlRegex.test(part)
-      ? <a key={i} href={part} target="_blank" rel="noreferrer" className="text-gold-400 underline break-all">{part}</a>
+      ? <a key={i} href={part} target="_blank" rel="noreferrer" className="inline-flex min-h-[34px] items-center text-gold-400 underline break-all">{part}</a>
       : part
   );
 }
@@ -856,7 +856,7 @@ export function NetworkingPage({ dark, user, profile }) {
         {/* ===== BREADCRUMB + PAGE HEADER ===== */}
         <div className="mb-8">
           <div className="flex items-center gap-2 text-[11px] text-[var(--text-dim)] mb-4">
-            <a href="/" className="hover:text-[var(--text)] transition-colors">Home</a>
+            <a href="/" className="inline-flex min-h-[34px] items-center hover:text-[var(--text)] transition-colors">Home</a>
             <span className="opacity-40">/</span>
             <span className="text-[var(--text)] font-medium">Creator Network</span>
           </div>

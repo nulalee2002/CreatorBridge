@@ -469,7 +469,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
                             <div className="relative">
                               <Lock size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${dark ? 'text-charcoal-300' : 'text-gray-400'}`} />
                               <input type={showPass ? 'text' : 'password'} placeholder="Password" required
-                                minLength={6} value={form.password}
+                                minLength={10} title="Password must be at least 10 characters." value={form.password}
                                 onChange={e => set('password', e.target.value)}
                                 className={`${inputCls} pl-10 pr-10`} />
                               <button type="button" onClick={() => setShowPass(s => !s)}
@@ -508,7 +508,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
                                   type="checkbox"
                                   checked={form.tosAccepted}
                                   onChange={e => set('tosAccepted', e.target.checked)}
-                                  className="mt-0.5 accent-gold-500 shrink-0"
+                                  className="mt-0.5 h-5 w-5 accent-gold-500 shrink-0"
                                 />
                                 <span className={`text-[11px] leading-snug ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
                                   I agree to the{' '}

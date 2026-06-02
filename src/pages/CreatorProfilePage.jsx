@@ -117,7 +117,7 @@ function Breadcrumb() {
 
   return (
     <div className="flex items-center gap-2 text-[11px] text-[var(--text-dim)] mb-6">
-      <a href="/" className="hover:text-[var(--text)] transition-colors">Home</a>
+      <a href="/" className="inline-flex min-h-[34px] items-center hover:text-[var(--text)] transition-colors">Home</a>
       <span className="opacity-40">/</span>
       <a href="/find" className="hover:text-[var(--text)] transition-colors">Find Creators</a>
       <span className="opacity-40">/</span>

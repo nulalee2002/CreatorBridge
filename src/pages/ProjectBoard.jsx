@@ -1687,7 +1687,7 @@ export function ProjectBoard({ dark }) {
             <div className="flex flex-col justify-between gap-6">
               <div>
                 <p className={`mb-5 text-xs ${textSub}`}>
-                  <button type="button" onClick={() => navigate('/')} className="hover:text-gold-300 transition-colors">Home</button>
+                  <button type="button" onClick={() => navigate('/')} className="inline-flex min-h-[34px] items-center hover:text-gold-300 transition-colors">Home</button>
                   <span className="mx-2 text-gold-500/70">/</span>
                   <span className={dark ? 'text-white' : 'text-gray-900'}>Project Board</span>
                 </p>

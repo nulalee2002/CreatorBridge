@@ -68,7 +68,7 @@ export function TermsPage({ dark }) {
               <nav className="space-y-1">
                 {SECTIONS.map(s => (
                   <a key={s.id} href={`#${s.id}`}
-                    className={`block text-xs py-1 transition-colors hover:text-gold-400 ${textSub}`}>
+                    className={`flex min-h-[34px] items-center text-xs py-1 transition-colors hover:text-gold-400 ${textSub}`}>
                     {s.title}
                   </a>
                 ))}

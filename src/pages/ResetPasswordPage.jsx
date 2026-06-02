@@ -33,7 +33,7 @@ export function ResetPasswordPage({ dark }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
-    if (password.length < 6) { setError('Password must be at least 6 characters.'); return; }
+    if (password.length < 10) { setError('Password must be at least 10 characters.'); return; }
     if (password !== confirm) { setError('Passwords do not match.'); return; }
     setLoading(true);
     const { error: updateError } = await supabase.auth.updateUser({ password });
@@ -85,7 +85,7 @@ export function ResetPasswordPage({ dark }) {
               <div>
                 <p className={`text-sm font-bold mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>Set a new password</p>
                 <p className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
-                  Choose something strong. At least 6 characters.
+                  Choose something strong. At least 10 characters.
                 </p>
               </div>
 
@@ -95,7 +95,7 @@ export function ResetPasswordPage({ dark }) {
                   type={showPass ? 'text' : 'password'}
                   placeholder="New password"
                   required
-                  minLength={6}
+                  minLength={10}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   className={`${inputCls} pl-10 pr-10`}
@@ -113,7 +113,7 @@ export function ResetPasswordPage({ dark }) {
                   type={showPass ? 'text' : 'password'}
                   placeholder="Confirm new password"
                   required
-                  minLength={6}
+                  minLength={10}
                   value={confirm}
                   onChange={e => setConfirm(e.target.value)}
                   className={`${inputCls} pl-10`}
