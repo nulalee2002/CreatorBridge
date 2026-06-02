@@ -7,7 +7,7 @@ import { BrandMark } from '../BrandLogo.jsx';
 import { sendNotificationEmail } from '../../lib/notifications.js';
 
 export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = 'client', onOpenTerms, onOpenCreatorRegistration }) {
-  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { signIn, signUp, signInWithGoogle, profile: authProfile } = useAuth();
   const [tab, setTab]           = useState(defaultTab); // 'login' | 'signup'
   const [role, setRole]         = useState(defaultRole); // 'creator' | 'client'
   const [showPass, setShowPass] = useState(false);
@@ -175,9 +175,18 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
         setLoading(false);
         return;
       }
-      
-      // Trigger welcome client email
-      if (role === 'client') {
+      const acceptedRole = authProfile?.role
+        || (await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle()
+        ).data?.role
+        || user.user_metadata?.role
+        || role;
+
+      // Trigger client welcome email only for confirmed client accounts.
+      if (acceptedRole === 'client') {
         sendNotificationEmail(user.email, 'welcome_client', {
           client_name: form.fullName || user.user_metadata?.full_name || 'Client'
         });

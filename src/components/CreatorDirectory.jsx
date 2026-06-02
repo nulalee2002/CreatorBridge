@@ -221,7 +221,7 @@ function CreatorCard({ creator, dark, onDelete, onViewProfile }) {
           <button 
             type="button" 
             onClick={toggleFav}
-            className={`p-1.5 rounded-lg transition-all shrink-0 ${isFav ? 'text-red-400' : dark ? 'text-charcoal-600 hover:text-red-400' : 'text-gray-300 hover:text-red-400'}`}
+            className={`inline-flex min-h-[34px] min-w-[34px] items-center justify-center rounded-lg transition-all shrink-0 ${isFav ? 'text-red-400' : dark ? 'text-charcoal-600 hover:text-red-400' : 'text-gray-300 hover:text-red-400'}`}
             title={isFav ? 'Remove from favorites' : 'Save to favorites'}
           >
             <Heart size={14} className={isFav ? 'fill-current' : ''} />
@@ -1600,7 +1600,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search by name, studio, specialty, city"
-                className="min-w-0 flex-1 bg-transparent py-2 text-sm text-white outline-none placeholder:text-charcoal-500"
+                className="min-h-[34px] min-w-0 flex-1 bg-transparent py-2 text-sm text-white outline-none placeholder:text-charcoal-500"
               />
               {searchQuery && (
                 <button
@@ -1612,7 +1612,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                   <X size={15} />
                 </button>
               )}
-              <button type="button" className="btn-gold text-[11px]" style={{ padding: '0.5rem 1rem' }}>
+              <button type="button" className="btn-gold text-[11px]" style={{ minHeight: '34px', padding: '0.5rem 1rem' }}>
                 Search
               </button>
             </div>
@@ -1625,14 +1625,14 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                 value={zip} 
                 onChange={e => setZip(e.target.value.replace(/\D/g,''))}
                 placeholder="ZIP Code..."
-                className="w-32 rounded-xl border border-white/[0.08] bg-charcoal-950/70 py-2 pl-9 pr-3 text-xs text-white outline-none placeholder-charcoal-500 focus:border-gold-500" 
+                className="min-h-[34px] w-32 rounded-xl border border-white/[0.08] bg-charcoal-950/70 py-2 pl-9 pr-3 text-xs text-white outline-none placeholder-charcoal-500 focus:border-gold-500" 
               />
             </div>
             
             <select 
               value={sortBy} 
               onChange={e => setSortBy(e.target.value)}
-              className="rounded-xl border border-white/[0.08] bg-charcoal-950/70 px-3 py-2 text-xs text-white outline-none focus:border-gold-500"
+              className="min-h-[34px] rounded-xl border border-white/[0.08] bg-charcoal-950/70 px-3 py-2 text-xs text-white outline-none focus:border-gold-500"
             >
               <option value="rating">Top Rated</option>
               <option value="reviews">Most Reviews</option>
@@ -1682,7 +1682,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
                   setAvailFilter('all');
                   setZip('');
                 }}
-                className="text-[10px] uppercase tracking-wider text-charcoal-500 transition-colors hover:text-gold-400"
+                className="inline-flex min-h-[34px] items-center text-[10px] uppercase tracking-wider text-charcoal-500 transition-colors hover:text-gold-400"
               >
                 Reset
               </button>

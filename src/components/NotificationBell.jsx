@@ -76,7 +76,7 @@ export function NotificationBell({ user, dark, navigate }) {
         type="button"
         onClick={() => { setOpen(value => !value); if (!open) loadNotifications(); }}
         aria-label={`Notifications${unread ? `, ${unread} unread` : ''}`}
-        className={`relative p-3 md:p-2 rounded-xl transition-colors ${
+        className={`relative inline-flex min-h-[34px] min-w-[34px] items-center justify-center p-2 rounded-xl transition-colors ${
           dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
         }`}
       >

@@ -5,9 +5,9 @@ const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPA
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const CLIENT_EMAIL = process.env.CREATORBRIDGE_QA_CLIENT_EMAIL || 'drl33+client@creatorbridge.studio';
-const CLIENT_PASSWORD = process.env.CREATORBRIDGE_QA_CLIENT_PASSWORD || 'CB-Client-L8pN43sX!26';
+const CLIENT_PASSWORD = process.env.CREATORBRIDGE_QA_CLIENT_PASSWORD;
 const CREATOR_EMAIL = process.env.CREATORBRIDGE_QA_CREATOR_EMAIL || 'drl33+creator@creatorbridge.studio';
-const CREATOR_PASSWORD = process.env.CREATORBRIDGE_QA_CREATOR_PASSWORD || 'CB-Creator-K7mQ92rV!26';
+const CREATOR_PASSWORD = process.env.CREATORBRIDGE_QA_CREATOR_PASSWORD;
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -16,6 +16,8 @@ function assert(condition, message) {
 assert(SUPABASE_URL, 'Missing VITE_SUPABASE_URL or SUPABASE_URL');
 assert(SUPABASE_ANON_KEY, 'Missing VITE_SUPABASE_ANON_KEY or SUPABASE_ANON_KEY');
 assert(SUPABASE_SERVICE_ROLE_KEY, 'Missing SUPABASE_SERVICE_ROLE_KEY');
+assert(CLIENT_PASSWORD, 'Missing CREATORBRIDGE_QA_CLIENT_PASSWORD in local .env or environment');
+assert(CREATOR_PASSWORD, 'Missing CREATORBRIDGE_QA_CREATOR_PASSWORD in local .env or environment');
 
 function makeAnonClient() {
   return createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {

@@ -421,7 +421,7 @@ function PostCard({ post, dark, isVerified, onLike, onReport, onReply }) {
         </div>
         <button
           onClick={() => onReport && onReport(post.id)}
-          className="text-[var(--text-dim)] hover:text-[var(--gold)] transition-colors"
+          className="inline-flex min-h-[34px] min-w-[34px] items-center justify-center text-[var(--text-dim)] hover:text-[var(--gold)] transition-colors"
           title="Report post"
         >
           <Flag size={14} />
@@ -435,19 +435,19 @@ function PostCard({ post, dark, isVerified, onLike, onReport, onReply }) {
       <div className="flex items-center gap-4 text-[11px] text-[var(--text-dim)] pt-3 border-t border-[var(--border)]">
         <button
           onClick={() => handleLike()}
-          className={`flex items-center gap-1.5 transition-colors ${liked ? 'text-red-400 animate-pulse' : 'hover:text-[var(--gold)]'}`}
+          className={`flex min-h-[34px] items-center gap-1.5 transition-colors ${liked ? 'text-red-400 animate-pulse' : 'hover:text-[var(--gold)]'}`}
         >
           <Heart size={14} className={liked ? 'fill-current' : ''} /> {localLikes} Likes
         </button>
         <button
           onClick={() => setShowReplies(v => !v)}
-          className="flex items-center gap-1.5 hover:text-[var(--gold)] transition-colors"
+          className="flex min-h-[34px] items-center gap-1.5 hover:text-[var(--gold)] transition-colors"
         >
           <MessageSquare size={14} /> {visibleReplyCount} replies
         </button>
         <button
           onClick={() => setShowReplies(v => !v)}
-          className="flex items-center gap-1.5 hover:text-[var(--gold)] transition-colors ml-auto font-medium"
+          className="flex min-h-[34px] items-center gap-1.5 hover:text-[var(--gold)] transition-colors ml-auto font-medium"
         >
           Reply <span className="text-[10px] ml-0.5">→</span>
         </button>
@@ -472,7 +472,7 @@ function PostCard({ post, dark, isVerified, onLike, onReport, onReply }) {
                 placeholder="Write a reply..."
                 className="flex-1 text-xs rounded-lg px-3 py-1.5 border outline-none focus:border-gold-500 bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500"
               />
-              <button type="submit" className="text-xs px-3 py-1.5 rounded-lg bg-gold-500 hover:bg-gold-600 text-charcoal-900 font-bold transition-all">
+              <button type="submit" className="min-h-[34px] text-xs px-3 py-1.5 rounded-lg bg-gold-500 hover:bg-gold-600 text-charcoal-900 font-bold transition-all">
                 Reply
               </button>
             </form>
@@ -953,7 +953,7 @@ export function NetworkingPage({ dark, user, profile }) {
           <div className="flex gap-2">
             <button
               onClick={scrollToPostComposer}
-              className="btn-ghost text-xs cursor-pointer"
+              className="btn-ghost min-h-[34px] text-xs cursor-pointer"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 5h14M5 12h14M5 19h14"/>
@@ -962,7 +962,7 @@ export function NetworkingPage({ dark, user, profile }) {
             </button>
             <button
               onClick={focusChatInput}
-              className="btn-gold text-xs cursor-pointer"
+              className="btn-gold min-h-[34px] text-xs cursor-pointer"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -1128,25 +1128,25 @@ export function NetworkingPage({ dark, user, profile }) {
               <div className="flex gap-1 px-4 py-3 border-b border-[var(--border)] flex-wrap bg-charcoal-950/20">
                 <button
                   onClick={() => setSelectedChannel('general')}
-                  className={`chat-channel cursor-pointer ${selectedChannel === 'general' ? 'active' : ''}`}
+                  className={`chat-channel min-h-[34px] cursor-pointer ${selectedChannel === 'general' ? 'active' : ''}`}
                 >
                   <span className="hash mr-0.5 font-serif font-medium text-[13px]">#</span>general
                 </button>
                 <button
                   onClick={() => setSelectedChannel('referrals')}
-                  className={`chat-channel cursor-pointer ${selectedChannel === 'referrals' ? 'active' : ''}`}
+                  className={`chat-channel min-h-[34px] cursor-pointer ${selectedChannel === 'referrals' ? 'active' : ''}`}
                 >
                   <span className="hash mr-0.5 font-serif font-medium text-[13px]">#</span>referrals
                 </button>
                 <button
                   onClick={() => setSelectedChannel('gear')}
-                  className={`chat-channel cursor-pointer ${selectedChannel === 'gear' ? 'active' : ''}`}
+                  className={`chat-channel min-h-[34px] cursor-pointer ${selectedChannel === 'gear' ? 'active' : ''}`}
                 >
                   <span className="hash mr-0.5 font-serif font-medium text-[13px]">#</span>gear-swap
                 </button>
                 <button
                   onClick={() => setSelectedChannel('leads')}
-                  className={`chat-channel cursor-pointer ${selectedChannel === 'leads' ? 'active' : ''}`}
+                  className={`chat-channel min-h-[34px] cursor-pointer ${selectedChannel === 'leads' ? 'active' : ''}`}
                 >
                   <span className="hash mr-0.5 font-serif font-medium text-[13px]">#</span>gig-leads
                 </button>

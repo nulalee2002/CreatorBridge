@@ -1735,7 +1735,7 @@ export function ProjectBoard({ dark }) {
           <div className={`flex gap-1 p-1 rounded-2xl border w-fit max-w-full overflow-x-auto ${dark ? 'bg-charcoal-950/60 border-white/[0.07]' : 'bg-gray-100 border-gray-200'}`}>
             {tabs.map(({ id, label }) => (
               <button key={id} type="button" onClick={() => setTab(id)}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                className={`min-h-[34px] px-4 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
                   tab === id ? 'bg-gold-500 text-charcoal-900' : dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-500 hover:text-gray-900'
                 }`}>
                 {label}
@@ -1748,7 +1748,7 @@ export function ProjectBoard({ dark }) {
               <Search size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${textSub}`} />
               <input type="text" value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Search briefs..."
-                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border outline-none bg-charcoal-900 text-white placeholder-charcoal-500 border-white/[0.08] focus:border-gold-500" />
+                className="min-h-[34px] w-full pl-9 pr-3 py-2 text-xs rounded-xl border outline-none bg-charcoal-900 text-white placeholder-charcoal-500 border-white/[0.08] focus:border-gold-500" />
             </div>
           )}
         </div>

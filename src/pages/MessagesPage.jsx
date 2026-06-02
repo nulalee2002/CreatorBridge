@@ -658,7 +658,7 @@ export function MessagesPage({ dark }) {
                 <div className="flex items-center justify-between mb-3">
                   <h2 className={`font-display font-bold text-base ${dark ? 'text-white' : 'text-gray-900'}`}>Messages</h2>
                   <button type="button" onClick={() => setShowNew(true)}
-                    className="p-1.5 rounded-lg bg-gold-500 hover:bg-gold-600 text-charcoal-900 transition-all">
+                    className="inline-flex min-h-[34px] min-w-[34px] items-center justify-center rounded-lg bg-gold-500 text-charcoal-900 transition-all hover:bg-gold-600">
                     <MessageSquare size={13} />
                   </button>
                 </div>
@@ -666,7 +666,7 @@ export function MessagesPage({ dark }) {
                   <Search size={12} className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${textSub}`} />
                   <input type="text" value={search} onChange={e => setSearch(e.target.value)}
                     placeholder="Search conversations..."
-                    className={`w-full pl-8 pr-3 py-2 text-xs rounded-xl border outline-none transition-all ${
+                    className={`w-full min-h-[34px] pl-8 pr-3 py-2 text-xs rounded-xl border outline-none transition-all ${
                       dark ? 'bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
                            : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
                     }`} />
@@ -683,7 +683,7 @@ export function MessagesPage({ dark }) {
                     <p className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>No conversations yet</p>
                     <p className="mx-auto mt-1 max-w-[13rem] text-xs leading-5">Start a thread from a creator profile, project, or quote request.</p>
                     <button type="button" onClick={() => setShowNew(true)}
-                      className="mt-4 rounded-xl bg-gold-500 px-4 py-2 text-xs font-bold text-charcoal-900 hover:bg-gold-600 transition-colors">
+                      className="mt-4 min-h-[34px] rounded-xl bg-gold-500 px-4 py-2 text-xs font-bold text-charcoal-900 hover:bg-gold-600 transition-colors">
                       New Message
                     </button>
                   </div>
@@ -709,7 +709,7 @@ export function MessagesPage({ dark }) {
                   <p className="text-sm font-medium">Select a conversation</p>
                   <p className="text-xs mt-1 opacity-70">or start a new one</p>
                   <button type="button" onClick={() => setShowNew(true)}
-                    className="mt-4 px-4 py-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-xs font-bold transition-all">
+                    className="mt-4 min-h-[34px] px-4 py-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-xs font-bold transition-all">
                     New Message
                   </button>
                 </div>

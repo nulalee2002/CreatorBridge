@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 const CLIENT_EMAIL = process.env.CREATORBRIDGE_QA_CLIENT_EMAIL || 'drl33+client@creatorbridge.studio';
-const CLIENT_PASSWORD = process.env.CREATORBRIDGE_QA_CLIENT_PASSWORD || 'CB-Client-L8pN43sX!26';
+const CLIENT_PASSWORD = process.env.CREATORBRIDGE_QA_CLIENT_PASSWORD;
 const TEST_RECIPIENT = process.env.CREATORBRIDGE_EMAIL_TEST_TO || CLIENT_EMAIL;
 
 function assert(condition, message) {
@@ -12,6 +12,7 @@ function assert(condition, message) {
 
 assert(SUPABASE_URL, 'Missing VITE_SUPABASE_URL or SUPABASE_URL');
 assert(SUPABASE_ANON_KEY, 'Missing VITE_SUPABASE_ANON_KEY or SUPABASE_ANON_KEY');
+assert(CLIENT_PASSWORD, 'Missing CREATORBRIDGE_QA_CLIENT_PASSWORD in local .env or environment');
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({

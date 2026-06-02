@@ -827,7 +827,7 @@ select.input { appearance:none; padding-right:2rem;
   }
   .btn-gold,
   .btn-ghost {
-    min-height:32px;
+    min-height:34px;
     padding:0.42rem 0.7rem;
     font-size:0.64rem;
   }

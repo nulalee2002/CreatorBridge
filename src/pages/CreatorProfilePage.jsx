@@ -119,9 +119,9 @@ function Breadcrumb() {
     <div className="flex items-center gap-2 text-[11px] text-[var(--text-dim)] mb-6">
       <a href="/" className="inline-flex min-h-[34px] items-center hover:text-[var(--text)] transition-colors">Home</a>
       <span className="opacity-40">/</span>
-      <a href="/find" className="hover:text-[var(--text)] transition-colors">Find Creators</a>
+      <a href="/find" className="inline-flex min-h-[34px] items-center hover:text-[var(--text)] transition-colors">Find Creators</a>
       <span className="opacity-40">/</span>
-      <a href={`/find?pillar=${pillarParam}`} className="hover:text-[var(--text)] transition-colors">{creator.pillar.label}</a>
+      <a href={`/find?pillar=${pillarParam}`} className="inline-flex min-h-[34px] items-center hover:text-[var(--text)] transition-colors">{creator.pillar.label}</a>
       <span className="opacity-40">/</span>
       <span className="text-[var(--text)]">{creator.studio}</span>
     </div>
@@ -219,15 +219,15 @@ function HeroInfo({ onJumpBook, onMessage, saved, setSaved }) {
       </div>
 
       <div className="flex flex-wrap gap-2 pt-2">
-        <button onClick={onJumpBook} className="btn-gold">
+        <button onClick={onJumpBook} className="btn-gold min-h-[34px]">
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           Check availability
         </button>
-        <button onClick={onMessage} className="btn-ghost" aria-label={CLIENT_ACCOUNT_PROMPT}>
+        <button onClick={onMessage} className="btn-ghost min-h-[34px]" aria-label={CLIENT_ACCOUNT_PROMPT}>
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
           Message
         </button>
-        <button onClick={() => setSaved(!saved)} className="btn-ghost" style={saved ? { borderColor: 'var(--gold)', color: 'var(--gold)', background: 'var(--gold-dim)' } : {}}>
+        <button onClick={() => setSaved(!saved)} className="btn-ghost min-h-[34px]" style={saved ? { borderColor: 'var(--gold)', color: 'var(--gold)', background: 'var(--gold-dim)' } : {}}>
           <svg className="w-3.5 h-3.5" fill={saved ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
           {saved ? "Saved" : "Save"}
         </button>
@@ -437,7 +437,7 @@ function Packages({ selected, setSelected, style, onBook }) {
                     <div className="text-2xl serif gold-text leading-none">{fmt(p.price)}</div>
                   </div>
                   <button onClick={(e) => { e.stopPropagation(); setSelected(p.id); onBook(); }}
-                    className={isSel ? "btn-gold text-[11px]" : "btn-ghost text-[11px]"}>
+                    className={isSel ? "btn-gold min-h-[34px] text-[11px]" : "btn-ghost min-h-[34px] text-[11px]"}>
                     {isSel ? "Continue" : "Select"}
                   </button>
                 </div>
@@ -482,7 +482,7 @@ function Packages({ selected, setSelected, style, onBook }) {
                 ))}
               </ul>
               <button onClick={(e) => { e.stopPropagation(); setSelected(p.id); onBook(); }}
-                className={"w-full justify-center " + (isSel ? "btn-gold text-xs" : "btn-ghost text-xs")}>
+                className={"w-full min-h-[34px] justify-center " + (isSel ? "btn-gold text-xs" : "btn-ghost text-xs")}>
                 {isSel ? "Continue with " + p.name : "Select " + p.name}
               </button>
             </div>
@@ -503,7 +503,7 @@ function Reviews() {
           <Eyebrow>Client reviews</Eyebrow>
           <h2 className="text-2xl md:text-3xl serif font-medium leading-tight">{creator.rating} · {creator.reviews} verified reviews</h2>
         </div>
-        <button onClick={() => setShowAll(!showAll)} className="btn-ghost text-[11px]">
+        <button onClick={() => setShowAll(!showAll)} className="btn-ghost min-h-[34px] text-[11px]">
           {showAll ? "Show fewer" : "Show all"}
         </button>
       </div>
@@ -552,7 +552,7 @@ function ReelModal({ open, onClose }) {
             <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--gold)] mb-1">Featured Reel · 02:14</div>
             <div className="text-base serif">2024–25 selected work · {creator.studio}</div>
           </div>
-          <button className="btn-ghost text-xs">Share</button>
+          <button className="btn-ghost min-h-[34px] text-xs">Share</button>
         </div>
       </div>
     </div>
@@ -574,8 +574,8 @@ function LightboxModal({ item, onClose }) {
             Selected frame from a recent {item.cat.toLowerCase()} production. Full case studies available after booking.
           </p>
           <div className="mt-auto flex items-center justify-between pt-4 border-t border-[var(--border)]">
-            <button onClick={onClose} className="btn-ghost text-xs">Close</button>
-            <button className="btn-gold text-xs">Book similar</button>
+            <button onClick={onClose} className="btn-ghost min-h-[34px] text-xs">Close</button>
+            <button className="btn-gold min-h-[34px] text-xs">Book similar</button>
           </div>
         </div>
       </div>
@@ -620,7 +620,7 @@ function BookingSheet({ open, onClose, selectedPkg }) {
               <p className="text-sm text-[var(--text-secondary)] max-w-sm mx-auto mb-6">
                 {creator.studio} will reply within ~2 hrs to confirm shoot details. Your 50% retainer of <span className="text-[var(--gold)] font-semibold">{fmt(retainer)}</span> is on hold and will only be charged once both sides confirm.
               </p>
-              <button onClick={onClose} className="btn-gold text-xs">Back to profile</button>
+              <button onClick={onClose} className="btn-gold min-h-[34px] text-xs">Back to profile</button>
             </div>
           ) : (
             <div className="space-y-5">
@@ -722,7 +722,7 @@ function StickyBook({ selectedPkg, onBook, show }) {
         <div>50% held in escrow</div>
         <div className="text-[var(--gold)]">{fmt(Math.round(pkg.price * 1.05 / 2))} due now</div>
       </div>
-      <button onClick={onBook} className="btn-gold text-xs">Reserve</button>
+      <button onClick={onBook} className="btn-gold min-h-[34px] text-xs">Reserve</button>
     </div>
   );
 }

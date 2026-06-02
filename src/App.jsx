@@ -787,7 +787,7 @@ export default function App() {
               <NotificationBell user={user} dark={dark} navigate={navigate} />
               <button type="button" onClick={() => navigate('/messages')}
                 aria-label="Messages"
-                className={`p-2 rounded-xl transition-colors ${
+                className={`inline-flex min-h-[34px] min-w-[34px] items-center justify-center p-2 rounded-xl transition-colors ${
                   activeTab === 'messages'
                     ? 'bg-gold-500/20 text-gold-400'
                     : dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
@@ -798,7 +798,7 @@ export default function App() {
               {authProfile?.role === 'creator' ? (
                 <button type="button" onClick={() => navigate('/dashboard')}
                   aria-label="Creator Dashboard"
-                  className={`p-2 rounded-xl transition-colors ${
+                  className={`inline-flex min-h-[34px] min-w-[34px] items-center justify-center p-2 rounded-xl transition-colors ${
                     activeTab === 'dashboard'
                       ? 'bg-gold-500/20 text-gold-400'
                       : dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
@@ -808,7 +808,7 @@ export default function App() {
               ) : (
                 <button type="button" onClick={() => navigate('/client')}
                   aria-label="My Profile"
-                  className={`p-2 rounded-xl transition-colors ${
+                  className={`inline-flex min-h-[34px] min-w-[34px] items-center justify-center p-2 rounded-xl transition-colors ${
                     activeTab === 'client'
                       ? 'bg-gold-500/20 text-gold-400'
                       : dark ? 'text-charcoal-400 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
@@ -821,7 +821,7 @@ export default function App() {
                 type="button"
                 onClick={() => navigate(accountDestination)}
                 aria-label="Go to my profile"
-                className={`w-8 h-8 md:w-7 md:h-7 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold transition-opacity hover:opacity-80 ${dark ? 'bg-gold-500/20 text-gold-400' : 'bg-gold-100 text-gold-600'}`}
+                className={`min-h-[34px] min-w-[34px] rounded-full overflow-hidden flex items-center justify-center text-xs font-bold transition-opacity hover:opacity-80 ${dark ? 'bg-gold-500/20 text-gold-400' : 'bg-gold-100 text-gold-600'}`}
               >
                 {authProfile?.avatar_url ? (
                   <img src={authProfile.avatar_url} alt={`${authProfile?.full_name ?? 'Your'} avatar`} className="w-full h-full object-cover" />
