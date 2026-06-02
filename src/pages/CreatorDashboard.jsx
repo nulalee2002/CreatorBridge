@@ -247,7 +247,10 @@ export function CreatorDashboard({ dark }) {
         .from('creator_listings')
         .select('*, creator_services(*), portfolio_items(*), packages(*)')
         .eq('user_id', user.id)
-        .single();
+        .order('review_status', { ascending: true })
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
       if (data) {
         const normalizedCreator = normalizeCreatorListing(data);
         setCreator(normalizedCreator);

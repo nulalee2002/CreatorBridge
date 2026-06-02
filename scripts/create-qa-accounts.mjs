@@ -150,12 +150,16 @@ async function seedCreator(user) {
 
   const existing = await admin
     .from('creator_listings')
-    .select('id')
+    .select('id, review_status, updated_at')
     .eq('user_id', user.id)
-    .maybeSingle();
+    .order('updated_at', { ascending: false });
   if (existing.error) throw existing.error;
 
-  let listingId = existing.data?.id;
+  const existingListings = existing.data || [];
+  let listingId = (
+    existingListings.find(listing => listing.review_status === 'approved') ||
+    existingListings[0]
+  )?.id;
   if (listingId) {
     const { error } = await admin.from('creator_listings').update(listingPayload).eq('id', listingId);
     if (error) throw error;
