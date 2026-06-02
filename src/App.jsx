@@ -265,6 +265,52 @@ function AuthRequired({ dark, user, loading, role = 'client', title, copy, child
   );
 }
 
+function AuthEntryRoute({ dark, tab = 'login', role = 'client', onOpenAuth }) {
+  const isSignup = tab === 'signup';
+
+  useEffect(() => {
+    onOpenAuth?.(tab, role);
+  }, [onOpenAuth, role, tab]);
+
+  return (
+    <main className="min-h-[62vh] grid place-items-center px-5 py-14">
+      <section className={`w-full max-w-xl rounded-[28px] border p-7 text-center ${
+        dark ? 'bg-charcoal-900/76 border-gold-500/18 shadow-[0_30px_100px_rgba(0,0,0,0.28)]' : 'bg-white border-gray-200 shadow-sm'
+      }`}>
+        <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+          Account access
+        </p>
+        <h1 className={`font-display text-3xl font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>
+          {isSignup ? 'Create your CreatorBridge account.' : 'Sign in to CreatorBridge.'}
+        </h1>
+        <p className={`mx-auto mt-3 max-w-md text-sm leading-6 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
+          {isSignup
+            ? 'Start a client account or apply as a verified creator. Creator applications use the full review form.'
+            : 'Access your dashboard, messages, bookings, saved creators, and support history.'}
+        </p>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <button
+            type="button"
+            onClick={() => onOpenAuth?.('login', role)}
+            className="rounded-xl bg-gold-500 px-5 py-3 text-sm font-bold text-charcoal-900 transition-colors hover:bg-gold-600"
+          >
+            Sign In
+          </button>
+          <button
+            type="button"
+            onClick={() => onOpenAuth?.('signup', role)}
+            className={`rounded-xl border px-5 py-3 text-sm font-bold transition-colors ${
+              dark ? 'border-white/[0.09] text-charcoal-200 hover:text-white hover:border-gold-500/35' : 'border-gray-200 text-gray-700 hover:text-gray-900'
+            }`}
+          >
+            Create Account
+          </button>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 // ── Initial State ────────────────────────────────────────────
 const DEFAULT_STATE = {
   serviceId:              null,
@@ -558,7 +604,11 @@ export default function App() {
     return () => window.removeEventListener('open-auth', handleOpenAuth);
   }, []);
 
-  function openAuth(tab = 'login') { setAuthTab(tab); setShowAuth(true); }
+  const openAuth = useCallback((tab = 'login', role = 'client') => {
+    setAuthTab(tab);
+    setAuthRole(role);
+    setShowAuth(true);
+  }, []);
 
   const quote = useMemo(() => buildQuote(state), [state]);
 
@@ -785,6 +835,8 @@ export default function App() {
         <Route path="/find" element={<CreatorDirectory dark={dark} mode="search" onSwitchToRegister={() => navigate('/register')} />} />
         <Route path="/search" element={<LazyRoute dark={dark}><SearchPage dark={dark} /></LazyRoute>} />
         <Route path="/register" element={<CreatorDirectory dark={dark} mode="register" onSwitchToSearch={() => navigate('/find')} />} />
+        <Route path="/login" element={<AuthEntryRoute dark={dark} tab="login" role="client" onOpenAuth={openAuth} />} />
+        <Route path="/signup" element={<AuthEntryRoute dark={dark} tab="signup" role="client" onOpenAuth={openAuth} />} />
         <Route path="/creator/:id" element={<LazyRoute dark={dark}><CreatorProfilePage dark={dark} /></LazyRoute>} />
         <Route path="/dashboard" element={
           <AuthRequired dark={dark} user={user} loading={authLoading} role="creator" title="Sign in to manage your creator account." copy="Creator tools, Stripe setup, packages, availability, earnings, and verification need an authenticated account.">
