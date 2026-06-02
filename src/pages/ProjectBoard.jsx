@@ -1663,10 +1663,6 @@ export function ProjectBoard({ dark }) {
 
   return (
     <div className={`relative min-h-screen ${dark ? 'bg-transparent' : 'bg-gray-55'} text-sans`}>
-      <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
-        <img src="/images/creatorbridge/backgrounds/06-page-headers/projectboard-crew-at-console.jpg" alt="" className="h-full w-full object-cover" style={{ opacity: 0.4, filter: 'brightness(0.85) saturate(1.1)' }} />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(13,13,15,0.64) 0%, rgba(13,13,15,0.74) 50%, rgba(13,13,15,0.84) 100%)' }} />
-      </div>
       <div className="relative z-0 max-w-7xl mx-auto px-4 sm:px-6 py-10">
         <div className={`relative overflow-hidden rounded-[28px] border p-6 md:p-8 mb-6 liquid-glass ${
           dark ? 'border-white/[0.08] shadow-[0_28px_90px_rgba(0,0,0,0.28)]' : 'bg-white border-gray-200'

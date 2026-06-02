@@ -634,13 +634,14 @@ export default function App() {
   }
 
   const bgMain = dark ? '' : 'bg-gray-50';
+  const routeBackdropClass = location.pathname === '/' ? 'cb-home-route' : 'cb-inner-route';
   const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.07] shadow-[0_22px_70px_rgba(0,0,0,0.18)]' : 'bg-white border-gray-200'}`;
   return (
     <>
     {/* Skip to main content — visible only on keyboard focus */}
     <a href="#cb-main-content" className="cb-skip-link">Skip to main content</a>
 
-    <div className={`min-h-screen ${bgMain} font-body transition-colors duration-200`} style={{ position: 'relative', zIndex: 1 }}>
+    <div className={`min-h-screen ${bgMain} ${routeBackdropClass} font-body transition-colors duration-200`} style={{ position: 'relative', zIndex: 1 }}>
       <div className="bg-grid" aria-hidden="true" />
       <div className="bg-signals" aria-hidden="true">
         <span className="sig h1" />

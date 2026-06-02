@@ -112,6 +112,29 @@ body::after {
 .bg-signals .sig.d1 { --rot: 18deg; }
 .bg-signals .sig.d2 { --rot: -12deg; }
 
+.cb-inner-route {
+  background:
+    radial-gradient(ellipse 58vmax 36vmax at 50% 0%, rgba(201,168,76,0.026), transparent 68%),
+    var(--bg);
+}
+.cb-inner-route .bg-grid {
+  opacity:0;
+}
+.cb-inner-route .bg-signals {
+  opacity:1;
+  mask-image:linear-gradient(180deg, transparent 0%, black 8%, black 92%, transparent 100%);
+  -webkit-mask-image:linear-gradient(180deg, transparent 0%, black 8%, black 92%, transparent 100%);
+}
+.cb-inner-route .bg-signals .sig {
+  background:linear-gradient(90deg,
+    transparent 0%,
+    rgba(201,168,76,0) 10%,
+    rgba(221,185,106,0.82) 50%,
+    rgba(201,168,76,0) 90%,
+    transparent 100%);
+  filter:drop-shadow(0 0 7px rgba(201,168,76,0.46));
+}
+
 /* Quiet down if user prefers reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .bg-grid { animation: none; }
