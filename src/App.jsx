@@ -93,6 +93,16 @@ const SCROLL_PROGRESS_ROUTES = [
   '/privacy',
 ];
 
+function getRouteBackdrop(pathname) {
+  if (pathname === '/') return '/images/creatorbridge/backgrounds/01-hero/hero-landing-camera-rig.jpg';
+  if (pathname.startsWith('/calculator')) return '/images/creatorbridge/backgrounds/08-sitewide/bg-audio-workstation.jpg';
+  if (pathname.startsWith('/find') || pathname.startsWith('/register')) return '/images/creatorbridge/backgrounds/06-page-headers/header-findcreators-onset-crew.jpg';
+  if (pathname.startsWith('/projects')) return '/images/creatorbridge/backgrounds/06-page-headers/projectboard-crew-at-console.jpg';
+  if (pathname.startsWith('/network')) return '/images/creatorbridge/backgrounds/03-featured-work/featured-documentary-rooftop-crew.jpg';
+  if (pathname.startsWith('/creator/')) return '/images/creatorbridge/backgrounds/05-creator-covers/creator-video-on-location.jpg';
+  return null;
+}
+
 function CreatorBridgeChromeEffects() {
   const ringRef = useRef(null);
   const dotRef = useRef(null);
@@ -635,6 +645,7 @@ export default function App() {
 
   const bgMain = dark ? '' : 'bg-gray-50';
   const routeBackdropClass = location.pathname === '/' ? 'cb-home-route' : 'cb-inner-route';
+  const routeBackdrop = getRouteBackdrop(location.pathname);
   const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.07] shadow-[0_22px_70px_rgba(0,0,0,0.18)]' : 'bg-white border-gray-200'}`;
   return (
     <>
@@ -642,6 +653,12 @@ export default function App() {
     <a href="#cb-main-content" className="cb-skip-link">Skip to main content</a>
 
     <div className={`min-h-screen ${bgMain} ${routeBackdropClass} font-body transition-colors duration-200`} style={{ position: 'relative', zIndex: 1 }}>
+      {routeBackdrop && (
+        <div className="cb-route-photo-backdrop" aria-hidden="true">
+          <img src={routeBackdrop} alt="" />
+          <div className="cb-route-photo-scrim" />
+        </div>
+      )}
       <div className="bg-grid" aria-hidden="true" />
       <div className="bg-signals" aria-hidden="true">
         <span className="sig h1" />
