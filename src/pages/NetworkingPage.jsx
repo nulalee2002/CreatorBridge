@@ -1046,7 +1046,7 @@ export function NetworkingPage({ dark, user, profile }) {
                         key={pt.id}
                         type="button"
                         onClick={() => setPostType(pt.id)}
-                        className={`text-xs px-3 py-1.5 rounded-full font-semibold border transition-all cursor-pointer ${
+                        className={`min-h-[34px] text-xs px-3 py-1.5 rounded-full font-semibold border transition-all cursor-pointer ${
                           postType === pt.id
                             ? 'border-gold-500 bg-gold-500/10 text-gold-400'
                             : 'border-white/[0.09] text-charcoal-400 hover:border-charcoal-500 hover:text-white'
@@ -1064,7 +1064,7 @@ export function NetworkingPage({ dark, user, profile }) {
                   <button
                     type="submit"
                     disabled={!postContent.trim()}
-                    className="w-full py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 disabled:cursor-not-allowed text-charcoal-900 text-sm font-bold transition-all cursor-pointer"
+                    className="min-h-[34px] w-full py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 disabled:cursor-not-allowed text-charcoal-900 text-sm font-bold transition-all cursor-pointer"
                   >
                     Post to {activeStateObj.name} Network
                   </button>
@@ -1200,7 +1200,7 @@ export function NetworkingPage({ dark, user, profile }) {
                       className="flex-1 text-xs rounded-xl px-3 py-2 border outline-none focus:border-gold-500 bg-charcoal-950/75 border-white/[0.09] text-white placeholder-charcoal-500 transition-colors"
                       onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); }}}
                     />
-                    <button type="submit" className="p-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 transition-all cursor-pointer">
+                    <button type="submit" className="min-h-[34px] min-w-[34px] p-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 transition-all cursor-pointer">
                       <Send size={14} />
                     </button>
                   </form>
