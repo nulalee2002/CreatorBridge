@@ -2,7 +2,7 @@
 
 Updated: 2026-06-01
 
-Status: Product rules and implementation audit. No migrations have been approved from this document yet.
+Status: Product rules and implementation audit. First non-breaking client guidance step implemented. No migrations have been approved from this document yet.
 
 ## Core Decision
 
@@ -145,8 +145,8 @@ Terms and onboarding must tell clients that relevant booking history may be visi
 
 | Area | Current State | Gap | Safe Next Step |
 | --- | --- | --- | --- |
-| Project brief posting | `ProjectBoard` has title, description, primary pillar/service, duration, budget, deadline, location, and minimum description length. | It is still a single modal, not a guided wizard. No reference links. | Add reference link fields and clearer guided helper copy before building a full wizard. |
-| Quote request flow | `RequestQuoteModal` asks structured questions: pillar, project type, date, time, venue, hours, deliverables, budget, and location preference. | No explicit reference example links. No brief quality score. | Add optional/reference URL fields, then make them required once the UX is ready. |
+| Project brief posting | `ProjectBoard` has title, description, primary pillar/service, duration, budget, deadline, location, minimum description length, clearer scope prompts, and optional reference example links appended to the existing brief text. | It is still a single modal, not a guided wizard. Reference links are collected without new database fields. | Keep this non-breaking version live, then design the full guided wizard before adding required structured fields. |
+| Quote request flow | `RequestQuoteModal` asks structured questions: pillar, project type, date, time, venue, hours, deliverables, budget, location preference, and optional reference example links appended to the existing request description/payload. | No brief quality score. Reference links are not required yet. | Keep reference links optional until the guided brief UX is ready, then decide whether two references should become required. |
 | Packages | `packages` table has deliverables, turnaround days, and revisions. Package builder exists. | No exclusions, add-ons, usage rights, raw/source policy, or booking snapshot. | Document package rules in UI first, then add nullable package fields and snapshot storage later. |
 | Revisions | Project lifecycle tracks `revision_count`. Dispute policy and support bot mention 2 included revisions and paid third revision. | No formal change-order table for outside-scope requests. | Add change order documentation now. Build a logged change-order flow after package snapshots are ready. |
 | Rate calculator | Calculator already frames output around a recommended quote and package-style pricing. | Need final audit that client-facing quote/PDF never leads with hourly rates. | Keep flat-fee-first rule in docs and verify calculator/quote PDF before launch. |
@@ -155,8 +155,8 @@ Terms and onboarding must tell clients that relevant booking history may be visi
 
 ## Implementation Order
 
-1. Add this roadmap to launch readiness tracking.
-2. Add reference links and client guidance copy to brief/quote flows.
+1. Add this roadmap to launch readiness tracking. Done.
+2. Add reference links and client guidance copy to brief/quote flows. Done without migrations.
 3. Audit calculator and quote PDF for flat-fee-first display.
 4. Add package UI language for inclusions, exclusions, revisions, and change-order requirement.
 5. Add nullable package/snapshot/change-order database fields after UI copy is approved.

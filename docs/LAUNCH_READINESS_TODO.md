@@ -29,7 +29,7 @@ Updated: 2026-05-25
 - [ ] Keep the current production app functional while the redesign is prepared. Do not replace the whole UI until security, payment, support, and admin flows have clean QA.
 - [ ] Replace placeholder/AI-looking images with realistic client-work imagery from the curated image library or approved external sources.
 - [ ] Rebuild the profile footer/bottom layout to match the new design direction instead of stretching or clipping on wide screens.
-- [ ] Add client-assisted brief guidance to the Project Board and quote request flows. The first safe version should ask for 2-3 reference links and clearer deliverable details before any database enforcement.
+- [x] Add client-assisted brief guidance to the Project Board and quote request flows. The first safe version asks for 2-3 reference links and clearer deliverable details without any database enforcement.
 
 ## Verified So Far
 

@@ -7,7 +7,7 @@ import { TurnstileWidget, turnstileConfigured } from './TurnstileWidget.jsx';
 import { normalizeServiceId, SERVICE_TYPE_OPTIONS } from '../data/rates.js';
 import { PILLARS, SUB_NICHES_BY_PILLAR } from '../data/taxonomy.js';
 import { fromSupabaseProject, upsertLocalProject } from '../utils/projectStorage.js';
-import { sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
+import { appendReferenceLinksToText, parseReferenceLinks, sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
 import { parseBudgetRange } from '../utils/matchingAlgorithm.js';
 
 // ── Static option sets ───────────────────────────────────────
@@ -144,6 +144,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
     hoursNeeded:         '',
     deliverables:        '',
     description:         '',
+    referenceLinks:      '',
     budgetRange:         '',
     locationPreference:  '',
   });
@@ -217,6 +218,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
     const isRemoteProject = form.venueType === 'Remote/Virtual';
     const cleanTitle = sanitizePlainText(form.projectTitle, 120);
     const cleanDescription = sanitizeLongText(form.description, 4000);
+    const referenceCheck = parseReferenceLinks(form.referenceLinks);
     if (!cleanTitle)                     e.projectTitle       = 'Give your project a clear title so creators understand what this is.';
     if (!form.serviceType)               e.serviceType        = 'Select the type of production service you need.';
     if (!form.projectType)               e.projectType        = 'Select the specific type of project within your chosen service.';
@@ -231,6 +233,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
     if (!form.hoursNeeded)               e.hoursNeeded        = 'How long do you need the creator on site or working on your project?';
     if (!form.deliverables)              e.deliverables       = 'This helps creators estimate the editing time and scope.';
     if (cleanDescription.length < 100)   e.description        = 'Please provide at least 100 characters so creators understand your vision.';
+    if (referenceCheck.invalid.length)   e.referenceLinks     = 'Use full links that start with https:// or http://.';
     if (!form.budgetRange)               e.budgetRange        = 'Selecting a budget range helps match you with creators who fit your project.';
     if (!form.locationPreference)        e.locationPreference = 'Let creators know if they need to be in your area.';
     return e;
@@ -250,7 +253,8 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
       venueType: sanitizePlainText(form.venueType, 80),
       hoursNeeded: sanitizePlainText(form.hoursNeeded, 80),
       deliverables: sanitizePlainText(form.deliverables, 80),
-      description: sanitizeLongText(form.description, 4000),
+      description: appendReferenceLinksToText(form.description, parseReferenceLinks(form.referenceLinks).links),
+      referenceLinks: parseReferenceLinks(form.referenceLinks).links,
       budgetRange: sanitizePlainText(form.budgetRange, 80),
       locationPreference: sanitizePlainText(form.locationPreference, 80),
     };
@@ -306,6 +310,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
       budgetMin:          budget.budgetMin,
       budgetMax:          budget.budgetMax,
       locationPreference: cleanForm.locationPreference,
+      referenceLinks:     cleanForm.referenceLinks,
       creatorId:          creator?.id || null,
       creatorName:        creator ? (creator.businessName || creator.name) : null,
       clientId:           user?.id || 'guest-' + Date.now(),
@@ -347,6 +352,8 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
       hoursNeeded: cleanForm.hoursNeeded,
       hours_needed: cleanForm.hoursNeeded,
       deliverables: cleanForm.deliverables,
+      referenceLinks: cleanForm.referenceLinks,
+      reference_links: cleanForm.referenceLinks,
       budgetRange: cleanForm.budgetRange,
       budget_range: cleanForm.budgetRange,
       budget: budget.budgetMax === 999999 ? budget.budgetMin : budget.budgetMax,
@@ -711,7 +718,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
             {/* 9. Project Description */}
             <div>
               <label className={labelCls}>
-                Describe your project and share a reference link *
+                Describe your project *
                 <span className={`ml-2 font-normal ${descLen >= 100 ? 'text-gold-400' : dark ? 'text-charcoal-300' : 'text-gray-400'}`}>
                   ({descLen}/100 min)
                 </span>
@@ -720,10 +727,25 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
                 rows={5}
                 value={form.description}
                 onChange={e => set('description', e.target.value)}
-                placeholder="Describe what needs to be filmed or created. Include the style or mood you want, any specific shots or deliverables, and important details the creator needs to know. Feel free to paste a link to a YouTube, Instagram, TikTok, or any video that captures the look or vibe you are going for. The more detail you share, the better your matches will be."
+                placeholder="Describe what needs to be filmed or created, where it will be used, specific shots or edits, final deliverables, deadline pressure, and what would count as done."
                 className={`${inputCls('description')} resize-none`}
               />
               {errorMsg('description')}
+            </div>
+
+            <div>
+              <label className={labelCls}>Reference examples</label>
+              <textarea
+                rows={3}
+                value={form.referenceLinks}
+                onChange={e => set('referenceLinks', e.target.value)}
+                placeholder="Paste 2-3 links that show the style, pacing, edit, framing, or finished result you want. One link per line."
+                className={`${inputCls('referenceLinks')} resize-none`}
+              />
+              <p className={`mt-1 text-[10px] leading-4 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
+                References help creators understand scope before they quote, which reduces revision confusion and scope creep.
+              </p>
+              {errorMsg('referenceLinks')}
             </div>
 
             {/* 10. Budget Range */}

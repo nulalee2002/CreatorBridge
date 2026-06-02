@@ -33,6 +33,42 @@ export function sanitizeUrl(value, maxLength = 500) {
   }
 }
 
+export function parseReferenceLinks(value, maxItems = 3) {
+  const rawItems = String(value ?? '')
+    .split(/[\n,]+/)
+    .map(item => item.trim())
+    .filter(Boolean);
+
+  const links = [];
+  const invalid = [];
+
+  rawItems.forEach(item => {
+    const clean = sanitizeUrl(item);
+    if (clean) links.push(clean);
+    else invalid.push(sanitizePlainText(item, 120));
+  });
+
+  return {
+    links: links.slice(0, maxItems),
+    invalid,
+  };
+}
+
+export function appendReferenceLinksToText(text, links) {
+  const cleanText = sanitizeLongText(text, 6000);
+  const cleanLinks = (Array.isArray(links) ? links : [])
+    .map(link => sanitizeUrl(link))
+    .filter(Boolean)
+    .slice(0, 3);
+
+  if (!cleanLinks.length) return cleanText;
+
+  return sanitizeLongText(
+    `${cleanText}\n\nReference examples:\n${cleanLinks.map((link, index) => `${index + 1}. ${link}`).join('\n')}`,
+    6000
+  );
+}
+
 export function sanitizeTagList(value, maxItems = 12, itemLength = 36) {
   return String(value ?? '')
     .split(',')

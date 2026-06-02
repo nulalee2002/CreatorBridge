@@ -16,7 +16,7 @@ import { CancellationModal } from '../components/CancellationModal.jsx';
 import { ClientReputationBadge, loadClientReputation, RateClientModal } from '../components/ClientReputationBadge.jsx';
 import { ReferralSection } from '../components/ReferralSection.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
-import { sanitizeLongText, sanitizePlainText, sanitizeTagList, clampNumber, sanitizeUrl } from '../utils/inputSecurity.js';
+import { appendReferenceLinksToText, parseReferenceLinks, sanitizeLongText, sanitizePlainText, sanitizeTagList, clampNumber, sanitizeUrl } from '../utils/inputSecurity.js';
 import { checkMessage, logFilterEvent } from '../utils/messageFilter.js';
 import { sendNotificationEmail } from '../lib/notifications.js';
 import {
@@ -402,6 +402,7 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
   const [form, setForm] = useState({
     title: '', description: '', serviceId: '', budgetMin: '', budgetMax: '',
     projectDuration: '', deadline: '', location: '', remote: true, skills: '',
+    referenceLinks: '',
   });
   const [errors, setErrors] = useState({});
   const [isPosting, setIsPosting] = useState(false);
@@ -423,9 +424,11 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
     const maxBudget = parseFloat(form.budgetMax);
     const cleanTitle = sanitizePlainText(form.title, 120);
     const cleanDescription = sanitizeLongText(form.description, 4000);
+    const referenceCheck = parseReferenceLinks(form.referenceLinks);
     if (!cleanTitle) next.title = 'Add a clear project title.';
     if (!form.serviceId) next.serviceId = 'Choose one primary pillar for this brief.';
     if (cleanDescription.length < 80) next.description = 'Add at least 80 characters so creators understand the scope.';
+    if (referenceCheck.invalid.length) next.referenceLinks = 'Use full links that start with https:// or http://.';
     if (!form.projectDuration) next.projectDuration = 'Select how long you need the creator or crew.';
     if (!form.budgetMin || !Number.isFinite(minBudget) || minBudget <= 0) next.budgetMin = 'Add a minimum budget above $0.';
     if (!form.budgetMax || !Number.isFinite(maxBudget) || maxBudget <= 0) next.budgetMax = 'Add a maximum budget above $0.';
@@ -439,9 +442,10 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
     setErrors({});
     setIsPosting(true);
     const cleanProject = sanitizeProjectDraft({
+      referenceLinks: parseReferenceLinks(form.referenceLinks).links,
       id:          Date.now().toString() + Math.random(),
       title:       sanitizePlainText(form.title, 120),
-      description: sanitizeLongText(form.description, 4000),
+      description: appendReferenceLinksToText(form.description, parseReferenceLinks(form.referenceLinks).links),
       serviceId:   form.serviceId,
       budgetMin:   clampNumber(form.budgetMin, { min: 0, max: 1000000, fallback: null }),
       budgetMax:   clampNumber(form.budgetMax, { min: 0, max: 1000000, fallback: null }),
@@ -515,12 +519,23 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
             <div>
               <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Brief *</p>
               <textarea rows={4} value={form.description} onChange={e => set('description', e.target.value)}
-                placeholder="Describe what needs to be created, the style or usage, must-have shots, deliverables, and anything the creator needs to know."
+                placeholder="Describe what needs to be created, where it will be used, must-have shots or edits, final deliverables, deadline pressure, and what would count as done."
                 className={`${inputCls('description')} resize-none`} />
               <div className="mt-1 flex items-center justify-between gap-3">
                 {errors.description ? <p className="text-xs text-red-400">{errors.description}</p> : <span />}
                 <p className={`text-[10px] ${form.description.length >= 80 ? 'text-gold-400' : textSub}`}>{form.description.length} / 80</p>
               </div>
+            </div>
+
+            <div>
+              <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Reference examples</p>
+              <textarea rows={3} value={form.referenceLinks} onChange={e => set('referenceLinks', e.target.value)}
+                placeholder="Paste 2-3 links that show the style, pacing, edit, framing, or finished result you want. One link per line."
+                className={`${inputCls('referenceLinks')} resize-none`} />
+              <p className={`mt-1 text-[10px] leading-4 ${textSub}`}>
+                References help creators price the real scope instead of guessing from a vague brief.
+              </p>
+              {errors.referenceLinks && <p className="mt-1 text-xs text-red-400">{errors.referenceLinks}</p>}
             </div>
 
             <div>
