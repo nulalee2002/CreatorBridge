@@ -2,8 +2,10 @@ import { formatCurrency } from './pricing.js';
 import { REGIONS } from '../data/regions.js';
 
 export async function generateQuotePDF(quote, state, profile) {
-  const { default: jsPDF } = await import('jspdf');
-  await import('jspdf-autotable');
+  const jsPDFModule = await import('jspdf');
+  const autoTableModule = await import('jspdf-autotable');
+  const jsPDF = jsPDFModule.jsPDF || jsPDFModule.default?.jsPDF || jsPDFModule.default;
+  const autoTable = autoTableModule.autoTable || autoTableModule.default?.autoTable || autoTableModule.default?.default || autoTableModule.default;
 
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
   const W = doc.internal.pageSize.getWidth();
@@ -97,7 +99,7 @@ export async function generateQuotePDF(quote, state, profile) {
     fmt(line.subtotal),
   ]);
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: y,
     head: [['Description', 'Rate', 'Qty', 'Amount']],
     body: tableBody,
@@ -119,7 +121,7 @@ export async function generateQuotePDF(quote, state, profile) {
     didDrawPage: () => {},
   });
 
-  y = doc.lastAutoTable.finalY + 8;
+  y = (doc.lastAutoTable?.finalY || y) + 8;
 
   // ── Totals Block ───────────────────────────────────────────
   const totalsX = W - margin - 80;

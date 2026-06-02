@@ -15,7 +15,6 @@ function useNavigate() {
 }
 import { formatCurrency } from './utils/pricing.js';
 import { Moon, Sun, Zap, RotateCcw, Search, UserPlus, LogIn, LogOut, User, MessageSquare, Briefcase, LayoutDashboard, Users } from 'lucide-react';
-import { v4 as uuid } from 'uuid';
 import { useAuth } from './contexts/AuthContext.jsx';
 import { AuthModal } from './components/auth/AuthModal.jsx';
 import { SupportTicketForm } from './components/SupportTicketForm.jsx';
@@ -27,6 +26,10 @@ import { SupportChatbot } from './components/SupportChatbot.jsx';
 import { HandoffPage } from './components/HandoffPage.jsx';
 import { handoffPages } from './data/handoffPages.js';
 import { NotificationBell } from './components/NotificationBell.jsx';
+
+function makeId() {
+  return globalThis.crypto?.randomUUID?.() || `id-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
 
 import { SERVICES, RATES, PACKAGE_TIERS } from './data/rates.js';
 import { DEFAULT_EXCHANGE_RATES } from './data/regions.js';
@@ -367,7 +370,7 @@ function reducer(state, action) {
         if (!rateMeta) return null;
         const regionRate = regionRates[rateKey];
         return {
-          id: uuid(),
+          id: makeId(),
           rateKey,
           label: rateMeta.label,
           unit: rateMeta.unit,
@@ -422,7 +425,7 @@ function reducer(state, action) {
         lineItems: [
           ...state.lineItems,
           {
-            id: uuid(),
+            id: makeId(),
             rateKey: action.rateKey,
             label: action.rateMeta?.label || action.rateKey,
             unit: action.rateMeta?.unit || '',
@@ -440,7 +443,7 @@ function reducer(state, action) {
         ...state,
         lineItems: [
           ...state.lineItems,
-          { id: uuid(), rateKey: null, label: '', unit: '', active: true, value: 0, quantity: 1, isCustom: true },
+          { id: makeId(), rateKey: null, label: '', unit: '', active: true, value: 0, quantity: 1, isCustom: true },
         ],
       };
 
@@ -488,7 +491,7 @@ function reducer(state, action) {
         const regionRate = regionRates[rateKey];
         const pkgItem = tierDef.items?.find(i => i.rateKey === rateKey);
         return {
-          id: uuid(),
+          id: makeId(),
           rateKey,
           label: rateMeta.label,
           unit: rateMeta.unit,
@@ -1092,7 +1095,7 @@ export default function App() {
                 <div className="flex items-center justify-between mb-2">
                   <p className={`text-xs font-medium ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>Your Actual Costs (for margin calc)</p>
                   <button type="button"
-                    onClick={() => dispatch({ type: 'SET_FIELD', field: 'costInputs', value: [...state.costInputs, { id: uuid(), label: '', value: 0 }] })}
+                    onClick={() => dispatch({ type: 'SET_FIELD', field: 'costInputs', value: [...state.costInputs, { id: makeId(), label: '', value: 0 }] })}
                     className="text-xs text-gold-400 hover:text-gold-300 transition-colors"
                   >
                     + Add cost
