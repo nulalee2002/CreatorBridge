@@ -4,6 +4,7 @@ Updated: 2026-05-25
 
 ## Active Launch Checks
 
+- [ ] Review and approve `docs/CREATOR_PROTECTION_AND_SCOPE_CONTROL.md` before any creator-protection migrations. This locks the platform rules for scope control, change orders, guided briefs, and client trust without changing the 50/50 payment structure.
 - [ ] Re-test creator profile pages after the 3-pillar profile fix. Public profiles must show one primary pillar and 1-3 specialties, never multiple old service lanes such as Drone / Aerial as a standalone primary tab.
 - [ ] Re-test Admin Operations global search after the creator listing column fix. Search should work against creator name, business name, city, state, and primary pillar.
 - [x] Run `npm run verify:release-payment-security` after redeploying `release-payment`. It must prove unauthenticated calls are blocked and the final payout email resolves the creator listing's `user_id`, not the listing id.
@@ -28,6 +29,7 @@ Updated: 2026-05-25
 - [ ] Keep the current production app functional while the redesign is prepared. Do not replace the whole UI until security, payment, support, and admin flows have clean QA.
 - [ ] Replace placeholder/AI-looking images with realistic client-work imagery from the curated image library or approved external sources.
 - [ ] Rebuild the profile footer/bottom layout to match the new design direction instead of stretching or clipping on wide screens.
+- [ ] Add client-assisted brief guidance to the Project Board and quote request flows. The first safe version should ask for 2-3 reference links and clearer deliverable details before any database enforcement.
 
 ## Verified So Far
 
