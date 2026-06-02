@@ -329,9 +329,13 @@ footer.site .logo-img { height:48px; }
   bottom:-1px;
   background:linear-gradient(0deg, var(--bg) 0%, rgba(13,13,15,0.78) 42%, rgba(13,13,15,0) 100%);
 }
-.cb-section-flow > *:not(.cb-soft-section-bg) {
+.cb-section-flow > *:not(.cb-soft-section-bg):not(.absolute) {
   position:relative;
   z-index:1;
+}
+.cb-section-flow > .absolute {
+  position:absolute;
+  z-index:0;
 }
 .cb-landing-hero {
   background:
