@@ -6,7 +6,7 @@ This file is intentionally short. Only items that can block a public launch belo
 
 ## Launch Gate: 4 Items Left
 
-- [ ] Run one live browser smoke pass across the core public and logged-in flows: homepage, find creators, creator profile, project board, support ticket, notification center, creator dashboard gate, client dashboard gate, admin support, admin operations search, admin finance, admin analytics, and creator agreement print.
+- [ ] Run the remaining live browser smoke pass for logged-in/support/admin actions: support ticket submit, notification center unread/read behavior, admin support view/update, admin operations search, admin finance CSV export, admin analytics, and creator agreement print.
 - [ ] Clear the remaining image library risk documented in `docs/IMAGE_LIBRARY_AUDIT.md`: 32 visible non-handoff image paths still need source proof, replacement, or written approval before launch.
 - [ ] Review Supabase/Resend bounce logs and remove or correct bad recipient addresses before opening the platform to real users.
 - [ ] Run the final `npm run verify:launch-sweep` after the last visual/content change and keep the passing output as launch evidence.
@@ -32,6 +32,7 @@ This file is intentionally short. Only items that can block a public launch belo
 - [x] Client approval is intentionally self-serve: clients can create accounts without manual admin approval, while creator hiring/payment/proposal activity remains protected by authenticated project and payment flows.
 - [x] Admin Operations has the stronger creator approval path because approval requires an admin reason and routes through `admin_approve_creator_noted`.
 - [x] Image audit created on 2026-06-03: 68 referenced app image paths were found; 36 handoff images are covered by the existing Unsplash handoff note, and 32 visible non-handoff images remain unresolved in `docs/IMAGE_LIBRARY_AUDIT.md`.
+- [x] In-app Browser public/mobile smoke pass completed on 2026-06-03 against local CreatorBridge: homepage, find creators, project board, network, calculator, sample creator profile, login, creator dashboard auth gate, client dashboard auth gate, creator agreement, terms, and dispute policy rendered with no broken images found. Phone-width checks for homepage, find creators, project board, network, calculator, sample creator profile, login, creator dashboard auth gate, and client dashboard auth gate found no horizontal overflow.
 
 ## Not Launch Blockers
 
