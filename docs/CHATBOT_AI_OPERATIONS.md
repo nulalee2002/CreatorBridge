@@ -24,6 +24,7 @@ This keeps the chatbot useful while preventing casual testing or repeated FAQ qu
 - Supabase Edge Function rate limit remains active.
 - The Edge Function caps chat history, message size, system prompt size, and max response tokens.
 - If paid AI is unavailable, Bridge falls back to platform-guide mode instead of breaking.
+- If the paid AI function fails because Anthropic credits are unavailable, the browser session pauses additional paid-AI attempts briefly and keeps answering with the built-in platform guide.
 
 ## Enabling Paid AI
 
@@ -51,3 +52,13 @@ npm run verify:chatbot-guide
 ## Launch Recommendation
 
 Launch with the hybrid assistant enabled only if the Anthropic balance is funded and `npm run verify:chatbot-ai` passes. The default paid model is `claude-3-5-haiku-20241022` so custom help uses a low-cost Haiku path instead of a more expensive model. If funds are not ready, launch with guide mode; users still get platform-specific support, booking guidance, support-ticket routing, and scope-control help.
+
+## Latest Paid-AI Status
+
+On 2026-06-03, `npm run verify:chatbot-ai` reached the deployed Supabase chatbot function and Anthropic returned:
+
+`providerErrorType: invalid_request_error`
+
+`providerErrorMessage: Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.`
+
+That means the CreatorBridge request path, function deployment, and model selection are no longer the known blocker. The remaining paid-AI blocker is Anthropic account funding. Keep `npm run verify:chatbot-guide` as the launch-safe check until the Anthropic balance is funded and `npm run verify:chatbot-ai` passes.

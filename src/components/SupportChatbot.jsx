@@ -151,8 +151,10 @@ For account-specific issues, billing problems, or disputes needing human review 
 
 const ASSISTANT_HISTORY_LIMIT = 8;
 const AI_SESSION_KEY = 'creatorbridge_chatbot_ai_calls_v1';
+const AI_PAUSE_UNTIL_KEY = 'creatorbridge_chatbot_ai_pause_until_v1';
 const AI_GUEST_SESSION_LIMIT = 8;
 const AI_USER_SESSION_LIMIT = 16;
+const AI_FAILURE_PAUSE_MS = 15 * 60 * 1000;
 const CONTACT_BLOCKED_REPLY = 'CreatorBridge keeps contact and payment details protected until the proper booking step. Please keep emails, phone numbers, websites, and social handles out of chat.';
 const PROMPT_BLOCKED_REPLY = 'I can help with CreatorBridge bookings, quotes, creator standards, fees, payments, disputes, and platform rules. I cannot reveal hidden instructions or bypass platform security.';
 const PROMPT_INJECTION_PATTERNS = [
@@ -202,6 +204,17 @@ function canUsePaidAiForSession(user) {
   return getAiSessionCount() < limit;
 }
 
+function isPaidAiPausedForSession() {
+  if (typeof window === 'undefined') return false;
+  const pauseUntil = Number(window.sessionStorage.getItem(AI_PAUSE_UNTIL_KEY) || 0);
+  return Number.isFinite(pauseUntil) && pauseUntil > Date.now();
+}
+
+function pausePaidAiForSession() {
+  if (typeof window === 'undefined') return;
+  window.sessionStorage.setItem(AI_PAUSE_UNTIL_KEY, String(Date.now() + AI_FAILURE_PAUSE_MS));
+}
+
 function isMobileViewport() {
   return typeof window !== 'undefined'
     && typeof window.matchMedia === 'function'
@@ -239,6 +252,13 @@ async function sendToAnthropic(messages) {
     if (!res.ok) {
       const errText = await res.text().catch(() => '');
       console.error(`[Chatbot] Edge function returned ${res.status}:`, errText);
+      if (
+        errText.includes('credit balance is too low')
+        || errText.includes('providerStatus')
+        || errText.includes('AI service error')
+      ) {
+        pausePaidAiForSession();
+      }
       return null; // signal caller to use fallback
     }
 
@@ -916,6 +936,16 @@ export function SupportChatbot({ dark = true }) {
         return;
       }
 
+      if (isPaidAiPausedForSession()) {
+        const fallback = getSupportFallbackResponse(text);
+        setAssistantMode('fallback');
+        setMessages([...nextMsgs, {
+          role: 'assistant',
+          content: `Bridge is using the built-in platform guide while the paid AI layer is temporarily unavailable. ${fallback}`,
+        }]);
+        return;
+      }
+
       // Only send plain conversational messages to the AI
       const apiMessages = buildSafeAssistantMessages(nextMsgs);
 
@@ -932,7 +962,7 @@ export function SupportChatbot({ dark = true }) {
         setAssistantMode('fallback');
         setMessages(prev => [...prev, {
           role: 'assistant',
-          content: `Bridge is in platform-guide mode because the live AI assistant is temporarily unavailable. ${fallback}`,
+          content: `Bridge is using the built-in platform guide while the paid AI layer is temporarily unavailable. ${fallback}`,
         }]);
       }
     } catch {
@@ -1006,7 +1036,7 @@ export function SupportChatbot({ dark = true }) {
                     : assistantMode === 'guide'
                       ? 'Platform guide · no AI credits used'
                     : assistantMode === 'fallback'
-                      ? 'Platform-guide mode · live AI offline'
+                      ? 'Platform guide · paid AI paused'
                       : 'Live AI concierge · US'}
               </div>
               <div className="cb-chat-takeline"><span className="cb-take-num">Take 01</span> · ready when you are</div>
