@@ -23,6 +23,7 @@ const REQUIRED_SUPABASE_SECRETS = [
   'PLATFORM_JOB_SECRET',
   'TURNSTILE_SECRET_KEY',
   'RESEND_API_KEY',
+  'ANTHROPIC_API_KEY',
 ];
 
 const PUBLIC_SECRET_RISKS = [
@@ -60,6 +61,7 @@ function findUsedEnvNames() {
     'supabase/functions/stripe-webhook/index.ts',
     'supabase/functions/release-payment/index.ts',
     'supabase/functions/check-connect-status/index.ts',
+    'supabase/functions/chatbot/index.ts',
     'supabase/functions/submit-quote-request/index.ts',
     'supabase/functions/send-notification-email/index.ts',
   ];

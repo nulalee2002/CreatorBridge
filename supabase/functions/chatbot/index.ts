@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
-  const rateLimited = checkRateLimit(req, { maxRequests: 40, windowMs: 60_000 });
+  const rateLimited = checkRateLimit(req, { maxRequests: 20, windowMs: 60_000 });
   if (rateLimited) return rateLimited;
 
   try {
@@ -44,6 +44,11 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'no chat messages provided' }, 400);
     }
 
+    const model = Deno.env.get('ANTHROPIC_MODEL') || 'claude-haiku-4-5-20251001';
+    const maxTokens = Number(Deno.env.get('ANTHROPIC_MAX_TOKENS') || 260);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15_000);
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -52,24 +57,26 @@ Deno.serve(async (req) => {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 350,
+        model,
+        max_tokens: Number.isFinite(maxTokens) ? Math.min(Math.max(maxTokens, 80), 500) : 260,
         system: systemMsg?.content || '',
         messages: chatMessages,
       }),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     if (!response.ok) {
       const errBody = await response.text();
       console.error('Anthropic API error:', response.status, errBody);
-      return jsonResponse({ error: 'AI service error' }, 502);
+      return jsonResponse({ error: 'AI service error', providerStatus: response.status }, 502);
     }
 
     const data = await response.json();
     const reply = data.content?.[0]?.type === 'text' ? data.content[0].text : '';
     if (!reply) return jsonResponse({ error: 'empty AI response' }, 502);
 
-    return jsonResponse({ reply });
+    return jsonResponse({ reply, provider: 'Anthropic', model });
   } catch (err) {
     console.error('chatbot function error:', err);
     return jsonResponse({ error: err instanceof Error ? err.message : 'unknown error' }, 500);

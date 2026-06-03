@@ -13,6 +13,7 @@
     "verify:email-provider": "node --env-file=.env scripts/verify-email-provider.mjs",
     "verify:release-payment-security": "node --env-file=.env scripts/verify-release-payment-security.mjs",
     "verify:admin-support-search": "node --env-file=.env scripts/verify-admin-support-search.mjs",
+    "verify:chatbot-ai": "node --env-file=.env scripts/verify-chatbot-ai.mjs",
     "verify:launch-sweep": "node --env-file=.env scripts/verify-launch-sweep.mjs",
     "verify:external-env": "node --env-file=.env scripts/verify-external-env.mjs",
     "qa:create-accounts": "node scripts/create-qa-accounts.mjs",

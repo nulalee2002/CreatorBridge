@@ -10,6 +10,7 @@ Updated: 2026-05-25
 - [x] Run `npm run verify:release-payment-security` after redeploying `release-payment`. It must prove unauthenticated calls are blocked and the final payout email resolves the creator listing's `user_id`, not the listing id.
 - [ ] Run live browser QA for support ticket submit, admin support view/update, admin operations, admin finance CSV export, admin analytics, global creator search, and creator agreement print-to-PDF.
 - [x] Run `npm run verify:admin-support-search` to verify support ticket RLS, non-admin admin-data blocks, platform search 3-pillar fields, and admin finance/analytics source queries.
+- [ ] Run `npm run verify:chatbot-ai` after deploying the `chatbot` Edge Function. It must prove Bridge is using the Supabase-hosted Anthropic path instead of browser-side keys or generic fallback mode.
 - [ ] Run live browser QA for notification center: quote request notification, direct message notification, proposal accepted notification, and unread/read state.
 - [x] Run `npm run verify:notifications` from a network-enabled terminal after notification deploys.
 - [x] Run `npm run verify:launch-sweep` from a network-enabled terminal before UI redesign implementation. This runs build, notification QA, Resend, release-payment security, and admin/support/search in one pass.
@@ -18,7 +19,7 @@ Updated: 2026-05-25
 - [x] Confirm Supabase Dashboard → Authentication → Emails uses the Resend/custom SMTP provider for Auth emails, not the default Supabase sender.
 - [ ] Review Supabase/Resend bounce logs and remove or correct bounced recipient addresses before launch.
 - [x] Run `supabase db query --linked -f scripts/verify-data-api-grants.sql` and fix any `CHECK_RLS_OFF` or `CHECK_NO_DATA_API_GRANT` rows before UI redesign work.
-- [x] Run `npm run verify:external-env` to confirm Vercel production has `VITE_TURNSTILE_SITE_KEY` and Supabase Edge Functions have `TURNSTILE_SECRET_KEY` plus `RESEND_API_KEY`.
+- [x] Run `npm run verify:external-env` to confirm Vercel production has `VITE_TURNSTILE_SITE_KEY` and Supabase Edge Functions have `TURNSTILE_SECRET_KEY` plus `RESEND_API_KEY`. Re-run after the chatbot deploy to confirm `ANTHROPIC_API_KEY` is present too.
 - [x] Confirm `release-payment` is protected in production by a valid user token or trusted job secret. Do not assume Supabase `verify_jwt` config from function list alone.
 - [x] Verify `send-notification-email` rejects unauthenticated calls after redeploy.
 - [ ] Choose an SMS provider before adding text notifications. Do not fake SMS until phone verification, consent, opt-out, and provider billing are configured.

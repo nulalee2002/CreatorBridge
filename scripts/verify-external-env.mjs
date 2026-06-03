@@ -34,10 +34,15 @@ assert(
   supabase.output.includes('RESEND_API_KEY'),
   'Supabase Edge Function secrets are missing RESEND_API_KEY'
 );
+assert(
+  supabase.output.includes('ANTHROPIC_API_KEY'),
+  'Supabase Edge Function secrets are missing ANTHROPIC_API_KEY'
+);
 
 console.log(JSON.stringify({
   ok: true,
   vercelProductionTurnstileSiteKeyPresent: true,
   supabaseTurnstileSecretPresent: true,
   supabaseResendApiKeyPresent: true,
+  supabaseAnthropicApiKeyPresent: true,
 }, null, 2));

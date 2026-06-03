@@ -4,6 +4,7 @@ const checks = [
   ['build', ['npm', ['run', 'build']]],
   ['notifications', ['npm', ['run', 'verify:notifications']]],
   ['email provider', ['npm', ['run', 'verify:email-provider']]],
+  ['chatbot AI', ['npm', ['run', 'verify:chatbot-ai']]],
   ['release-payment security', ['npm', ['run', 'verify:release-payment-security']]],
   ['admin/support/search', ['npm', ['run', 'verify:admin-support-search']]],
 ];

@@ -559,6 +559,7 @@ export function SupportChatbot({ dark = true }) {
   const [input, setInput]       = useState('');
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
+  const [assistantMode, setAssistantMode] = useState('ai');
   const [bridgeWave, setBridgeWave] = useState(false);
   const bottomRef               = useRef(null);
   const inputRef                = useRef(null);
@@ -918,13 +919,18 @@ export function SupportChatbot({ dark = true }) {
 
       const reply = await sendToAnthropic(apiMessages);
       if (reply) {
+        setAssistantMode('ai');
         setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
       } else {
         // AI edge function unavailable — use keyword fallback and note it in console
         const lastUserContent = nextMsgs.filter(m => m.role === 'user').at(-1)?.content || '';
         const fallback = getDemoResponse(lastUserContent);
         console.warn('[Chatbot] Using keyword fallback — AI edge function unreachable');
-        setMessages(prev => [...prev, { role: 'assistant', content: fallback }]);
+        setAssistantMode('fallback');
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: `Bridge is in platform-guide mode because the live AI assistant is temporarily unavailable. ${fallback}`,
+        }]);
       }
     } catch {
       setError('Could not reach support. Try emailing drl33@creatorbridge.studio');
@@ -990,7 +996,13 @@ export function SupportChatbot({ dark = true }) {
                 Bridge <span className="cb-chat-tier">Concierge</span>
               </div>
               <div className="cb-chat-sub">
-                {bookingMode ? 'Booking path active' : quoteMode ? 'Quote builder active' : 'Verified production talent · US'}
+                {bookingMode
+                  ? 'Booking path active'
+                  : quoteMode
+                    ? 'Quote builder active'
+                    : assistantMode === 'fallback'
+                      ? 'Platform-guide mode · live AI offline'
+                      : 'Live AI concierge · US'}
               </div>
               <div className="cb-chat-takeline"><span className="cb-take-num">Take 01</span> · ready when you are</div>
             </div>
