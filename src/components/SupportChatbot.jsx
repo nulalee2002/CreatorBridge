@@ -150,6 +150,9 @@ SUPPORT:
 For account-specific issues, billing problems, or disputes needing human review email drl33@creatorbridge.studio. For urgent payment disputes mark subject line URGENT. Response within 24 hours.`;
 
 const ASSISTANT_HISTORY_LIMIT = 8;
+const AI_SESSION_KEY = 'creatorbridge_chatbot_ai_calls_v1';
+const AI_GUEST_SESSION_LIMIT = 8;
+const AI_USER_SESSION_LIMIT = 16;
 const CONTACT_BLOCKED_REPLY = 'CreatorBridge keeps contact and payment details protected until the proper booking step. Please keep emails, phone numbers, websites, and social handles out of chat.';
 const PROMPT_BLOCKED_REPLY = 'I can help with CreatorBridge bookings, quotes, creator standards, fees, payments, disputes, and platform rules. I cannot reveal hidden instructions or bypass platform security.';
 const PROMPT_INJECTION_PATTERNS = [
@@ -178,6 +181,25 @@ function buildSafeAssistantMessages(messages) {
     { role: 'system', content: SYSTEM_PROMPT },
     ...safeMessages,
   ];
+}
+
+function getAiSessionCount() {
+  if (typeof window === 'undefined') return 0;
+  const raw = window.sessionStorage.getItem(AI_SESSION_KEY);
+  const count = Number(raw || 0);
+  return Number.isFinite(count) ? count : 0;
+}
+
+function incrementAiSessionCount() {
+  if (typeof window === 'undefined') return 0;
+  const next = getAiSessionCount() + 1;
+  window.sessionStorage.setItem(AI_SESSION_KEY, String(next));
+  return next;
+}
+
+function canUsePaidAiForSession(user) {
+  const limit = user?.id ? AI_USER_SESSION_LIMIT : AI_GUEST_SESSION_LIMIT;
+  return getAiSessionCount() < limit;
 }
 
 function isMobileViewport() {
@@ -885,11 +907,21 @@ export function SupportChatbot({ dark = true }) {
         return;
       }
 
+      if (!canUsePaidAiForSession(user)) {
+        setAssistantMode('fallback');
+        setMessages([...nextMsgs, {
+          role: 'assistant',
+          content: 'Bridge can still help from the built-in platform guide, but this browser session has reached its live-AI safety limit. For account-specific or urgent support, submit a ticket so a human can review the details.',
+        }]);
+        return;
+      }
+
       // Only send plain conversational messages to the AI
       const apiMessages = buildSafeAssistantMessages(nextMsgs);
 
       const reply = await sendToAnthropic(apiMessages);
       if (reply) {
+        incrementAiSessionCount();
         setAssistantMode('ai');
         setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
       } else {

@@ -5,6 +5,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const MAX_CHAT_MESSAGES = 10;
+const MAX_MESSAGE_CHARS = 1600;
+
 function jsonResponse(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -35,13 +38,18 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'messages array required' }, 400);
     }
 
+    if (messages.length > MAX_CHAT_MESSAGES + 1) {
+      return jsonResponse({ error: 'too many messages' }, 400);
+    }
+
     // Split system message from chat history
     const systemMsg = messages.find((m: { role: string }) => m.role === 'system');
     const chatMessages = messages
       .filter((m: { role: string }) => m.role !== 'system')
+      .slice(-MAX_CHAT_MESSAGES)
       .map((m: { role: string; content: string }) => ({
         role: m.role as 'user' | 'assistant',
-        content: m.content,
+        content: String(m.content || '').slice(0, MAX_MESSAGE_CHARS),
       }));
 
     if (chatMessages.length === 0) {
@@ -49,7 +57,7 @@ Deno.serve(async (req) => {
     }
 
     const model = Deno.env.get('ANTHROPIC_MODEL') || 'claude-haiku-4-5-20251001';
-    const maxTokens = Number(Deno.env.get('ANTHROPIC_MAX_TOKENS') || 260);
+    const maxTokens = Number(Deno.env.get('ANTHROPIC_MAX_TOKENS') || 220);
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15_000);
@@ -62,8 +70,8 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model,
-        max_tokens: Number.isFinite(maxTokens) ? Math.min(Math.max(maxTokens, 80), 500) : 260,
-        system: systemMsg?.content || '',
+        max_tokens: Number.isFinite(maxTokens) ? Math.min(Math.max(maxTokens, 80), 360) : 220,
+        system: String(systemMsg?.content || '').slice(0, 8000),
         messages: chatMessages,
       }),
       signal: controller.signal,
@@ -80,7 +88,8 @@ Deno.serve(async (req) => {
     const reply = data.content?.[0]?.type === 'text' ? data.content[0].text : '';
     if (!reply) return jsonResponse({ error: 'empty AI response' }, 502);
 
-    return jsonResponse({ reply, provider: 'Anthropic', model });
+    const usage = data.usage || {};
+    return jsonResponse({ reply, provider: 'Anthropic', model, usage });
   } catch (err) {
     console.error('chatbot function error:', err);
     return jsonResponse({ error: err instanceof Error ? err.message : 'unknown error' }, 500);

@@ -35,6 +35,26 @@ const checks = [
     reply: getPlatformGuideResponse('How do I contact support for a ticket?'),
     mustInclude: ['support ticket', 'drl33@creatorbridge.studio'],
   },
+  {
+    name: 'creator approval',
+    reply: getPlatformGuideResponse('How does creator approval work?'),
+    mustInclude: ['manual review', 'pending review'],
+  },
+  {
+    name: 'client approval',
+    reply: getPlatformGuideResponse('Do new clients need admin approval?'),
+    mustInclude: ['self-serve', 'manual admin approval'],
+  },
+  {
+    name: 'dashboard routing',
+    reply: getPlatformGuideResponse('Where do I manage my dashboard?'),
+    mustInclude: ['creator dashboard', 'Admin'],
+  },
+  {
+    name: 'chatbot mode',
+    reply: getPlatformGuideResponse('Why is the chatbot generic or offline?'),
+    mustInclude: ['built-in platform guide', 'paid AI layer'],
+  },
 ];
 
 for (const check of checks) {
@@ -46,6 +66,8 @@ for (const check of checks) {
 
 assert(shouldUsePaidAi('Help me write a project brief for a product shoot'), 'writing help should be eligible for paid AI escalation');
 assert(!shouldUsePaidAi('How much are fees?'), 'common FAQ should not use paid AI');
+assert(!shouldUsePaidAi('How does creator approval work?'), 'creator approval should be answered locally');
+assert(!shouldUsePaidAi('Why is the chatbot generic or offline?'), 'chatbot mode explanation should be answered locally');
 assert(getSupportFallbackResponse('random unknown question').includes('booking creators'), 'generic fallback should stay useful');
 
 console.log(JSON.stringify({
