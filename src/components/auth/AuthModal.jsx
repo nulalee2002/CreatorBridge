@@ -396,6 +396,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
                           <div className="relative">
                             <Mail size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${dark ? 'text-charcoal-300' : 'text-gray-400'}`} />
                             <input type="email" placeholder="Email address" required value={forgotEmail}
+                              autoComplete="email"
                               onChange={e => setForgotEmail(e.target.value)}
                               className={`${inputCls} pl-10`} autoFocus />
                           </div>
@@ -463,6 +464,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
                               <div className="relative">
                                 <User size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${dark ? 'text-charcoal-300' : 'text-gray-400'}`} />
                                 <input type="text" placeholder="Full Name" required value={form.fullName}
+                                  autoComplete="name"
                                   onChange={e => set('fullName', e.target.value)}
                                   className={`${inputCls} pl-10`} />
                               </div>
@@ -471,6 +473,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
                             <div className="relative">
                               <Mail size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${dark ? 'text-charcoal-300' : 'text-gray-400'}`} />
                               <input type="email" placeholder="Email address" required value={form.email}
+                                autoComplete="email"
                                 onChange={e => set('email', e.target.value)}
                                 className={`${inputCls} pl-10`} />
                             </div>
@@ -479,6 +482,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
                               <Lock size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${dark ? 'text-charcoal-300' : 'text-gray-400'}`} />
                               <input type={showPass ? 'text' : 'password'} placeholder="Password" required
                                 minLength={10} title="Password must be at least 10 characters." value={form.password}
+                                autoComplete={tab === 'signup' ? 'new-password' : 'current-password'}
                                 onChange={e => set('password', e.target.value)}
                                 className={`${inputCls} pl-10 pr-10`} />
                               <button type="button" onClick={() => setShowPass(s => !s)}
