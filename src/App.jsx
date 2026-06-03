@@ -102,6 +102,8 @@ function getRouteBackdrop(pathname) {
   if (pathname.startsWith('/find') || pathname.startsWith('/register')) return '/images/creatorbridge/backgrounds/06-page-headers/header-findcreators-onset-crew.jpg';
   if (pathname.startsWith('/projects')) return '/images/creatorbridge/backgrounds/06-page-headers/projectboard-crew-at-console.jpg';
   if (pathname.startsWith('/network')) return '/images/creatorbridge/backgrounds/03-featured-work/featured-documentary-rooftop-crew.jpg';
+  if (pathname.startsWith('/dashboard')) return '/images/creatorbridge/backgrounds/02-pillars/pillar-video-arri-autumn.jpg';
+  if (pathname.startsWith('/client')) return '/images/creatorbridge/backgrounds/10-spare-unused/spare-julius-drost-xKZkjXcZc3s.jpg';
   if (pathname.startsWith('/creator/')) return '/images/creatorbridge/backgrounds/05-creator-covers/creator-video-on-location.jpg';
   return null;
 }
@@ -647,7 +649,8 @@ export default function App() {
   }
 
   const bgMain = dark ? '' : 'bg-gray-50';
-  const routeBackdropClass = location.pathname === '/' ? 'cb-home-route' : 'cb-inner-route';
+  const isAccountRoute = location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/client');
+  const routeBackdropClass = location.pathname === '/' ? 'cb-home-route' : isAccountRoute ? 'cb-inner-route cb-account-route' : 'cb-inner-route';
   const routeBackdrop = getRouteBackdrop(location.pathname);
   const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.07] shadow-[0_22px_70px_rgba(0,0,0,0.18)]' : 'bg-white border-gray-200'}`;
   return (

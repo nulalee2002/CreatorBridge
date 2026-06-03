@@ -158,6 +158,16 @@ body::after {
     transparent 100%);
   filter:drop-shadow(0 0 7px rgba(201,168,76,0.46));
 }
+.cb-account-route .cb-route-photo-backdrop img {
+  opacity:0.4;
+  filter:brightness(0.78) saturate(1.12) contrast(1.04);
+  transform:scale(1.03);
+}
+.cb-account-route .cb-route-photo-scrim {
+  background:
+    radial-gradient(circle at 50% 34%, rgba(13,13,15,0.48) 0%, rgba(13,13,15,0.82) 48%, rgba(13,13,15,0.92) 100%),
+    linear-gradient(90deg, rgba(13,13,15,0.9) 0%, rgba(13,13,15,0.64) 50%, rgba(13,13,15,0.9) 100%);
+}
 
 /* Quiet down if user prefers reduced motion */
 @media (prefers-reduced-motion: reduce) {
