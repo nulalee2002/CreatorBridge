@@ -21,6 +21,10 @@ Deno.serve(async (req) => {
   if (rateLimited) return rateLimited;
 
   try {
+    if (Deno.env.get('CHATBOT_AI_ENABLED') === 'false') {
+      return jsonResponse({ error: 'AI disabled' }, 503);
+    }
+
     const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!apiKey) {
       return jsonResponse({ error: 'AI not configured' }, 503);

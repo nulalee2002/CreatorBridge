@@ -23,7 +23,13 @@ const REQUIRED_SUPABASE_SECRETS = [
   'PLATFORM_JOB_SECRET',
   'TURNSTILE_SECRET_KEY',
   'RESEND_API_KEY',
+];
+
+const OPTIONAL_SUPABASE_SECRETS = [
   'ANTHROPIC_API_KEY',
+  'ANTHROPIC_MODEL',
+  'ANTHROPIC_MAX_TOKENS',
+  'CHATBOT_AI_ENABLED',
 ];
 
 const PUBLIC_SECRET_RISKS = [
@@ -105,6 +111,12 @@ for (const name of [...REQUIRED_VERCEL, ...OPTIONAL_VERCEL]) {
 for (const name of REQUIRED_SUPABASE_SECRETS) {
   if (localKeys.has(name)) {
     warnings.push(`${name} appears in root .env. Supabase Edge Function secrets should be set in Supabase secrets, not exposed to frontend builds.`);
+  }
+}
+
+for (const name of OPTIONAL_SUPABASE_SECRETS) {
+  if (localKeys.has(name)) {
+    warnings.push(`${name} appears in root .env. Keep chatbot AI controls in Supabase secrets when possible.`);
   }
 }
 

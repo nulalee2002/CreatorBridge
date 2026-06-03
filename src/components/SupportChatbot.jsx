@@ -8,6 +8,7 @@ import { parseBudgetRange } from '../utils/matchingAlgorithm.js';
 import { fromSupabaseProject, upsertLocalProject } from '../utils/projectStorage.js';
 import { clampNumber, sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
 import { checkMessage, logFilterEvent } from '../utils/messageFilter.js';
+import { getPlatformGuideResponse, getSupportFallbackResponse, shouldUsePaidAi } from '../data/supportKnowledge.js';
 
 const BRIDGE_BODY_SVG = `
 <svg viewBox="0 0 72 110" fill="none" class="bridge-face bridge-body-svg" aria-hidden="true">
@@ -228,49 +229,6 @@ async function sendToAnthropic(messages) {
     console.error('[Chatbot] Network error calling edge function:', err);
     return null;
   }
-}
-
-// Fallback responses — used only when the AI edge function is unavailable
-function getDemoResponse(question) {
-  const q = question.toLowerCase();
-
-  if (q.includes('how does this platform work') || q.includes('how does creatorbridge work') || (q.includes('how does') && q.includes('work'))) {
-    return 'Here\'s the short version: clients post a project brief, Smart Match surfaces 3 to 5 verified creators who fit the budget, location, and service type, client pays a 50% retainer to lock in the booking, creator delivers, client approves, and the rest of the payment releases. Creators keep 90% of every project.';
-  }
-  if (q.includes('fee') || q.includes('cost') || q.includes('price') || q.includes('how much')) {
-    return 'Clients pay a flat 5% booking fee — no subscription, no lead fees. Creators start at a 10% platform cut, which drops to 8% after 10 projects and 6% after 25. The more you work, the less you give up.';
-  }
-  if (q.includes('sign up') || q.includes('get started') || q.includes('join') || q.includes('register')) {
-    return 'Clients can browse right now — no account required to look around. To book, you\'ll need a free client account. Creators go through a 5-step application with portfolio review and verification. Hit Join in the nav to start either path.';
-  }
-  if (q.includes('payment') || q.includes('retainer') || q.includes('when do i get paid') || q.includes('when will i get paid')) {
-    return 'Clients pay 50% upfront to secure the booking. The remaining 50% releases when the client approves the final delivery. If the client goes quiet for 72 hours after delivery, payment auto-releases. No chasing invoices.';
-  }
-  if (q.includes('not happy') || q.includes('unhappy') || q.includes('not satisfied') || q.includes('dispute')) {
-    return 'Every project includes 2 free revisions, so start there. If something is genuinely wrong after revisions, clients have 72 hours after delivery to open a dispute. That freezes the payment and the CreatorBridge team steps in to sort it out fairly.';
-  }
-  if (q.includes('cancel') || q.includes('refund')) {
-    return 'Cancel before work starts: creator keeps 25% as a cancellation fee, client gets 75% back. Cancel after work has started: creator keeps the full 50% retainer. Once work is delivered, there are no refunds — only the revision process.';
-  }
-  if (q.includes('match') || q.includes('how does matching work') || q.includes('how do i get matched')) {
-    return 'Submit a project brief with your service type, budget, location, and timeline. Smart Match returns 3 to 5 creators who actually fit your needs — not just whoever bid first. For urgent projects, Fast Match assigns the best available creator instantly.';
-  }
-  if (q.includes('verif') || q.includes('verified') || q.includes('trusted') || q.includes('legit')) {
-    return 'Every creator on the platform is manually reviewed. They need 2+ years of paid experience, real portfolio samples, a government ID verified through Stripe, and a video intro. You\'re not rolling the dice — everyone here has been checked.';
-  }
-  if (q.includes('tier') || q.includes('launch') || q.includes('proven') || q.includes('elite') || q.includes('signature')) {
-    return 'Creators level up through four tiers: Launch (new), Proven (10+ projects), Elite (25+ projects), and Signature (top performers). Higher tiers rank better in search and signal more trust to clients. It\'s earned, not purchased.';
-  }
-  if (q.includes('insurance')) {
-    return 'CreatorBridge doesn\'t verify creator insurance — that\'s between you and the creator. For any on-location shoot, just ask your creator directly before you book.';
-  }
-  if (q.includes('contact') || q.includes('reach') || q.includes('email') || q.includes('phone') || q.includes('support')) {
-    return 'For account-specific issues or billing questions, email drl33@creatorbridge.studio. For urgent payment disputes, put URGENT in the subject line and the team responds within 24 hours.';
-  }
-  if (q.includes('hello') || q.includes('hi') || q.includes('hey') || q.includes('what can you do') || q.includes('what can you help')) {
-    return 'Hey! Bridge here. I can help you find and book verified media creators, walk you through how the platform works, answer questions about fees and payments, or help you build a project brief. What do you need?';
-  }
-  return 'Good question. I can help with booking creators, platform fees, payments, disputes, verification, and how matching works. Try asking me about any of that — or if it\'s account-specific, email drl33@creatorbridge.studio.';
 }
 
 // ── Booking flow config ──────────────────────────────────────────
@@ -914,6 +872,19 @@ export function SupportChatbot({ dark = true }) {
     setLoading(true);
 
     try {
+      const localReply = getPlatformGuideResponse(text);
+      if (localReply) {
+        setAssistantMode('guide');
+        setMessages([...nextMsgs, { role: 'assistant', content: localReply }]);
+        return;
+      }
+
+      if (!shouldUsePaidAi(text)) {
+        setAssistantMode('guide');
+        setMessages([...nextMsgs, { role: 'assistant', content: getSupportFallbackResponse(text) }]);
+        return;
+      }
+
       // Only send plain conversational messages to the AI
       const apiMessages = buildSafeAssistantMessages(nextMsgs);
 
@@ -922,10 +893,10 @@ export function SupportChatbot({ dark = true }) {
         setAssistantMode('ai');
         setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
       } else {
-        // AI edge function unavailable — use keyword fallback and note it in console
+        // AI edge function unavailable — use local platform guide and note it in console
         const lastUserContent = nextMsgs.filter(m => m.role === 'user').at(-1)?.content || '';
-        const fallback = getDemoResponse(lastUserContent);
-        console.warn('[Chatbot] Using keyword fallback — AI edge function unreachable');
+        const fallback = getSupportFallbackResponse(lastUserContent);
+        console.warn('[Chatbot] Using local platform guide — AI edge function unreachable');
         setAssistantMode('fallback');
         setMessages(prev => [...prev, {
           role: 'assistant',
@@ -1000,6 +971,8 @@ export function SupportChatbot({ dark = true }) {
                   ? 'Booking path active'
                   : quoteMode
                     ? 'Quote builder active'
+                    : assistantMode === 'guide'
+                      ? 'Platform guide · no AI credits used'
                     : assistantMode === 'fallback'
                       ? 'Platform-guide mode · live AI offline'
                       : 'Live AI concierge · US'}
