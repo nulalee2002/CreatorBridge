@@ -34,6 +34,7 @@ To enable paid AI after confirming the Anthropic account has funds:
 ```bash
 cd "/Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc"
 supabase secrets set CHATBOT_AI_ENABLED=true --project-ref mxizhszqhbhxzkkhgnmg
+supabase secrets set ANTHROPIC_MODEL=claude-3-5-haiku-20241022 --project-ref mxizhszqhbhxzkkhgnmg
 supabase secrets set ANTHROPIC_MAX_TOKENS=220 --project-ref mxizhszqhbhxzkkhgnmg
 supabase functions deploy chatbot --project-ref mxizhszqhbhxzkkhgnmg
 npm run verify:chatbot-ai
@@ -49,4 +50,4 @@ npm run verify:chatbot-guide
 
 ## Launch Recommendation
 
-Launch with the hybrid assistant enabled only if the Anthropic balance is funded and `npm run verify:chatbot-ai` passes. If funds are not ready, launch with guide mode; users still get platform-specific support, booking guidance, support-ticket routing, and scope-control help.
+Launch with the hybrid assistant enabled only if the Anthropic balance is funded and `npm run verify:chatbot-ai` passes. The default paid model is `claude-3-5-haiku-20241022` so custom help uses a low-cost Haiku path instead of a more expensive model. If funds are not ready, launch with guide mode; users still get platform-specific support, booking guidance, support-ticket routing, and scope-control help.

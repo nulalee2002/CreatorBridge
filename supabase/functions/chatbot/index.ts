@@ -15,6 +15,20 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
   });
 }
 
+function providerErrorMessage(errBody: string) {
+  try {
+    const parsed = JSON.parse(errBody);
+    const message = parsed?.error?.message || parsed?.message;
+    const type = parsed?.error?.type || parsed?.type;
+    return {
+      providerErrorType: typeof type === 'string' ? type : undefined,
+      providerErrorMessage: typeof message === 'string' ? message.slice(0, 240) : undefined,
+    };
+  } catch {
+    return { providerErrorMessage: errBody.slice(0, 240) };
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -56,7 +70,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'no chat messages provided' }, 400);
     }
 
-    const model = Deno.env.get('ANTHROPIC_MODEL') || 'claude-haiku-4-5-20251001';
+    const model = Deno.env.get('ANTHROPIC_MODEL') || 'claude-3-5-haiku-20241022';
     const maxTokens = Number(Deno.env.get('ANTHROPIC_MAX_TOKENS') || 220);
 
     const controller = new AbortController();
@@ -81,7 +95,11 @@ Deno.serve(async (req) => {
     if (!response.ok) {
       const errBody = await response.text();
       console.error('Anthropic API error:', response.status, errBody);
-      return jsonResponse({ error: 'AI service error', providerStatus: response.status }, 502);
+      return jsonResponse({
+        error: 'AI service error',
+        providerStatus: response.status,
+        ...providerErrorMessage(errBody),
+      }, 502);
     }
 
     const data = await response.json();
