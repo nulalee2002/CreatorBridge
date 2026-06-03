@@ -87,13 +87,19 @@ async function runTests() {
   const listingId = approvedListing.id;
   console.log(`- Found Approved Listing ID: ${listingId}`);
 
-  // 1. Temporarily reject creator listing to test unverified block
-  console.log('\n1. Rejecting creator listing temporarily using admin write RPC...');
-  const { error: rejectErr } = await adminClient.rpc('admin_reject_creator', {
-    p_listing_id: listingId
-  });
-  if (rejectErr) throw rejectErr;
-  console.log('✅ Listing status set to rejected successfully.');
+  let listingWasChanged = false;
+  let postId = null;
+  let chatId = null;
+
+  try {
+    // 1. Temporarily reject creator listing to test unverified block
+    console.log('\n1. Rejecting creator listing temporarily using admin write RPC...');
+    const { error: rejectErr } = await adminClient.rpc('admin_reject_creator', {
+      p_listing_id: listingId
+    });
+    if (rejectErr) throw rejectErr;
+    listingWasChanged = true;
+    console.log('✅ Listing status set to rejected successfully.');
 
   // 2. Test RLS block on network post insertion for unverified creator
   console.log('\n2. Testing unverified creator RLS block on network post...');
@@ -111,8 +117,7 @@ async function runTests() {
   if (postBlockErr) {
     console.log('✅ Correctly blocked! RLS error:', postBlockErr.message);
   } else {
-    console.error('❌ FAILED: RLS did not block unverified creator post!');
-    process.exit(1);
+    throw new Error('RLS did not block unverified creator post');
   }
 
   // 3. Restore creator listing approval
@@ -140,10 +145,9 @@ async function runTests() {
     .single();
 
   if (clientPostErr) {
-    console.error('❌ Failed client post creation:', clientPostErr.message);
-    process.exit(1);
+    throw new Error(`Failed client post creation: ${clientPostErr.message}`);
   }
-  const postId = clientPost.id;
+  postId = clientPost.id;
   console.log('✅ Client post created successfully. ID:', postId);
 
   // 5. Test verified creator reply creation
@@ -162,8 +166,7 @@ async function runTests() {
     .single();
 
   if (replyErr) {
-    console.error('❌ Failed creator reply creation:', replyErr.message);
-    process.exit(1);
+    throw new Error(`Failed creator reply creation: ${replyErr.message}`);
   }
   console.log('✅ Creator reply created successfully. ID:', creatorReply.id);
 
@@ -177,8 +180,7 @@ async function runTests() {
     });
 
   if (likeErr) {
-    console.error('❌ Failed creator post like creation:', likeErr.message);
-    process.exit(1);
+    throw new Error(`Failed creator post like creation: ${likeErr.message}`);
   }
   console.log('✅ Creator liked client post successfully!');
 
@@ -198,18 +200,31 @@ async function runTests() {
     .single();
 
   if (chatErr) {
-    console.error('❌ Failed state chat message insertion:', chatErr.message);
-    process.exit(1);
+    throw new Error(`Failed state chat message insertion: ${chatErr.message}`);
   }
+  chatId = chatMsg.id;
   console.log('✅ State chat message inserted successfully. ID:', chatMsg.id);
 
-  // Clean up created test data
-  console.log('\nCleaning up created test records...');
-  await adminClient.from('network_posts').delete().eq('id', postId);
-  await adminClient.from('state_chat_messages').delete().eq('id', chatMsg.id);
-  console.log('✅ Cleanup complete.');
-
-  console.log('\n--- ALL NETWORK AND MEMBERSHIP GATE TESTS PASSED SUCCESSFULLY! ---');
+    console.log('\n--- ALL NETWORK AND MEMBERSHIP GATE TESTS PASSED SUCCESSFULLY! ---');
+  } finally {
+    console.log('\nRestoring QA data...');
+    if (listingWasChanged) {
+      const { error: restoreErr } = await adminClient.rpc('admin_approve_creator', {
+        p_listing_id: listingId
+      });
+      if (restoreErr) console.warn('Warning: could not restore creator listing approval:', restoreErr.message);
+      else console.log('✅ Creator listing approval restored.');
+    }
+    if (postId) {
+      const { error: postCleanErr } = await adminClient.from('network_posts').delete().eq('id', postId);
+      if (postCleanErr) console.warn('Warning during network post cleanup:', postCleanErr.message);
+    }
+    if (chatId) {
+      const { error: chatCleanErr } = await adminClient.from('state_chat_messages').delete().eq('id', chatId);
+      if (chatCleanErr) console.warn('Warning during chat cleanup:', chatCleanErr.message);
+    }
+    console.log('✅ Cleanup complete.');
+  }
 }
 
 runTests().catch(err => {
