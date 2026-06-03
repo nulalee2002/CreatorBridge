@@ -31,8 +31,8 @@ const admin = createClient(supabaseUrl, serviceRoleKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
-const adminEmail    = env.QA_ADMIN_EMAIL || 'drl33@creatorbridge.studio';
-const adminPassword = env.QA_ADMIN_PASS;
+const adminEmail    = env.QA_ADMIN_EMAIL || env.CREATORBRIDGE_QA_ADMIN_EMAIL || 'drl33@creatorbridge.studio';
+const adminPassword = env.QA_ADMIN_PASS || env.CREATORBRIDGE_QA_ADMIN_PASSWORD;
 if (!adminPassword) {
   console.error('Error: QA_ADMIN_PASS must be set in .env');
   process.exit(1);
@@ -57,6 +57,18 @@ async function createAdmin() {
       const { data } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
       const existingUser = data.users.find(u => u.email?.toLowerCase() === adminEmail.toLowerCase());
       if (existingUser) {
+        if (adminEmail !== 'drl33@creatorbridge.studio') {
+          const updated = await admin.auth.admin.updateUserById(existingUser.id, {
+            password: adminPassword,
+            email_confirm: true,
+            user_metadata: {
+              full_name: 'Platform Admin',
+              role: 'admin',
+            },
+          });
+          if (updated.error) throw updated.error;
+          console.log('- Existing QA admin password refreshed from local environment.');
+        }
         await linkAdmin(existingUser.id);
       }
       return;
@@ -86,7 +98,7 @@ async function linkAdmin(userId) {
   // 2. Insert into platform_admins
   const { error: adminErr } = await admin.from('platform_admins').upsert({
     user_id: userId,
-    note: 'CreatorBridge owner admin',
+    note: adminEmail === 'drl33@creatorbridge.studio' ? 'CreatorBridge owner admin' : 'CreatorBridge QA admin',
   });
   if (adminErr) throw adminErr;
   console.log(`- Platform admin access granted successfully.`);
@@ -94,7 +106,7 @@ async function linkAdmin(userId) {
   console.log('\n==================================================');
   console.log('SUCCESS: Admin Account Setup Complete!');
   console.log(`Email: ${adminEmail}`);
-  console.log(`Password: ${adminPassword}`);
+  console.log('Password: configured from local environment');
   console.log('==================================================');
 }
 

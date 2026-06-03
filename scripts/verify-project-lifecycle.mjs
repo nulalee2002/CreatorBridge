@@ -26,14 +26,14 @@ if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
   process.exit(1);
 }
 
-const creatorEmail = env.QA_CREATOR_EMAIL || 'drl33+creator@creatorbridge.studio';
-const creatorPass  = env.QA_CREATOR_PASS;
+const creatorEmail = env.QA_CREATOR_EMAIL || env.CREATORBRIDGE_QA_CREATOR_EMAIL || 'drl33+creator@creatorbridge.studio';
+const creatorPass  = env.QA_CREATOR_PASS || env.CREATORBRIDGE_QA_CREATOR_PASSWORD;
 
-const clientEmail  = env.QA_CLIENT_EMAIL  || 'drl33+client@creatorbridge.studio';
-const clientPass   = env.QA_CLIENT_PASS;
+const clientEmail  = env.QA_CLIENT_EMAIL || env.CREATORBRIDGE_QA_CLIENT_EMAIL || 'drl33+client@creatorbridge.studio';
+const clientPass   = env.QA_CLIENT_PASS || env.CREATORBRIDGE_QA_CLIENT_PASSWORD;
 
-const adminEmail   = env.QA_ADMIN_EMAIL   || 'drl33@creatorbridge.studio';
-const adminPass    = env.QA_ADMIN_PASS;
+const adminEmail   = env.QA_ADMIN_EMAIL || env.CREATORBRIDGE_QA_ADMIN_EMAIL || 'drl33@creatorbridge.studio';
+const adminPass    = env.QA_ADMIN_PASS || env.CREATORBRIDGE_QA_ADMIN_PASSWORD;
 
 if (!creatorPass || !clientPass || !adminPass) {
   console.error('Error: QA_CREATOR_PASS, QA_CLIENT_PASS, and QA_ADMIN_PASS must be set in .env');
