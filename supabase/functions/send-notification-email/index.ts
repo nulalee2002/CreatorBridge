@@ -221,7 +221,18 @@ Deno.serve(async (req) => {
   if (rateLimited) return rateLimited;
 
   try {
-    const { to, template, data } = await req.json();
+    const { to, template, data, verifyOnly } = await req.json();
+
+    if (verifyOnly === true) {
+      const apiKey = Deno.env.get('RESEND_API_KEY');
+      return jsonResponse({
+        success: true,
+        provider: 'Resend',
+        providerConfigured: Boolean(apiKey),
+        verifiedOnly: true,
+      });
+    }
+
     if (!to || !template) {
       return jsonResponse({ error: 'recipient email (to) and template name are required' }, 400);
     }
