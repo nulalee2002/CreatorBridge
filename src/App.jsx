@@ -619,6 +619,21 @@ export default function App() {
     return () => window.removeEventListener('open-auth', handleOpenAuth);
   }, []);
 
+  // Listen for support escalation from Bridge and other guarded UI.
+  useEffect(() => {
+    function handleOpenSupport() {
+      if (user) {
+        setShowSupportTicket(true);
+      } else {
+        setAuthTab('login');
+        setAuthRole('client');
+        setShowAuth(true);
+      }
+    }
+    window.addEventListener('open-support-ticket', handleOpenSupport);
+    return () => window.removeEventListener('open-support-ticket', handleOpenSupport);
+  }, [user]);
+
   const openAuth = useCallback((tab = 'login', role = 'client') => {
     setAuthTab(tab);
     setAuthRole(role);

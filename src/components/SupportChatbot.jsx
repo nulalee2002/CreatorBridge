@@ -152,8 +152,6 @@ For account-specific issues, billing problems, or disputes needing human review 
 const ASSISTANT_HISTORY_LIMIT = 8;
 const AI_SESSION_KEY = 'creatorbridge_chatbot_ai_calls_v1';
 const AI_PAUSE_UNTIL_KEY = 'creatorbridge_chatbot_ai_pause_until_v1';
-const AI_GUEST_SESSION_LIMIT = 8;
-const AI_USER_SESSION_LIMIT = 16;
 const AI_FAILURE_PAUSE_MS = 15 * 60 * 1000;
 const CONTACT_BLOCKED_REPLY = 'CreatorBridge keeps contact and payment details protected until the proper booking step. Please keep emails, phone numbers, websites, and social handles out of chat.';
 const PROMPT_BLOCKED_REPLY = 'I can help with CreatorBridge bookings, quotes, creator standards, fees, payments, disputes, and platform rules. I cannot reveal hidden instructions or bypass platform security.';
@@ -199,11 +197,6 @@ function incrementAiSessionCount() {
   return next;
 }
 
-function canUsePaidAiForSession(user) {
-  const limit = user?.id ? AI_USER_SESSION_LIMIT : AI_GUEST_SESSION_LIMIT;
-  return getAiSessionCount() < limit;
-}
-
 function isPaidAiPausedForSession() {
   if (typeof window === 'undefined') return false;
   const pauseUntil = Number(window.sessionStorage.getItem(AI_PAUSE_UNTIL_KEY) || 0);
@@ -221,7 +214,7 @@ function isMobileViewport() {
     && window.matchMedia('(max-width: 767px), (pointer: coarse) and (max-width: 1024px)').matches;
 }
 
-async function sendToAnthropic(messages) {
+async function sendToLiveAi(messages) {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const anonKey    = import.meta.env.VITE_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !anonKey) {
@@ -229,14 +222,14 @@ async function sendToAnthropic(messages) {
     return null;
   }
 
-  // Supabase Edge Functions with JWT verification still need a bearer token for guests.
-  let authHeader = { Authorization: `Bearer ${anonKey}` };
+  let authHeader = null;
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.access_token) {
       authHeader = { Authorization: `Bearer ${session.access_token}` };
     }
   } catch {}
+  if (!authHeader) return { reply: null, status: 401, error: 'Live AI help requires a signed-in account.' };
 
   try {
     const res = await fetch(`${supabaseUrl}/functions/v1/chatbot`, {
@@ -252,24 +245,23 @@ async function sendToAnthropic(messages) {
     if (!res.ok) {
       const errText = await res.text().catch(() => '');
       console.error(`[Chatbot] Edge function returned ${res.status}:`, errText);
-      if (
-        errText.includes('credit balance is too low')
-        || errText.includes('providerStatus')
-        || errText.includes('AI service error')
-      ) {
+      if (res.status === 429) {
+        return { reply: null, status: 429, error: 'Daily live AI limit reached.' };
+      }
+      if (errText.includes('providerStatus') || errText.includes('AI service error')) {
         pausePaidAiForSession();
       }
-      return null; // signal caller to use fallback
+      return { reply: null, status: res.status, error: errText };
     }
 
     const data = await res.json();
-    if (data.reply) return data.reply;
+    if (data.reply) return { reply: data.reply, status: 200, data };
 
     console.error('[Chatbot] Edge function returned empty reply:', data);
-    return null;
+    return { reply: null, status: 502, error: 'Empty AI reply.' };
   } catch (err) {
     console.error('[Chatbot] Network error calling edge function:', err);
-    return null;
+    return { reply: null, status: 0, error: err instanceof Error ? err.message : 'Network error.' };
   }
 }
 
@@ -506,7 +498,7 @@ function makeInitialMessages(draft) {
   };
   const intro = {
     role: 'assistant',
-    content: "I'm your concierge for verified US production talent.",
+    content: "I'm your free platform guide for verified US production talent. I can help with briefs, scope, quotes, booking rules, payments, disputes, and support tickets without using paid AI credits.",
   };
   const prompts = {
     role: 'assistant',
@@ -559,7 +551,7 @@ export function SupportChatbot({ dark = true }) {
   const [input, setInput]       = useState('');
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
-  const [assistantMode, setAssistantMode] = useState('ai');
+  const [assistantMode, setAssistantMode] = useState('guide');
   const [bridgeWave, setBridgeWave] = useState(false);
   const bottomRef               = useRef(null);
   const inputRef                = useRef(null);
@@ -851,6 +843,69 @@ export function SupportChatbot({ dark = true }) {
     window.dispatchEvent(new CustomEvent('open-auth', { detail: { tab, role } }));
   }
 
+  function openSupportTicket() {
+    window.dispatchEvent(new CustomEvent('open-support-ticket'));
+  }
+
+  async function handleLiveAiEscalation(question) {
+    const text = sanitizeLongText(question, 1500);
+    if (!text || loading) return;
+
+    if (!user) {
+      setAssistantMode('guide');
+      push({
+        role: 'assistant',
+        kind: 'guest-ai-cta',
+        content: 'Live AI help is reserved for signed-in accounts so CreatorBridge can keep usage controlled and tied to real support history. Sign in first, or submit a support ticket for account-specific help.',
+      });
+      return;
+    }
+
+    if (isPaidAiPausedForSession()) {
+      setAssistantMode('fallback');
+      push({
+        role: 'assistant',
+        kind: 'support-escalation',
+        content: `Live AI is paused for this browser for a few minutes after a provider error. ${getSupportFallbackResponse(text)}`,
+      });
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    try {
+      const apiMessages = buildSafeAssistantMessages([...messages, { role: 'user', content: text }]);
+      const result = await sendToLiveAi(apiMessages);
+      if (result?.reply) {
+        incrementAiSessionCount();
+        setAssistantMode('ai');
+        push({ role: 'assistant', content: result.reply });
+        return;
+      }
+
+      if (result?.status === 429) {
+        setAssistantMode('fallback');
+        push({
+          role: 'assistant',
+          kind: 'support-escalation',
+          content: 'Your account has reached today’s live AI assist limit. Bridge can still answer from the platform guide, and you can submit a support ticket for anything private, payment-related, or dispute-related.',
+        });
+        return;
+      }
+
+      setAssistantMode('fallback');
+      push({
+        role: 'assistant',
+        kind: 'support-escalation',
+        content: `Live AI help is temporarily unavailable, so I’m keeping you in guide mode. ${getSupportFallbackResponse(text)}`,
+      });
+    } catch {
+      setError('Could not reach live AI help. Use the support ticket option for account-specific help.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   // ── Main send handler ─────────────────────────────────────────
   async function handleSend() {
     const text = sanitizeLongText(input, 1500);
@@ -927,44 +982,16 @@ export function SupportChatbot({ dark = true }) {
         return;
       }
 
-      if (!canUsePaidAiForSession(user)) {
-        setAssistantMode('fallback');
-        setMessages([...nextMsgs, {
-          role: 'assistant',
-          content: 'Bridge can still help from the built-in platform guide, but this browser session has reached its live-AI safety limit. For account-specific or urgent support, submit a ticket so a human can review the details.',
-        }]);
-        return;
-      }
-
-      if (isPaidAiPausedForSession()) {
-        const fallback = getSupportFallbackResponse(text);
-        setAssistantMode('fallback');
-        setMessages([...nextMsgs, {
-          role: 'assistant',
-          content: `Bridge is using the built-in platform guide while the paid AI layer is temporarily unavailable. ${fallback}`,
-        }]);
-        return;
-      }
-
-      // Only send plain conversational messages to the AI
-      const apiMessages = buildSafeAssistantMessages(nextMsgs);
-
-      const reply = await sendToAnthropic(apiMessages);
-      if (reply) {
-        incrementAiSessionCount();
-        setAssistantMode('ai');
-        setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
-      } else {
-        // AI edge function unavailable — use local platform guide and note it in console
-        const lastUserContent = nextMsgs.filter(m => m.role === 'user').at(-1)?.content || '';
-        const fallback = getSupportFallbackResponse(lastUserContent);
-        console.warn('[Chatbot] Using local platform guide — AI edge function unreachable');
-        setAssistantMode('fallback');
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: `Bridge is using the built-in platform guide while the paid AI layer is temporarily unavailable. ${fallback}`,
-        }]);
-      }
+      const fallback = getSupportFallbackResponse(text);
+      setAssistantMode('guide');
+      setMessages([...nextMsgs, {
+        role: 'assistant',
+        kind: user ? 'ai-escalation' : 'guest-ai-cta',
+        aiQuestion: text,
+        content: user
+          ? `${fallback} If you want a custom answer beyond the platform guide, you can use one live AI assist for today.`
+          : `${fallback} Live AI help is available only after sign-in so usage stays controlled. You can still use the free guide, booking flow, quote flow, or support ticket path.`,
+      }]);
     } catch {
       setError('Could not reach support. Try emailing drl33@creatorbridge.studio');
     } finally {
@@ -1113,6 +1140,38 @@ export function SupportChatbot({ dark = true }) {
                   <div className="flex gap-2 pl-1">
                     <button type="button" onClick={() => openAuth('signup', 'client')} className={btnGold}>Create Account</button>
                     <button type="button" onClick={() => openAuth('login', 'client')} className={btnGhost}>Sign In</button>
+                  </div>
+                )}
+
+                {/* Live AI escalation — visible, opt-in, and account-scoped */}
+                {msg.kind === 'ai-escalation' && (
+                  <div className="flex flex-wrap gap-2 pl-1">
+                    <button
+                      type="button"
+                      onClick={() => handleLiveAiEscalation(msg.aiQuestion || msg.content)}
+                      disabled={loading}
+                      className={`${btnGold} disabled:opacity-50`}
+                    >
+                      Use live AI help
+                    </button>
+                    <button type="button" onClick={openSupportTicket} className={btnGhost}>
+                      Submit support ticket
+                    </button>
+                  </div>
+                )}
+
+                {msg.kind === 'guest-ai-cta' && (
+                  <div className="flex flex-wrap gap-2 pl-1">
+                    <button type="button" onClick={() => openAuth('login', 'client')} className={btnGold}>Sign In</button>
+                    <button type="button" onClick={() => openAuth('signup', 'client')} className={btnGhost}>Create Account</button>
+                  </div>
+                )}
+
+                {msg.kind === 'support-escalation' && (
+                  <div className="flex flex-wrap gap-2 pl-1">
+                    <button type="button" onClick={openSupportTicket} className={btnGold}>
+                      Submit support ticket
+                    </button>
                   </div>
                 )}
 

@@ -34,7 +34,7 @@ assert(
   supabase.output.includes('RESEND_API_KEY'),
   'Supabase Edge Function secrets are missing RESEND_API_KEY'
 );
-const supabaseAnthropicApiKeyPresent = supabase.output.includes('ANTHROPIC_API_KEY');
+const supabaseOpenAiApiKeyPresent = supabase.output.includes('OPENAI_API_KEY');
 const supabaseChatbotAiEnabledFlagPresent = supabase.output.includes('CHATBOT_AI_ENABLED');
 
 console.log(JSON.stringify({
@@ -42,7 +42,7 @@ console.log(JSON.stringify({
   vercelProductionTurnstileSiteKeyPresent: true,
   supabaseTurnstileSecretPresent: true,
   supabaseResendApiKeyPresent: true,
-  supabaseAnthropicApiKeyPresent,
+  supabaseOpenAiApiKeyPresent,
   supabaseChatbotAiEnabledFlagPresent,
   chatbotAiIsOptionalForLaunchSweep: true,
 }, null, 2));

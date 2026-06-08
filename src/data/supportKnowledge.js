@@ -41,8 +41,8 @@ export function getPlatformGuideResponse(question = '') {
     return 'CreatorBridge is designed to prevent scope creep. The project brief should define the deliverables, timeline, usage, revision count, location, and references before booking. Work outside the approved scope should be treated as a change request, documented in the project thread, and priced before the creator starts the extra work.';
   }
 
-  if (q.includes('what should i include') || q.includes('ask me questions') || q.includes('help with my brief') || q.includes('scope my project')) {
-    return 'Start with these basics: what are we making, where is it happening, when is it due, how many final deliverables are needed, where will the work be used, what reference links show the style, what must be included, what is out of scope, and what budget range is realistic. The clearer the brief, the less room there is for scope creep.';
+  if (q.includes('what should i include') || q.includes('ask me questions') || q.includes('help with my brief') || q.includes('scope my project') || q.includes('help me write') || q.includes('draft a brief') || q.includes('write my brief')) {
+    return 'Here is the clean brief structure: 1. What are we making? 2. Which pillar fits: Video, Photography, or Post Production? 3. Where and when does it happen? 4. What exact deliverables are needed? 5. Where will the work be used? 6. What reference links show the style? 7. What is not included? 8. What budget range is approved? If you answer those, you will prevent most scope creep before the project starts.';
   }
 
   if (q.includes('brief') || q.includes('project details') || q.includes('reference') || q.includes('link') || q.includes('examples')) {
@@ -51,6 +51,14 @@ export function getPlatformGuideResponse(question = '') {
 
   if (q.includes('quote') || q.includes('estimate') || q.includes('proposal')) {
     return 'A quote should be based on the selected production pillar, specialty, deliverables, timeline, locations, usage rights, and experience level. The quote flow should keep the scope specific so the creator is not guessing and the client knows exactly what they are booking.';
+  }
+
+  if (q.includes('which creator') || q.includes('recommend') || q.includes('compare creators') || q.includes('choose a creator') || q.includes('who should i hire')) {
+    return 'Use this filter: pick the creator whose primary pillar matches the work first, then compare 1 to 3 specialties, portfolio samples closest to your reference, location fit, package clarity, availability, and completed-project history. Do not choose only by price. A cheaper creator with the wrong pillar or unclear deliverables usually creates more risk than savings.';
+  }
+
+  if (q.includes('strategy') || q.includes('plan') || q.includes('how should') || q.includes('what should') || q.includes('walk me through') || q.includes('confused') || q.includes('stuck')) {
+    return 'Let’s keep it practical. If you are a client, start by choosing the pillar, then write the deliverables, timeline, budget, usage, references, and what is out of scope. If you are a creator, start with the requested deliverables, confirm what is included, price anything extra as a change request, and keep all decisions in the project thread. For account, payment, or dispute issues, use a support ticket so the team has the record.';
   }
 
   if (q.includes('not happy') || q.includes('unhappy') || q.includes('not satisfied') || q.includes('dispute')) {
@@ -86,7 +94,7 @@ export function getPlatformGuideResponse(question = '') {
   }
 
   if (q.includes('offline') || q.includes('generic') || q.includes('not smart') || q.includes('ai assistant') || q.includes('chatbot')) {
-    return 'Bridge has two layers: a built-in platform guide for common support and an optional paid AI layer for custom questions. The guide handles known rules and workflows without spending AI credits. The paid AI layer should be enabled only with budget controls, rate limits, and fallback behavior so it stays useful without quietly draining credits.';
+    return 'Bridge now works in three layers: the free platform guide handles common support without using AI credits, guided booking and quote flows handle the important workflows, and live AI help is a logged-in escalation for custom questions only. Account, payment, and dispute issues should still go to a support ticket because those need a human record.';
   }
 
   if (q.includes('contact') || q.includes('reach') || q.includes('email') || q.includes('phone') || q.includes('support') || q.includes('ticket')) {
@@ -102,27 +110,31 @@ export function getPlatformGuideResponse(question = '') {
 
 export function shouldUsePaidAi(question = '') {
   const q = String(question).toLowerCase();
+  const explicitAiTerms = [
+    'use live ai',
+    'live ai help',
+    'ask ai',
+    'ai help',
+  ];
+  if (explicitAiTerms.some(term => q.includes(term))) return true;
+
   const paidIntentTerms = [
-    'help me write',
-    'draft',
-    'rewrite',
-    'compare',
-    'recommend',
-    'strategy',
-    'plan',
-    'which creator',
-    'what should',
-    'how should',
+    'review my draft',
+    'review this brief',
+    'rewrite this',
+    'compare these creators',
+    'custom recommendation',
+    'custom strategy',
+    'specific situation',
+    'complex issue',
+    'edge case',
+    'does this scope look right',
     'custom',
     'specific',
-    'confused',
-    'stuck',
     'does this',
-    'can you explain',
-    'walk me through',
   ];
-  if (paidIntentTerms.some(term => q.includes(term))) return true;
   if (getPlatformGuideResponse(q)) return false;
+  if (paidIntentTerms.some(term => q.includes(term))) return true;
   return false;
 }
 

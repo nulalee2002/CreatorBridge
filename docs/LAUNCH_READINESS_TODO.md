@@ -18,7 +18,7 @@ This file is intentionally short. Only items that can block a public launch belo
 - [x] `npm run verify:workflow-smoke` passed from the Mac terminal on 2026-06-03: messaging/contact protection, project lifecycle/dispute handling, and network membership gates all passed.
 - [x] Release-payment security passed.
 - [x] Admin/support/search verifier passed.
-- [x] Chatbot guide mode passed and does not spend Anthropic credits.
+- [x] Chatbot guide mode passed and does not spend paid AI credits.
 - [x] Notification verifier passed.
 - [x] Resend email provider verifier passed.
 - [x] Supabase Auth SMTP is configured with Resend.
@@ -36,7 +36,7 @@ This file is intentionally short. Only items that can block a public launch belo
 
 ## Not Launch Blockers
 
-- Paid Claude/Anthropic chatbot mode can be enabled when needed, but it should stay hybrid: local platform guide first, paid AI only for custom questions, with rate/session/token limits active.
+- Paid chatbot AI can be enabled when needed, but Bridge should stay hybrid: local platform guide first, paid AI only after a logged-in user clicks `Use live AI help`, with account-level daily quota and token limits active.
 - SMS/text notifications. Do not add until provider, consent, opt-out, phone verification, and billing are ready.
 - Full Claude Design pixel-perfect sweep. Important polish, but not a payment/security/support blocker.
 - Additional creator-protection migrations. Review `docs/CREATOR_PROTECTION_AND_SCOPE_CONTROL.md` before writing migrations, but do not change the 50/50 payment structure.

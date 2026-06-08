@@ -53,7 +53,7 @@ const checks = [
   {
     name: 'chatbot mode',
     reply: getPlatformGuideResponse('Why is the chatbot generic or offline?'),
-    mustInclude: ['built-in platform guide', 'paid AI layer'],
+    mustInclude: ['free platform guide', 'live AI help'],
   },
 ];
 
@@ -64,7 +64,8 @@ for (const check of checks) {
   }
 }
 
-assert(shouldUsePaidAi('Help me write a project brief for a product shoot'), 'writing help should be eligible for paid AI escalation');
+assert(!shouldUsePaidAi('Help me write a project brief for a product shoot'), 'brief writing should be handled by free guide');
+assert(shouldUsePaidAi('Use live AI help to review this custom scope'), 'explicit live AI help should be eligible for paid AI escalation');
 assert(!shouldUsePaidAi('How much are fees?'), 'common FAQ should not use paid AI');
 assert(!shouldUsePaidAi('How does creator approval work?'), 'creator approval should be answered locally');
 assert(!shouldUsePaidAi('Why is the chatbot generic or offline?'), 'chatbot mode explanation should be answered locally');

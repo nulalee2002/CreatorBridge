@@ -25,6 +25,7 @@ Do not set these as `VITE_` variables:
 VITE_SUPABASE_SERVICE_ROLE_KEY
 VITE_STRIPE_SECRET_KEY
 VITE_STRIPE_WEBHOOK_SECRET
+VITE_OPENAI_API_KEY
 VITE_ANTHROPIC_API_KEY
 ```
 
@@ -50,9 +51,9 @@ Supabase provides `SUPABASE_URL` and service role access to Edge Functions, but 
 
 ## Current Release Risk
 
-`SupportChatbot.jsx` previously referenced `VITE_ANTHROPIC_API_KEY`. That browser-side key path has been removed because it could expose the Anthropic key to visitors. The safer next fix is to move chatbot AI calls behind a Supabase Edge Function or another backend endpoint, then store the Anthropic key only in backend secrets.
+`SupportChatbot.jsx` previously referenced `VITE_ANTHROPIC_API_KEY`. That browser-side key path has been removed because it could expose the Anthropic key to visitors. Live chatbot AI now runs through the Supabase `chatbot` Edge Function, and provider keys such as `OPENAI_API_KEY` must stay in Supabase secrets only.
 
-Until that backend chatbot endpoint exists, the chatbot should use the built-in demo/platform response fallback instead of exposing a live Anthropic key to visitors.
+Bridge should launch in free platform-guide mode first. Paid live AI should require a signed-in user, a visible escalation click, and the account-level daily quota table before it is enabled in production.
 
 ## Storage Security
 
