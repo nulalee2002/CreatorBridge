@@ -8,6 +8,7 @@ import { normalizeServiceId, SERVICE_TYPE_OPTIONS } from '../data/rates.js';
 import { PILLARS, SUB_NICHES_BY_PILLAR } from '../data/taxonomy.js';
 import { fromSupabaseProject, upsertLocalProject } from '../utils/projectStorage.js';
 import { appendReferenceLinksToText, parseReferenceLinks, sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
+import { checkMessage } from '../utils/messageFilter.js';
 import { parseBudgetRange } from '../utils/matchingAlgorithm.js';
 
 // ── Static option sets ───────────────────────────────────────
@@ -218,6 +219,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
     const isRemoteProject = form.venueType === 'Remote/Virtual';
     const cleanTitle = sanitizePlainText(form.projectTitle, 120);
     const cleanDescription = sanitizeLongText(form.description, 4000);
+    const cleanOtherProjectType = sanitizePlainText(form.otherProjectType, 120);
     const referenceCheck = parseReferenceLinks(form.referenceLinks);
     if (!cleanTitle)                     e.projectTitle       = 'Give your project a clear title so creators understand what this is.';
     if (!form.serviceType)               e.serviceType        = 'Select the type of production service you need.';
@@ -236,6 +238,17 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
     if (referenceCheck.invalid.length)   e.referenceLinks     = 'Use full links that start with https:// or http://.';
     if (!form.budgetRange)               e.budgetRange        = 'Selecting a budget range helps match you with creators who fit your project.';
     if (!form.locationPreference)        e.locationPreference = 'Let creators know if they need to be in your area.';
+    const contactFieldChecks = [
+      ['projectTitle', cleanTitle],
+      ['description', cleanDescription],
+      ['otherProjectType', cleanOtherProjectType],
+    ];
+    contactFieldChecks.forEach(([field, value]) => {
+      if (!value || e[field]) return;
+      if (checkMessage(value).blocked) {
+        e[field] = 'Keep direct contact details inside CreatorBridge. Add style/reference URLs only in the reference links field.';
+      }
+    });
     return e;
   }
 

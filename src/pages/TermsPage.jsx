@@ -33,6 +33,7 @@ function Section({ id, title, dark, children }) {
 
 export function TermsPage({ dark }) {
   const location = useLocation();
+  const isPrivacyRoute = location.pathname === '/privacy';
 
   useEffect(() => {
     const targetHash = location.hash || (location.pathname === '/privacy' ? '#privacy' : '');
@@ -54,9 +55,13 @@ export function TermsPage({ dark }) {
         <div className="mb-8 text-center">
           <p className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${textSub}`}>Legal</p>
           <h1 className={`font-display font-bold text-3xl mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>
-            Terms of Service
+            {isPrivacyRoute ? 'Privacy Policy' : 'Terms of Service'}
           </h1>
-          <p className={`text-sm ${textSub}`}>Effective April 9, 2026. Last updated April 9, 2026.</p>
+          <p className={`text-sm ${textSub}`}>
+            {isPrivacyRoute
+              ? 'How CreatorBridge handles account, booking, payment, messaging, and support data.'
+              : 'Effective April 9, 2026. Last updated April 9, 2026.'}
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-8">

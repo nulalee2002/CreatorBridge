@@ -424,6 +424,8 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
     const maxBudget = parseFloat(form.budgetMax);
     const cleanTitle = sanitizePlainText(form.title, 120);
     const cleanDescription = sanitizeLongText(form.description, 4000);
+    const cleanLocation = sanitizePlainText(form.location, 160);
+    const cleanSkills = sanitizePlainText(form.skills, 500);
     const referenceCheck = parseReferenceLinks(form.referenceLinks);
     if (!cleanTitle) next.title = 'Add a clear project title.';
     if (!form.serviceId) next.serviceId = 'Choose one primary pillar for this brief.';
@@ -433,6 +435,18 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
     if (!form.budgetMin || !Number.isFinite(minBudget) || minBudget <= 0) next.budgetMin = 'Add a minimum budget above $0.';
     if (!form.budgetMax || !Number.isFinite(maxBudget) || maxBudget <= 0) next.budgetMax = 'Add a maximum budget above $0.';
     if (form.budgetMin && form.budgetMax && minBudget > maxBudget) next.budgetMax = 'Max budget should be higher than min budget.';
+    const contactFieldChecks = [
+      ['title', cleanTitle],
+      ['description', cleanDescription],
+      ['location', cleanLocation],
+      ['skills', cleanSkills],
+    ];
+    contactFieldChecks.forEach(([field, value]) => {
+      if (!value || next[field]) return;
+      if (checkMessage(value).blocked) {
+        next[field] = 'Keep direct contact details inside CreatorBridge. Add style/reference URLs only in the reference links field.';
+      }
+    });
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -1449,6 +1463,9 @@ export function ProjectBoard({ dark }) {
         .from('creator_listings')
         .select('*')
         .eq('user_id', user.id)
+        .order('review_status', { ascending: true })
+        .order('updated_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
       if (cancelled || !data) return;
       setCreatorListing(fromCreatorListingRow(data));
