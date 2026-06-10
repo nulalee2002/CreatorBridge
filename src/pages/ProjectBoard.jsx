@@ -1075,13 +1075,13 @@ function ProjectCard({ project, dark, onApply, myApplications, isClient, canAppl
 function getProjectCoverImage(project) {
   switch(getProjectPillarId(project)) {
     case 'video_production':
-      return '/images/creatorbridge/camera-lens-event-reflection.png';
+      return '/images/creatorbridge/backgrounds/04-hero-parallax/parallax-camera-lens-macro.jpg';
     case 'photography':
-      return '/images/creatorbridge/commercial-photographer.png';
+      return '/images/creatorbridge/backgrounds/04-hero-parallax/parallax-photo-studio.jpg';
     case 'post_production':
-      return '/images/creatorbridge/post-production-suite.png';
+      return '/images/creatorbridge/backgrounds/02-pillars/pillar-post-editing-monitor.jpg';
     default:
-      return '/images/creatorbridge/creator-profile-cover-studio.jpg';
+      return '/images/creatorbridge/backgrounds/02-pillars/pillar-photo-studio-subjects.jpg';
   }
 }
 

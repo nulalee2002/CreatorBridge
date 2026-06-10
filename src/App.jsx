@@ -97,7 +97,7 @@ const SCROLL_PROGRESS_ROUTES = [
 ];
 
 function getRouteBackdrop(pathname) {
-  if (pathname === '/') return '/images/creatorbridge/backgrounds/01-hero/hero-landing-camera-rig.jpg';
+  if (pathname === '/') return '/images/creatorbridge/backgrounds/01-hero/hero-landing-camera-dolly-alt.jpg';
   if (pathname.startsWith('/calculator') || pathname.startsWith('/rate-calculator')) return '/images/creatorbridge/backgrounds/08-sitewide/bg-audio-workstation.jpg';
   if (pathname.startsWith('/find') || pathname.startsWith('/register')) return '/images/creatorbridge/backgrounds/06-page-headers/header-findcreators-onset-crew.jpg';
   if (pathname.startsWith('/projects')) return '/images/creatorbridge/backgrounds/06-page-headers/projectboard-crew-at-console.jpg';
@@ -972,7 +972,7 @@ export default function App() {
               </div>
               <div className={`relative hidden min-h-[230px] overflow-hidden rounded-2xl border lg:block ${dark ? 'border-gold-500/18 bg-charcoal-950/70' : 'border-gray-200 bg-gray-50'}`}>
                 <img
-                  src="/images/creatorbridge/rate-calculator-desk.jpg"
+                  src="/images/creatorbridge/backgrounds/08-sitewide/bg-audio-workstation.jpg"
                   alt=""
                   className="absolute inset-0 h-full w-full object-cover"
                   loading="lazy"

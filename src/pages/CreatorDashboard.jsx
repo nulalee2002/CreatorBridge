@@ -353,8 +353,8 @@ export function CreatorDashboard({ dark }) {
   ];
 
   const serviceIds = (creator.services || []).map(s => s.serviceId || s.service_id).filter(Boolean);
-  const dashboardVisual = '/images/creatorbridge/creator-intro-video-default.jpg';
-  const productionMathVisual = '/images/creatorbridge/rate-calculator-desk.jpg';
+  const dashboardVisual = '/images/creatorbridge/backgrounds/02-pillars/pillar-video-arri-autumn.jpg';
+  const productionMathVisual = '/images/creatorbridge/backgrounds/08-sitewide/bg-audio-workstation.jpg';
 
   return (
     <div className={`min-h-screen ${dark ? 'bg-transparent' : 'bg-gray-50'}`}>

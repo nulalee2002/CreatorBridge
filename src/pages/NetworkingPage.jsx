@@ -862,7 +862,7 @@ export function NetworkingPage({ dark, user, profile }) {
           </div>
           
           <div className="relative overflow-hidden rounded-3xl border border-white/[0.08]">
-          <img src="/images/creatorbridge/backgrounds/06-page-headers/header-network-warehouse-crew.jpg" alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover" style={{ opacity: 0.5, filter: 'brightness(0.78) saturate(1.05)' }} loading="lazy" />
+          <img src="/images/creatorbridge/backgrounds/03-featured-work/featured-warehouse-film-set.jpg" alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover" style={{ opacity: 0.5, filter: 'brightness(0.78) saturate(1.05)' }} loading="lazy" />
           <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(13,13,15,0.92) 0%, rgba(13,13,15,0.78) 45%, rgba(13,13,15,0.5) 100%)' }} />
           <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(13,13,15,0.15) 0%, rgba(13,13,15,0.08) 55%, rgba(13,13,15,0.55) 100%)' }} />
           <div className="relative z-10 grid lg:grid-cols-12 gap-8 items-end p-6 md:p-10">

@@ -1,13 +1,12 @@
 # CreatorBridge Launch Readiness Todo
 
-Updated: 2026-06-03
+Updated: 2026-06-10
 
 This file is intentionally short. Only items that can block a public launch belong in the Launch Gate. Optional features, design polish, and future upgrades stay out of the gate so the finish line does not keep moving.
 
-## Launch Gate: 4 Items Left
+## Launch Gate: 3 Items Left
 
 - [ ] Run the remaining live browser smoke pass for logged-in/support/admin actions: support ticket submit, notification center unread/read behavior, admin support view/update, admin operations search, admin finance CSV export, admin analytics, and creator agreement print.
-- [ ] Clear the remaining image library risk documented in `docs/IMAGE_LIBRARY_AUDIT.md`: 32 visible non-handoff image paths still need source proof, replacement, or written approval before launch.
 - [ ] Review Supabase/Resend bounce logs and remove or correct bad recipient addresses before opening the platform to real users.
 - [ ] Run the final `npm run verify:launch-sweep` after the last visual/content change and keep the passing output as launch evidence.
 
@@ -31,7 +30,7 @@ This file is intentionally short. Only items that can block a public launch belo
 - [x] Creator approval is manual: submitted listings are saved as `pending_review`, hidden from approved directory results, then approved/rejected from Admin Dashboard or Admin Operations.
 - [x] Client approval is intentionally self-serve: clients can create accounts without manual admin approval, while creator hiring/payment/proposal activity remains protected by authenticated project and payment flows.
 - [x] Admin Operations has the stronger creator approval path because approval requires an admin reason and routes through `admin_approve_creator_noted`.
-- [x] Image audit created on 2026-06-03: 68 referenced app image paths were found; 36 handoff images are covered by the existing Unsplash handoff note, and 32 visible non-handoff images remain unresolved in `docs/IMAGE_LIBRARY_AUDIT.md`.
+- [x] Image launch gate cleared on 2026-06-10: active app image references were reduced to 58 paths; 36 handoff images are covered by the existing Unsplash handoff note, 22 background images are cleared by git-history Unsplash filenames, and the 10 visible unknown-source references were replaced with already cleared image paths.
 - [x] In-app Browser public/mobile smoke pass completed on 2026-06-03 against local CreatorBridge: homepage, find creators, project board, network, calculator, sample creator profile, login, creator dashboard auth gate, client dashboard auth gate, creator agreement, terms, and dispute policy rendered with no broken images found. Phone-width checks for homepage, find creators, project board, network, calculator, sample creator profile, login, creator dashboard auth gate, and client dashboard auth gate found no horizontal overflow.
 
 ## Not Launch Blockers

@@ -1,16 +1,17 @@
 # CreatorBridge Image Library Audit
 
-Updated: 2026-06-03
+Updated: 2026-06-10
 
 Purpose: make the image launch gate concrete. This document separates images that are currently cleared by existing documentation from images that still need source proof, replacement, or manual approval before public launch.
 
 ## Current Evidence
 
-The active app code references 68 unique `/images/creatorbridge/...` paths.
+The active app code references 58 unique `/images/creatorbridge/...` paths.
 
 - 36 referenced handoff images are covered by `docs/CLAUDE_DESIGN_VISUAL_QA.md`, which says the design handoff inventory identifies those images as Unsplash images that are commercially usable under the Unsplash license.
-- 24 referenced `backgrounds/` images are not yet launch-cleared because the repo does not currently include source URLs, photographer/source attribution, generation notes, or written approval records for them.
-- 8 referenced top-level CreatorBridge images are not yet launch-cleared for the same reason.
+- 22 referenced `backgrounds/` images are now launch-cleared by git history: commit `7908ef5` added the original files with `-unsplash` filenames that include photographer/source slugs, and commit `b0b8505` renamed those exact files into their current descriptive slot names.
+- 10 previously referenced non-cleared visible images were replaced on 2026-06-10 with already cleared handoff or git-history Unsplash paths.
+- Current active scan result: 0 unresolved launch-facing image paths.
 - Unused files do not block launch unless they become visible in the app.
 
 ## Launch Rule
@@ -29,58 +30,58 @@ Unknown-source visible images must be replaced or documented before launch.
 
 The referenced files under `/images/creatorbridge/handoff/` are launch-acceptable placeholders under the current design handoff note. They should still be replaced with real creator/client work when the marketplace has enough real supply.
 
-## Not Yet Cleared: Referenced Background Images
+## Cleared By Git History
 
-These are visible or used as page/card/fallback backgrounds and need source proof or replacement:
+These referenced background images were added as Unsplash files in commit `7908ef5` and then renamed into role-based folders in commit `b0b8505`. The original filenames are the source evidence currently stored in git history.
 
 ```text
-/images/creatorbridge/backgrounds/01-hero/hero-landing-camera-dolly-alt.jpg
-/images/creatorbridge/backgrounds/01-hero/hero-landing-camera-rig.jpg
-/images/creatorbridge/backgrounds/02-pillars/pillar-photo-studio-subjects.jpg
-/images/creatorbridge/backgrounds/02-pillars/pillar-post-editing-monitor.jpg
-/images/creatorbridge/backgrounds/02-pillars/pillar-video-arri-autumn.jpg
-/images/creatorbridge/backgrounds/03-featured-work/featured-documentary-rooftop-crew.jpg
-/images/creatorbridge/backgrounds/03-featured-work/featured-horizon-photographer.jpg
-/images/creatorbridge/backgrounds/03-featured-work/featured-neon-dj-purple.jpg
-/images/creatorbridge/backgrounds/03-featured-work/featured-warehouse-film-set.jpg
-/images/creatorbridge/backgrounds/04-hero-parallax/parallax-camera-lens-macro.jpg
-/images/creatorbridge/backgrounds/04-hero-parallax/parallax-photo-studio.jpg
-/images/creatorbridge/backgrounds/05-creator-covers/creator-post-color-grade.jpg
-/images/creatorbridge/backgrounds/05-creator-covers/creator-video-field-shoot.jpg
-/images/creatorbridge/backgrounds/05-creator-covers/creator-video-on-location.jpg
-/images/creatorbridge/backgrounds/05-creator-covers/creator-video-studio.jpg
-/images/creatorbridge/backgrounds/06-page-headers/header-findcreators-onset-crew.jpg
-/images/creatorbridge/backgrounds/06-page-headers/header-network-warehouse-crew.jpg
-/images/creatorbridge/backgrounds/06-page-headers/projectboard-crew-at-console.jpg
-/images/creatorbridge/backgrounds/07-cta/cta-ambient-editing-suite.jpg
-/images/creatorbridge/backgrounds/08-sitewide/bg-audio-workstation.jpg
-/images/creatorbridge/backgrounds/08-sitewide/bg-cinematic-set.jpg
-/images/creatorbridge/backgrounds/08-sitewide/bg-podcast-home-studio.jpg
-/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg
-/images/creatorbridge/backgrounds/10-spare-unused/spare-julius-drost-xKZkjXcZc3s.jpg
+/images/creatorbridge/backgrounds/01-hero/hero-landing-camera-dolly-alt.jpg <- jakob-owens-B4f_Kx5jvpg-unsplash.jpg
+/images/creatorbridge/backgrounds/02-pillars/pillar-photo-studio-subjects.jpg <- gordon-cowie-JbcOtH0W6UQ-unsplash.jpg
+/images/creatorbridge/backgrounds/02-pillars/pillar-post-editing-monitor.jpg <- sandisk-udRj4qXyAPs-unsplash.jpg
+/images/creatorbridge/backgrounds/02-pillars/pillar-video-arri-autumn.jpg <- brian-erickson-4I54kCQdHEs-unsplash.jpg
+/images/creatorbridge/backgrounds/03-featured-work/featured-documentary-rooftop-crew.jpg <- jj-rocha-NqPUto5vS10-unsplash.jpg
+/images/creatorbridge/backgrounds/03-featured-work/featured-horizon-photographer.jpg <- elijah-merrell--qFWOJEEQh4-unsplash.jpg
+/images/creatorbridge/backgrounds/03-featured-work/featured-neon-dj-purple.jpg <- daniel-robert-dinu-KPX_dYb4CJI-unsplash.jpg
+/images/creatorbridge/backgrounds/03-featured-work/featured-warehouse-film-set.jpg <- jakob-owens-ycExgCMRggc-unsplash.jpg
+/images/creatorbridge/backgrounds/04-hero-parallax/parallax-camera-lens-macro.jpg <- mei-ling-mirow-Wa16XnW486s-unsplash.jpg
+/images/creatorbridge/backgrounds/04-hero-parallax/parallax-photo-studio.jpg <- marissa-lewis-1_GpBh396Zk-unsplash.jpg
+/images/creatorbridge/backgrounds/05-creator-covers/creator-post-color-grade.jpg <- bas-peperzak-hY07uZBVrGo-unsplash.jpg
+/images/creatorbridge/backgrounds/05-creator-covers/creator-video-field-shoot.jpg <- jose-p-ortiz-tzhZ_Py70xA-unsplash.jpg
+/images/creatorbridge/backgrounds/05-creator-covers/creator-video-on-location.jpg <- luigi-ritchie-d4bQC7yVyoE-unsplash.jpg
+/images/creatorbridge/backgrounds/05-creator-covers/creator-video-studio.jpg <- rob-wingate-UG9LOi8BJWQ-unsplash.jpg
+/images/creatorbridge/backgrounds/06-page-headers/header-findcreators-onset-crew.jpg <- oscar-ivan-esquivel-arteaga-7ggVlsBGruY-unsplash.jpg
+/images/creatorbridge/backgrounds/06-page-headers/projectboard-crew-at-console.jpg <- thisisengineering-ATeFbve78Zo-unsplash.jpg
+/images/creatorbridge/backgrounds/07-cta/cta-ambient-editing-suite.jpg <- natalie-parham-ITafWBGLSNs-unsplash.jpg
+/images/creatorbridge/backgrounds/08-sitewide/bg-audio-workstation.jpg <- denisse-leon-OVEWbIgffDk-unsplash.jpg
+/images/creatorbridge/backgrounds/08-sitewide/bg-cinematic-set.jpg <- johannes-blenke-c8XF9nlGUfc-unsplash.jpg
+/images/creatorbridge/backgrounds/08-sitewide/bg-podcast-home-studio.jpg <- ali-abdullah-Y6oKbxRX0ig-unsplash.jpg
+/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg <- jakob-owens-ntqaFfrDdEA-unsplash.jpg
+/images/creatorbridge/backgrounds/10-spare-unused/spare-julius-drost-xKZkjXcZc3s.jpg <- julius-drost-xKZkjXcZc3s-unsplash.jpg
 ```
 
-## Not Yet Cleared: Referenced Top-Level Images
+## Replaced On 2026-06-10
 
-These are visible in dashboard/profile/project experiences and need source proof or replacement:
+These formerly visible unknown-source references were removed from app code and replaced with already cleared image paths:
 
 ```text
-/images/creatorbridge/camera-lens-event-reflection.png
-/images/creatorbridge/client-command-center.jpg
-/images/creatorbridge/commercial-photographer.png
-/images/creatorbridge/creator-intro-video-default.jpg
-/images/creatorbridge/creator-profile-cover-studio.jpg
-/images/creatorbridge/post-production-suite.png
-/images/creatorbridge/project-board-planning-alt.jpg
-/images/creatorbridge/rate-calculator-desk.jpg
+/images/creatorbridge/backgrounds/01-hero/hero-landing-camera-rig.jpg -> /images/creatorbridge/backgrounds/01-hero/hero-landing-camera-dolly-alt.jpg
+/images/creatorbridge/backgrounds/06-page-headers/header-network-warehouse-crew.jpg -> /images/creatorbridge/backgrounds/03-featured-work/featured-warehouse-film-set.jpg
+/images/creatorbridge/camera-lens-event-reflection.png -> /images/creatorbridge/backgrounds/04-hero-parallax/parallax-camera-lens-macro.jpg
+/images/creatorbridge/client-command-center.jpg -> /images/creatorbridge/backgrounds/08-sitewide/bg-cinematic-set.jpg
+/images/creatorbridge/commercial-photographer.png -> /images/creatorbridge/backgrounds/04-hero-parallax/parallax-photo-studio.jpg
+/images/creatorbridge/creator-intro-video-default.jpg -> /images/creatorbridge/backgrounds/02-pillars/pillar-video-arri-autumn.jpg
+/images/creatorbridge/creator-profile-cover-studio.jpg -> /images/creatorbridge/backgrounds/02-pillars/pillar-photo-studio-subjects.jpg
+/images/creatorbridge/post-production-suite.png -> /images/creatorbridge/backgrounds/02-pillars/pillar-post-editing-monitor.jpg
+/images/creatorbridge/project-board-planning-alt.jpg -> /images/creatorbridge/backgrounds/06-page-headers/projectboard-crew-at-console.jpg
+/images/creatorbridge/rate-calculator-desk.jpg -> /images/creatorbridge/backgrounds/08-sitewide/bg-audio-workstation.jpg
 ```
 
 ## Next Image Pass
 
-1. For each not-yet-cleared image, either add source proof here or replace it with approved Pexels/Unsplash/generated/owned imagery.
+1. Keep future visible image additions tied to source proof, ownership, generation notes, or written approval before they enter app code.
 2. Prefer Pexels/Unsplash for temporary production-work placeholders.
 3. Avoid using generated or stock images as proof of a named creator's actual portfolio.
-4. After replacements, rerun the reference scan and update the counts above.
+4. Replace launch placeholders with real approved creator/client work as the marketplace gets real supply.
 
 Reference scan used:
 

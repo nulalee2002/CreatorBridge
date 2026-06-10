@@ -298,8 +298,8 @@ export function ClientProfilePage({ dark }) {
   const clientName = form.companyName || form.displayName || 'Client Account';
   const clientAvatar = avatarPreviewUrl || normalizeExternalUrl(form.avatarUrl);
   const clientWebsite = normalizeExternalUrl(form.website);
-  const clientHeroImage = '/images/creatorbridge/client-command-center.jpg';
-  const clientSupportImage = '/images/creatorbridge/project-board-planning-alt.jpg';
+  const clientHeroImage = '/images/creatorbridge/backgrounds/08-sitewide/bg-cinematic-set.jpg';
+  const clientSupportImage = '/images/creatorbridge/backgrounds/06-page-headers/projectboard-crew-at-console.jpg';
 
   if (loading) {
     return (
