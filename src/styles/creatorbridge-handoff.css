@@ -455,6 +455,119 @@ footer.site .logo-img { height:48px; }
 .reveal-up { will-change:opacity,transform; }
 .reveal-up.js-hidden { opacity:0; transform:translateY(40px); }
 
+/* ===== LIVING BACKGROUND =====
+   Bokeh embers + film grain + mouse-reactive depth (depth handled in JS).
+   All layers are fixed, non-interactive, and whisper-subtle by design. */
+.cb-embers {
+  /* Above page content (z-10), below nav (z-50) and veil (z-45) — bokeh
+     drifts over the page like out-of-focus set lights in the foreground. */
+  position:fixed; inset:0; z-index:30; pointer-events:none; overflow:hidden;
+}
+.cb-ember {
+  position:absolute; border-radius:50%;
+  background:radial-gradient(circle, rgba(222,184,90,0.85) 0%, rgba(212,169,65,0.22) 45%, transparent 70%);
+  filter:blur(9px);
+  opacity:0;
+  animation:cbEmberDrift var(--dur,26s) linear var(--delay,0s) infinite;
+  will-change:transform,opacity;
+}
+.cb-ember.e1 { width:130px; height:130px; left:8%;  --dur:22s; --delay:0s;  --peak:0.26; }
+.cb-ember.e2 { width:65px;  height:65px;  left:22%; --dur:17s; --delay:4s;  --peak:0.34; }
+.cb-ember.e3 { width:180px; height:180px; left:35%; --dur:27s; --delay:9s;  --peak:0.20; }
+.cb-ember.e4 { width:85px;  height:85px;  left:49%; --dur:19s; --delay:2s;  --peak:0.30; }
+.cb-ember.e5 { width:52px;  height:52px;  left:60%; --dur:15s; --delay:11s; --peak:0.36; }
+.cb-ember.e6 { width:150px; height:150px; left:71%; --dur:24s; --delay:6s;  --peak:0.22; }
+.cb-ember.e7 { width:72px;  height:72px;  left:82%; --dur:18s; --delay:13s; --peak:0.32; }
+.cb-ember.e8 { width:105px; height:105px; left:91%; --dur:21s; --delay:1s;  --peak:0.26; }
+.cb-ember.e9 { width:58px;  height:58px;  left:15%; --dur:16s; --delay:8s;  --peak:0.30; }
+@keyframes cbEmberDrift {
+  0%   { transform:translateY(108vh) translateX(0); opacity:0; }
+  8%   { opacity:var(--peak,0.1); }
+  50%  { transform:translateY(45vh) translateX(26px); opacity:var(--peak,0.1); }
+  92%  { opacity:0.02; }
+  100% { transform:translateY(-18vh) translateX(-14px); opacity:0; }
+}
+
+.cb-grain {
+  position:fixed; inset:-60px; z-index:2; pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  background-size:240px 240px;
+  opacity:0.09;
+  mix-blend-mode:overlay;
+  animation:cbGrainShift 0.9s steps(3) infinite;
+}
+@keyframes cbGrainShift {
+  0%   { transform:translate(0,0); }
+  33%  { transform:translate(-28px,16px); }
+  66%  { transform:translate(18px,-24px); }
+  100% { transform:translate(0,0); }
+}
+
+@media (max-width:767px) {
+  /* Phones: fewer embers, lighter grain, save the battery. */
+  .cb-ember.e3, .cb-ember.e6, .cb-ember.e8, .cb-ember.e9 { display:none; }
+  .cb-grain { opacity:0.035; animation-duration:1.4s; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cb-ember { animation:none; opacity:0; }
+  .cb-grain { animation:none; }
+}
+
+/* ===== PAGE TRANSITIONS — cinematic veil dip =====
+   A dark layer eases over the page while the route swaps behind it, then
+   lifts. The page content itself is never animated, so lazy chunks and
+   data loads can never cause a visible pop mid-transition. */
+.cb-veil {
+  position:fixed; inset:0; z-index:45; pointer-events:none;
+  opacity:0;
+  background:
+    radial-gradient(circle at 50% 26%, rgba(38,31,16,0.55), transparent 52%),
+    rgba(9,9,12,0.985);
+  transition:opacity 0.5s cubic-bezier(0.22,1,0.36,1);
+}
+.cb-veil.cb-veil-on {
+  opacity:1;
+  transition:opacity 0.17s ease-in;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cb-veil { transition:none; opacity:0 !important; }
+}
+
+/* Legacy signal strips retired — the bokeh embers carry the background now. */
+.bg-signals { display:none; }
+
+/* ===== BRIDGE CHATBOT POLISH ===== */
+.cb-fab-body {
+  animation:cbFabFloat 5s ease-in-out infinite;
+  transition:transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s ease;
+}
+.cb-fab-body:hover {
+  transform:translateY(-4px) scale(1.05);
+  box-shadow:0 18px 50px rgba(201,168,76,0.28);
+  animation-play-state:paused;
+}
+@keyframes cbFabFloat {
+  0%, 100% { transform:translateY(0); }
+  50%      { transform:translateY(-6px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cb-fab-body { animation:none; }
+}
+
+/* Gold ignition — one-time flare applied by the motion system after the
+   landing headline lines settle. */
+.cb-gold-ignite {
+  animation: goldShift 6s ease infinite, cbIgnite 1.3s cubic-bezier(0.22,1,0.36,1) 1;
+}
+@keyframes cbIgnite {
+  0%   { filter: brightness(0.65) saturate(0.8); }
+  40%  { filter: brightness(1.6) saturate(1.25); }
+  100% { filter: brightness(1) saturate(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cb-gold-ignite { animation: none; }
+}
+
 /* ===== LANE / IMAGE CARDS ===== */
 .lane-card {
   position:relative; overflow:hidden; border-radius:12px;
@@ -1339,6 +1452,128 @@ footer.site .bottom {
 }
 footer.site .bottom-links { display:flex; gap:1.5rem; }
 footer.site .bottom-links a { display:inline; padding:0; }
+
+/* ===== RATE CALCULATOR PICKERS =====
+   The calculator script renders .pillar-pick and .spec-pick buttons, but
+   their styles were never delivered with the handoff — they rendered as
+   bare text. This is the missing design language: selectable tiles and
+   chips matching the platform. */
+.pillar-pick {
+  position:relative; display:block; width:100%; text-align:left;
+  padding:1rem 1.1rem 1rem 2.55rem;
+  border:1px solid var(--border); border-radius:14px;
+  background:rgba(255,255,255,0.02);
+  font:inherit; color:var(--text); cursor:pointer;
+  transition:border-color .25s ease, background .25s ease, transform .25s ease, box-shadow .25s ease;
+}
+.pillar-pick:hover { border-color:rgba(201,168,76,0.45); transform:translateY(-2px); }
+.pillar-pick.active {
+  border-color:var(--gold);
+  background:linear-gradient(160deg, rgba(201,168,76,0.10), rgba(201,168,76,0.03));
+  box-shadow:0 14px 44px rgba(0,0,0,0.28);
+}
+.pillar-pick .pcheck {
+  position:absolute; left:1.05rem; top:1.25rem;
+  width:13px; height:13px; border-radius:50%;
+  border:1.5px solid var(--text-dim);
+  transition:border-color .25s, background .25s, box-shadow .25s;
+}
+.pillar-pick.active .pcheck {
+  border-color:var(--gold); background:var(--gold);
+  box-shadow:0 0 10px rgba(201,168,76,0.65);
+}
+.pillar-pick .pnum {
+  font-size:9px; letter-spacing:0.2em; text-transform:uppercase;
+  color:var(--text-dim); margin-bottom:0.2rem; transition:color .25s;
+}
+.pillar-pick.active .pnum { color:var(--gold); }
+.pillar-pick .plabel { font-weight:600; font-size:0.95rem; margin-bottom:0.15rem; }
+.pillar-pick .pbase { font-size:11px; color:var(--text-secondary); }
+
+.spec-pick {
+  font:inherit; font-size:11.5px; line-height:1; color:var(--text-secondary);
+  padding:0.5rem 0.85rem; min-height:36px; border-radius:999px;
+  border:1px solid var(--border); background:rgba(255,255,255,0.02);
+  cursor:pointer; white-space:nowrap;
+  transition:color .22s, border-color .22s, background .22s, transform .22s;
+}
+.spec-pick:hover { color:var(--text); border-color:rgba(201,168,76,0.4); transform:translateY(-1px); }
+.spec-pick.active {
+  color:var(--gold); border-color:var(--gold);
+  background:rgba(201,168,76,0.09);
+}
+.spec-pick .mult { color:var(--gold); font-size:10px; margin-left:0.25rem; }
+
+select.input {
+  appearance:none; -webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23c9a84c' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 0.95rem center;
+  padding-right:2.5rem; cursor:pointer;
+}
+select.input:hover { border-color:rgba(201,168,76,0.45); }
+
+@media (max-width:767px) {
+  .pillar-pick { padding:0.8rem 0.9rem 0.8rem 2.3rem; }
+  .pillar-pick .pcheck { top:1rem; }
+  .pillar-pick .plabel { font-size:0.88rem; }
+  .spec-pick { font-size:10.5px; min-height:40px; }
+}
+
+/* --- Mobile hero strip ---
+   Compact replacement for the Production Standards / Marketplace Pulse
+   float cards, which are hidden on phones. Desktop never sees this. */
+.cb-hero-strip { display:none; }
+@media (max-width:767px) {
+  .cb-hero-strip {
+    display:flex; flex-wrap:wrap; gap:0.4rem 1.1rem;
+    margin-top:1.1rem; padding:0.7rem 0.9rem;
+    border:1px solid rgba(201,168,76,0.18);
+    border-radius:12px;
+    background:rgba(13,13,15,0.55);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+  }
+  .cb-hero-strip span {
+    display:inline-flex; align-items:center; gap:0.45rem;
+    font-size:10.5px; color:var(--text-secondary); white-space:nowrap;
+  }
+  .cb-hero-strip b {
+    font-weight:500; font-size:8.5px; letter-spacing:0.16em;
+    text-transform:uppercase; color:var(--gold);
+  }
+}
+
+/* --- Collapsible footer columns (phones only) --- */
+footer.site .cb-footer-toggle {
+  display:inline-flex; align-items:center; gap:0.4rem;
+  font:inherit; color:inherit; letter-spacing:inherit;
+  text-transform:inherit; background:none; border:none; padding:0;
+  cursor:default; pointer-events:none;
+}
+footer.site .cb-footer-chevron { display:none; }
+@media (max-width:639px) {
+  footer.site .grid { gap:0.4rem; margin-bottom:1.5rem; }
+  footer.site .brand-col { margin-bottom:1.25rem; }
+  footer.site .cb-footer-col h4 { margin-bottom:0; }
+  footer.site .cb-footer-toggle {
+    pointer-events:auto; cursor:pointer;
+    width:100%; justify-content:space-between;
+    min-height:44px; font-size:11px;
+    border-bottom:1px solid var(--border);
+  }
+  footer.site .cb-footer-chevron {
+    display:inline-block; color:var(--gold);
+    transition:transform 0.3s ease;
+  }
+  footer.site .cb-open .cb-footer-chevron { transform:rotate(180deg); }
+  footer.site .cb-footer-links {
+    display:grid; grid-template-rows:0fr;
+    transition:grid-template-rows 0.35s ease;
+  }
+  footer.site .cb-footer-links > div { min-height:0; overflow:hidden; }
+  footer.site .cb-open .cb-footer-links { grid-template-rows:1fr; }
+  footer.site .cb-footer-links button { min-height:40px; }
+}
 
 /* =======================================================================
    INTERACTIVE HOVER FEEDBACK

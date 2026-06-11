@@ -280,6 +280,27 @@ function AuthRequired({ dark, user, loading, role = 'client', title, copy, child
   );
 }
 
+// Footer link column — always open on desktop, tap-to-expand on phones.
+function FooterCol({ title, children }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={`cb-footer-col ${open ? 'cb-open' : ''}`}>
+      <h4>
+        <button
+          type="button"
+          className="cb-footer-toggle"
+          onClick={() => setOpen(o => !o)}
+          aria-expanded={open}
+        >
+          {title}
+          <span className="cb-footer-chevron" aria-hidden="true">▾</span>
+        </button>
+      </h4>
+      <div className="cb-footer-links"><div>{children}</div></div>
+    </div>
+  );
+}
+
 function NotFoundRoute({ dark }) {
   const navigate = useNavigate();
   return (
@@ -562,10 +583,81 @@ export default function App() {
   const navigate  = useNavigate();
   const location  = useLocation();
 
+  // ── Cinematic page transitions ─────────────────────────────────────────
+  // Routes render `displayedLocation`, which lags `location` just long
+  // enough for the old page to ease out and the new one to ease up in.
+  const [displayedLocation, setDisplayedLocation] = useState(location);
+  const [pageTransitionClass, setPageTransitionClass] = useState('');
+
   useEffect(() => {
-    if (location.hash) return;
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  }, [location.pathname, location.hash]);
+    if (location === displayedLocation) return;
+    // Hash/search-only changes swap instantly (no visual transition).
+    if (location.pathname === displayedLocation.pathname) {
+      setDisplayedLocation(location);
+      return;
+    }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setDisplayedLocation(location);
+      if (!location.hash) window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      return;
+    }
+    // Veil dip: a dark layer eases over the page, the route swaps and any
+    // lazy content mounts safely behind it, then the veil lifts. The page
+    // itself is never animated, so nothing can pop or jump mid-transition.
+    setPageTransitionClass('cb-veil-on');
+    const swap = setTimeout(() => {
+      setDisplayedLocation(location);
+      if (!location.hash) window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      const lift = setTimeout(() => setPageTransitionClass(''), 90);
+      return () => clearTimeout(lift);
+    }, 200);
+    return () => clearTimeout(swap);
+  }, [location, displayedLocation]);
+
+  // Cinematic motion system (GSAP) — lazy-loaded so it never blocks first
+  // paint. Re-initializes after each page swap; public pages only.
+  useEffect(() => {
+    let cancelled = false;
+    let mod = null;
+    // Small delay lets lazy route components mount before we animate.
+    const timer = setTimeout(() => {
+      import('./lib/motion.js').then(m => {
+        if (cancelled) return;
+        mod = m;
+        m.initPageMotion(displayedLocation.pathname);
+      }).catch(() => { /* motion is enhancement only — never break the page */ });
+    }, 160);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      mod?.killPageMotion();
+    };
+  }, [displayedLocation.pathname]);
+
+  // Mouse-reactive depth — background layers drift toward the cursor so the
+  // page feels dimensional. Desktop pointers only; loads once, lazily.
+  useEffect(() => {
+    if (!window.matchMedia('(pointer: fine)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let cleanup = null;
+    let cancelled = false;
+    import('gsap').then(({ gsap }) => {
+      if (cancelled) return;
+      const layers = [...document.querySelectorAll('[data-depth]')].map(el => ({
+        toX: gsap.quickTo(el, 'x', { duration: 1.4, ease: 'power2.out' }),
+        toY: gsap.quickTo(el, 'y', { duration: 1.4, ease: 'power2.out' }),
+        depth: parseFloat(el.dataset.depth) || 6,
+      }));
+      const onMove = (e) => {
+        const nx = (e.clientX / window.innerWidth) - 0.5;
+        const ny = (e.clientY / window.innerHeight) - 0.5;
+        layers.forEach(l => { l.toX(nx * -l.depth); l.toY(ny * -l.depth); });
+      };
+      window.addEventListener('pointermove', onMove, { passive: true });
+      cleanup = () => window.removeEventListener('pointermove', onMove);
+    }).catch(() => {});
+    return () => { cancelled = true; cleanup?.(); };
+  }, []);
 
   const [state, dispatch] = useReducer(reducer, DEFAULT_STATE, (init) => {
     try {
@@ -719,8 +811,8 @@ export default function App() {
           <div className="cb-route-photo-scrim" />
         </div>
       )}
-      <div className="bg-grid" aria-hidden="true" />
-      <div className="bg-signals" aria-hidden="true">
+      <div className="bg-grid" data-depth="5" aria-hidden="true" />
+      <div className="bg-signals" data-depth="9" aria-hidden="true">
         <span className="sig h1" />
         <span className="sig h2" />
         <span className="sig h3" />
@@ -731,6 +823,14 @@ export default function App() {
         <span className="sig d1" />
         <span className="sig d2" />
       </div>
+      {/* Drifting bokeh embers — set-light orbs floating up through the dark */}
+      <div className="cb-embers" data-depth="14" aria-hidden="true">
+        {[...Array(9)].map((_, i) => <span key={i} className={`cb-ember e${i + 1}`} />)}
+      </div>
+      {/* Film grain — barely-there animated texture over everything dark */}
+      <div className="cb-grain" aria-hidden="true" />
+      {/* Page-transition veil — dips over content during route changes */}
+      <div className={`cb-veil ${pageTransitionClass}`} aria-hidden="true" />
       <CreatorBridgeChromeEffects />
 
       {/* ── Top Nav ── */}
@@ -908,7 +1008,7 @@ export default function App() {
 
       {/* ── Routes ── */}
       <main id="cb-main-content" tabIndex={-1} style={{ outline: 'none' }}>
-      <Routes>
+      <Routes location={displayedLocation}>
         <Route path="/" element={<LandingPage dark={dark} />} />
         <Route path="/find" element={<CreatorDirectory dark={dark} mode="search" onSwitchToRegister={() => navigate('/register')} />} />
         <Route path="/search" element={<LazyRoute dark={dark}><SearchPage dark={dark} /></LazyRoute>} />
@@ -1317,26 +1417,23 @@ export default function App() {
                   <span className="footer-pill">Post Production</span>
                 </div>
               </div>
-              <div>
-                <h4>Platform</h4>
+              <FooterCol title="Platform">
                 <button type="button" onClick={() => navigate('/find')}>Find Creators</button>
                 <button type="button" onClick={() => navigate('/projects')}>Project Board</button>
                 <button type="button" onClick={() => navigate('/network')}>Creator Network</button>
                 <button type="button" onClick={() => navigate('/calculator')}>Rate Calculator</button>
-              </div>
-              <div>
-                <h4>For Creators</h4>
+              </FooterCol>
+              <FooterCol title="For Creators">
                 <button type="button" onClick={() => navigate('/creator/demo')}>Sample profile</button>
                 <button type="button" onClick={() => navigate('/join-as-creator')}>Apply to join</button>
                 <button type="button" onClick={() => navigate('/creator-agreement')}>Creator Agreement</button>
                 <button type="button" onClick={() => navigate('/dispute-policy')}>Dispute Policy</button>
-              </div>
-              <div>
-                <h4>Company</h4>
+              </FooterCol>
+              <FooterCol title="Company">
                 <button type="button" onClick={() => navigate('/terms')}>Terms</button>
                 <button type="button" onClick={() => navigate('/privacy')}>Privacy</button>
                 <button type="button" onClick={() => user ? setShowSupportTicket(true) : setShowAuth(true)}>Contact Support</button>
-              </div>
+              </FooterCol>
             </div>
             <div className="bottom">
               <div>© 2026 CreatorBridge · US-only verified media marketplace · All bookings in USD.</div>
