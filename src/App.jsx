@@ -933,6 +933,7 @@ export default function App() {
         <Route path="/privacy" element={<LazyRoute dark={dark}><TermsPage dark={dark} /></LazyRoute>} />
         <Route path="/reset-password" element={<LazyRoute dark={dark}><ResetPasswordPage dark={dark} /></LazyRoute>} />
         <Route path="/calculator" element={<HandoffPage page={handoffPages.rateCalculator} bgImage="/images/creatorbridge/backgrounds/08-sitewide/bg-audio-workstation.jpg" />} />
+        <Route path="/rate-calculator" element={<HandoffPage page={handoffPages.rateCalculator} bgImage="/images/creatorbridge/backgrounds/08-sitewide/bg-audio-workstation.jpg" />} />
       </Routes>
       </main>
 

@@ -23,3 +23,7 @@ niche_implementation_handoff.md
 2026-05-20-creatorbridge-codex-handoff.md
 skills-lock.json
 vite.config.js.timestamp-*.mjs
+
+# Local optimization/verification artifacts; do not deploy or commit.
+_holding-not-deployed/
+dist-verify/

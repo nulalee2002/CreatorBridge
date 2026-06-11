@@ -37,8 +37,8 @@ let creator = {
   languages: ["English", "Spanish"],
   crew: "2-person core team + on-call stylists & assistants",
   tiers: ["Verified", "Elite"],
-  avatar: "/images/creatorbridge/handoff/photo-1494790108377-be9c29b29330.png",
-  reel: "/images/creatorbridge/handoff/photo-1485846234645-a62644f84728.png"
+  avatar: "/images/creatorbridge/handoff/photo-1494790108377-be9c29b29330.jpg",
+  reel: "/images/creatorbridge/handoff/photo-1485846234645-a62644f84728.jpg"
 };
 
 let verification = [
@@ -49,15 +49,15 @@ let verification = [
 ];
 
 let portfolio = [
-  { id: 1, cat: "Editorial & Press",                ratio: "aspect-[4/5]",  src: "/images/creatorbridge/handoff/photo-1492691527719-9d1e07e534b4.png", title: "Spring drop · Aritzia" },
-  { id: 2, cat: "Brand & Commercial Photography",   ratio: "aspect-[16/10]",src: "/images/creatorbridge/handoff/photo-1542038784456-1ea8e935640e.png", title: "Soho House · Miami" },
-  { id: 3, cat: "Headshots & Portraits",            ratio: "aspect-[4/5]",  src: "/images/creatorbridge/handoff/photo-1554384645-13eab165c24b.png", title: "Equinox · Member series" },
-  { id: 4, cat: "Brand & Commercial Photography",   ratio: "aspect-[16/10]",src: "/images/creatorbridge/handoff/photo-1502672260266-1c1ef2d93688.png", title: "The Standard · Property" },
-  { id: 5, cat: "Editorial & Press",                ratio: "aspect-[4/5]",  src: "/images/creatorbridge/handoff/photo-1496217590455-aa63a8350eea.png", title: "Vogue Business · Resort" },
-  { id: 6, cat: "Brand & Commercial Photography",   ratio: "aspect-[16/10]",src: "/images/creatorbridge/handoff/photo-1539109136881-3be0616acf4b.png", title: "Horizon Rebrand" },
-  { id: 7, cat: "Headshots & Portraits",            ratio: "aspect-[4/5]",  src: "/images/creatorbridge/handoff/photo-1531123897727-8f129e1688ce.png", title: "Founder portraits" },
-  { id: 8, cat: "Brand & Commercial Photography",   ratio: "aspect-[16/10]",src: "/images/creatorbridge/handoff/photo-1516035069371-29a1b244cc32.png", title: "Editorial campaign" },
-  { id: 9, cat: "Editorial & Press",                ratio: "aspect-[4/5]",  src: "/images/creatorbridge/handoff/photo-1600585154340-be6161a56a0c.png", title: "Coral Gables · feature" }
+  { id: 1, cat: "Editorial & Press",                ratio: "aspect-[4/5]",  src: "/images/creatorbridge/handoff/photo-1492691527719-9d1e07e534b4.jpg", title: "Spring drop · Aritzia" },
+  { id: 2, cat: "Brand & Commercial Photography",   ratio: "aspect-[16/10]",src: "/images/creatorbridge/handoff/photo-1542038784456-1ea8e935640e.jpg", title: "Soho House · Miami" },
+  { id: 3, cat: "Headshots & Portraits",            ratio: "aspect-[4/5]",  src: "/images/creatorbridge/handoff/photo-1554384645-13eab165c24b.jpg", title: "Equinox · Member series" },
+  { id: 4, cat: "Brand & Commercial Photography",   ratio: "aspect-[16/10]",src: "/images/creatorbridge/handoff/photo-1502672260266-1c1ef2d93688.jpg", title: "The Standard · Property" },
+  { id: 5, cat: "Editorial & Press",                ratio: "aspect-[4/5]",  src: "/images/creatorbridge/handoff/photo-1496217590455-aa63a8350eea.jpg", title: "Vogue Business · Resort" },
+  { id: 6, cat: "Brand & Commercial Photography",   ratio: "aspect-[16/10]",src: "/images/creatorbridge/handoff/photo-1539109136881-3be0616acf4b.jpg", title: "Horizon Rebrand" },
+  { id: 7, cat: "Headshots & Portraits",            ratio: "aspect-[4/5]",  src: "/images/creatorbridge/handoff/photo-1531123897727-8f129e1688ce.jpg", title: "Founder portraits" },
+  { id: 8, cat: "Brand & Commercial Photography",   ratio: "aspect-[16/10]",src: "/images/creatorbridge/handoff/photo-1516035069371-29a1b244cc32.jpg", title: "Editorial campaign" },
+  { id: 9, cat: "Editorial & Press",                ratio: "aspect-[4/5]",  src: "/images/creatorbridge/handoff/photo-1600585154340-be6161a56a0c.jpg", title: "Coral Gables · feature" }
 ];
 
 let packages = [
@@ -178,7 +178,7 @@ function HeroInfo({ onJumpBook, onMessage, saved, setSaved }) {
     <div className="space-y-5">
       <div className="flex items-start gap-4">
         <div className="parallax-wrap w-16 h-16 rounded-2xl overflow-hidden shrink-0 ring-1 ring-[var(--border)]">
-          <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.png'; } }}/>
+          <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg'; } }}/>
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -710,7 +710,7 @@ function StickyBook({ selectedPkg, onBook, show }) {
     <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[80] liquid-glass rounded-2xl px-5 py-3 flex items-center gap-5 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
       <div className="flex items-center gap-3">
         <div className="w-9 h-9 rounded-lg overflow-hidden">
-          <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.png'; } }}/>
+          <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg'; } }}/>
         </div>
         <div>
           <div className="text-[10px] text-[var(--text-dim)] leading-none mb-0.5">{pkg.name} package</div>

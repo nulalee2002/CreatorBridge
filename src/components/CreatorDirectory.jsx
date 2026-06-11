@@ -96,26 +96,26 @@ function getCreatorCoverImage(creator) {
   if (portfolioImage) return portfolioImage.imageUrl || portfolioImage.image_url;
   const subNiche = creator.sub_niches?.[0];
   if (subNiche) {
-    if (subNiche.startsWith('ph_')) return '/images/creatorbridge/handoff/photo-1542038784456-1ea8e935640e.png';
-    if (subNiche.startsWith('pp_')) return '/images/creatorbridge/handoff/photo-1574717024653-61fd2cf4d44d.png';
-    return '/images/creatorbridge/handoff/photo-1485846234645-a62644f84728.png';
+    if (subNiche.startsWith('ph_')) return '/images/creatorbridge/handoff/photo-1542038784456-1ea8e935640e.jpg';
+    if (subNiche.startsWith('pp_')) return '/images/creatorbridge/handoff/photo-1574717024653-61fd2cf4d44d.jpg';
+    return '/images/creatorbridge/handoff/photo-1485846234645-a62644f84728.jpg';
   }
   const serviceId = creator.services?.[0]?.serviceId || creator.services?.[0]?.service_id || '';
   switch(serviceId) {
     case 'video':
-      return '/images/creatorbridge/handoff/photo-1485846234645-a62644f84728.png';
+      return '/images/creatorbridge/handoff/photo-1485846234645-a62644f84728.jpg';
     case 'photography':
-      return '/images/creatorbridge/handoff/photo-1542038784456-1ea8e935640e.png';
+      return '/images/creatorbridge/handoff/photo-1542038784456-1ea8e935640e.jpg';
     case 'drone':
-      return '/images/creatorbridge/handoff/photo-1506947411487-a56738267384.png';
+      return '/images/creatorbridge/handoff/photo-1506947411487-a56738267384.jpg';
     case 'podcast':
-      return '/images/creatorbridge/handoff/photo-1590602847861-f357a9332bbc.png';
+      return '/images/creatorbridge/handoff/photo-1590602847861-f357a9332bbc.jpg';
     case 'postProduction':
     case 'editor':
     case 'social':
-      return '/images/creatorbridge/handoff/photo-1574717024653-61fd2cf4d44d.png';
+      return '/images/creatorbridge/handoff/photo-1574717024653-61fd2cf4d44d.jpg';
     default:
-      return '/images/creatorbridge/handoff/photo-1492691527719-9d1e07e534b4.png';
+      return '/images/creatorbridge/handoff/photo-1492691527719-9d1e07e534b4.jpg';
   }
 }
 

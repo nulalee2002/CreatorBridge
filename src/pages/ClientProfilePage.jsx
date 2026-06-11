@@ -367,7 +367,7 @@ export function ClientProfilePage({ dark }) {
               <div className="flex min-w-0 items-center gap-3">
                 <div className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border text-sm font-black ${dark ? 'border-gold-500/25 bg-charcoal-950/65 text-gold-300' : 'border-gold-200 bg-white text-gold-700'}`}>
                   {clientAvatar ? (
-                    <img src={clientAvatar} alt="" className="h-full w-full object-cover" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.png'; } }}/>
+                    <img src={clientAvatar} alt="" className="h-full w-full object-cover" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg'; } }}/>
                   ) : clientInitials(clientName)}
                 </div>
                 <div className="min-w-0">
@@ -520,7 +520,7 @@ export function ClientProfilePage({ dark }) {
                 <div className={`mb-2 flex items-center gap-3 rounded-2xl border p-3 ${dark ? 'border-white/[0.07] bg-charcoal-950/45' : 'border-gray-200 bg-gray-50'}`}>
                   <div className={`flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border text-xs font-black ${dark ? 'border-gold-500/25 bg-charcoal-950/70 text-gold-300' : 'border-gold-200 bg-white text-gold-700'}`}>
                     {clientAvatar ? (
-                      <img src={clientAvatar} alt="" className="h-full w-full object-cover" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.png'; } }}/>
+                      <img src={clientAvatar} alt="" className="h-full w-full object-cover" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg'; } }}/>
                     ) : clientInitials(clientName)}
                   </div>
                   <div className="min-w-0 flex-1">
