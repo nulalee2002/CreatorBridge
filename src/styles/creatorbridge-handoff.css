@@ -667,6 +667,28 @@ select.input { appearance:none; padding-right:2rem;
   .nav { padding:0.6rem 1rem; }
 }
 
+/* ===== TABLET NAV FIX =====
+   Between phone and desktop the nav links used to wrap onto a second row,
+   making the fixed header taller than the page top padding and letting
+   page headings slide underneath it. Keep the header a single row by
+   compacting the links and letting them scroll horizontally instead. */
+@media(min-width:768px) and (max-width:1199px){
+  .nav { padding:0.6rem 1rem; }
+  .nav-inner { flex-wrap:nowrap; gap:0.5rem; }
+  .nav-links {
+    flex:1 1 auto;
+    min-width:0;
+    overflow-x:auto;
+    white-space:nowrap;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+  }
+  .nav-links::-webkit-scrollbar { display:none; }
+  .nav-link { flex:0 0 auto; padding:0.45rem 0.6rem; font-size:0.68rem; }
+  .logo-img { height:26px; }
+  .nav-actions { flex:0 0 auto; }
+}
+
 /* ===== MOBILE HANDOFF OPTIMIZATION =====
    Phone view keeps the Claude Design language, but removes desktop crowding:
    compact chrome, visible scrollable nav, smaller mascot, tighter cards,

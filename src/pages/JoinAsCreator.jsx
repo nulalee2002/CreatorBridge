@@ -5,7 +5,7 @@ export function JoinAsCreator({ dark }) {
   const navigate = useNavigate();
 
   const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
-  const cardCls = `rounded-2xl border p-6 shadow-[0_24px_80px_rgba(0,0,0,0.16)] transition-all duration-300 hover:scale-[1.02] ${
+  const cardCls = `rounded-xl sm:rounded-2xl border p-4 sm:p-6 shadow-[0_24px_80px_rgba(0,0,0,0.16)] transition-all duration-300 hover:scale-[1.02] ${
     dark ? 'bg-charcoal-900/72 border-white/[0.07] hover:border-gold-500/30' : 'bg-white border-gray-200 hover:border-gold-500/50'
   }`;
 
@@ -35,14 +35,14 @@ export function JoinAsCreator({ dark }) {
       </section>
 
       {/* Niches We Serve */}
-      <section className="max-w-5xl mx-auto px-4 py-12">
-        <div className="text-center mb-10">
+      <section className="max-w-5xl mx-auto px-4 py-8 sm:py-12">
+        <div className="text-center mb-6 sm:mb-10">
           <h2 className={`font-display font-bold text-2xl sm:text-3xl mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>
             Niches We Serve
           </h2>
           <p className={`text-xs ${textSub}`}>We specialize in professional freelance content production categories.</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
           <div className={cardCls}>
             <div className="w-10 h-10 rounded-xl bg-gold-500/10 text-gold-400 flex items-center justify-center mb-4">
               <Video size={20} />
@@ -89,14 +89,14 @@ export function JoinAsCreator({ dark }) {
       </section>
 
       {/* How it Works */}
-      <section className="max-w-5xl mx-auto px-4 py-12">
-        <div className="text-center mb-10">
+      <section className="max-w-5xl mx-auto px-4 py-8 sm:py-12">
+        <div className="text-center mb-6 sm:mb-10">
           <h2 className={`font-display font-bold text-2xl sm:text-3xl mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>
             How It Works
           </h2>
           <p className={`text-xs ${textSub}`}>A straightforward matching and payment experience from start to finish.</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-6">
           <div className={`${cardCls} relative overflow-hidden`}>
             <div className="absolute top-4 right-4 text-3xl font-black text-gold-500/10">01</div>
             <h3 className={`font-bold text-base mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>Register & Get Verified</h3>
@@ -122,8 +122,8 @@ export function JoinAsCreator({ dark }) {
       </section>
 
       {/* What You Earn */}
-      <section className="max-w-5xl mx-auto px-4 py-12">
-        <div className={`rounded-2xl border p-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-center ${
+      <section className="max-w-5xl mx-auto px-4 py-8 sm:py-12">
+        <div className={`rounded-xl sm:rounded-2xl border p-5 sm:p-8 grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8 items-center ${
           dark ? 'bg-charcoal-900/40 border-white/[0.07]' : 'bg-white border-gray-200'
         }`}>
           <div>
@@ -149,7 +149,7 @@ export function JoinAsCreator({ dark }) {
               </li>
             </ul>
           </div>
-          <div className={`p-6 rounded-xl border ${dark ? 'bg-charcoal-950/65 border-white/[0.08]' : 'bg-gray-50 border-gray-200'}`}>
+          <div className={`p-4 sm:p-6 rounded-xl border ${dark ? 'bg-charcoal-950/65 border-white/[0.08]' : 'bg-gray-50 border-gray-200'}`}>
             <h3 className={`font-bold text-xs uppercase tracking-wider mb-4 ${dark ? 'text-gold-400' : 'text-gold-600'}`}>Payout Comparison Example</h3>
             <div className="space-y-3 font-mono text-xs">
               <div className="flex justify-between border-b border-gray-800/40 pb-2">
@@ -173,7 +173,7 @@ export function JoinAsCreator({ dark }) {
       </section>
 
       {/* Trust Signals */}
-      <section className="max-w-5xl mx-auto px-4 py-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 text-center">
+      <section className="max-w-5xl mx-auto px-4 py-8 sm:py-12 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 text-center">
         <div className="p-4">
           <div className="w-8 h-8 rounded-full bg-gold-500/10 text-gold-400 flex items-center justify-center mx-auto mb-3">
             <MapPin size={16} />
