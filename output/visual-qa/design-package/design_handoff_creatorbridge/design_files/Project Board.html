@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Board — CreatorBridge</title>
+<link rel="stylesheet" href="styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+.brief-card {
+  position:relative;
+  padding:1.1rem 1.25rem;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:rgba(20,20,24,0.45);
+  backdrop-filter:blur(20px) saturate(1.4);
+  cursor:pointer;
+  transition:all 0.3s cubic-bezier(0.23,1,0.32,1);
+}
+.brief-card:hover { border-color:var(--border-hover); background:rgba(20,20,24,0.6); }
+.brief-card.active {
+  border-color:var(--gold);
+  background:rgba(201,168,76,0.06);
+  box-shadow:0 0 30px rgba(201,168,76,0.08);
+}
+.brief-card.active::before {
+  content:''; position:absolute; left:-1px; top:1rem; bottom:1rem;
+  width:3px; border-radius:2px; background:var(--gold);
+}
+.filter-pill {
+  display:inline-flex; align-items:center; gap:0.4rem;
+  padding:0.45rem 0.9rem; border-radius:8px;
+  font-size:11.5px; color:var(--text-secondary);
+  border:1px solid var(--border);
+  background:rgba(255,255,255,0.02);
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.filter-pill:hover { color:var(--text); border-color:rgba(255,255,255,0.15); }
+.filter-pill.active {
+  background:var(--gold); color:var(--bg); border-color:var(--gold);
+  font-weight:600;
+}
+.filter-pill .pk {
+  font-family:'Playfair Display',serif;
+  font-size:10px;
+  letter-spacing:0.15em;
+  color:var(--gold);
+  opacity:0.65;
+  text-transform:uppercase;
+}
+.filter-pill.active .pk { color:var(--bg); opacity:0.9; }
+.pillar-lane-label {
+  display:inline-flex; align-items:center; gap:0.45rem;
+  padding:0.32rem 0.65rem; border-radius:6px;
+  font-size:11px;
+  background:rgba(201,168,76,0.08);
+  border:1px solid rgba(201,168,76,0.18);
+  color:var(--gold);
+}
+.pillar-lane-label .pillar {
+  font-family:'Playfair Display',serif;
+  font-size:11px;
+  letter-spacing:0.04em;
+}
+.pillar-lane-label .sep { opacity:0.5; }
+.pillar-lane-label .spec {
+  color:var(--text);
+  font-size:11px;
+}
+.lane-icon {
+  width:36px; height:36px;
+  border-radius:10px;
+  background:var(--gold-dim);
+  display:flex; align-items:center; justify-content:center;
+  color:var(--gold);
+  flex-shrink:0;
+}
+.detail-pane {
+  position:sticky; top:6rem;
+  max-height:calc(100vh - 7rem);
+  overflow-y:auto;
+}
+.modal-backdrop {
+  position:fixed; inset:0; z-index:200;
+  background:rgba(0,0,0,0.7);
+  backdrop-filter:blur(8px);
+  display:flex; align-items:center; justify-content:center;
+  padding:1.5rem;
+  opacity:0; pointer-events:none;
+  transition:opacity 0.3s;
+}
+.modal-backdrop.open { opacity:1; pointer-events:auto; }
+.modal-box {
+  background:rgba(20,20,24,0.95);
+  backdrop-filter:blur(20px) saturate(1.4);
+  border:1px solid var(--border);
+  border-radius:16px;
+  max-width:560px; width:100%;
+  max-height:calc(100vh - 3rem); overflow-y:auto;
+  transform:scale(0.95) translateY(20px);
+  transition:transform 0.3s;
+}
+.modal-backdrop.open .modal-box { transform:scale(1) translateY(0); }
+</style>
+</head>
+<body>
+
+<div id="nav-root"></div>
+
+<main style="position:relative;z-index:10; padding-top:5.5rem;">
+
+<!-- ===== HEADER STRIP ===== -->
+<section class="px-6 lg:px-16 pt-10 pb-6">
+  <div class="max-w-[1400px] mx-auto">
+    <div class="flex items-center gap-2 text-[11px] text-[var(--text-dim)] mb-4 reveal-up">
+      <a href="Landing.html" class="hover:text-[var(--text)] transition-colors">Home</a>
+      <span class="opacity-40">/</span>
+      <span class="text-[var(--text)]">Project Board</span>
+    </div>
+    <div class="grid lg:grid-cols-12 gap-6 items-end mb-6 reveal-up">
+      <div class="lg:col-span-7">
+        <div class="eyebrow mb-2">Open production briefs · US only</div>
+        <h1 class="text-4xl md:text-5xl serif font-medium leading-[1.05]">
+          Curated work. <span class="gold-text">Scoped before money moves.</span>
+        </h1>
+        <p class="text-sm text-[var(--text-secondary)] max-w-md mt-4">
+          Every brief is reviewed by the CreatorBridge team and tagged by pillar + specialty. Creators apply with proof; clients shortlist before any USD retainer is held.
+        </p>
+      </div>
+      <div class="lg:col-span-5 flex lg:justify-end gap-2">
+        <button id="post-brief-btn" class="btn-gold">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+          Post a brief
+        </button>
+        <a href="Find Creators.html" class="btn-ghost">Browse creators</a>
+      </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="flex flex-wrap items-center gap-2 reveal-up">
+      <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--text-dim)] mr-2">Pillar</div>
+      <button class="filter-pill active" data-pillar="all"><span class="pk">ALL</span> All briefs <span id="count-all" style="opacity:0.6"></span></button>
+      <button class="filter-pill" data-pillar="video"><span class="pk">01</span> Video Production <span class="opacity-60" id="count-video"></span></button>
+      <button class="filter-pill" data-pillar="photo"><span class="pk">02</span> Photography <span class="opacity-60" id="count-photo"></span></button>
+      <button class="filter-pill" data-pillar="post"><span class="pk">03</span> Post Production <span class="opacity-60" id="count-post"></span></button>
+      <div class="ml-auto flex items-center gap-2">
+        <select id="sort" class="bg-transparent border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs" style="color:var(--text);">
+          <option value="newest">Newest</option>
+          <option value="budget-desc">Budget · high to low</option>
+          <option value="budget-asc">Budget · low to high</option>
+          <option value="applied">Most applied</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== RESULTS ===== -->
+<section class="px-6 lg:px-16 pb-24">
+  <div class="max-w-[1400px] mx-auto">
+    <div class="grid lg:grid-cols-12 gap-6">
+
+      <!-- LIST -->
+      <div class="lg:col-span-5 space-y-3" id="brief-list"></div>
+
+      <!-- DETAIL -->
+      <div class="lg:col-span-7">
+        <div id="detail-pane" class="detail-pane"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ===== POST BRIEF MODAL ===== -->
+<div class="modal-backdrop" id="post-modal">
+  <div class="modal-box p-6 lg:p-8">
+    <div class="flex items-center justify-between mb-5">
+      <div>
+        <div class="eyebrow mb-1">Post a production brief · US only</div>
+        <h3 class="text-xl serif">Tell us what you're producing</h3>
+      </div>
+      <button id="close-modal" class="w-9 h-9 rounded-full border border-[var(--border)] flex items-center justify-center hover:border-[var(--gold)] hover:text-[var(--gold)] transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+
+    <div class="space-y-4">
+      <label class="block">
+        <div class="text-[10px] tracking-[0.2em] uppercase text-[var(--text-dim)] mb-1.5">Project title</div>
+        <input type="text" class="input" placeholder="e.g. Product photography for spring launch">
+      </label>
+      <div class="grid grid-cols-2 gap-3">
+        <label class="block">
+          <div class="text-[10px] tracking-[0.2em] uppercase text-[var(--text-dim)] mb-1.5">Primary pillar</div>
+          <select id="modal-pillar" class="input">
+            <option value="video">Video Production</option>
+            <option value="photo" selected>Photography</option>
+            <option value="post">Post Production</option>
+          </select>
+        </label>
+        <label class="block">
+          <div class="text-[10px] tracking-[0.2em] uppercase text-[var(--text-dim)] mb-1.5">Specialty</div>
+          <select id="modal-specialty" class="input"></select>
+        </label>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <label class="block">
+          <div class="text-[10px] tracking-[0.2em] uppercase text-[var(--text-dim)] mb-1.5">US location</div>
+          <input type="text" class="input" placeholder="City, ST · or Remote">
+        </label>
+        <label class="block">
+          <div class="text-[10px] tracking-[0.2em] uppercase text-[var(--text-dim)] mb-1.5">Deadline</div>
+          <input type="text" class="input" placeholder="e.g. Jun 15 or Ongoing">
+        </label>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <label class="block">
+          <div class="text-[10px] tracking-[0.2em] uppercase text-[var(--text-dim)] mb-1.5">Budget min · USD</div>
+          <input type="number" class="input" placeholder="$">
+        </label>
+        <label class="block">
+          <div class="text-[10px] tracking-[0.2em] uppercase text-[var(--text-dim)] mb-1.5">Budget max · USD</div>
+          <input type="number" class="input" placeholder="$">
+        </label>
+      </div>
+      <label class="block">
+        <div class="text-[10px] tracking-[0.2em] uppercase text-[var(--text-dim)] mb-1.5">Brief</div>
+        <textarea class="input-area" rows="5" placeholder="Deliverables, mood, references, timeline…"></textarea>
+      </label>
+      <div class="liquid-glass rounded-xl p-4 text-xs text-[var(--text-secondary)]">
+        Briefs are reviewed within 24 hrs. Once live, verified US creators can apply with proof — you choose who to shortlist before any USD retainer is held.
+      </div>
+      <div class="flex gap-2 justify-end pt-2">
+        <button id="cancel-modal" class="btn-ghost text-xs">Cancel</button>
+        <button class="btn-gold text-xs">Submit for review</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="footer-root"></div>
+
+<script src="core.js"></script>
+<script>
+window.CB.mountChrome('projects');
+
+// ===== BRIEFS =====
+// Every brief tagged with primary pillar + specialty (within that pillar).
+const BRIEFS = [
+  {
+    id: 1, title: "Product Photography for E-Commerce Launch", client: "BeautyBrand Co",
+    pillar: "photo", specialty: "Product & Still Life",
+    location: "New York, NY", budgetMin: 800, budgetMax: 1500,
+    posted: "2 days ago", deadline: "May 30", applied: 3, status: "Open",
+    cover: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=900&q=80",
+    summary: "Launching a new skincare line — need a US-based product photographer to shoot 30+ items on clean white backgrounds plus 12 lifestyle composition frames.",
+    deliverables: ["30 product images · white background", "12 lifestyle composition shots", "Retouched + color-corrected", "Web + print-ready files", "Usage rights · 18 months"],
+    tags: ["product photography", "Adobe Lightroom", "white background", "skincare"],
+    refs: ["https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=500&q=80", "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=500&q=80"]
+  },
+  {
+    id: 2, title: "YouTube Channel Intro Animation (30 sec)", client: "TechReviewPro",
+    pillar: "post", specialty: "Motion Graphics & VFX",
+    location: "Remote · US", budgetMin: 300, budgetMax: 600,
+    posted: "5 days ago", deadline: "Jun 12", applied: 7, status: "Open",
+    cover: "https://images.unsplash.com/photo-1633419461186-7d40a38105ec?w=900&q=80",
+    summary: "Need a motion designer for a punchy 30-second intro animation for a tech review channel. Bold typography, kinetic energy, tech-forward.",
+    deliverables: ["30-second intro animation", "5-second outro variant", "1080p + 4K masters", "Editable AE project file", "2 revision rounds"],
+    tags: ["After Effects", "motion graphics", "logo animation", "kinetic type"],
+    refs: ["https://images.unsplash.com/photo-1633419461186-7d40a38105ec?w=500&q=80"]
+  },
+  {
+    id: 3, title: "Monthly Social Video Package — Real Estate", client: "LuxRealty Group",
+    pillar: "video", specialty: "Short-Form & Social (Reels/TikTok/UGC)",
+    location: "Los Angeles, CA", budgetMin: 1200, budgetMax: 2500,
+    posted: "1 week ago", deadline: "Ongoing", applied: 12, status: "Open",
+    cover: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900&q=80",
+    summary: "Boutique real estate agency needs a monthly social-first video package: 4 Reels, 8 Stories, captions and strategy. Looking for a long-term partner in LA.",
+    deliverables: ["4 Reels with motion edits · monthly", "8 Stories · monthly", "Caption copy + strategy", "Monthly content calendar"],
+    tags: ["Instagram", "Reels", "real estate", "monthly retainer"],
+    refs: ["https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=500&q=80"]
+  },
+  {
+    id: 4, title: "Weekly Podcast Audio Editing — Long-Term", client: "The Business Pod",
+    pillar: "post", specialty: "Podcast Audio Editing",
+    location: "Remote · US", budgetMin: 150, budgetMax: 300,
+    posted: "3 days ago", deadline: "Recurring", applied: 5, status: "Open",
+    cover: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=900&q=80",
+    summary: "Established weekly business podcast (200+ episodes) seeking a reliable audio editor. ~45 min raw audio per week. Long-term preferred.",
+    deliverables: ["Weekly episode edit · 45 min", "Noise cleanup + leveling", "Show notes + chapter markers", "Same-day Monday turnaround"],
+    tags: ["Adobe Audition", "podcast editing", "Descript", "long-term"],
+    refs: []
+  },
+  {
+    id: 5, title: "Aerial Video for Luxury Property Listings", client: "Sunset Realty Miami",
+    pillar: "video", specialty: "Drone & Aerial Video",
+    location: "Miami, FL", budgetMin: 400, budgetMax: 800,
+    posted: "1 day ago", deadline: "Jun 5", applied: 2, status: "Open",
+    cover: "https://images.unsplash.com/photo-1506947411487-a56738267384?w=900&q=80",
+    summary: "Need a Part 107 licensed drone operator for aerial footage of 4 waterfront properties. 4K footage + edited 30-second listing reels.",
+    deliverables: ["4K aerial footage · 4 properties", "Color graded clips", "Edited 30-second listing reels", "Aerial stills · 8 per property"],
+    tags: ["Part 107", "DJI Mavic", "real estate", "4K"],
+    refs: ["https://images.unsplash.com/photo-1567496898669-ee935f5f647a?w=500&q=80"]
+  },
+  {
+    id: 6, title: "Conference Recap Video · Annual Summit", client: "Verge Conference",
+    pillar: "video", specialty: "Event & Conference Video",
+    location: "San Francisco, CA", budgetMin: 3000, budgetMax: 5000,
+    posted: "6 days ago", deadline: "Jul 1", applied: 9, status: "Open",
+    cover: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=900&q=80",
+    summary: "Two-day tech conference (~2000 attendees) needs a recap video team: keynote captures, hallway b-roll, attendee interviews, 3-minute hype edit.",
+    deliverables: ["Multi-cam keynote captures", "Hallway b-roll + atmosphere", "8 attendee interviews", "3-min hype recap edit", "Social cutdowns · 6 variants"],
+    tags: ["multi-cam", "live event", "interviews", "social"],
+    refs: ["https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=500&q=80"]
+  },
+  {
+    id: 7, title: "Restaurant Menu Photography", client: "Saigon Sky",
+    pillar: "photo", specialty: "Food & Hospitality",
+    location: "Chicago, IL", budgetMin: 600, budgetMax: 1200,
+    posted: "4 days ago", deadline: "Jun 20", applied: 4, status: "Open",
+    cover: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=900&q=80",
+    summary: "Modern Vietnamese restaurant launching new spring menu — need 24 hero dishes shot. Natural light preferred, moody-but-clean aesthetic.",
+    deliverables: ["24 hero dish images", "8 atmosphere shots · interior", "Print menu + Instagram crops", "Retouched + color matched"],
+    tags: ["food photography", "natural light", "restaurant", "editorial"],
+    refs: ["https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500&q=80"]
+  },
+  {
+    id: 8, title: "Documentary Short for Nonprofit", client: "Hope Foundation",
+    pillar: "video", specialty: "Documentary & Interviews",
+    location: "Multi-city · NYC, Detroit, ATL", budgetMin: 4000, budgetMax: 8000,
+    posted: "2 weeks ago", deadline: "Aug 15", applied: 11, status: "Shortlisting",
+    cover: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=900&q=80",
+    summary: "12-minute documentary short profiling 3 program beneficiaries across NYC, Detroit, and Atlanta. Interviews + verite + supporting footage.",
+    deliverables: ["3-city travel + production", "12-min documentary edit", "3 interview-only versions for digital", "Sound design + original score", "Festival-ready masters"],
+    tags: ["documentary", "interviews", "verite", "travel"],
+    refs: ["https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=500&q=80"]
+  },
+  {
+    id: 9, title: "Editorial Headshots — Founder Series", client: "Stride Magazine",
+    pillar: "photo", specialty: "Editorial & Press",
+    location: "Brooklyn, NY", budgetMin: 1500, budgetMax: 2500,
+    posted: "5 days ago", deadline: "Jun 28", applied: 6, status: "Open",
+    cover: "https://images.unsplash.com/photo-1554384645-13eab165c24b?w=900&q=80",
+    summary: "Magazine feature on 8 founders — editorial portraits, studio + on-location. Need a photographer with strong editorial sensibility.",
+    deliverables: ["8 founder portraits · 2hrs each", "Editorial finishing", "Print + digital deliverables", "Usage · 18 months print/digital"],
+    tags: ["editorial", "portrait", "magazine", "founders"],
+    refs: ["https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=500&q=80"]
+  },
+  {
+    id: 10, title: "Brand Color Pass · Spring Campaign", client: "Northgrade · Aesop",
+    pillar: "post", specialty: "Color Grading",
+    location: "Remote · US", budgetMin: 800, budgetMax: 1600,
+    posted: "1 day ago", deadline: "Jun 8", applied: 4, status: "Open",
+    cover: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=900&q=80",
+    summary: "Color grading pass on a 90-second spring campaign film — moody warm palette, two-pass workflow with editorial team.",
+    deliverables: ["90-sec primary grade", "Two revision passes", "Social-format reformats", "Editorial collab"],
+    tags: ["DaVinci Resolve", "editorial", "warm grade", "campaign"],
+    refs: []
+  }
+];
+
+const state = { pillar: 'all', sort: 'newest', activeId: 1 };
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+function fmt(n) { return '$' + n.toLocaleString(); }
+
+function pillarLabelHtml(b) {
+  const p = window.CB.pillarByKey(b.pillar);
+  return `<span class="pillar-lane-label"><span class="pillar">${p.label}</span><span class="sep">·</span><span class="spec">${b.specialty}</span></span>`;
+}
+
+function pillarIconSvg(key) {
+  if (key === 'video') return `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>`;
+  if (key === 'photo') return `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3.5"/></svg>`;
+  return `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>`;
+}
+
+function listCardHtml(b) {
+  const active = state.activeId === b.id ? ' active' : '';
+  return `
+    <div class="brief-card${active}" data-id="${b.id}">
+      <div class="flex items-start gap-3 mb-2.5">
+        <div class="lane-icon">${pillarIconSvg(b.pillar)}</div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1 flex-wrap">
+            <span class="tag-green">${b.status}</span>
+            <span class="text-[10px] text-[var(--text-dim)]">${b.posted}</span>
+          </div>
+          <div class="font-medium text-sm leading-tight mb-1.5">${b.title}</div>
+          ${pillarLabelHtml(b)}
+        </div>
+      </div>
+      <div class="text-[11px] text-[var(--text-dim)] mb-3">${b.client} · ${b.location}</div>
+      <div class="flex items-center justify-between text-[11px]">
+        <div class="text-[var(--gold)] font-semibold serif">${fmt(b.budgetMin)} – ${fmt(b.budgetMax)} <span class="text-[9px] text-[var(--text-dim)] tracking-wider ml-0.5">USD</span></div>
+        <div class="text-[var(--text-dim)]">${b.applied} applied</div>
+      </div>
+    </div>`;
+}
+
+function detailHtml(b) {
+  const refsHtml = b.refs.length
+    ? `<div class="grid grid-cols-${Math.min(b.refs.length, 3)} gap-2 mb-6">
+        ${b.refs.map(r => `<div class="parallax-wrap rounded-lg overflow-hidden aspect-video"><img src="${r}" class="parallax-img w-full h-full object-cover scale-105"></div>`).join('')}
+      </div>` : '';
+  return `
+    <div class="liquid-glass rounded-2xl overflow-hidden">
+      <div class="aspect-[16/8] relative overflow-hidden">
+        <img src="${b.cover}" class="w-full h-full object-cover" alt="${b.title}">
+        <div class="absolute inset-0" style="background:linear-gradient(to top, rgba(13,13,15,0.95), rgba(13,13,15,0.4));"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-6">
+          <div class="flex items-center gap-2 mb-2 flex-wrap">
+            ${pillarLabelHtml(b)}
+            <span class="tag-green">${b.status}</span>
+            <span class="text-[10px] text-[var(--text-dim)] ml-auto">${b.posted}</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl serif font-medium leading-tight mb-1">${b.title}</h2>
+          <div class="text-xs text-[var(--text-dim)]">${b.client} · ${b.location} · Deadline ${b.deadline}</div>
+        </div>
+      </div>
+
+      <div class="p-6 md:p-8">
+        <div class="grid grid-cols-3 gap-4 mb-6 liquid-glass rounded-xl p-4">
+          <div>
+            <div class="text-[9px] tracking-[0.2em] uppercase text-[var(--text-dim)] mb-1">Budget · USD</div>
+            <div class="text-base serif gold-text leading-none">${fmt(b.budgetMin)}–${fmt(b.budgetMax)}</div>
+          </div>
+          <div>
+            <div class="text-[9px] tracking-[0.2em] uppercase text-[var(--text-dim)] mb-1">Applied</div>
+            <div class="text-base serif leading-none">${b.applied} creators</div>
+          </div>
+          <div>
+            <div class="text-[9px] tracking-[0.2em] uppercase text-[var(--text-dim)] mb-1">Deadline</div>
+            <div class="text-base serif leading-none">${b.deadline}</div>
+          </div>
+        </div>
+
+        <div class="eyebrow mb-2">The brief</div>
+        <p class="text-sm text-[var(--text-secondary)] leading-relaxed mb-6">${b.summary}</p>
+
+        <div class="eyebrow mb-3">Deliverables</div>
+        <ul class="space-y-2 mb-6">
+          ${b.deliverables.map(d => `<li class="flex items-start gap-2 text-xs text-[var(--text)]/85">
+            <svg class="w-3 h-3 text-[var(--gold)] mt-1 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            ${d}
+          </li>`).join('')}
+        </ul>
+
+        ${refsHtml ? `<div class="eyebrow mb-3">Reference</div>${refsHtml}` : ''}
+
+        <div class="eyebrow mb-3">Tags</div>
+        <div class="flex flex-wrap gap-1.5 mb-8">
+          ${b.tags.map(t => `<span class="tag-plain">${t}</span>`).join('')}
+        </div>
+
+        <div class="liquid-glass rounded-xl p-5 mb-6">
+          <div class="eyebrow mb-2">Booking structure · USD</div>
+          <div class="flex items-center justify-between text-xs mb-2"><span class="text-[var(--text-secondary)]">Held in escrow on award</span><span class="text-[var(--gold)] serif">50%</span></div>
+          <div class="flex items-center justify-between text-xs mb-2"><span class="text-[var(--text-secondary)]">Released on delivery approval</span><span class="text-[var(--gold)] serif">50%</span></div>
+          <div class="flex items-center justify-between text-xs"><span class="text-[var(--text-secondary)]">Client booking fee</span><span class="text-[var(--text-dim)]">5%</span></div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-2">
+          <button class="btn-gold flex-1 justify-center">Apply with proof</button>
+          <button class="btn-ghost">Save for later</button>
+          <button class="btn-ghost">Share</button>
+        </div>
+        <p class="text-[10px] text-[var(--text-dim)] mt-3 text-center">Applications include your relevant work + a short pitch. Client shortlists from verified US creators only.</p>
+      </div>
+    </div>`;
+}
+
+function render() {
+  let list = BRIEFS.filter(b => state.pillar === 'all' || b.pillar === state.pillar);
+  if (state.sort === 'budget-desc') list.sort((a,b) => b.budgetMax - a.budgetMax);
+  else if (state.sort === 'budget-asc') list.sort((a,b) => a.budgetMin - b.budgetMin);
+  else if (state.sort === 'applied') list.sort((a,b) => b.applied - a.applied);
+  $('#brief-list').innerHTML = list.length ? list.map(listCardHtml).join('') :
+    `<div class="liquid-glass rounded-2xl p-8 text-center"><div class="text-lg serif mb-1">No open briefs in this pillar</div><div class="text-xs text-[var(--text-dim)]">Switch pillars or check back soon.</div></div>`;
+
+  // bind click
+  $$('.brief-card').forEach(card => {
+    card.addEventListener('click', () => {
+      state.activeId = parseInt(card.dataset.id);
+      render();
+    });
+  });
+
+  // detail — prefer the active brief if visible, else first in list
+  const active = list.find(b => b.id === state.activeId) || list[0];
+  $('#detail-pane').innerHTML = active ? detailHtml(active) : '<div class="text-xs text-[var(--text-dim)] p-8">No brief selected.</div>';
+}
+
+function updateCounts() {
+  $('#count-all').textContent = `(${BRIEFS.length})`;
+  ['video', 'photo', 'post'].forEach(k => {
+    $('#count-' + k).textContent = `(${BRIEFS.filter(b => b.pillar === k).length})`;
+  });
+}
+
+// Filter handlers
+$$('[data-pillar]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('[data-pillar]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.pillar = btn.dataset.pillar;
+    render();
+  });
+});
+$('#sort').addEventListener('change', e => { state.sort = e.target.value; render(); });
+
+// Modal pillar/specialty cascade
+function refreshSpecOptions() {
+  const sel = $('#modal-pillar').value;
+  const p = window.CB.pillarByKey(sel);
+  $('#modal-specialty').innerHTML = p.specialties.map(s => `<option>${s}</option>`).join('');
+}
+$('#modal-pillar').addEventListener('change', refreshSpecOptions);
+refreshSpecOptions();
+
+// Modal
+const modal = $('#post-modal');
+$('#post-brief-btn').addEventListener('click', () => modal.classList.add('open'));
+$('#close-modal').addEventListener('click', () => modal.classList.remove('open'));
+$('#cancel-modal').addEventListener('click', () => modal.classList.remove('open'));
+modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+
+updateCounts();
+render();
+</script>
+</body>
+</html>

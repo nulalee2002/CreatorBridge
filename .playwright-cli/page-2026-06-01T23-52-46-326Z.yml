@@ -1,0 +1,209 @@
+- generic [ref=e2]:
+  - link "Skip to main content" [ref=e3] [cursor=pointer]:
+    - /url: "#cb-main-content"
+  - generic [ref=e4]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - button "CreatorBridge home" [ref=e7] [cursor=pointer]:
+          - img "CreatorBridge — Verified Media Marketplace"
+        - navigation "Primary navigation" [ref=e8]:
+          - button "Find Creators" [ref=e9] [cursor=pointer]
+          - button "Project Board" [ref=e10] [cursor=pointer]
+          - button "Network" [ref=e11] [cursor=pointer]
+          - button "Rate Calculator" [ref=e12] [cursor=pointer]
+        - button "Sign In" [ref=e14] [cursor=pointer]
+    - main [ref=e15]:
+      - generic [ref=e17]:
+        - generic [ref=e18]:
+          - button "Home" [ref=e19] [cursor=pointer]
+          - generic [ref=e20]: /
+          - generic [ref=e21]: Find Creators
+        - generic [ref=e23]:
+          - generic [ref=e24]:
+            - paragraph [ref=e25]: Browse the network · US-only
+            - heading "Verified creators, sorted by what matters." [level=1] [ref=e26]
+            - paragraph [ref=e27]: Filter by primary pillar — Video Production, Photography, or Post Production — then narrow by specialty. Every creator commits to one pillar and 1–3 specialties.
+          - generic [ref=e28]:
+            - generic [ref=e29]:
+              - img [ref=e30]
+              - textbox "Search by name, studio, specialty, city" [ref=e33]
+              - button "Search" [ref=e34] [cursor=pointer]
+            - generic [ref=e35]:
+              - generic [ref=e36]:
+                - img
+                - textbox "ZIP Code..." [ref=e37]
+              - combobox [ref=e38]:
+                - option "Top Rated" [selected]
+                - option "Most Reviews"
+                - option "Best Budget Match"
+                - 'option "Price: Low to High"'
+                - 'option "Price: High to Low"'
+        - button "＋ Show Filters" [ref=e39] [cursor=pointer]:
+          - generic [ref=e40]:
+            - generic [ref=e41]: ＋
+            - text: Show Filters
+        - main [ref=e43]:
+          - generic [ref=e44]:
+            - generic [ref=e45]:
+              - paragraph [ref=e46]: Daily Curated Preview
+              - paragraph [ref=e47]: Guests see a limited selection of 3 verified creators each day. Create a free account to browse the full national directory, view active rates, packages, and book instantly.
+            - button "Create Free Account" [ref=e48] [cursor=pointer]
+          - paragraph [ref=e50]:
+            - text: Showing 3 creators
+            - generic [ref=e51]: · 13 verified in network
+          - generic [ref=e52]:
+            - generic [ref=e53] [cursor=pointer]:
+              - generic [ref=e54]:
+                - img "Crosscut Edit Room" [ref=e55]
+                - generic [ref=e56]: Post Production
+                - generic [ref=e58]:
+                  - generic [ref=e59]: Available
+                  - generic [ref=e60]: proven
+                - img "Marcus Bell" [ref=e62]
+              - generic [ref=e63]:
+                - generic [ref=e64]:
+                  - generic [ref=e65]:
+                    - heading "Crosscut Edit Room" [level=3] [ref=e66]
+                    - paragraph [ref=e67]: Marcus Bell
+                  - button "Save to favorites" [ref=e68]:
+                    - img [ref=e69]
+                - generic [ref=e71]:
+                  - generic [ref=e72]:
+                    - img [ref=e73]
+                    - text: Verified
+                  - generic [ref=e76]:
+                    - img [ref=e77]
+                    - text: Portland, OR
+                  - generic [ref=e80]: 4-6 yrs
+                - paragraph [ref=e81]: Motion + edit suite. After Effects, kinetic typography, brand-channel cutdowns.
+                - generic [ref=e82]:
+                  - generic [ref=e83]: Motion Graphics & VFX
+                  - generic [ref=e84]: Short-Form Editing
+                  - generic [ref=e85]: Video Editing (Long-Form)
+                - generic [ref=e86]:
+                  - generic [ref=e87]:
+                    - img [ref=e88]
+                    - generic [ref=e90]: "4.7"
+                    - generic [ref=e91]: (33)
+                  - generic [ref=e93]:
+                    - text: FROM
+                    - generic [ref=e94]: $115
+            - generic [ref=e95] [cursor=pointer]:
+              - generic [ref=e96]:
+                - img "SoundWave Podcast Co." [ref=e97]
+                - generic [ref=e98]: Post Production
+                - generic [ref=e100]:
+                  - generic [ref=e101]: Available
+                  - generic [ref=e102]: proven
+                - img "Jordan Mitchell" [ref=e104]
+              - generic [ref=e105]:
+                - generic [ref=e106]:
+                  - generic [ref=e107]:
+                    - heading "SoundWave Podcast Co." [level=3] [ref=e108]
+                    - paragraph [ref=e109]: Jordan Mitchell
+                  - button "Save to favorites" [ref=e110]:
+                    - img [ref=e111]
+                - generic [ref=e113]:
+                  - generic [ref=e114]:
+                    - img [ref=e115]
+                    - text: Verified
+                  - generic [ref=e118]:
+                    - img [ref=e119]
+                    - text: New York, NY
+                  - generic [ref=e122]: 7+ yrs
+                - paragraph [ref=e123]: Full-service podcast production studio in NYC. We've launched over 200 shows from scratch and taken dozens of existing podcasts from hobbyist recordings to top-charting. Our team handles recording, editing, mastering, show notes, and distribution setup — you just show up and talk.
+                - generic [ref=e124]:
+                  - generic [ref=e125]: Podcast Audio Editing
+                  - generic [ref=e126]: Sound Design & Mixing
+                  - generic [ref=e127]: Short-Form Editing
+                - generic [ref=e128]:
+                  - generic [ref=e129]:
+                    - img [ref=e130]
+                    - generic [ref=e132]: "4.8"
+                    - generic [ref=e133]: (53)
+                  - generic [ref=e135]:
+                    - text: FROM
+                    - generic [ref=e136]: $125
+            - generic [ref=e137] [cursor=pointer]:
+              - generic [ref=e138]:
+                - img "Aria Visual Studio" [ref=e139]
+                - generic [ref=e140]: Photography
+                - generic [ref=e142]:
+                  - generic [ref=e143]: Available
+                  - generic [ref=e144]: elite
+                - img "Aria Vasquez" [ref=e146]
+              - generic [ref=e147]:
+                - generic [ref=e148]:
+                  - generic [ref=e149]:
+                    - heading "Aria Visual Studio" [level=3] [ref=e150]
+                    - paragraph [ref=e151]: Aria Vasquez
+                  - button "Save to favorites" [ref=e152]:
+                    - img [ref=e153]
+                - generic [ref=e155]:
+                  - generic [ref=e156]:
+                    - img [ref=e157]
+                    - text: Verified
+                  - generic [ref=e160]:
+                    - img [ref=e161]
+                    - text: Miami, FL
+                  - generic [ref=e164]: 7+ yrs
+                - paragraph [ref=e165]: Commercial and portrait photographer with a bold, editorial aesthetic. Featured in Vogue Business, Harper's Bazaar, and Architectural Digest. I specialize in luxury real estate, fashion campaigns, and executive portraits. Every image is delivered fully retouched, color-graded, and ready for print or digital.
+                - generic [ref=e166]:
+                  - generic [ref=e167]: Brand & Commercial Photography
+                  - generic [ref=e168]: Real Estate Photography
+                  - generic [ref=e169]: Lifestyle & Fashion
+                - generic [ref=e170]:
+                  - generic [ref=e171]:
+                    - img [ref=e172]
+                    - generic [ref=e174]: "4.9"
+                    - generic [ref=e175]: (64)
+                  - generic [ref=e177]:
+                    - text: FROM
+                    - generic [ref=e178]: $120
+          - generic [ref=e179]:
+            - generic [ref=e180]:
+              - paragraph [ref=e181]: Are you a content creator?
+              - heading "Claim your primary pillar and set your rates" [level=3] [ref=e182]
+              - paragraph [ref=e183]: CreatorBridge matches verified video production, photography, and post-production specialists with serious client projects. Keep 90% of your earnings.
+            - button "Join as Creator" [ref=e184] [cursor=pointer]:
+              - img [ref=e185]
+              - text: Join as Creator
+    - contentinfo [ref=e188]:
+      - generic [ref=e189]:
+        - generic [ref=e190]:
+          - generic [ref=e191]:
+            - button "CreatorBridge" [ref=e192] [cursor=pointer]:
+              - img "CreatorBridge"
+            - paragraph [ref=e193]: The verified US marketplace connecting brands with professional media specialists across three production pillars — without building an internal media department.
+            - generic [ref=e194]:
+              - generic [ref=e195]: Video Production
+              - generic [ref=e196]: Photography
+              - generic [ref=e197]: Post Production
+          - generic [ref=e198]:
+            - heading "Platform" [level=4] [ref=e199]
+            - button "Find Creators" [ref=e200] [cursor=pointer]
+            - button "Project Board" [ref=e201] [cursor=pointer]
+            - button "Creator Network" [ref=e202] [cursor=pointer]
+            - button "Rate Calculator" [ref=e203] [cursor=pointer]
+          - generic [ref=e204]:
+            - heading "For Creators" [level=4] [ref=e205]
+            - button "Sample profile" [ref=e206] [cursor=pointer]
+            - button "Apply to join" [ref=e207] [cursor=pointer]
+            - button "Creator Agreement" [ref=e208] [cursor=pointer]
+            - button "Dispute Policy" [ref=e209] [cursor=pointer]
+          - generic [ref=e210]:
+            - heading "Company" [level=4] [ref=e211]
+            - button "Terms" [ref=e212] [cursor=pointer]
+            - button "Privacy" [ref=e213] [cursor=pointer]
+            - button "Contact Support" [ref=e214] [cursor=pointer]
+        - generic [ref=e215]:
+          - generic [ref=e216]: © 2026 CreatorBridge · US-only verified media marketplace · All bookings in USD.
+          - generic [ref=e217]:
+            - button "Terms" [ref=e218] [cursor=pointer]
+            - button "Privacy" [ref=e219] [cursor=pointer]
+            - button "Support" [ref=e220] [cursor=pointer]
+  - button "Open Bridge Assistant" [ref=e221] [cursor=pointer]:
+    - img [ref=e224]:
+      - generic [ref=e243]: CB
+      - generic [ref=e252]: BRIDGE
+    - img [ref=e268]

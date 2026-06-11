@@ -254,7 +254,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
 
       {/* Modal */}
       <div className={`relative w-full max-w-md rounded-[28px] border shadow-2xl overflow-hidden ${
-        dark ? 'bg-charcoal-950/92 border-white/[0.08]' : 'bg-white border-gray-200'
+        dark ? 'bg-charcoal-950 border-white/[0.08]' : 'bg-white border-gray-200'
       }`}>
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/60 to-transparent" />
         {/* Close */}

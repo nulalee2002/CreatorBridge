@@ -1,0 +1,137 @@
+0 verbose cli /opt/homebrew/Cellar/node/25.9.0_1/bin/node /opt/homebrew/bin/npm
+1 info using npm@11.12.1
+2 info using node@v25.9.0
+3 silly config load:file:/opt/homebrew/lib/node_modules/npm/npmrc
+4 silly config load:file:/Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc/.npmrc
+5 silly config load:file:/Users/drl33/.npmrc
+6 silly config load:file:/Users/drl33/.npm-global/etc/npmrc
+7 verbose title npm install
+8 verbose argv "install" "--package-lock-only" "--ignore-scripts" "--cache" "./output/npm-cache"
+9 verbose logfile logs-max:10 dir:/Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc/output/npm-cache/_logs/2026-06-02T15_08_53_513Z-
+10 verbose logfile /Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc/output/npm-cache/_logs/2026-06-02T15_08_53_513Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:4496293888 maxSize:1124073472 maxEntrySize:562036736
+13 silly idealTree buildDeps
+14 silly fetch manifest jspdf@^4.2.1
+15 silly packumentCache full:https://registry.npmjs.org/jspdf cache-miss
+16 http fetch GET https://registry.npmjs.org/jspdf attempt 1 failed with ENOTFOUND
+17 http fetch GET https://registry.npmjs.org/jspdf attempt 2 failed with ENOTFOUND
+18 http fetch GET https://registry.npmjs.org/jspdf attempt 3 failed with ENOTFOUND
+19 silly fetch manifest jspdf-autotable@^5.0.2
+20 silly packumentCache full:https://registry.npmjs.org/jspdf-autotable cache-miss
+21 http fetch GET https://registry.npmjs.org/jspdf-autotable attempt 1 failed with ENOTFOUND
+22 http fetch GET https://registry.npmjs.org/jspdf-autotable attempt 2 failed with ENOTFOUND
+23 http fetch GET https://registry.npmjs.org/jspdf-autotable attempt 3 failed with ENOTFOUND
+24 silly fetch manifest @vitejs/plugin-react@^6.0.2
+25 silly packumentCache full:https://registry.npmjs.org/@vitejs%2fplugin-react cache-miss
+26 http fetch GET https://registry.npmjs.org/@vitejs%2fplugin-react attempt 1 failed with ENOTFOUND
+27 http fetch GET https://registry.npmjs.org/@vitejs%2fplugin-react attempt 2 failed with ENOTFOUND
+28 http fetch GET https://registry.npmjs.org/@vitejs%2fplugin-react attempt 3 failed with ENOTFOUND
+29 silly fetch manifest postcss@^8.5.10
+30 silly packumentCache full:https://registry.npmjs.org/postcss cache-miss
+31 http fetch GET https://registry.npmjs.org/postcss attempt 1 failed with ENOTFOUND
+32 http fetch GET https://registry.npmjs.org/postcss attempt 2 failed with ENOTFOUND
+33 http fetch GET https://registry.npmjs.org/postcss attempt 3 failed with ENOTFOUND
+34 silly fetch manifest vite@^8.0.16
+35 silly packumentCache full:https://registry.npmjs.org/vite cache-miss
+36 http fetch GET https://registry.npmjs.org/vite attempt 1 failed with ENOTFOUND
+37 http fetch GET https://registry.npmjs.org/vite attempt 2 failed with ENOTFOUND
+38 http fetch GET https://registry.npmjs.org/vite attempt 3 failed with ENOTFOUND
+39 silly placeDep ROOT @vitejs/plugin-react@ REPLACE for: creatorbridge@1.0.0 want: ^6.0.2
+40 silly placeDep ROOT jspdf@ REPLACE for: creatorbridge@1.0.0 want: ^4.2.1
+41 silly placeDep ROOT jspdf-autotable@ REPLACE for: creatorbridge@1.0.0 want: ^5.0.2
+42 silly placeDep ROOT postcss@ REPLACE for: creatorbridge@1.0.0 want: ^8.5.10
+43 warn ERESOLVE overriding peer dependency {
+43 warn ERESOLVE   code: 'ERESOLVE',
+43 warn ERESOLVE   edge: {
+43 warn ERESOLVE     type: 'peer',
+43 warn ERESOLVE     name: 'postcss',
+43 warn ERESOLVE     spec: '^8.1.0',
+43 warn ERESOLVE     from: {
+43 warn ERESOLVE       name: 'autoprefixer',
+43 warn ERESOLVE       version: '10.4.27',
+43 warn ERESOLVE       location: 'node_modules/autoprefixer',
+43 warn ERESOLVE       isWorkspace: false,
+43 warn ERESOLVE       dependents: [Array]
+43 warn ERESOLVE     }
+43 warn ERESOLVE   },
+43 warn ERESOLVE   dep: {
+43 warn ERESOLVE     name: 'postcss',
+43 warn ERESOLVE     version: undefined,
+43 warn ERESOLVE     errors: [ [FetchError] ],
+43 warn ERESOLVE     package: {},
+43 warn ERESOLVE     whileInstalling: {
+43 warn ERESOLVE       name: 'creatorbridge',
+43 warn ERESOLVE       version: '1.0.0',
+43 warn ERESOLVE       path: '/Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc'
+43 warn ERESOLVE     },
+43 warn ERESOLVE     location: 'node_modules/postcss',
+43 warn ERESOLVE     isWorkspace: false,
+43 warn ERESOLVE     dependents: [ [Object] ]
+43 warn ERESOLVE   },
+43 warn ERESOLVE   force: false,
+43 warn ERESOLVE   isMine: true,
+43 warn ERESOLVE   strictPeerDeps: false,
+43 warn ERESOLVE   current: {
+43 warn ERESOLVE     name: 'postcss',
+43 warn ERESOLVE     version: '8.5.8',
+43 warn ERESOLVE     location: 'node_modules/postcss',
+43 warn ERESOLVE     isWorkspace: false,
+43 warn ERESOLVE     dependents: [
+43 warn ERESOLVE       [Object], [Object],
+43 warn ERESOLVE       [Object], [Object],
+43 warn ERESOLVE       [Object], [Object],
+43 warn ERESOLVE       [Object]
+43 warn ERESOLVE     ]
+43 warn ERESOLVE   }
+43 warn ERESOLVE }
+44 silly placeDep ROOT vite@ OK for: creatorbridge@1.0.0 want: ^8.0.16
+45 silly fetch manifest postcss-import@^15.1.0
+46 silly packumentCache full:https://registry.npmjs.org/postcss-import cache-miss
+47 http fetch GET https://registry.npmjs.org/postcss-import attempt 1 failed with ENOTFOUND
+48 http fetch GET https://registry.npmjs.org/postcss-import attempt 2 failed with ENOTFOUND
+49 http fetch GET https://registry.npmjs.org/postcss-import attempt 3 failed with ENOTFOUND
+50 silly fetch manifest postcss-js@^4.0.1
+51 silly packumentCache full:https://registry.npmjs.org/postcss-js cache-miss
+52 http fetch GET https://registry.npmjs.org/postcss-js attempt 1 failed with ENOTFOUND
+53 http fetch GET https://registry.npmjs.org/postcss-js attempt 2 failed with ENOTFOUND
+54 http fetch GET https://registry.npmjs.org/postcss-js attempt 3 failed with ENOTFOUND
+55 silly fetch manifest postcss-load-config@^4.0.2 || ^5.0 || ^6.0
+56 silly packumentCache full:https://registry.npmjs.org/postcss-load-config cache-miss
+57 http fetch GET https://registry.npmjs.org/postcss-load-config attempt 1 failed with ENOTFOUND
+58 http fetch GET https://registry.npmjs.org/postcss-load-config attempt 2 failed with ENOTFOUND
+59 http fetch GET https://registry.npmjs.org/postcss-load-config attempt 3 failed with ENOTFOUND
+60 silly fetch manifest postcss-nested@^6.2.0
+61 silly packumentCache full:https://registry.npmjs.org/postcss-nested cache-miss
+62 http fetch GET https://registry.npmjs.org/postcss-nested attempt 1 failed with ENOTFOUND
+63 http fetch GET https://registry.npmjs.org/postcss-nested attempt 2 failed with ENOTFOUND
+64 http fetch GET https://registry.npmjs.org/postcss-nested attempt 3 failed with ENOTFOUND
+65 silly placeDep node_modules/tailwindcss postcss-import@ OK for: tailwindcss@3.4.19 want: ^15.1.0
+66 silly placeDep node_modules/tailwindcss postcss-js@ OK for: tailwindcss@3.4.19 want: ^4.0.1
+67 silly placeDep node_modules/tailwindcss postcss-load-config@ OK for: tailwindcss@3.4.19 want: ^4.0.2 || ^5.0 || ^6.0
+68 silly placeDep node_modules/tailwindcss postcss-nested@ OK for: tailwindcss@3.4.19 want: ^6.2.0
+69 verbose type system
+70 verbose stack FetchError: request to https://registry.npmjs.org/@vitejs%2fplugin-react failed, reason: getaddrinfo ENOTFOUND registry.npmjs.org
+70 verbose stack     at ClientRequest.<anonymous> (/opt/homebrew/lib/node_modules/npm/node_modules/minipass-fetch/lib/index.js:130:14)
+70 verbose stack     at ClientRequest.emit (node:events:509:20)
+70 verbose stack     at emitErrorEvent (node:_http_client:109:11)
+70 verbose stack     at _destroy (node:_http_client:993:9)
+70 verbose stack     at onSocketNT (node:_http_client:1013:5)
+70 verbose stack     at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+71 error code ENOTFOUND
+72 error syscall getaddrinfo
+73 error errno ENOTFOUND
+74 error network request to https://registry.npmjs.org/@vitejs%2fplugin-react failed, reason: getaddrinfo ENOTFOUND registry.npmjs.org
+75 error network This is a problem related to network connectivity.
+75 error network In most cases you are behind a proxy or have bad network settings.
+75 error network
+75 error network If you are behind a proxy, please make sure that the 'proxy' config is set properly.  See: 'npm help config'
+76 silly unfinished npm timer reify 1780412933731
+77 silly unfinished npm timer reify:loadTrees 1780412933731
+78 verbose cwd /Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc
+79 verbose os Darwin 25.5.0
+80 verbose node v25.9.0
+81 verbose npm  v11.12.1
+82 verbose exit 1
+83 verbose code 1
+84 error A complete log of this run can be found in: /Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc/output/npm-cache/_logs/2026-06-02T15_08_53_513Z-debug-0.log

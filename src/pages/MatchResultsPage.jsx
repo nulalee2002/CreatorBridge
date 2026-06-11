@@ -42,8 +42,17 @@ function MatchCard({ match, dark, onViewProfile, onRequestQuote }) {
       <div className="p-5">
         {/* Header row */}
         <div className="flex items-start gap-4">
-          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shrink-0 ${dark ? 'bg-white/[0.04] ring-1 ring-white/[0.07] group-hover:ring-gold-500/20' : 'bg-gray-100'}`}>
-            {creator.avatar || '🎬'}
+          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shrink-0 overflow-hidden ${dark ? 'bg-white/[0.04] ring-1 ring-white/[0.07] group-hover:ring-gold-500/20' : 'bg-gray-100'}`}>
+            {typeof creator.avatar === 'string' && (creator.avatar.startsWith('/') || creator.avatar.startsWith('http')) ? (
+              <img
+                src={creator.avatar}
+                alt={creator.businessName || creator.name || 'Creator avatar'}
+                className="h-full w-full object-cover"
+                onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement.textContent = '🎬'; }}
+              />
+            ) : (
+              creator.avatar || '🎬'
+            )}
           </div>
 
           <div className="flex-1 min-w-0">

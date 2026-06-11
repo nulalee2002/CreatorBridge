@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creator Network — CreatorBridge</title>
+<link rel="stylesheet" href="styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+.state-tile {
+  position:relative;
+  padding:0.85rem 1rem;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:rgba(20,20,24,0.45);
+  cursor:pointer;
+  transition:all 0.25s;
+  display:flex; flex-direction:column; gap:0.25rem;
+}
+.state-tile:hover { border-color:rgba(201,168,76,0.25); background:rgba(20,20,24,0.6); }
+.state-tile.active {
+  border-color:var(--gold);
+  background:rgba(201,168,76,0.08);
+  box-shadow:0 0 24px rgba(201,168,76,0.1);
+}
+.state-tile .abbr {
+  font-family:'Playfair Display',serif;
+  font-size:22px; line-height:1;
+}
+.state-tile.active .abbr { color:var(--gold); }
+.state-tile .name { font-size:11px; color:var(--text-dim); }
+.state-tile .count {
+  font-size:10px; color:var(--gold); margin-top:2px;
+  letter-spacing:0.05em;
+}
+.state-tile.hot::after {
+  content:''; position:absolute; top:0.5rem; right:0.5rem;
+  width:6px; height:6px; border-radius:50%;
+  background:var(--green); box-shadow:0 0 8px rgba(74,222,128,0.6);
+  animation:pulseDot 2s infinite;
+}
+@keyframes pulseDot {
+  0%,100% { opacity:1; transform:scale(1); }
+  50% { opacity:0.4; transform:scale(1.4); }
+}
+
+.post-card {
+  padding:1.25rem;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:rgba(20,20,24,0.45);
+  backdrop-filter:blur(20px) saturate(1.4);
+  transition:all 0.3s;
+}
+.post-card:hover { border-color:var(--border-hover); background:rgba(20,20,24,0.6); }
+.post-meta {
+  display:flex; align-items:center; gap:0.5rem;
+  margin-bottom:0.75rem;
+}
+.post-avatar {
+  width:36px; height:36px; border-radius:10px; overflow:hidden;
+  border:1px solid var(--border);
+}
+.post-avatar img { width:100%; height:100%; object-fit:cover; }
+
+.chat-msg {
+  display:flex; align-items:flex-start; gap:0.6rem;
+  padding:0.5rem 0.75rem;
+  border-radius:10px;
+  transition:background 0.15s;
+}
+.chat-msg:hover { background:rgba(255,255,255,0.02); }
+.chat-msg .av {
+  width:28px; height:28px; border-radius:50%;
+  overflow:hidden; flex-shrink:0;
+}
+.chat-msg .av img { width:100%; height:100%; object-fit:cover; }
+.chat-channel {
+  display:flex; align-items:center; gap:0.5rem;
+  padding:0.45rem 0.75rem;
+  font-size:12px; color:var(--text-secondary);
+  border-radius:8px;
+  cursor:pointer;
+}
+.chat-channel:hover { background:rgba(255,255,255,0.04); color:var(--text); }
+.chat-channel.active {
+  background:var(--gold-dim);
+  color:var(--gold);
+}
+.chat-channel .hash {
+  font-family:'Playfair Display',serif;
+  opacity:0.6;
+}
+.chat-channel.active .hash { opacity:1; }
+
+.online-dot {
+  width:7px; height:7px; border-radius:50%;
+  background:var(--green); flex-shrink:0;
+}
+
+/* Creator pillar mini-chip on post bylines */
+.creator-pillar-mini {
+  display:inline-flex; align-items:center; gap:0.4rem;
+  margin-top:0.35rem;
+  padding:0.18rem 0.5rem;
+  border-radius:5px;
+  background:rgba(201,168,76,0.06);
+  border:1px solid rgba(201,168,76,0.15);
+  font-size:10.5px;
+  line-height:1.2;
+}
+.creator-pillar-mini .pdot {
+  width:4px; height:4px; border-radius:50%;
+  background:var(--gold);
+}
+.creator-pillar-mini .plabel {
+  font-family:'Playfair Display',serif;
+  color:var(--gold);
+}
+.creator-pillar-mini .psep { color:var(--text-dim); }
+.creator-pillar-mini .pspec { color:var(--text); }
+</style>
+</head>
+<body>
+
+<div id="nav-root"></div>
+
+<main style="position:relative;z-index:10; padding-top:5.5rem;">
+
+<!-- ===== HEADER ===== -->
+<section class="px-6 lg:px-16 pt-10 pb-6">
+  <div class="max-w-[1400px] mx-auto">
+    <div class="flex items-center gap-2 text-[11px] text-[var(--text-dim)] mb-4 reveal-up">
+      <a href="Landing.html" class="hover:text-[var(--text)] transition-colors">Home</a>
+      <span class="opacity-40">/</span>
+      <span class="text-[var(--text)]">Creator Network</span>
+    </div>
+    <div class="grid lg:grid-cols-12 gap-6 items-end reveal-up">
+      <div class="lg:col-span-7">
+        <div class="eyebrow mb-2">State creator networks</div>
+        <h1 class="text-4xl md:text-5xl serif font-medium leading-[1.05]">
+          A trusted local circuit. <span class="gold-text">Verified only.</span>
+        </h1>
+        <p class="text-sm text-[var(--text-secondary)] max-w-lg mt-4">
+          Referrals, gear swaps, collab requests, and gig leads — organized by state so the conversation stays local. No DM scraping, no contact poaching, no general-marketplace noise.
+        </p>
+      </div>
+      <div class="lg:col-span-5 grid grid-cols-3 gap-3">
+        <div class="liquid-glass rounded-xl p-3 text-center">
+          <div class="text-2xl serif gold-text leading-none" id="stat-creators">—</div>
+          <div class="text-[9px] uppercase tracking-wider text-[var(--text-dim)] mt-1">Creators</div>
+        </div>
+        <div class="liquid-glass rounded-xl p-3 text-center">
+          <div class="text-2xl serif gold-text leading-none" id="stat-posts">—</div>
+          <div class="text-[9px] uppercase tracking-wider text-[var(--text-dim)] mt-1">Posts today</div>
+        </div>
+        <div class="liquid-glass rounded-xl p-3 text-center">
+          <div class="text-2xl serif gold-text leading-none" id="stat-active">—</div>
+          <div class="text-[9px] uppercase tracking-wider text-[var(--text-dim)] mt-1">Active now</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== STATE PICKER ===== -->
+<section class="px-6 lg:px-16 py-6">
+  <div class="max-w-[1400px] mx-auto">
+    <div class="flex items-center justify-between mb-3">
+      <div class="text-[10px] tracking-[0.2em] uppercase text-[var(--text-dim)]">Choose your state</div>
+      <div class="flex items-center gap-2 text-[11px] text-[var(--text-dim)]">
+        <span class="online-dot"></span> Active networks pulse green
+      </div>
+    </div>
+    <div class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-12 gap-2" id="state-grid"></div>
+  </div>
+</section>
+
+<!-- ===== FEED + CHAT ===== -->
+<section class="px-6 lg:px-16 pb-24 pt-4">
+  <div class="max-w-[1400px] mx-auto">
+    <!-- ACTIVE STATE BANNER -->
+    <div class="liquid-glass rounded-2xl p-6 mb-6 reveal-up flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <div class="flex items-baseline gap-3 mb-1">
+          <span class="serif text-3xl gold-text" id="active-abbr">CA</span>
+          <span class="serif text-2xl" id="active-name">California Network</span>
+          <span class="tag-green">Verified creators only</span>
+        </div>
+        <p class="text-xs text-[var(--text-secondary)]" id="active-blurb">142 verified creators · LA, SF, San Diego, Sacramento, OC, San Jose.</p>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn-ghost text-xs">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 5h14M5 12h14M5 19h14"/></svg>
+          Compose post
+        </button>
+        <button class="btn-gold text-xs">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Join chat
+        </button>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-12 gap-6">
+      <!-- FEED -->
+      <div class="lg:col-span-8">
+        <div class="flex items-center gap-2 mb-4 flex-wrap">
+          <button class="filter-pill active" data-type="all" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.8rem;border-radius:8px;font-size:11px;color:var(--text-secondary);border:1px solid var(--border);background:rgba(255,255,255,0.02);cursor:pointer;">All posts</button>
+          <button class="filter-pill" data-type="referral">Referrals</button>
+          <button class="filter-pill" data-type="gear">Gear swap</button>
+          <button class="filter-pill" data-type="collab">Collabs</button>
+          <button class="filter-pill" data-type="lead">Gig leads</button>
+        </div>
+        <div class="space-y-3" id="feed"></div>
+      </div>
+
+      <!-- CHAT -->
+      <div class="lg:col-span-4">
+        <div class="liquid-glass rounded-2xl overflow-hidden" style="position:sticky; top:6rem;">
+          <div class="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
+            <div>
+              <div class="eyebrow mb-0.5">Live chat</div>
+              <div class="text-sm font-medium" id="chat-state">California</div>
+            </div>
+            <div class="flex items-center gap-1.5 text-[11px] text-[var(--text-secondary)]">
+              <span class="online-dot"></span> <span id="online-count">23</span> online
+            </div>
+          </div>
+
+          <div class="flex gap-1 px-4 py-3 border-b border-[var(--border)] flex-wrap" id="channels">
+            <button class="chat-channel active" data-ch="general"><span class="hash">#</span>general</button>
+            <button class="chat-channel" data-ch="referrals"><span class="hash">#</span>referrals</button>
+            <button class="chat-channel" data-ch="gear"><span class="hash">#</span>gear-swap</button>
+            <button class="chat-channel" data-ch="leads"><span class="hash">#</span>gig-leads</button>
+          </div>
+
+          <div class="px-3 py-3 space-y-1 max-h-[420px] overflow-y-auto" id="chat-stream"></div>
+
+          <div class="border-t border-[var(--border)] p-3 flex items-center gap-2">
+            <input type="text" id="chat-input" placeholder="Message #general…" class="flex-1 bg-transparent border-0 text-sm py-2 px-2 focus:outline-none placeholder:text-[var(--text-dim)]" style="color:var(--text);">
+            <button id="chat-send" class="btn-gold" style="padding:0.5rem 0.8rem;font-size:11px;">Send</button>
+          </div>
+        </div>
+
+        <!-- NETWORK RULES -->
+        <div class="liquid-glass rounded-2xl p-5 mt-5">
+          <div class="eyebrow mb-3">Network rules</div>
+          <ul class="space-y-2.5 text-xs text-[var(--text-secondary)]">
+            <li class="flex gap-2"><svg class="w-3 h-3 text-[var(--gold)] mt-1 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Verified accounts only · no off-platform contact sharing.</li>
+            <li class="flex gap-2"><svg class="w-3 h-3 text-[var(--gold)] mt-1 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Job leads route through the Project Board, not DMs.</li>
+            <li class="flex gap-2"><svg class="w-3 h-3 text-[var(--gold)] mt-1 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Referrals earn 3% of completed project value.</li>
+            <li class="flex gap-2"><svg class="w-3 h-3 text-[var(--gold)] mt-1 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Be local. State conversations stay state-specific.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<div id="footer-root"></div>
+
+<script src="core.js"></script>
+<script>
+window.CB.mountChrome('network');
+
+// ===== STATES =====
+const STATES = [
+  { abbr: "CA", name: "California",   creators: 142, posts: 18, active: 23, hot: true },
+  { abbr: "NY", name: "New York",     creators: 118, posts: 14, active: 19, hot: true },
+  { abbr: "TX", name: "Texas",        creators: 89,  posts: 11, active: 12, hot: true },
+  { abbr: "FL", name: "Florida",      creators: 76,  posts: 9,  active: 14, hot: true },
+  { abbr: "IL", name: "Illinois",     creators: 54,  posts: 5,  active: 7,  hot: false },
+  { abbr: "GA", name: "Georgia",      creators: 47,  posts: 6,  active: 8,  hot: true },
+  { abbr: "AZ", name: "Arizona",      creators: 38,  posts: 7,  active: 9,  hot: true },
+  { abbr: "WA", name: "Washington",   creators: 41,  posts: 4,  active: 6,  hot: false },
+  { abbr: "MA", name: "Massachusetts",creators: 32,  posts: 3,  active: 4,  hot: false },
+  { abbr: "CO", name: "Colorado",     creators: 28,  posts: 4,  active: 5,  hot: false },
+  { abbr: "PA", name: "Pennsylvania", creators: 31,  posts: 2,  active: 3,  hot: false },
+  { abbr: "NC", name: "N. Carolina",  creators: 26,  posts: 3,  active: 4,  hot: false },
+  { abbr: "OR", name: "Oregon",       creators: 22,  posts: 2,  active: 3,  hot: false },
+  { abbr: "MI", name: "Michigan",     creators: 20,  posts: 1,  active: 2,  hot: false },
+  { abbr: "OH", name: "Ohio",         creators: 19,  posts: 1,  active: 2,  hot: false },
+  { abbr: "MN", name: "Minnesota",    creators: 17,  posts: 1,  active: 2,  hot: false },
+  { abbr: "NV", name: "Nevada",       creators: 21,  posts: 2,  active: 3,  hot: false },
+  { abbr: "UT", name: "Utah",         creators: 15,  posts: 1,  active: 2,  hot: false },
+  { abbr: "TN", name: "Tennessee",    creators: 23,  posts: 3,  active: 4,  hot: false },
+  { abbr: "VA", name: "Virginia",     creators: 18,  posts: 1,  active: 2,  hot: false },
+  { abbr: "OK", name: "Oklahoma",     creators: 9,   posts: 0,  active: 1,  hot: false },
+  { abbr: "WI", name: "Wisconsin",    creators: 11,  posts: 1,  active: 1,  hot: false },
+  { abbr: "MO", name: "Missouri",     creators: 13,  posts: 1,  active: 2,  hot: false },
+  { abbr: "LA", name: "Louisiana",    creators: 16,  posts: 2,  active: 3,  hot: false }
+];
+
+const FEEDS = {
+  CA: [
+    { type: "lead", icon: "·", author: "Naomi Greene", studio: "Greene Street Films · LA", pillar: "Video Production", specialty: "Brand Films & Commercials", avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=200&q=80", time: "1 hr ago", body: "Brand wants a 2-day shoot in Malibu next month, full-day rate $4-5k range. Open to one referral — DM if you have hospitality-brand experience and a clean reel.", replies: 4 },
+    { type: "gear", icon: "·", author: "David Park", studio: "LensCraft · Burbank", pillar: "Video Production", specialty: "Brand Films & Commercials", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80", time: "3 hr ago", body: "Selling: Sony FX6 body, 600 hours, no shutter issues, includes V-mount plate and two batteries. $5,800 firm. CA pickup only.", replies: 9 },
+    { type: "collab", icon: "·", author: "Lia Romero", studio: "Indie cinematographer · SF", pillar: "Video Production", specialty: "Music Videos", avatar: "https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=200&q=80", time: "5 hr ago", body: "Doing a passion short over July — looking for a colorist who'll work for backend. Festival-track piece, fully insured.", replies: 2 },
+    { type: "referral", icon: "·", author: "Ava Tanaka", studio: "Tanaka Visuals · LA", pillar: "Photography", specialty: "Editorial & Press", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80", time: "Yesterday", body: "Just wrapped a 3-month brand campaign with Northgrade Color for finishing — Aaron is incredibly fast and his eye for editorial grades is unmatched. Highly recommend for anyone in the lane.", replies: 7 }
+  ],
+  NY: [
+    { type: "lead", icon: "·", author: "Jordan Mitchell", studio: "SoundWave · NYC", pillar: "Post Production", specialty: "Podcast Audio Editing", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80", time: "32 min ago", body: "Studio has 2 open recording days next week. Manhattan podcast/voiceover gigs — referral fee on the table for anyone who fills them.", replies: 3 },
+    { type: "gear", icon: "·", author: "Sofia Pellizzari", studio: "Pellizzari Editorial · NYC", pillar: "Photography", specialty: "Editorial & Press", avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=200&q=80", time: "2 hr ago", body: "Renting out: Profoto B10 Plus duo pack with stands, $80/day. Manhattan delivery if needed.", replies: 1 },
+    { type: "collab", icon: "·", author: "Marcus Bell", studio: "Bell Editorial · Brooklyn", pillar: "Post Production", specialty: "Color Grading", avatar: "https://images.unsplash.com/photo-1463453091185-61582044d556?w=200&q=80", time: "4 hr ago", body: "Looking for a stylist for a 4-page editorial test shoot. Test rate, full credits, published portfolio piece in return.", replies: 6 },
+    { type: "referral", icon: "·", author: "Naomi Greene", studio: "Greene Street Films", pillar: "Video Production", specialty: "Brand Films & Commercials", avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=200&q=80", time: "1 day ago", body: "Bondi Studio crushed a quick Reels package for a launch I produced — turnaround was 4 days. Worth knowing they exist.", replies: 4 }
+  ],
+  TX: [
+    { type: "collab", icon: "·", author: "Mateo Reyes", studio: "Skyframe Aerial · Austin", pillar: "Video Production", specialty: "Drone & Aerial Video", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80", time: "2 hr ago", body: "Heading out to West Texas for a 3-day aerial shoot June 18-20. Have an open seat in the truck if anyone wants to share fuel + b-roll a side project.", replies: 3 },
+    { type: "gear", icon: "·", author: "Kelsey Trent", studio: "Trent Productions · Houston", pillar: "Video Production", specialty: "Corporate & Internal Video", avatar: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=200&q=80", time: "Yesterday", body: "Selling a barely-used Aputure 600D Pro with softbox + grid. $1,400. Houston only.", replies: 5 }
+  ],
+  FL: [
+    { type: "lead", icon: "·", author: "Aria Vasquez", studio: "Aria Visual Studio · Miami", pillar: "Photography", specialty: "Brand & Commercial Photography", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80", time: "1 hr ago", body: "Hotel campaign overbooked next month — could route a similar gig to a Florida shooter with editorial experience. Verified-only DMs.", replies: 5 },
+    { type: "referral", icon: "·", author: "Carlos Mendez", studio: "Coast Studios · Tampa", pillar: "Photography", specialty: "Food & Hospitality", avatar: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=200&q=80", time: "3 hr ago", body: "Worked with Aria on a Soho House Miami shoot last quarter — full pre-pro deck, tight call sheet, deliverables on time. Set the bar for the rest of the year.", replies: 2 }
+  ],
+  GA: [
+    { type: "lead", icon: "·", author: "Dre Williams", studio: "Cumulus Events · Atlanta", pillar: "Video Production", specialty: "Event & Conference Video", avatar: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=200&q=80", time: "2 hr ago", body: "Tech conference in Midtown needs a second-shooter June 14-15. Multi-cam experience preferred. Going through CB project board.", replies: 4 }
+  ]
+};
+
+const CHAT = {
+  general: [
+    { name: "Naomi G.", time: "10:32", avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100&q=80", text: "Good morning ☕️ shooting a brand piece in Venice today, weather's perfect" },
+    { name: "Aria V.", time: "10:35", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80", text: "Jealous. Miami's humid AF. Crew suiting up for an indoor shoot all day" },
+    { name: "David P.", time: "10:38", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80", text: "Anyone tried the new Sony Burano on a real job? Considering renting for next week" },
+    { name: "Mateo R.", time: "10:41", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80", text: "Cleared for Part 107 recertification today — back in the air next week" },
+    { name: "Jordan M.", time: "10:44", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80", text: "Booked 4 podcast clients off the project board in May. CB scoring better than any cold outbound I've ever done" },
+    { name: "Sofia P.", time: "10:48", avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=100&q=80", text: "Lighting test shots from yesterday — full client approval before we even broke for lunch" }
+  ],
+  referrals: [
+    { name: "Aria V.", time: "9:14", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80", text: "Boutique hotel rebrand looking for video — anyone California-based with hospitality reel?" },
+    { name: "Naomi G.", time: "9:18", avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100&q=80", text: "I'll bite — DMing now" },
+    { name: "David P.", time: "9:22", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80", text: "Aria solid pick, his Standard Hotels work was 10/10" }
+  ],
+  gear: [
+    { name: "David P.", time: "8:52", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80", text: "Selling FX6, see today's main feed for details" },
+    { name: "Sofia P.", time: "9:01", avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=100&q=80", text: "Renting Profoto B10 Plus duo · $80/day · Manhattan" },
+    { name: "Mateo R.", time: "9:11", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80", text: "Anyone got an extra ND filter set in 4×5.65? Mine fell into Lake Travis on Saturday 🪦" }
+  ],
+  leads: [
+    { name: "Aria V.", time: "11:02", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80", text: "Routing 2 commercial photo briefs to FL/CA — see today's main feed" },
+    { name: "Dre W.", time: "11:08", avatar: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=100&q=80", text: "Atlanta tech conf needs 2nd shooter, June 14-15. Posted to project board, applying via CB" }
+  ]
+};
+
+const state = { active: 'CA', type: 'all', channel: 'general' };
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+function renderStates() {
+  $('#state-grid').innerHTML = STATES.map(s => `
+    <button class="state-tile${s.hot ? ' hot' : ''}${state.active === s.abbr ? ' active' : ''}" data-st="${s.abbr}">
+      <div class="abbr">${s.abbr}</div>
+      <div class="name">${s.name}</div>
+      <div class="count">${s.creators} verified</div>
+    </button>`).join('');
+  $$('[data-st]').forEach(b => b.addEventListener('click', () => {
+    state.active = b.dataset.st;
+    renderAll();
+  }));
+}
+
+function renderFeed() {
+  const list = (FEEDS[state.active] || []).filter(p => state.type === 'all' || p.type === state.type);
+  const feed = $('#feed');
+  if (!list.length) {
+    feed.innerHTML = `
+      <div class="liquid-glass rounded-2xl p-8 text-center">
+        <div class="serif text-xl mb-2">Quiet here.</div>
+        <div class="text-xs text-[var(--text-dim)]">No posts in this lane today. Switch tabs or compose the first one.</div>
+      </div>`;
+    return;
+  }
+  feed.innerHTML = list.map(p => `
+    <div class="post-card">
+      <div class="post-meta">
+        <div class="post-avatar"><img src="${p.avatar}" alt=""></div>
+        <div class="flex-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <div class="text-sm font-medium">${p.author}</div>
+            <span class="tag-gold">${typeLabel(p.type)}</span>
+          </div>
+          <div class="text-[11px] text-[var(--text-dim)]">${p.studio} · ${p.time}</div>
+          ${p.pillar ? `<div class="creator-pillar-mini"><span class="pdot"></span><span class="plabel">${p.pillar}</span><span class="psep">·</span><span class="pspec">${p.specialty}</span></div>` : ''}
+        </div>
+        <button class="text-[var(--text-dim)] hover:text-[var(--gold)] transition-colors" style="background:none;border:none;cursor:pointer;">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+        </button>
+      </div>
+      <p class="text-sm text-[var(--text)]/90 leading-relaxed mb-4">${p.body}</p>
+      <div class="flex items-center gap-4 text-[11px] text-[var(--text-dim)] pt-3 border-t border-[var(--border)]">
+        <button class="flex items-center gap-1.5 hover:text-[var(--gold)] transition-colors" style="background:none;border:none;cursor:pointer;color:inherit;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+          ${p.replies} replies
+        </button>
+        <button class="flex items-center gap-1.5 hover:text-[var(--gold)] transition-colors" style="background:none;border:none;cursor:pointer;color:inherit;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+          Save
+        </button>
+        <button class="flex items-center gap-1.5 hover:text-[var(--gold)] transition-colors ml-auto" style="background:none;border:none;cursor:pointer;color:inherit;">
+          Reply
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </button>
+      </div>
+    </div>`).join('');
+}
+
+function typeLabel(t) {
+  return { lead: 'Gig lead', gear: 'Gear', collab: 'Collab', referral: 'Referral' }[t] || t;
+}
+
+function renderChat() {
+  const msgs = CHAT[state.channel] || [];
+  $('#chat-stream').innerHTML = msgs.map(m => `
+    <div class="chat-msg">
+      <div class="av"><img src="${m.avatar}" alt=""></div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-baseline gap-2">
+          <span class="text-xs font-medium">${m.name}</span>
+          <span class="text-[10px] text-[var(--text-dim)]">${m.time}</span>
+        </div>
+        <div class="text-[12px] text-[var(--text)]/90 leading-relaxed">${m.text}</div>
+      </div>
+    </div>`).join('');
+  // scroll to bottom
+  const stream = $('#chat-stream');
+  stream.scrollTop = stream.scrollHeight;
+  $('#chat-input').placeholder = `Message #${state.channel}…`;
+}
+
+function renderHeader() {
+  const s = STATES.find(x => x.abbr === state.active);
+  if (!s) return;
+  $('#active-abbr').textContent = s.abbr;
+  $('#active-name').textContent = s.name + ' Network';
+  $('#active-blurb').textContent = `${s.creators} verified creators · join the local conversation.`;
+  $('#chat-state').textContent = s.name;
+  $('#online-count').textContent = s.active;
+  $('#stat-creators').textContent = s.creators;
+  $('#stat-posts').textContent = s.posts;
+  $('#stat-active').textContent = s.active;
+}
+
+function renderAll() {
+  renderStates();
+  renderHeader();
+  renderFeed();
+  renderChat();
+}
+
+// type filter
+$$('[data-type]').forEach(b => b.addEventListener('click', () => {
+  $$('[data-type]').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  state.type = b.dataset.type;
+  renderFeed();
+}));
+
+// channel pick
+$$('[data-ch]').forEach(b => b.addEventListener('click', () => {
+  $$('[data-ch]').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  state.channel = b.dataset.ch;
+  renderChat();
+}));
+
+// send (mock)
+function send() {
+  const input = $('#chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  CHAT[state.channel].push({
+    name: 'You', time: 'now',
+    avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&q=80',
+    text
+  });
+  input.value = '';
+  renderChat();
+}
+$('#chat-send').addEventListener('click', send);
+$('#chat-input').addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+
+renderAll();
+</script>
+</body>
+</html>

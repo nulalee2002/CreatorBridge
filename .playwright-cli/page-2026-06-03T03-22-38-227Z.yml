@@ -1,0 +1,87 @@
+- generic [ref=e2]:
+  - link "Skip to main content" [ref=e3] [cursor=pointer]:
+    - /url: "#cb-main-content"
+  - generic [ref=e4]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - button "CreatorBridge home" [ref=e7] [cursor=pointer]:
+          - img "CreatorBridge — Verified Media Marketplace" [ref=e8]
+        - navigation "Primary navigation" [ref=e9]:
+          - button "Find Creators" [ref=e10] [cursor=pointer]
+          - button "Project Board" [ref=e11] [cursor=pointer]
+          - button "Network" [ref=e12] [cursor=pointer]
+          - button "Rate Calculator" [ref=e13] [cursor=pointer]
+        - generic [ref=e151]:
+          - button "Notifications" [ref=e153] [cursor=pointer]:
+            - img [ref=e154]
+          - button "Messages" [ref=e157] [cursor=pointer]:
+            - img [ref=e158]
+          - button "My Profile" [ref=e160] [cursor=pointer]:
+            - img [ref=e161]
+          - button "Go to my profile" [ref=e164] [cursor=pointer]: P
+          - button "Sign out" [ref=e165] [cursor=pointer]: Sign Out
+    - main [ref=e18]:
+      - main [ref=e19]:
+        - generic [ref=e20]:
+          - paragraph [ref=e21]: Account access
+          - heading "Sign in to CreatorBridge." [level=1] [ref=e22]
+          - paragraph [ref=e23]: Access your dashboard, messages, bookings, saved creators, and support history.
+          - generic [ref=e24]:
+            - button "Sign In" [ref=e25] [cursor=pointer]
+            - button "Create Account" [ref=e26] [cursor=pointer]
+    - contentinfo [ref=e27]:
+      - generic [ref=e28]:
+        - generic [ref=e29]:
+          - generic [ref=e30]:
+            - button "CreatorBridge" [ref=e31] [cursor=pointer]:
+              - img "CreatorBridge" [ref=e32]
+            - paragraph [ref=e33]: The verified US marketplace connecting brands with professional media specialists across three production pillars — without building an internal media department.
+            - generic [ref=e34]:
+              - generic [ref=e35]: Video Production
+              - generic [ref=e36]: Photography
+              - generic [ref=e37]: Post Production
+          - generic [ref=e38]:
+            - heading "Platform" [level=4] [ref=e39]
+            - button "Find Creators" [ref=e40] [cursor=pointer]
+            - button "Project Board" [ref=e41] [cursor=pointer]
+            - button "Creator Network" [ref=e42] [cursor=pointer]
+            - button "Rate Calculator" [ref=e43] [cursor=pointer]
+          - generic [ref=e44]:
+            - heading "For Creators" [level=4] [ref=e45]
+            - button "Sample profile" [ref=e46] [cursor=pointer]
+            - button "Apply to join" [ref=e47] [cursor=pointer]
+            - button "Creator Agreement" [ref=e48] [cursor=pointer]
+            - button "Dispute Policy" [ref=e49] [cursor=pointer]
+          - generic [ref=e50]:
+            - heading "Company" [level=4] [ref=e51]
+            - button "Terms" [ref=e52] [cursor=pointer]
+            - button "Privacy" [ref=e53] [cursor=pointer]
+            - button "Contact Support" [ref=e54] [cursor=pointer]
+        - generic [ref=e55]:
+          - generic [ref=e56]: © 2026 CreatorBridge · US-only verified media marketplace · All bookings in USD.
+          - generic [ref=e57]:
+            - button "Terms" [ref=e58] [cursor=pointer]
+            - button "Privacy" [ref=e59] [cursor=pointer]
+            - button "Support" [ref=e60] [cursor=pointer]
+    - generic [ref=e63]:
+      - button [ref=e64] [cursor=pointer]:
+        - img [ref=e65]
+      - generic [ref=e69]:
+        - generic [ref=e166]: ⚖️
+        - heading "Review & Accept Terms" [level=3] [ref=e167]
+        - paragraph [ref=e168]: Before you can proceed to the platform, you must read and agree to our Terms of Service, Creator Agreement, and Dispute Policy.
+        - generic [ref=e169]:
+          - link "Read Terms of Service" [ref=e170] [cursor=pointer]:
+            - /url: /terms-of-service
+          - link "Read Creator Agreement" [ref=e171] [cursor=pointer]:
+            - /url: /creator-agreement
+          - link "Read Dispute Policy" [ref=e172] [cursor=pointer]:
+            - /url: /dispute-policy
+        - generic [ref=e173]:
+          - button "Cancel" [ref=e174] [cursor=pointer]
+          - button "I Agree & Accept" [ref=e175] [cursor=pointer]
+  - button "Open Bridge Assistant" [ref=e101] [cursor=pointer]:
+    - img [ref=e104]:
+      - generic [ref=e123]: CB
+      - generic [ref=e132]: BRIDGE
+    - img [ref=e148]

@@ -32,7 +32,11 @@ function buildThreads(messages, userId) {
   const map = {};
   messages.forEach(msg => {
     if (msg.senderId !== userId && msg.recipientId !== userId) return;
-    const tid = msg.threadId || msg.remoteConversationId || [msg.senderId, msg.recipientId].sort().join('_');
+    // Group by participant pair so repeat conversations with the same person
+    // collapse into one inbox thread instead of one thread per conversation id.
+    const tid = (msg.senderId && msg.recipientId)
+      ? [msg.senderId, msg.recipientId].sort().join('_')
+      : (msg.threadId || msg.remoteConversationId);
     if (!map[tid]) map[tid] = { threadId: tid, remoteConversationId: msg.remoteConversationId || null, messages: [], otherUserId: null, otherName: null, otherAvatar: null };
     map[tid].messages.push(msg);
     if (msg.remoteConversationId && !map[tid].remoteConversationId) map[tid].remoteConversationId = msg.remoteConversationId;
@@ -51,7 +55,10 @@ function buildThreads(messages, userId) {
   return Object.values(map).map(t => {
     const messagesByTime = [...t.messages].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     const lastMessage = messagesByTime.at(-1);
-    return { ...t, messages: messagesByTime, lastMessage };
+    // Continue the most recent server conversation when sending from a merged thread.
+    const latestConversationId = [...messagesByTime].reverse().find(m => m.remoteConversationId)?.remoteConversationId || t.remoteConversationId;
+    const conversationIds = [...new Set(messagesByTime.map(m => m.remoteConversationId).filter(Boolean))];
+    return { ...t, messages: messagesByTime, lastMessage, remoteConversationId: latestConversationId, conversationIds };
   }).sort((a, b) => new Date(b.lastMessage?.createdAt || 0) - new Date(a.lastMessage?.createdAt || 0));
 }
 
@@ -78,23 +85,29 @@ function saveMessage(msg) {
 function markMessagesRead(threadId, userId) {
   try {
     const all = JSON.parse(localStorage.getItem(LOCAL_MESSAGE_KEY) || '[]');
-    const updated = all.map(m =>
-      (m.threadId === threadId || m.remoteConversationId === threadId) && m.recipientId === userId ? { ...m, read: true } : m
-    );
+    const updated = all.map(m => {
+      const pairKey = (m.senderId && m.recipientId) ? [m.senderId, m.recipientId].sort().join('_') : null;
+      const inThread = m.threadId === threadId || m.remoteConversationId === threadId || pairKey === threadId;
+      return inThread && m.recipientId === userId ? { ...m, read: true } : m;
+    });
     localStorage.setItem(LOCAL_MESSAGE_KEY, JSON.stringify(updated));
   } catch {}
 }
 
 async function markRemoteMessagesRead(thread, userId) {
-  const conversationId = thread?.remoteConversationId || (isUuid(thread?.threadId) ? thread.threadId : null);
-  if (!conversationId || !supabaseConfigured || !supabase || !isUuid(userId)) return;
-  try {
-    const { error } = await supabase.rpc('mark_conversation_messages_read', {
-      p_conversation_id: conversationId,
-    });
-    if (error) throw error;
-  } catch (error) {
-    console.warn('CreatorBridge message read receipt update failed:', error?.message || error);
+  if (!supabaseConfigured || !supabase || !isUuid(userId)) return;
+  // Merged threads can span multiple server conversations — mark them all read.
+  const fallback = thread?.remoteConversationId || (isUuid(thread?.threadId) ? thread.threadId : null);
+  const conversationIds = (thread?.conversationIds?.length ? thread.conversationIds : [fallback]).filter(Boolean);
+  for (const conversationId of conversationIds) {
+    try {
+      const { error } = await supabase.rpc('mark_conversation_messages_read', {
+        p_conversation_id: conversationId,
+      });
+      if (error) throw error;
+    } catch (error) {
+      console.warn('CreatorBridge message read receipt update failed:', error?.message || error);
+    }
   }
 }
 

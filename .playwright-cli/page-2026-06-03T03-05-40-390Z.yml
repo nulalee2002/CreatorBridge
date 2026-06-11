@@ -1,0 +1,64 @@
+- generic [ref=e2]:
+  - link "Skip to main content" [ref=e3] [cursor=pointer]:
+    - /url: "#cb-main-content"
+  - generic [ref=e4]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - button "CreatorBridge home" [ref=e7] [cursor=pointer]:
+          - img "CreatorBridge — Verified Media Marketplace"
+        - navigation "Primary navigation" [ref=e8]:
+          - button "Find Creators" [ref=e9] [cursor=pointer]
+          - button "Project Board" [ref=e10] [cursor=pointer]
+          - button "Network" [ref=e11] [cursor=pointer]
+          - button "Rate Calculator" [ref=e12] [cursor=pointer]
+        - generic [ref=e14]:
+          - button "Notifications" [ref=e16] [cursor=pointer]:
+            - img [ref=e17]
+          - button "Messages" [ref=e20] [cursor=pointer]:
+            - img [ref=e21]
+          - button "My Profile" [ref=e23] [cursor=pointer]:
+            - img [ref=e24]
+          - button "Go to my profile" [ref=e27] [cursor=pointer]: D
+          - button "Sign out" [ref=e28] [cursor=pointer]: Sign Out
+    - main [ref=e29]:
+      - main [ref=e30]:
+        - generic [ref=e31]: Loading CreatorBridge...
+    - contentinfo [ref=e32]:
+      - generic [ref=e33]:
+        - generic [ref=e34]:
+          - generic [ref=e35]:
+            - button "CreatorBridge" [ref=e36] [cursor=pointer]:
+              - img "CreatorBridge"
+            - paragraph [ref=e37]: The verified US marketplace connecting brands with professional media specialists across three production pillars — without building an internal media department.
+            - generic [ref=e38]:
+              - generic [ref=e39]: Video Production
+              - generic [ref=e40]: Photography
+              - generic [ref=e41]: Post Production
+          - generic [ref=e42]:
+            - heading "Platform" [level=4] [ref=e43]
+            - button "Find Creators" [ref=e44] [cursor=pointer]
+            - button "Project Board" [ref=e45] [cursor=pointer]
+            - button "Creator Network" [ref=e46] [cursor=pointer]
+            - button "Rate Calculator" [ref=e47] [cursor=pointer]
+          - generic [ref=e48]:
+            - heading "For Creators" [level=4] [ref=e49]
+            - button "Sample profile" [ref=e50] [cursor=pointer]
+            - button "Apply to join" [ref=e51] [cursor=pointer]
+            - button "Creator Agreement" [ref=e52] [cursor=pointer]
+            - button "Dispute Policy" [ref=e53] [cursor=pointer]
+          - generic [ref=e54]:
+            - heading "Company" [level=4] [ref=e55]
+            - button "Terms" [ref=e56] [cursor=pointer]
+            - button "Privacy" [ref=e57] [cursor=pointer]
+            - button "Contact Support" [ref=e58] [cursor=pointer]
+        - generic [ref=e59]:
+          - generic [ref=e60]: © 2026 CreatorBridge · US-only verified media marketplace · All bookings in USD.
+          - generic [ref=e61]:
+            - button "Terms" [ref=e62] [cursor=pointer]
+            - button "Privacy" [ref=e63] [cursor=pointer]
+            - button "Support" [ref=e64] [cursor=pointer]
+  - button "Open Bridge Assistant" [ref=e65] [cursor=pointer]:
+    - img [ref=e68]:
+      - generic [ref=e87]: CB
+      - generic [ref=e96]: BRIDGE
+    - img [ref=e112]

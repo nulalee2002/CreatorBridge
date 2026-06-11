@@ -1,0 +1,152 @@
+0 verbose cli /opt/homebrew/Cellar/node/25.9.0_1/bin/node /opt/homebrew/bin/npm
+1 info using npm@11.12.1
+0 verbose cli /opt/homebrew/Cellar/node/25.9.0_1/bin/node /opt/homebrew/bin/npm
+2 info using node@v25.9.0
+3 silly config load:file:/opt/homebrew/lib/node_modules/npm/npmrc
+4 silly config load:file:/Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc/.npmrc
+1 info using npm@11.12.1
+5 silly config load:file:/Users/drl33/.npmrc
+6 silly config load:file:/Users/drl33/.npm-global/etc/npmrc
+2 info using node@v25.9.0
+7 verbose title npm view @vitejs/plugin-react version peerDependencies
+3 silly config load:file:/opt/homebrew/lib/node_modules/npm/npmrc
+4 silly config load:file:/Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc/.npmrc
+8 verbose argv "view" "@vitejs/plugin-react" "version" "peerDependencies" "--json" "--cache" "./output/npm-cache"
+5 silly config load:file:/Users/drl33/.npmrc
+6 silly config load:file:/Users/drl33/.npm-global/etc/npmrc
+9 verbose logfile logs-max:10 dir:/Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc/output/npm-cache/_logs/2026-06-02T14_57_55_507Z-
+7 verbose title npm view jspdf version
+8 verbose argv "view" "jspdf" "version" "--cache" "./output/npm-cache"
+10 verbose logfile /Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc/output/npm-cache/_logs/2026-06-02T14_57_55_507Z-debug-0.log
+9 verbose logfile logs-max:10 dir:/Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc/output/npm-cache/_logs/2026-06-02T14_57_55_507Z-
+10 verbose logfile /Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc/output/npm-cache/_logs/2026-06-02T14_57_55_507Z-debug-0.log
+0 verbose cli /opt/homebrew/Cellar/node/25.9.0_1/bin/node /opt/homebrew/bin/npm
+1 info using npm@11.12.1
+2 info using node@v25.9.0
+3 silly config load:file:/opt/homebrew/lib/node_modules/npm/npmrc
+4 silly config load:file:/Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc/.npmrc
+5 silly config load:file:/Users/drl33/.npmrc
+6 silly config load:file:/Users/drl33/.npm-global/etc/npmrc
+7 verbose title npm view vite version
+8 verbose argv "view" "vite" "version" "--cache" "./output/npm-cache"
+9 verbose logfile logs-max:10 dir:/Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc/output/npm-cache/_logs/2026-06-02T14_57_55_507Z-
+10 verbose logfile /Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc/output/npm-cache/_logs/2026-06-02T14_57_55_507Z-debug-0.log
+0 verbose cli /opt/homebrew/Cellar/node/25.9.0_1/bin/node /opt/homebrew/bin/npm
+1 info using npm@11.12.1
+2 info using node@v25.9.0
+3 silly config load:file:/opt/homebrew/lib/node_modules/npm/npmrc
+4 silly config load:file:/Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc/.npmrc
+5 silly config load:file:/Users/drl33/.npmrc
+6 silly config load:file:/Users/drl33/.npm-global/etc/npmrc
+7 verbose title npm view jspdf-autotable version peerDependencies
+8 verbose argv "view" "jspdf-autotable" "version" "peerDependencies" "--json" "--cache" "./output/npm-cache"
+9 verbose logfile logs-max:10 dir:/Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc/output/npm-cache/_logs/2026-06-02T14_57_55_507Z-
+10 verbose logfile /Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc/output/npm-cache/_logs/2026-06-02T14_57_55_507Z-debug-0.log
+11 silly logfile done cleaning log files
+11 silly logfile done cleaning log files
+11 silly logfile done cleaning log files
+11 silly logfile done cleaning log files
+12 http fetch GET https://registry.npmjs.org/vite attempt 1 failed with ENOTFOUND
+12 http fetch GET https://registry.npmjs.org/@vitejs%2fplugin-react attempt 1 failed with ENOTFOUND
+12 http fetch GET https://registry.npmjs.org/jspdf attempt 1 failed with ENOTFOUND
+12 http fetch GET https://registry.npmjs.org/jspdf-autotable attempt 1 failed with ENOTFOUND
+13 http fetch GET https://registry.npmjs.org/vite attempt 2 failed with ENOTFOUND
+13 http fetch GET https://registry.npmjs.org/@vitejs%2fplugin-react attempt 2 failed with ENOTFOUND
+13 http fetch GET https://registry.npmjs.org/jspdf attempt 2 failed with ENOTFOUND
+13 http fetch GET https://registry.npmjs.org/jspdf-autotable attempt 2 failed with ENOTFOUND
+14 http fetch GET https://registry.npmjs.org/vite attempt 3 failed with ENOTFOUND
+14 http fetch GET https://registry.npmjs.org/@vitejs%2fplugin-react attempt 3 failed with ENOTFOUND
+14 http fetch GET https://registry.npmjs.org/jspdf-autotable attempt 3 failed with ENOTFOUND
+14 http fetch GET https://registry.npmjs.org/jspdf attempt 3 failed with ENOTFOUND
+15 verbose type system
+15 verbose type system
+15 verbose type system
+15 verbose type system
+16 verbose stack FetchError: request to https://registry.npmjs.org/jspdf-autotable failed, reason: getaddrinfo ENOTFOUND registry.npmjs.org
+16 verbose stack     at ClientRequest.<anonymous> (/opt/homebrew/lib/node_modules/npm/node_modules/minipass-fetch/lib/index.js:130:14)
+16 verbose stack     at ClientRequest.emit (node:events:509:20)
+16 verbose stack     at emitErrorEvent (node:_http_client:109:11)
+16 verbose stack     at _destroy (node:_http_client:993:9)
+16 verbose stack     at onSocketNT (node:_http_client:1013:5)
+16 verbose stack     at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+16 verbose stack FetchError: request to https://registry.npmjs.org/jspdf failed, reason: getaddrinfo ENOTFOUND registry.npmjs.org
+16 verbose stack     at ClientRequest.<anonymous> (/opt/homebrew/lib/node_modules/npm/node_modules/minipass-fetch/lib/index.js:130:14)
+16 verbose stack     at ClientRequest.emit (node:events:509:20)
+16 verbose stack     at emitErrorEvent (node:_http_client:109:11)
+16 verbose stack     at _destroy (node:_http_client:993:9)
+16 verbose stack     at onSocketNT (node:_http_client:1013:5)
+16 verbose stack     at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+17 error code ENOTFOUND
+16 verbose stack FetchError: request to https://registry.npmjs.org/vite failed, reason: getaddrinfo ENOTFOUND registry.npmjs.org
+16 verbose stack     at ClientRequest.<anonymous> (/opt/homebrew/lib/node_modules/npm/node_modules/minipass-fetch/lib/index.js:130:14)
+16 verbose stack     at ClientRequest.emit (node:events:509:20)
+16 verbose stack     at emitErrorEvent (node:_http_client:109:11)
+16 verbose stack     at _destroy (node:_http_client:993:9)
+16 verbose stack     at onSocketNT (node:_http_client:1013:5)
+16 verbose stack     at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+17 error code ENOTFOUND
+17 error code ENOTFOUND
+16 verbose stack FetchError: request to https://registry.npmjs.org/@vitejs%2fplugin-react failed, reason: getaddrinfo ENOTFOUND registry.npmjs.org
+16 verbose stack     at ClientRequest.<anonymous> (/opt/homebrew/lib/node_modules/npm/node_modules/minipass-fetch/lib/index.js:130:14)
+16 verbose stack     at ClientRequest.emit (node:events:509:20)
+16 verbose stack     at emitErrorEvent (node:_http_client:109:11)
+16 verbose stack     at _destroy (node:_http_client:993:9)
+16 verbose stack     at onSocketNT (node:_http_client:1013:5)
+16 verbose stack     at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+17 error code ENOTFOUND
+18 error syscall getaddrinfo
+18 error syscall getaddrinfo
+18 error syscall getaddrinfo
+19 error errno ENOTFOUND
+18 error syscall getaddrinfo
+19 error errno ENOTFOUND
+19 error errno ENOTFOUND
+19 error errno ENOTFOUND
+20 error network request to https://registry.npmjs.org/jspdf failed, reason: getaddrinfo ENOTFOUND registry.npmjs.org
+20 error network request to https://registry.npmjs.org/jspdf-autotable failed, reason: getaddrinfo ENOTFOUND registry.npmjs.org
+20 error network request to https://registry.npmjs.org/vite failed, reason: getaddrinfo ENOTFOUND registry.npmjs.org
+20 error network request to https://registry.npmjs.org/@vitejs%2fplugin-react failed, reason: getaddrinfo ENOTFOUND registry.npmjs.org
+21 error network This is a problem related to network connectivity.
+21 error network In most cases you are behind a proxy or have bad network settings.
+21 error network
+21 error network If you are behind a proxy, please make sure that the 'proxy' config is set properly.  See: 'npm help config'
+21 error network This is a problem related to network connectivity.
+21 error network In most cases you are behind a proxy or have bad network settings.
+21 error network
+21 error network If you are behind a proxy, please make sure that the 'proxy' config is set properly.  See: 'npm help config'
+21 error network This is a problem related to network connectivity.
+21 error network In most cases you are behind a proxy or have bad network settings.
+21 error network
+21 error network If you are behind a proxy, please make sure that the 'proxy' config is set properly.  See: 'npm help config'
+21 error network This is a problem related to network connectivity.
+21 error network In most cases you are behind a proxy or have bad network settings.
+21 error network
+21 error network If you are behind a proxy, please make sure that the 'proxy' config is set properly.  See: 'npm help config'
+22 verbose cwd /Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc
+23 verbose os Darwin 25.5.0
+24 verbose node v25.9.0
+25 verbose npm  v11.12.1
+26 verbose exit 1
+27 verbose code 1
+22 verbose cwd /Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc
+23 verbose os Darwin 25.5.0
+24 verbose node v25.9.0
+25 verbose npm  v11.12.1
+22 verbose cwd /Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc
+23 verbose os Darwin 25.5.0
+24 verbose node v25.9.0
+25 verbose npm  v11.12.1
+26 verbose exit 1
+28 error A complete log of this run can be found in: /Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc/output/npm-cache/_logs/2026-06-02T14_57_55_507Z-debug-0.log
+22 verbose cwd /Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc
+23 verbose os Darwin 25.5.0
+27 verbose code 1
+24 verbose node v25.9.0
+25 verbose npm  v11.12.1
+26 verbose exit 1
+28 error A complete log of this run can be found in: /Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc/output/npm-cache/_logs/2026-06-02T14_57_55_507Z-debug-0.log
+27 verbose code 1
+26 verbose exit 1
+27 verbose code 1
+28 error A complete log of this run can be found in: /Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc/output/npm-cache/_logs/2026-06-02T14_57_55_507Z-debug-0.log
+28 error A complete log of this run can be found in: /Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc/output/npm-cache/_logs/2026-06-02T14_57_55_507Z-debug-0.log

@@ -280,6 +280,45 @@ function AuthRequired({ dark, user, loading, role = 'client', title, copy, child
   );
 }
 
+function NotFoundRoute({ dark }) {
+  const navigate = useNavigate();
+  return (
+    <main className="min-h-[62vh] grid place-items-center px-5 py-14">
+      <section className={`w-full max-w-xl rounded-[28px] border p-8 text-center ${
+        dark ? 'bg-charcoal-900/76 border-gold-500/18 shadow-[0_30px_100px_rgba(0,0,0,0.28)]' : 'bg-white border-gray-200 shadow-sm'
+      }`}>
+        <p className="text-gold-400 mb-3" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+          404 · Page not found
+        </p>
+        <h1 className={`font-display text-3xl font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>
+          That page isn&apos;t on the call sheet.
+        </h1>
+        <p className={`mx-auto mt-3 max-w-md text-sm leading-6 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
+          The link may be old or mistyped. Head back home, or browse verified creators and open production briefs.
+        </p>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="rounded-xl bg-gold-500 px-5 py-3 text-sm font-bold text-charcoal-900 transition-colors hover:bg-gold-600"
+          >
+            Back to home
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/find')}
+            className={`rounded-xl border px-5 py-3 text-sm font-bold transition-colors ${
+              dark ? 'border-white/[0.09] text-charcoal-200 hover:text-white hover:border-gold-500/35' : 'border-gray-200 text-gray-700 hover:text-gray-900'
+            }`}
+          >
+            Find Creators
+          </button>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 function AuthEntryRoute({ dark, tab = 'login', role = 'client', onOpenAuth }) {
   const isSignup = tab === 'signup';
 
@@ -934,6 +973,7 @@ export default function App() {
         <Route path="/reset-password" element={<LazyRoute dark={dark}><ResetPasswordPage dark={dark} /></LazyRoute>} />
         <Route path="/calculator" element={<HandoffPage page={handoffPages.rateCalculator} bgImage="/images/creatorbridge/backgrounds/08-sitewide/bg-audio-workstation.jpg" />} />
         <Route path="/rate-calculator" element={<HandoffPage page={handoffPages.rateCalculator} bgImage="/images/creatorbridge/backgrounds/08-sitewide/bg-audio-workstation.jpg" />} />
+        <Route path="*" element={<NotFoundRoute dark={dark} />} />
       </Routes>
       </main>
 

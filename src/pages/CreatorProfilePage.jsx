@@ -782,7 +782,9 @@ function HandoffCreatorProfile() {
       navigate(`/messages?with=${creator.userId}`);
       return;
     }
-    setBookOpen(true);
+    // Demo/seed profiles have no linked account — explain instead of
+    // silently opening the booking drawer.
+    window.alert('This is a sample profile, so direct messaging is unavailable. Browse verified creators in Find Creators to start a real conversation.');
   });
 
   return (
@@ -976,7 +978,7 @@ export function CreatorProfilePage() {
   return (
     <>
       <SEO
-        title={`${data.creator.studio} | CreatorBridge`}
+        title={data.creator.studio}
         description={`Verified CreatorBridge ${data.creator.pillar.label.toLowerCase()} profile with packages, portfolio, reviews, and booking details.`}
       />
       <HandoffCreatorProfile />
