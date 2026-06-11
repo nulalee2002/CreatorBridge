@@ -27,3 +27,9 @@ vite.config.js.timestamp-*.mjs
 # Local optimization/verification artifacts; do not deploy or commit.
 _holding-not-deployed/
 dist-verify/
+
+# Local QA/session leftovers; never commit.
+.playwright-cli/
+.superpowers/
+/output/
+/backgrounds/
