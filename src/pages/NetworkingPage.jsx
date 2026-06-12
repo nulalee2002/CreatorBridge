@@ -1110,7 +1110,9 @@ export function NetworkingPage({ dark, user, profile }) {
           <div className="lg:col-span-4 space-y-6">
             
             {/* Live Chat Panel */}
-            <div className="liquid-glass rounded-2xl overflow-hidden flex flex-col" style={{ position: 'sticky', top: '6rem' }}>
+            {/* Sticky on desktop only — sticky inside the stacked mobile flow
+                made this panel slide over the sections below while scrolling. */}
+            <div className="liquid-glass rounded-2xl overflow-hidden flex flex-col cb-chat-sticky">
               
               {/* Chat Header */}
               <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">

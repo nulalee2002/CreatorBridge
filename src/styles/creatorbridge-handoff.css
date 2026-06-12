@@ -1549,6 +1549,27 @@ select.input:hover { border-color:rgba(201,168,76,0.45); }
   }
 }
 
+/* Network live-chat panel: sticky is a desktop-sidebar behavior only. */
+@media (min-width:1024px) {
+  .cb-chat-sticky { position:sticky; top:6rem; }
+}
+
+/* --- Mobile hero media grid ---
+   The desktop composition (tall lens image beside two stacked wide shots)
+   leaves a dead hole at phone widths. On phones: lens becomes a full-width
+   banner, the two wide shots sit side by side beneath it. */
+@media (max-width:767px) {
+  .cb-hero-media > div:first-child {
+    grid-column:1 / -1;
+    aspect-ratio:16/10 !important;
+  }
+  .cb-hero-media > .space-y-3 {
+    grid-column:1 / -1;
+    display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;
+  }
+  .cb-hero-media > .space-y-3 > * { margin-top:0 !important; }
+}
+
 /* --- Collapsible footer columns (phones only) --- */
 footer.site .cb-footer-toggle {
   display:inline-flex; align-items:center; gap:0.4rem;
