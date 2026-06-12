@@ -1120,10 +1120,18 @@ select.input { appearance:none; padding-right:2rem;
   /* Hero floating cards (Marketplace Pulse, Production Standards) lose
      their anchor when the image grid stacks on mobile. Hide them here so
      the mobile hero stays clean. They reappear at >=768px where the
-     image composition gives them somewhere natural to sit. */
+     image composition gives them somewhere natural to sit.
+     UPDATE (June 12): per design review they now stay on mobile too,
+     scaled well down so they float over the imagery like desktop without
+     covering it. `scale` is a separate property from `transform`, so the
+     bob animation keeps working. */
   .float-card {
-    display:none !important;
+    display:block !important;
+    scale:0.66;
+    padding:0.7rem 0.85rem !important;
   }
+  .float-card.bob-1 { transform-origin:bottom left; }
+  .float-card.bob-2 { transform-origin:top right; }
   .liquid-glass {
     backdrop-filter:blur(16px) saturate(1.25);
     -webkit-backdrop-filter:blur(16px) saturate(1.25);
@@ -1528,24 +1536,16 @@ select.input:hover { border-color:rgba(201,168,76,0.45); }
 /* --- Mobile hero strip ---
    Compact replacement for the Production Standards / Marketplace Pulse
    float cards, which are hidden on phones. Desktop never sees this. */
-.cb-hero-strip { display:none; }
-@media (max-width:767px) {
-  .cb-hero-strip {
-    display:flex; flex-wrap:wrap; gap:0.4rem 1.1rem;
-    margin-top:1.1rem; padding:0.7rem 0.9rem;
-    border:1px solid rgba(201,168,76,0.18);
-    border-radius:12px;
-    background:rgba(13,13,15,0.55);
-    backdrop-filter:blur(10px);
-    -webkit-backdrop-filter:blur(10px);
-  }
-  .cb-hero-strip span {
-    display:inline-flex; align-items:center; gap:0.45rem;
-    font-size:10.5px; color:var(--text-secondary); white-space:nowrap;
-  }
-  .cb-hero-strip b {
-    font-weight:500; font-size:8.5px; letter-spacing:0.16em;
-    text-transform:uppercase; color:var(--gold);
+/* Retired June 12: the real float cards now scale down on mobile instead,
+   so the summary strip duplicated their content. */
+.cb-hero-strip { display:none !important; }
+
+/* Desktop: the Production Standards card was smothering the image beneath
+   it — scale it back so the photo reads behind the data. */
+@media (min-width:768px) {
+  .float-card.bob-2 {
+    scale:0.78;
+    transform-origin:top right;
   }
 }
 

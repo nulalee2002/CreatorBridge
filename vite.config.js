@@ -1,6 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+// Note: editing this file makes the dev server restart itself — useful when
+// the file watcher dies on external drives and HMR stops picking up changes.
+
 export default defineConfig({
   plugins: [react()],
   build: {
