@@ -529,6 +529,12 @@ footer.site .logo-img { height:48px; }
   opacity:1;
   transition:opacity 0.17s ease-in;
 }
+/* Light-mode veil: a soft warm white dip instead of a black flash. */
+.cb-veil.cb-veil-light {
+  background:
+    radial-gradient(circle at 50% 26%, rgba(212,169,65,0.10), transparent 52%),
+    rgba(249,248,245,0.985);
+}
 @media (prefers-reduced-motion: reduce) {
   .cb-veil { transition:none; opacity:0 !important; }
 }

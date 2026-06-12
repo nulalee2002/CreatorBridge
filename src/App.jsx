@@ -823,14 +823,18 @@ export default function App() {
         <span className="sig d1" />
         <span className="sig d2" />
       </div>
-      {/* Drifting bokeh embers — set-light orbs floating up through the dark */}
-      <div className="cb-embers" data-depth="14" aria-hidden="true">
-        {[...Array(9)].map((_, i) => <span key={i} className={`cb-ember e${i + 1}`} />)}
-      </div>
-      {/* Film grain — barely-there animated texture over everything dark */}
-      <div className="cb-grain" aria-hidden="true" />
-      {/* Page-transition veil — dips over content during route changes */}
-      <div className={`cb-veil ${pageTransitionClass}`} aria-hidden="true" />
+      {/* Drifting bokeh embers — set-light orbs floating up through the dark.
+          Dark mode only: gold light needs darkness to read as light. */}
+      {dark && (
+        <div className="cb-embers" data-depth="14" aria-hidden="true">
+          {[...Array(9)].map((_, i) => <span key={i} className={`cb-ember e${i + 1}`} />)}
+        </div>
+      )}
+      {/* Film grain — dark mode only; reads as dirt on light backgrounds */}
+      {dark && <div className="cb-grain" aria-hidden="true" />}
+      {/* Page-transition veil — dips over content during route changes.
+          Matches the active theme so neither mode gets a flash. */}
+      <div className={`cb-veil ${dark ? '' : 'cb-veil-light'} ${pageTransitionClass}`} aria-hidden="true" />
       <CreatorBridgeChromeEffects />
 
       {/* ── Top Nav ── */}
