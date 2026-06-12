@@ -546,7 +546,12 @@ export function NetworkingPage({ dark, user, profile }) {
   }, [selectedState]);
 
   useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Scroll only the chat's own message list to the newest message.
+    // scrollIntoView scrolled every ancestor too, yanking the whole page
+    // down to the chat panel every time the Network page opened.
+    const marker = chatBottomRef.current;
+    const scroller = marker?.parentElement;
+    if (scroller) scroller.scrollTop = scroller.scrollHeight;
   }, [messages, selectedChannel]);
 
   async function loadPosts() {
