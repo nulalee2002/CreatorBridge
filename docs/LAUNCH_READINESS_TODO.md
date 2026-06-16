@@ -4,8 +4,9 @@ Updated: 2026-06-16
 
 This file is intentionally short. Only items that can block a public launch belong in the Launch Gate. Optional features, design polish, and future upgrades stay out of the gate so the finish line does not keep moving.
 
-## Launch Gate: 4 Items Left
+## Launch Gate: 5 Items Left
 
+- [ ] Configure Bunny Stream for production video portfolios: set `BUNNY_STREAM_LIBRARY_ID`, `BUNNY_STREAM_API_KEY`, and `BUNNY_STREAM_PLAYBACK_KEY` as Supabase Edge Function secrets; set `VITE_BUNNY_STREAM_LIBRARY_ID` in Vercel; configure the Bunny Stream library with allowed referrers for the CreatorBridge production domain and local QA domain; deploy `bunny-create-video` and `bunny-delete-video`; then verify intro upload, portfolio video upload, thumbnail generation, and public playback.
 - [ ] Resolve Twilio production sending before public launch. Live phone-gate UI and Supabase functions are wired, but Twilio returned `403` for the QA recipient because trial accounts can only send to verified numbers.
 - [ ] Run the remaining live browser smoke pass for logged-in/support/admin actions: support ticket submit, notification center unread/read behavior, admin support view/update, admin operations search, admin finance CSV export, admin analytics, and creator agreement print.
 - [ ] Review Supabase/Resend bounce logs and remove or correct bad recipient addresses before opening the platform to real users.
@@ -52,6 +53,7 @@ This file is intentionally short. Only items that can block a public launch belo
 - The old orphaned payment transactions are no longer orphaned: both queried records show `final_status = released` with transfer ids.
 - In-app notification center code now exists for quote requests, direct messages, and accepted proposals with 24-hour response due dates.
 - Live production phone-gate browser pass on 2026-06-16 confirmed an unverified client sees "Please verify your phone to post a brief" plus the SMS controls, and a verified client sees the full "Post Project" form.
+- Walled-garden portfolio implementation is in code: creator intro videos and video portfolio items use Bunny Stream refs, portfolio photos stay in Supabase Storage, creator-facing external profile/social fields are removed, and creator-written public text is checked for URLs, handles, phone/email, platform names, and payment apps.
 
 ## Corrected On 2026-05-25
 

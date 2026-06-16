@@ -16,6 +16,7 @@
     "verify:chatbot-guide": "node scripts/verify-chatbot-guide.mjs",
     "verify:chatbot-ai": "node --env-file=.env scripts/verify-chatbot-ai.mjs",
     "verify:client-phone-gate": "node --env-file=.env scripts/verify-client-phone-gate.mjs",
+    "verify:walled-garden-portfolio": "node scripts/verify-walled-garden-portfolio.mjs",
     "verify:messaging": "node --env-file=.env scripts/verify-messaging.mjs",
     "verify:project-lifecycle": "node --env-file=.env scripts/verify-project-lifecycle.mjs",
     "verify:network": "node --env-file=.env scripts/verify-network.mjs",

@@ -38,7 +38,18 @@ const PATTERNS = [
     // @username patterns (but allow @mentions of platform UI context)
     regex: /@[a-zA-Z0-9_\.]{2,}/,
   },
+  {
+    type: 'platform_name',
+    regex: /\b(instagram|youtube|youtu\.be|vimeo|linkedin|loom|tiktok|facebook|twitter|x\.com|snapchat|threads)\b/i,
+  },
+  {
+    type: 'payment_app',
+    regex: /\b(venmo|cash\s*app|cashapp|zelle|paypal|pay\s*pal)\b/i,
+  },
 ];
+
+const CREATOR_TEXT_FIELDS = ['name', 'businessName', 'business_name', 'bio', 'title', 'description'];
+export const CREATOR_TEXT_BLOCK_MESSAGE = 'Keep it on CreatorBridge. Remove links, handles, phone numbers, email addresses, payment apps, or outside platform names before continuing.';
 
 /**
  * Check message text for contact info violations.
@@ -50,6 +61,27 @@ export function checkMessage(text) {
   for (const { type, regex } of PATTERNS) {
     if (regex.test(text)) {
       return { blocked: true, patternType: type };
+    }
+  }
+  return { blocked: false };
+}
+
+/**
+ * Check creator-written public profile text for outbound contact attempts.
+ * @param {Record<string, string>|string} input
+ * @returns {{ blocked: boolean, patternType?: string, field?: string, message?: string }}
+ */
+export function checkCreatorText(input) {
+  if (typeof input === 'string') {
+    const result = checkMessage(input);
+    return result.blocked ? { ...result, message: CREATOR_TEXT_BLOCK_MESSAGE } : result;
+  }
+
+  for (const field of CREATOR_TEXT_FIELDS) {
+    if (!Object.prototype.hasOwnProperty.call(input || {}, field)) continue;
+    const result = checkMessage(input[field]);
+    if (result.blocked) {
+      return { ...result, field, message: CREATOR_TEXT_BLOCK_MESSAGE };
     }
   }
   return { blocked: false };

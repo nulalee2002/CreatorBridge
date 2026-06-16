@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   LayoutDashboard, Eye, MessageSquare, Heart, Star, TrendingUp,
   Package, Edit3, ExternalLink, Check, Clock, ChevronRight,
-  Plus, Trash2, AlertCircle, Bell, BarChart2, Calendar, DollarSign, BadgeCheck, Video, Link, Save,
+  Plus, Trash2, AlertCircle, Bell, BarChart2, Calendar, DollarSign, BadgeCheck, Video, Link, Save, Upload,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
@@ -21,6 +21,7 @@ import { TierBadge, TierProgress, TierUpBanner } from '../components/TierBadge.j
 import { calculateTier } from '../config/tiers.js';
 import { dollarsToDisplay, statusBadgeClass, PROJECT_STATUSES } from '../config/fees.js';
 import { ReferralSection } from '../components/ReferralSection.jsx';
+import { uploadVideoToBunny, isBunnyVideoRef } from '../utils/bunnyStream.js';
 
 // ── Data helpers ────────────────────────────────────────────────
 function loadMyListing(userId) {
@@ -83,6 +84,9 @@ function normalizeCreatorListing(listing) {
           service_id: item.service_id || item.serviceId,
           imageUrl: item.imageUrl || item.image_url || '',
           image_url: item.image_url || item.imageUrl || '',
+          mediaType: item.mediaType || item.media_type || (item.bunny_video_id ? 'video' : 'image'),
+          media_type: item.media_type || item.mediaType || (item.bunny_video_id ? 'video' : 'image'),
+          bunny_video_id: item.bunny_video_id || '',
           link: item.link || item.url || '',
           url: item.url || item.link || '',
         }))
@@ -728,8 +732,8 @@ function ProfileCompletion({ creator, dark, navigate }) {
     { label: 'Profile photo / avatar',      done: !!creator.avatar },
     { label: 'Bio written',                  done: !!(creator.bio?.length > 20) },
     { label: 'Primary pillar selected',       done: !!(creator.primary_pillar || creator.services?.length) },
-    { label: 'Portfolio item added',         done: (creator.portfolio?.length || 0) > 0 },
-    { label: 'Contact info provided',        done: !!(creator.contact?.email || creator.email) },
+    { label: 'Intro video uploaded',         done: String(creator.video_intro_url || creator.videoIntroUrl || '').startsWith('bunny:') },
+    { label: 'Portfolio media added',        done: (creator.portfolio || []).some(item => item.bunny_video_id || item.imageUrl || item.image_url) },
     { label: 'Availability set',             done: false }, // would need to check localStorage
   ];
   const score = checks.filter(c => c.done).length;
@@ -777,47 +781,41 @@ function ProfileCompletion({ creator, dark, navigate }) {
 
 // ── Video Intro Tab ──────────────────────────────────────────────
 function VideoIntroTab({ creator, dark, onUpdate }) {
-  const [url, setUrl]       = useState(creator.video_intro_url || '');
+  const [videoRef, setVideoRef] = useState(creator.video_intro_url || '');
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [uploadState, setUploadState] = useState('');
   const [saved, setSaved]   = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError]   = useState('');
   const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
   const cardCls  = `rounded-2xl border p-5 ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`;
-  const inputCls = `w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${
-    dark ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
-         : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
-  }`;
 
-  // Normalize YouTube/Vimeo/Loom URL to embed URL
-  function toEmbedUrl(rawUrl) {
-    if (!rawUrl) return '';
-    const s = rawUrl.trim();
-    // Already an embed URL
-    if (s.includes('/embed/') || s.includes('player.vimeo') || s.includes('loom.com/embed')) return s;
-    // YouTube
-    const yt = s.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/))([A-Za-z0-9_-]{11})/);
-    if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
-    // Vimeo
-    const vi = s.match(/vimeo\.com\/(\d+)/);
-    if (vi) return `https://player.vimeo.com/video/${vi[1]}`;
-    // Loom
-    const lo = s.match(/loom\.com\/share\/([a-zA-Z0-9]+)/);
-    if (lo) return `https://www.loom.com/embed/${lo[1]}`;
-    return s;
+  async function handleUpload(file) {
+    if (!file) return;
+    setError('');
+    setSaved(false);
+    setUploadState('Uploading intro video...');
+    try {
+      const uploaded = await uploadVideoToBunny({
+        file,
+        purpose: 'intro',
+        title: `${creator?.business_name || creator?.businessName || creator?.name || 'Creator'} intro`,
+        onProgress: pct => setUploadState(`Uploading intro video... ${pct}%`),
+      });
+      setVideoRef(uploaded.videoRef);
+      setPreviewUrl(uploaded.embedUrl || '');
+      setUploadState('Intro video uploaded. Save it to attach it to your profile.');
+    } catch (uploadError) {
+      setUploadState('');
+      setError(uploadError?.message || 'Could not upload this intro video.');
+    }
   }
-
-  const embedUrl = toEmbedUrl(url);
-  const isValidEmbed = embedUrl && (
-    embedUrl.includes('youtube.com/embed') ||
-    embedUrl.includes('player.vimeo.com') ||
-    embedUrl.includes('loom.com/embed')
-  );
 
   async function handleSave() {
     setError('');
-    const finalUrl = url.trim() ? embedUrl : '';
-    if (url.trim() && !isValidEmbed) {
-      setError('Please enter a valid YouTube, Vimeo, or Loom URL.');
+    const finalUrl = videoRef.trim();
+    if (!isBunnyVideoRef(finalUrl)) {
+      setError('Upload a CreatorBridge intro video before saving.');
       return;
     }
     setSaving(true);
@@ -856,33 +854,35 @@ function VideoIntroTab({ creator, dark, onUpdate }) {
           <h2 className={`font-display font-bold text-base ${dark ? 'text-white' : 'text-gray-900'}`}>Video Introduction</h2>
         </div>
         <p className={`text-xs mb-5 ${textSub}`}>
-          Paste a YouTube, Vimeo, or Loom link. Keep it 1 to 2 minutes. Introduce yourself, show your work, and tell clients why they should hire you.
+          Upload a required 60 second intro through CreatorBridge. Bunny Stream handles playback; outside video links are not shown on public profiles.
         </p>
 
         <div className="mb-4">
           <label className={`text-xs font-medium block mb-1.5 ${textSub}`}>
-            <Link size={11} className="inline -mt-0.5 mr-0.5" /> Video URL
+            <Upload size={11} className="inline -mt-0.5 mr-0.5" /> Intro video
           </label>
           <input
-            type="url"
-            value={url}
-            onChange={e => { setUrl(e.target.value); setSaved(false); setError(''); }}
-            placeholder="https://youtube.com/watch?v=... or Vimeo / Loom link"
-            className={inputCls}
+            type="file"
+            accept="video/mp4,video/quicktime,video/webm"
+            onChange={e => handleUpload(e.target.files?.[0])}
+            className={`block w-full text-xs file:mr-3 file:rounded-lg file:border-0 file:px-3 file:py-2 file:text-xs file:font-bold file:bg-gold-500 file:text-charcoal-900 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}
           />
           {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
-          {isValidEmbed && !error && (
-            <p className="text-xs mt-1 text-gold-400">✓ Valid video URL detected</p>
+          {uploadState && (
+            <p className={`text-xs mt-1 ${uploadState.includes('uploaded') ? 'text-gold-400' : 'text-charcoal-300'}`}>{uploadState}</p>
+          )}
+          {isBunnyVideoRef(videoRef) && !error && (
+            <p className="text-xs mt-1 text-gold-400">CreatorBridge intro video attached.</p>
           )}
         </div>
 
         {/* Preview */}
-        {isValidEmbed && (
+        {previewUrl && (
           <div className="mb-4">
             <p className={`text-xs font-medium mb-2 ${textSub}`}>Preview</p>
             <div className="rounded-xl overflow-hidden aspect-video bg-black">
               <iframe
-                src={embedUrl}
+                src={previewUrl}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
                 className="w-full h-full"
@@ -904,7 +904,7 @@ function VideoIntroTab({ creator, dark, onUpdate }) {
         <p className={`text-[10px] font-bold uppercase tracking-wider mb-3 ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>Tips for a great intro</p>
         <ul className={`space-y-1.5 text-xs ${textSub}`}>
           {[
-            'Keep it under 90 seconds - clients watch short intros more often',
+            'Keep it around 60 seconds - clients watch short intros more often',
             'Introduce yourself, your specialty, and your style',
             'Show examples of your work or a behind-the-scenes clip',
             'Record in a well-lit space with good audio',

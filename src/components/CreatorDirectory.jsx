@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { getNewCreatorSpotlight } from '../utils/matchingAlgorithm.js';
 import { useNavigate } from 'react-router-dom';
-import { Search, MapPin, Star, X, Plus, Trash2, ArrowRight, Filter, UserPlus, Heart, ExternalLink, BadgeCheck, AlertCircle } from 'lucide-react';
+import { Search, MapPin, Star, X, Plus, Trash2, ArrowRight, Filter, UserPlus, Heart, BadgeCheck, AlertCircle, Upload, Video, Image as ImageIcon } from 'lucide-react';
 import { SERVICES, RATES, MARKETPLACE_CATEGORIES, getMarketplaceServiceIds, serviceMatchesMarketplaceCategory } from '../data/rates.js';
 import { PILLARS, SUB_NICHES_BY_PILLAR, getPillar, getSubNiche, LEGACY_SERVICE_TO_PILLAR, MAX_SUB_NICHES } from '../data/taxonomy.js';
 import { REGIONS } from '../data/regions.js';
@@ -14,6 +14,8 @@ import { FastMatch } from './FastMatch.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { uploadUserAsset } from '../utils/storage.js';
+import { uploadVideoToBunny, makeBunnyVideoRef, getBunnyVideoId } from '../utils/bunnyStream.js';
+import { checkCreatorText, logFilterEvent, CREATOR_TEXT_BLOCK_MESSAGE } from '../utils/messageFilter.js';
 import { sendNotificationEmail } from '../lib/notifications.js';
 import { HandoffPage } from './HandoffPage.jsx';
 import { handoffPages } from '../data/handoffPages.js';
@@ -30,11 +32,15 @@ function parseYearsExperience(value) {
 }
 
 function portfolioItemComplete(item) {
+  const mediaType = item?.mediaType || item?.media_type || 'image';
+  const hasMedia = mediaType === 'video'
+    ? !!(item?.bunny_video_id || item?.bunnyVideoId)
+    : !!(item?.imageUrl || item?.image_url);
   return !!(
     item?.title?.trim() &&
     item?.description?.trim() &&
     (item?.subNicheId || item?.serviceId) &&
-    item?.link?.trim()
+    hasMedia
   );
 }
 
@@ -327,7 +333,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
     primary_pillar: '',
     sub_niches: [],
     portfolio: [],
-    contact: { email: '', phone: '', website: '', instagram: '' },
+    contact: { email: '', phone: '' },
     rating: '', reviewCount: '',
     yearsExperience: '',
     usBasedConfirm: false,
@@ -343,6 +349,8 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
   });
   const [step, setStep] = useState(1);
   const [portfolioUploadState, setPortfolioUploadState] = useState({});
+  const [introUploadState, setIntroUploadState] = useState('');
+  const [formError, setFormError] = useState('');
 
   const TOTAL_STEPS = 5;
   const BLOCKED_EXPERIENCE = ['Less than 1 year', '1 year'];
@@ -371,7 +379,15 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
   const addPortfolio = () => {
     setForm(f => ({
       ...f,
-      portfolio: [...f.portfolio, { title: '', description: '', subNicheId: f.sub_niches[0] || '' }],
+      portfolio: [
+        ...f.portfolio,
+        {
+          title: '',
+          description: '',
+          subNicheId: f.sub_niches[0] || '',
+          mediaType: f.portfolio.filter(item => (item.mediaType || item.media_type || 'image') !== 'video').length >= 6 ? 'video' : 'image',
+        },
+      ],
     }));
   };
   const updatePortfolio = (idx, field, val) => {
@@ -383,6 +399,52 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
   };
   const removePortfolio = (idx) => {
     setForm(f => ({ ...f, portfolio: f.portfolio.filter((_, i) => i !== idx) }));
+  };
+  const uploadIntroVideo = async (file) => {
+    if (!file) return;
+    if (!user?.id) {
+      setIntroUploadState('Sign in before uploading your intro video.');
+      return;
+    }
+    setIntroUploadState('Uploading intro video...');
+    try {
+      const uploaded = await uploadVideoToBunny({
+        file,
+        purpose: 'intro',
+        title: `${form.businessName || form.name || 'Creator'} intro`,
+        onProgress: pct => setIntroUploadState(`Uploading intro video... ${pct}%`),
+      });
+      set('videoIntroUrl', uploaded.videoRef);
+      setIntroUploadState('Intro video uploaded.');
+    } catch (error) {
+      setIntroUploadState(error?.message || 'Intro video could not be uploaded.');
+    }
+  };
+  const uploadPortfolioVideo = async (idx, file) => {
+    if (!file) return;
+    if (!user?.id) {
+      setPortfolioUploadState(s => ({ ...s, [idx]: 'Sign in before uploading portfolio videos.' }));
+      return;
+    }
+    setPortfolioUploadState(s => ({ ...s, [idx]: 'Uploading portfolio video...' }));
+    try {
+      const title = form.portfolio[idx]?.title || `${form.name || 'Creator'} portfolio video`;
+      const uploaded = await uploadVideoToBunny({
+        file,
+        purpose: 'portfolio',
+        title,
+        onProgress: pct => setPortfolioUploadState(s => ({ ...s, [idx]: `Uploading portfolio video... ${pct}%` })),
+      });
+      updatePortfolio(idx, 'bunny_video_id', uploaded.videoId);
+      updatePortfolio(idx, 'videoRef', makeBunnyVideoRef(uploaded.videoId));
+      updatePortfolio(idx, 'imageUrl', uploaded.thumbnailUrl || '');
+      setPortfolioUploadState(s => ({ ...s, [idx]: 'Portfolio video uploaded.' }));
+    } catch (error) {
+      setPortfolioUploadState(s => ({
+        ...s,
+        [idx]: error?.message || 'Portfolio video could not be uploaded.',
+      }));
+    }
   };
   const uploadPortfolioPreview = async (idx, file) => {
     if (!file) return;
@@ -426,6 +488,8 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
   const bioLen = form.bio.length;
   const expBlocked = BLOCKED_EXPERIENCE.includes(form.yearsExperience);
   const completePortfolioCount = form.portfolio.filter(portfolioItemComplete).length;
+  const portfolioVideoCount = form.portfolio.filter(item => (item.mediaType || item.media_type) === 'video').length;
+  const portfolioPhotoCount = form.portfolio.filter(item => (item.mediaType || item.media_type || 'image') !== 'video').length;
   const portfolioMet = completePortfolioCount >= 3;
   const videoIntroMet = form.videoIntroUrl.trim().length > 0;
   const pillarSelected = !!form.primary_pillar
@@ -463,6 +527,24 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 
   const handleSubmit = () => {
     if (!canPublish) return;
+    const profileCheck = checkCreatorText({
+      name: form.name,
+      businessName: form.businessName,
+      bio: form.bio,
+    });
+    const portfolioCheck = form.portfolio
+      .map((item, index) => ({
+        index,
+        result: checkCreatorText({ title: item.title, description: item.description }),
+      }))
+      .find(item => item.result.blocked);
+    const blocked = profileCheck.blocked ? profileCheck : portfolioCheck?.result;
+    if (blocked?.blocked) {
+      setFormError(CREATOR_TEXT_BLOCK_MESSAGE);
+      logFilterEvent(user?.id || 'creator-registration', blocked.patternType || 'creator_text', supabase, supabaseConfigured);
+      return;
+    }
+    setFormError('');
     const regionKey = zipToRegion(form.location.zip) || 'us-tier2';
     const city = zipToCity(form.location.zip) || form.location.city;
     const listing = {
@@ -481,6 +563,12 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
       review_status: 'pending_review',
       years_experience: parseYearsExperience(form.yearsExperience),
       video_intro_url: form.videoIntroUrl.trim(),
+      portfolio: form.portfolio.map(item => ({
+        ...item,
+        media_type: item.mediaType || item.media_type || 'image',
+        bunny_video_id: item.bunny_video_id || getBunnyVideoId(item.videoRef || ''),
+        link: '',
+      })),
       createdAt: new Date().toISOString(),
     };
     onSave(listing);
@@ -811,7 +899,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	              This is the trust layer of your profile. Clients should be able to understand your voice, your real client experience, and the kind of production work you can repeat.
 	            </p>
 	          </div>
-	          {/* Video intro URL */}
+	          {/* Bunny video intro */}
 	          <div className={`rounded-2xl border p-4 sm:p-5 ${dark ? 'border-white/[0.07] bg-charcoal-950/55' : 'border-gray-200 bg-gray-50'}`}>
 	            <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
 	              <div>
@@ -819,20 +907,31 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	                  <div>
 	                    <p className={labelCls}>Professional Video Intro *</p>
 	                    <p className={`text-xs leading-5 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
-	                      Link a 60 to 90 second intro that shows who clients will be hiring.
+	                      Upload a 60 second intro that shows who clients will be hiring. This is required before review.
 	                    </p>
 	                  </div>
 	                  <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${videoIntroMet ? 'bg-gold-500/15 text-gold-400 ring-1 ring-gold-500/25' : dark ? 'bg-white/[0.06] text-charcoal-400 ring-1 ring-white/[0.08]' : 'bg-gray-100 text-gray-500'}`}>
 	                    {videoIntroMet ? 'Added' : 'Required'}
 	                  </span>
 	                </div>
-	                <input
-	                  type="url"
-	                  value={form.videoIntroUrl}
-	                  onChange={e => set('videoIntroUrl', e.target.value)}
-	                  placeholder="Paste your intro video link from YouTube, Vimeo, or Loom"
-	                  className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`}
-	                />
+	                <label className={`flex min-h-[112px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed p-4 text-center transition-colors ${dark ? 'border-white/[0.09] bg-charcoal-900/60 hover:border-gold-500/45' : 'border-gray-300 bg-white hover:border-gold-500/45'}`}>
+	                  <Video size={22} className="mb-2 text-gold-400" />
+	                  <span className={`text-xs font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>
+	                    {videoIntroMet ? 'Replace intro video' : 'Upload intro video'}
+	                  </span>
+	                  <span className={`mt-1 text-[11px] ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>MP4, MOV, or WEBM</span>
+	                  <input
+	                    type="file"
+	                    accept="video/mp4,video/quicktime,video/webm"
+	                    onChange={e => uploadIntroVideo(e.target.files?.[0])}
+	                    className="sr-only"
+	                  />
+	                </label>
+	                {introUploadState && (
+	                  <p className={`mt-2 text-xs ${introUploadState.includes('uploaded') ? 'text-gold-400' : introUploadState.includes('Uploading') ? 'text-charcoal-300' : 'text-red-400'}`}>
+	                    {introUploadState}
+	                  </p>
+	                )}
 	              </div>
 	              <div className={`rounded-xl border p-3 ${dark ? 'border-gold-500/15 bg-gold-500/[0.06]' : 'border-gold-200 bg-white'}`}>
 	                <p className={`text-xs font-bold mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>What to cover</p>
@@ -851,11 +950,11 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	            <div>
 	              <p className={labelCls}>Portfolio Samples *</p>
 	              <p className={`text-xs ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
-	                Add at least 3 real client projects. Use titles and short descriptions that prove scope, not vague labels.
+	                Add at least 3 real client projects. Photos stay in CreatorBridge storage; videos upload to Bunny.
 	              </p>
 	            </div>
 	            <div className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${portfolioMet ? 'bg-gold-500/15 text-gold-400 ring-1 ring-gold-500/25' : dark ? 'bg-white/[0.06] text-charcoal-400 ring-1 ring-white/[0.08]' : 'bg-gray-100 text-gray-500'}`}>
-	              {completePortfolioCount}/3 complete
+	              {completePortfolioCount}/3 complete · {portfolioVideoCount}/3 videos · {portfolioPhotoCount}/6 photos
 	            </div>
 	          </div>
 	          {form.portfolio.map((item, i) => (
@@ -871,6 +970,27 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	                </div>
 	                <button type="button" onClick={() => removePortfolio(i)}
 	                  className="rounded-lg p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"><Trash2 size={14} /></button>
+	              </div>
+	              <div className={`mb-3 inline-flex rounded-xl border p-1 ${dark ? 'border-white/[0.08] bg-charcoal-900/60' : 'border-gray-200 bg-white'}`}>
+	                {[
+	                  { id: 'image', label: 'Photo', icon: ImageIcon },
+	                  { id: 'video', label: 'Video', icon: Video },
+	                ].map(({ id, label, icon: Icon }) => {
+	                  const active = (item.mediaType || item.media_type || 'image') === id;
+	                  return (
+	                    <button
+	                      key={id}
+	                      type="button"
+	                      onClick={() => updatePortfolio(i, 'mediaType', id)}
+	                      disabled={(id === 'video' && !active && portfolioVideoCount >= 3) || (id === 'image' && !active && portfolioPhotoCount >= 6)}
+	                      className={`inline-flex min-h-[34px] items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-all disabled:opacity-40 ${
+	                        active ? 'bg-gold-500 text-charcoal-900' : dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+	                      }`}
+	                    >
+	                      <Icon size={13} /> {label}
+	                    </button>
+	                  );
+	                })}
 	              </div>
 	              <div className="grid gap-3 md:grid-cols-[1fr_220px] mb-3">
 	                <input type="text" value={item.title} onChange={e => updatePortfolio(i, 'title', e.target.value)}
@@ -889,34 +1009,53 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	                rows={2}
 	                placeholder="Briefly describe the client, scope, deliverables, or result."
 	                className={`w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all resize-none ${inputCls}`} />
-	              <input type="url" value={item.link || ''} onChange={e => updatePortfolio(i, 'link', e.target.value)}
-	                placeholder="Portfolio link, e.g. YouTube, Vimeo, website, Drive, or published project URL"
-	                className={`mt-3 w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
-	              <input type="url" value={item.imageUrl || ''} onChange={e => updatePortfolio(i, 'imageUrl', e.target.value)}
-	                placeholder="Optional preview image URL, e.g. approved project still, thumbnail, or portfolio image"
-	                className={`mt-3 w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
-	              <div className={`mt-3 rounded-xl border border-dashed p-3 ${dark ? 'border-white/[0.08] bg-charcoal-950/35' : 'border-gray-300 bg-gray-50'}`}>
-	                <label className={`block text-[10px] font-bold uppercase tracking-[0.16em] ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
-	                  Upload preview image
-	                </label>
-	                <p className={`mt-1 text-xs ${dark ? 'text-charcoal-500' : 'text-gray-500'}`}>
-	                  Optional. Use a real project still or approved client-safe thumbnail. JPG, PNG, or WEBP under 8 MB.
-	                </p>
-	                <input
-	                  type="file"
-	                  accept="image/png,image/jpeg,image/webp"
-	                  onChange={e => uploadPortfolioPreview(i, e.target.files?.[0])}
-	                  className={`mt-3 block w-full text-xs file:mr-3 file:rounded-lg file:border-0 file:px-3 file:py-2 file:text-xs file:font-bold file:bg-gold-500 file:text-charcoal-900 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}
-	                />
-	                {portfolioUploadState[i] && (
-	                  <p className={`mt-2 text-xs ${portfolioUploadState[i].includes('uploaded') ? 'text-gold-400' : 'text-red-400'}`}>
-	                    {portfolioUploadState[i]}
+	              {(item.mediaType || item.media_type || 'image') === 'video' ? (
+	                <div className={`mt-3 rounded-xl border border-dashed p-3 ${dark ? 'border-white/[0.08] bg-charcoal-950/35' : 'border-gray-300 bg-gray-50'}`}>
+	                  <label className={`block text-[10px] font-bold uppercase tracking-[0.16em] ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
+	                    Upload portfolio video
+	                  </label>
+	                  <p className={`mt-1 text-xs ${dark ? 'text-charcoal-500' : 'text-gray-500'}`}>
+	                    Up to 3 portfolio videos. MP4, MOV, or WEBM. Bunny Stream creates the playback and thumbnail.
 	                  </p>
-	                )}
-	              </div>
+	                  <input
+	                    type="file"
+	                    accept="video/mp4,video/quicktime,video/webm"
+	                    onChange={e => uploadPortfolioVideo(i, e.target.files?.[0])}
+	                    className={`mt-3 block w-full text-xs file:mr-3 file:rounded-lg file:border-0 file:px-3 file:py-2 file:text-xs file:font-bold file:bg-gold-500 file:text-charcoal-900 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}
+	                  />
+	                  {item.bunny_video_id && <p className="mt-2 text-xs text-gold-400">Bunny video attached.</p>}
+	                  {portfolioUploadState[i] && (
+	                    <p className={`mt-2 text-xs ${portfolioUploadState[i].includes('uploaded') ? 'text-gold-400' : portfolioUploadState[i].includes('Uploading') ? 'text-charcoal-300' : 'text-red-400'}`}>
+	                      {portfolioUploadState[i]}
+	                    </p>
+	                  )}
+	                </div>
+	              ) : (
+	                <div className={`mt-3 rounded-xl border border-dashed p-3 ${dark ? 'border-white/[0.08] bg-charcoal-950/35' : 'border-gray-300 bg-gray-50'}`}>
+	                  <label className={`block text-[10px] font-bold uppercase tracking-[0.16em] ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
+	                    Upload portfolio photo
+	                  </label>
+	                  <p className={`mt-1 text-xs ${dark ? 'text-charcoal-500' : 'text-gray-500'}`}>
+	                    Up to 6 photos. Use a real project still or approved client-safe image. JPG, PNG, or WEBP under 8 MB.
+	                  </p>
+	                  <input
+	                    type="file"
+	                    accept="image/png,image/jpeg,image/webp"
+	                    onChange={e => uploadPortfolioPreview(i, e.target.files?.[0])}
+	                    className={`mt-3 block w-full text-xs file:mr-3 file:rounded-lg file:border-0 file:px-3 file:py-2 file:text-xs file:font-bold file:bg-gold-500 file:text-charcoal-900 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}
+	                  />
+	                  {item.imageUrl && <p className="mt-2 text-xs text-gold-400">Photo attached.</p>}
+	                  {portfolioUploadState[i] && (
+	                    <p className={`mt-2 text-xs ${portfolioUploadState[i].includes('uploaded') ? 'text-gold-400' : 'text-red-400'}`}>
+	                      {portfolioUploadState[i]}
+	                    </p>
+	                  )}
+	                </div>
+	              )}
 	            </div>
 	          ))}
           <button type="button" onClick={addPortfolio}
+            disabled={portfolioVideoCount >= 3 && portfolioPhotoCount >= 6}
             className={`w-full py-2.5 rounded-xl border-2 border-dashed text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
               dark ? 'border-charcoal-600 text-charcoal-400 hover:border-gold-500/50 hover:text-gold-400' : 'border-gray-300 text-gray-500 hover:border-gold-500/50 hover:text-gold-500'
             }`}>
@@ -924,7 +1063,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
           </button>
           {completePortfolioCount < 3 && (
             <p className="text-xs text-gold-400 mt-1">
-              Please add at least 3 complete portfolio samples with title, description, service, and link before submitting.
+              Please add at least 3 complete portfolio samples with title, description, specialty, and CreatorBridge-hosted media before submitting.
             </p>
           )}
         </div>
@@ -958,8 +1097,6 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	              {[
 	                { key: 'email',     label: 'Email *',          placeholder: 'hello@yourstudio.com',  type: 'email' },
 	                { key: 'phone',     label: 'Phone',            placeholder: '(555) 000-0000',        type: 'tel' },
-	                { key: 'website',   label: 'Website',          placeholder: 'yourstudio.com',        type: 'text' },
-	                { key: 'instagram', label: 'Instagram Handle', placeholder: '@yourstudio',           type: 'text' },
 	              ].map(({ key, label, placeholder, type }) => (
 	                <div key={key}>
 	                  <p className={labelCls}>{label}</p>
@@ -1063,6 +1200,12 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	          </div>
 	        </div>
 	      )}
+
+      {formError && (
+        <div className={`rounded-xl border p-3 text-xs ${dark ? 'border-red-500/25 bg-red-500/10 text-red-300' : 'border-red-200 bg-red-50 text-red-700'}`}>
+          {formError}
+        </div>
+      )}
 
       {/* Navigation */}
       <div className="flex gap-2">
@@ -1459,8 +1602,6 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
             region_key: enriched.location?.regionKey || 'us-tier2',
             email: enriched.contact?.email || null,
             phone: enriched.contact?.phone || null,
-            website: enriched.contact?.website || null,
-            instagram: enriched.contact?.instagram || null,
             rating: enriched.rating,
             review_count: enriched.reviewCount,
             video_intro_url: enriched.video_intro_url || enriched.videoIntroUrl || null,
@@ -1483,8 +1624,10 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
           service_id: item.subNicheId || item.serviceId || null,
           title: item.title,
           description: item.description,
-          link: item.link,
+          link: null,
           image_url: item.imageUrl || item.image_url || null,
+          media_type: item.media_type || item.mediaType || 'image',
+          bunny_video_id: item.bunny_video_id || getBunnyVideoId(item.videoRef || ''),
           display_order: index,
         }));
         if (portfolioRows.length) await supabase.from('portfolio_items').insert(portfolioRows);

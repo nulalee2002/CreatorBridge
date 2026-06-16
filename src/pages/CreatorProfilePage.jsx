@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { SEO } from '../components/SEO.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { SEED_CREATORS } from '../data/seedCreators.js';
+import { getBunnyEmbedUrl, getBunnyThumbnailUrl, isBunnyVideoRef } from '../utils/bunnyStream.js';
 
 const useTweaks = (defaults) => [defaults, () => {}];
 const TweaksPanel = () => null;
@@ -105,6 +106,17 @@ const Pill = ({ children, tone = "gold" }) => (
 );
 
 const fmt = (n) => "$" + n.toLocaleString();
+const FALLBACK_REEL_POSTER = "/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg";
+
+function getIntroPoster() {
+  return isBunnyVideoRef(creator.reel)
+    ? getBunnyThumbnailUrl(creator.reel) || creator.reelPoster || creator.avatar || FALLBACK_REEL_POSTER
+    : creator.reel || FALLBACK_REEL_POSTER;
+}
+
+function getIntroEmbed() {
+  return isBunnyVideoRef(creator.reel) ? getBunnyEmbedUrl(creator.reel) : '';
+}
 
 // ---------- SUB-COMPONENTS ----------
 
@@ -134,7 +146,7 @@ function Hero({ onPlayReel, onJumpBook, onMessage, layout, saved, setSaved }) {
       <section>
         <div className="relative rounded-2xl overflow-hidden mb-6 parallax-wrap">
           <div className="aspect-[21/9] relative">
-            <img src={creator.reel} alt="Reel" className="absolute inset-0 w-full h-full object-cover scale-105" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg'; } }}/>
+            <img src={getIntroPoster()} alt="Reel" className="absolute inset-0 w-full h-full object-cover scale-105" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg'; } }}/>
             <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/60 to-transparent"></div>
             <button onClick={onPlayReel} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-[var(--gold)]/90 hover:bg-[var(--gold-light)] transition-all flex items-center justify-center hover:scale-110">
               <svg className="w-6 h-6 text-[var(--bg)] ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -145,19 +157,19 @@ function Hero({ onPlayReel, onJumpBook, onMessage, layout, saved, setSaved }) {
             </div>
           </div>
         </div>
-        <HeroInfo onJumpBook={onJumpBook} onMessage={onMessage} saved={saved} setSaved={setSaved}/>
+        <HeroInfo onJumpBook={onJumpBook} onMessage={onMessage} onPlayReel={onPlayReel} saved={saved} setSaved={setSaved}/>
       </section>
     );
   }
   return (
     <section className="grid lg:grid-cols-12 gap-8 lg:gap-10 mb-12">
       <div className="lg:col-span-7">
-        <HeroInfo onJumpBook={onJumpBook} onMessage={onMessage} saved={saved} setSaved={setSaved}/>
+        <HeroInfo onJumpBook={onJumpBook} onMessage={onMessage} onPlayReel={onPlayReel} saved={saved} setSaved={setSaved}/>
       </div>
       <div className="lg:col-span-5">
         <div className="relative rounded-2xl overflow-hidden parallax-wrap group cursor-pointer" onClick={onPlayReel}>
           <div className="aspect-[4/5] relative">
-            <img src={creator.reel} alt="Reel" className="absolute inset-0 w-full h-full object-cover scale-105 group-hover:scale-110 transition-transform duration-700" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg'; } }}/>
+            <img src={getIntroPoster()} alt="Reel" className="absolute inset-0 w-full h-full object-cover scale-105 group-hover:scale-110 transition-transform duration-700" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg'; } }}/>
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20"></div>
             <button className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-[var(--gold)]/90 group-hover:bg-[var(--gold-light)] transition-all flex items-center justify-center group-hover:scale-110">
               <svg className="w-6 h-6 text-[var(--bg)] ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -173,13 +185,14 @@ function Hero({ onPlayReel, onJumpBook, onMessage, layout, saved, setSaved }) {
   );
 }
 
-function HeroInfo({ onJumpBook, onMessage, saved, setSaved }) {
+function HeroInfo({ onJumpBook, onMessage, onPlayReel, saved, setSaved }) {
   return (
     <div className="space-y-5">
       <div className="flex items-start gap-4">
-        <div className="parallax-wrap w-16 h-16 rounded-2xl overflow-hidden shrink-0 ring-1 ring-[var(--border)]">
+        <button type="button" onClick={onPlayReel} className="parallax-wrap relative w-16 h-16 rounded-2xl overflow-hidden shrink-0 ring-1 ring-[var(--border)]">
           <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg'; } }}/>
-        </div>
+          <span className="absolute inset-x-1 bottom-1 rounded-full bg-[var(--gold)] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-[var(--bg)]">Watch intro</span>
+        </button>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">
             <span className="primary-pillar-badge">
@@ -370,6 +383,9 @@ function Portfolio({ onOpen }) {
   const cats = ["All", ...creator.specialties];
   const [active, setActive] = useState("All");
   const items = active === "All" ? portfolio : portfolio.filter(p => p.cat === active);
+  const photoItems = items.filter(p => p.mediaType !== 'video');
+  const videoItems = items.filter(p => p.mediaType === 'video');
+  const renderItems = [...videoItems, ...photoItems];
   return (
     <section className="mb-16">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
@@ -391,12 +407,19 @@ function Portfolio({ onOpen }) {
         </div>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-        {items.map(p => (
+        {renderItems.map(p => (
           <div key={p.id} onClick={() => onOpen(p)} className={"lane-card cursor-pointer " + p.ratio}>
             <img src={p.src} alt={p.title} onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg'; } }}/>
             <div className="lane-content">
               <div className="text-[9px] uppercase tracking-[0.2em] text-[var(--gold)] mb-1">{p.cat}</div>
-              <div className="text-sm font-medium">{p.title}</div>
+              <div className="flex items-center gap-2 text-sm font-medium">
+                {p.mediaType === 'video' && (
+                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--gold)] text-[var(--bg)]">
+                    <svg className="h-3 w-3 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  </span>
+                )}
+                {p.title}
+              </div>
             </div>
           </div>
         ))}
@@ -533,24 +556,37 @@ function Reviews() {
 
 function ReelModal({ open, onClose }) {
   if (!open) return null;
+  const introEmbed = getIntroEmbed();
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md" onClick={onClose}>
       <div className="max-w-5xl w-full liquid-glass rounded-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
         <div className="aspect-video relative bg-black">
-          <img src={creator.reel} alt="Reel" className="absolute inset-0 w-full h-full object-cover opacity-80" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg'; } }}/>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-20 h-20 rounded-full bg-[var(--gold)]/90 flex items-center justify-center">
-              <svg className="w-8 h-8 text-[var(--bg)] ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-            </div>
-          </div>
-          <button onClick={onClose} className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white">
+          {introEmbed ? (
+            <iframe
+              src={introEmbed}
+              title={`${creator.studio} intro video`}
+              className="absolute inset-0 h-full w-full"
+              allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <>
+              <img src={getIntroPoster()} alt="Reel" className="absolute inset-0 w-full h-full object-cover opacity-80" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg'; } }}/>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full bg-[var(--gold)]/90 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-[var(--bg)] ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+              </div>
+            </>
+          )}
+          <button onClick={onClose} className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
         <div className="p-5 flex items-center justify-between">
           <div>
-            <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--gold)] mb-1">Featured Reel · 02:14</div>
-            <div className="text-base serif">2024–25 selected work · {creator.studio}</div>
+            <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--gold)] mb-1">Featured Intro</div>
+            <div className="text-base serif">CreatorBridge intro · {creator.studio}</div>
           </div>
           <button className="btn-ghost min-h-[34px] text-xs">Share</button>
         </div>
@@ -561,11 +597,24 @@ function ReelModal({ open, onClose }) {
 
 function LightboxModal({ item, onClose }) {
   if (!item) return null;
+  const videoEmbed = item.mediaType === 'video' ? getBunnyEmbedUrl(item.videoRef || item.bunny_video_id) : '';
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/85 backdrop-blur-md" onClick={onClose}>
       <div className="max-w-6xl w-full liquid-glass rounded-2xl overflow-hidden grid md:grid-cols-3" onClick={e => e.stopPropagation()}>
         <div className="md:col-span-2 bg-black">
-          <img src={item.src} alt={item.title} className="w-full h-full object-cover max-h-[80vh]" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg'; } }}/>
+          {videoEmbed ? (
+            <div className="aspect-video">
+              <iframe
+                src={videoEmbed}
+                title={item.title}
+                className="h-full w-full"
+                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          ) : (
+            <img src={item.src} alt={item.title} className="w-full h-full object-cover max-h-[80vh]" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg'; } }}/>
+          )}
         </div>
         <div className="p-6 flex flex-col">
           <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--gold)] mb-3">{item.cat}</div>
@@ -879,7 +928,8 @@ function adaptSeedCreator(seed) {
     crew: ARIA_CREATOR.crew,
     tiers: [seed.tier ? seed.tier.charAt(0).toUpperCase() + seed.tier.slice(1) : 'Verified'],
     avatar: seed.avatar || ARIA_CREATOR.avatar,
-    reel: seed.cover || ARIA_CREATOR.reel,
+    reel: seed.video_intro_url || seed.videoIntroUrl || seed.cover || ARIA_CREATOR.reel,
+    reelPoster: seed.cover || ARIA_CREATOR.reel,
     __lowestRate: lowestRate,
   };
 }
@@ -904,12 +954,53 @@ function buildAdaptedPortfolio(adaptedCreator) {
   });
 }
 
+function buildListingPortfolio(listing, adaptedCreator) {
+  const items = Array.isArray(listing.portfolio) ? listing.portfolio : [];
+  if (!items.length) return buildAdaptedPortfolio(adaptedCreator);
+  return items.map((item, index) => {
+    const mediaType = item.mediaType || item.media_type || (item.bunny_video_id ? 'video' : 'image');
+    const videoRef = item.videoRef || (item.bunny_video_id ? `bunny:${item.bunny_video_id}` : '');
+    return {
+      id: item.id || index + 1,
+      cat: item.subNicheId || item.serviceId || adaptedCreator.specialties[index % adaptedCreator.specialties.length] || adaptedCreator.pillar.label,
+      ratio: mediaType === 'video' ? 'aspect-[16/10]' : index % 2 ? 'aspect-[16/10]' : 'aspect-[4/5]',
+      src: mediaType === 'video'
+        ? getBunnyThumbnailUrl(videoRef) || item.imageUrl || item.image_url || FALLBACK_REEL_POSTER
+        : item.imageUrl || item.image_url || FALLBACK_REEL_POSTER,
+      title: item.title || `Selected work ${index + 1}`,
+      mediaType,
+      videoRef,
+      bunny_video_id: item.bunny_video_id || '',
+    };
+  });
+}
+
+function getLocalListing(id) {
+  try {
+    const all = JSON.parse(localStorage.getItem('creator-directory') || '[]');
+    return all.find(item => item.id === id || item.user_id === id) || null;
+  } catch {
+    return null;
+  }
+}
+
 function getCreatorData(id) {
   // Aria sample profile keeps its full rich payload.
   if (!id || id === 'demo' || id === 'seed-2') {
     return {
       creator: ARIA_CREATOR,
       portfolio: ARIA_PORTFOLIO,
+      packages: ARIA_PACKAGES,
+      reviews: ARIA_REVIEWS,
+      verification: ARIA_VERIFICATION,
+    };
+  }
+  const localListing = getLocalListing(id);
+  if (localListing) {
+    const adapted = adaptSeedCreator(localListing);
+    return {
+      creator: adapted,
+      portfolio: buildListingPortfolio(localListing, adapted),
       packages: ARIA_PACKAGES,
       reviews: ARIA_REVIEWS,
       verification: ARIA_VERIFICATION,

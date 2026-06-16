@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, X, ChevronRight, BadgeCheck, Upload, Link2, Instagram, Youtube, Globe, Linkedin } from 'lucide-react';
+import { Check, BadgeCheck, Upload, Video } from 'lucide-react';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 
 /**
@@ -68,13 +68,6 @@ function StepRow({ number, title, description, status, children, dark }) {
  */
 export function VerificationFlow({ creator, dark, onUpdate }) {
   const [saving, setSaving] = useState(false);
-  const [socialLinks, setSocialLinks] = useState({
-    instagram: creator?.contact?.instagram || creator?.instagram || '',
-    youtube:   creator?.youtube || '',
-    vimeo:     creator?.vimeo || '',
-    linkedin:  creator?.linkedin || '',
-    website:   creator?.contact?.website || creator?.website || '',
-  });
   const [credentialNote, setCredentialNote] = useState('');
   const [credSaved, setCredSaved] = useState(false);
 
@@ -87,49 +80,28 @@ export function VerificationFlow({ creator, dark, onUpdate }) {
   // Step 1: Identity — auto-verified if Stripe is connected
   const identityDone = creator?.stripe_onboarded === true;
 
-  // Step 2: Portfolio — need 3+ items with links
+  // Step 2: Portfolio — need 3+ CreatorBridge-hosted media items
   const portfolioItems = creator?.portfolio || creator?.portfolio_items || [];
-  const portfolioWithLinks = portfolioItems.filter(p => p.link || p.url);
-  const portfolioDone = portfolioWithLinks.length >= 3;
+  const hostedPortfolio = portfolioItems.filter(p => (
+    p.bunny_video_id ||
+    p.videoRef ||
+    p.imageUrl ||
+    p.image_url
+  ));
+  const portfolioDone = hostedPortfolio.length >= 3;
 
-  // Step 3: Social media — at least one connected profile
-  const connectedSocials = Object.values(socialLinks).filter(v => v && v.trim().length > 2);
-  const socialDone = connectedSocials.length >= 1;
+  // Step 3: Required Bunny intro
+  const introDone = String(creator?.video_intro_url || creator?.videoIntroUrl || '').startsWith('bunny:');
 
   // Step 4: Credentials (optional)
   const steps = creator?.verification_steps || {};
   const credentialsDone = steps.credentials_submitted === true;
 
   // Overall status
-  const allCoreComplete = identityDone && portfolioDone && socialDone;
+  const allCoreComplete = identityDone && portfolioDone && introDone;
   const currentStatus = allCoreComplete && credentialsDone ? 'pro_verified'
     : allCoreComplete ? 'verified'
     : 'unverified';
-
-  async function saveSocialLinks() {
-    setSaving(true);
-    const update = {
-      instagram: socialLinks.instagram,
-      youtube:   socialLinks.youtube,
-      vimeo:     socialLinks.vimeo,
-      linkedin:  socialLinks.linkedin,
-      website:   socialLinks.website,
-    };
-    if (supabaseConfigured && creator?.id) {
-      await supabase.from('creator_listings').update(update).eq('id', creator.id);
-    } else {
-      try {
-        const all = JSON.parse(localStorage.getItem('creator-directory') || '[]');
-        const idx = all.findIndex(c => c.id === creator?.id);
-        if (idx !== -1) {
-          all[idx] = { ...all[idx], ...update };
-          localStorage.setItem('creator-directory', JSON.stringify(all));
-        }
-      } catch {}
-    }
-    onUpdate?.({ ...update });
-    setSaving(false);
-  }
 
   async function submitCredential() {
     if (!credentialNote.trim()) return;
@@ -191,60 +163,38 @@ export function VerificationFlow({ creator, dark, onUpdate }) {
         <StepRow
           number={2}
           title="Portfolio Verification"
-          description="Add at least 3 portfolio items with links to external work."
-          status={portfolioDone ? 'done' : portfolioWithLinks.length > 0 ? 'partial' : 'pending'}
+          description="Add at least 3 CreatorBridge-hosted portfolio photos or Bunny videos."
+          status={portfolioDone ? 'done' : hostedPortfolio.length > 0 ? 'partial' : 'pending'}
           dark={dark}
         >
           <div className="flex items-center gap-2">
             {[0,1,2].map(i => (
               <div key={i} className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                portfolioWithLinks.length > i ? 'bg-gold-500/20 ring-1 ring-gold-500/25' : dark ? 'bg-white/[0.08]' : 'bg-gray-200'
+                hostedPortfolio.length > i ? 'bg-gold-500/20 ring-1 ring-gold-500/25' : dark ? 'bg-white/[0.08]' : 'bg-gray-200'
               }`}>
-                {portfolioWithLinks.length > i
+                {hostedPortfolio.length > i
                   ? <Check size={10} className="text-gold-400" />
                   : <span className={`text-[9px] ${textSub}`}>{i+1}</span>
                 }
               </div>
             ))}
             <span className={`text-xs ${textSub}`}>
-              {portfolioWithLinks.length} / 3 portfolio items with links
+              {hostedPortfolio.length} / 3 hosted portfolio items
             </span>
           </div>
         </StepRow>
 
-        {/* Step 3: Social Media */}
+        {/* Step 3: Intro Video */}
         <StepRow
           number={3}
-          title="Social Media Verification"
-          description="Link at least one active social media profile so clients can verify you."
-          status={socialDone ? 'done' : 'pending'}
+          title="Intro Video"
+          description="Upload your required Bunny-hosted intro from the Video Intro tab."
+          status={introDone ? 'done' : 'pending'}
           dark={dark}
         >
-          <div className="space-y-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                { key: 'instagram', icon: Instagram, placeholder: 'instagram.com/yourhandle' },
-                { key: 'youtube',   icon: Youtube,   placeholder: 'youtube.com/yourchannel' },
-                { key: 'linkedin',  icon: Linkedin,  placeholder: 'linkedin.com/in/yourname' },
-                { key: 'website',   icon: Globe,     placeholder: 'yourwebsite.com' },
-              ].map(({ key, icon: Icon, placeholder }) => (
-                <div key={key} className="relative">
-                  <Icon size={12} className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${textSub}`} />
-                  <input
-                    type="url"
-                    value={socialLinks[key]}
-                    onChange={e => setSocialLinks(s => ({ ...s, [key]: e.target.value }))}
-                    placeholder={placeholder}
-                    className={`${inputCls} pl-8 text-xs`}
-                  />
-                </div>
-              ))}
-            </div>
-            <button type="button" onClick={saveSocialLinks} disabled={saving}
-              className="px-3 py-1.5 rounded-lg bg-gold-500 hover:bg-gold-600 disabled:opacity-50 text-charcoal-900 text-xs font-bold transition-all">
-              {saving ? 'Saving...' : 'Save Profiles'}
-            </button>
-          </div>
+          <p className={`text-xs flex items-center gap-2 ${introDone ? 'text-gold-300' : textSub}`}>
+            <Video size={12} /> {introDone ? 'Intro video is attached.' : 'Intro video is required before verification.'}
+          </p>
         </StepRow>
 
         {/* Step 4: Credentials (optional) */}
