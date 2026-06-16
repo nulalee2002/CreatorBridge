@@ -125,8 +125,8 @@ Launch is for new creators with no requirements. Proven requires 10 or more comp
 VERIFICATION:
 Creators go through a 4-step verification process including phone SMS verification, Stripe identity verification with a government ID, portfolio review, and manual approval by the CreatorBridge team. All creators visible on the platform are verified.
 
-REFERRAL PROGRAM:
-Every creator and client has a unique referral link in their dashboard. Creator refers Creator: fee drops from 10 percent to 7 percent on their next project. Client refers Client: 5 percent booking fee waived on their next project. Creator refers Client: counts as one bonus completed project toward tier progression. Anyone who joins through a referral link gets their first booking fee waived. Rewards trigger only after a real paid transaction is completed.
+CLIENT INVITES:
+Creators can share their CreatorBridge profile link with new clients. Invite new clients to book through CreatorBridge. New clients may receive a first-booking credit, and creators may receive a platform credit after a completed project. CreatorBridge does not pay rewards for signups, referrals of other creators, or recruiting activity. Credits are tied only to completed client projects.
 
 MATCHING:
 Clients submit a project brief with service type, budget, location, and dates. Smart Match returns 3 to 5 curated creators. Fast Match is instant single-creator assignment for urgent projects, free first use then 25 dollars.

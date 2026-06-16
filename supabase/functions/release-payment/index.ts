@@ -24,6 +24,18 @@ async function paymentIntentChargeId(paymentIntentId?: string | null) {
   return latestCharge?.id ?? null;
 }
 
+async function grantReferralCreditForReleasedTransaction(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  transactionId: string
+) {
+  const { error } = await supabaseAdmin.rpc('grant_referral_credit_for_released_transaction', {
+    p_transaction_id: transactionId,
+  });
+  if (error) {
+    console.warn('release-payment: referral credit grant skipped', error.message);
+  }
+}
+
 /**
  * release-payment
  * Called when:
@@ -231,6 +243,8 @@ Deno.serve(async (req) => {
         adminRelease:  isAdmin,
       },
     });
+
+    await grantReferralCreditForReleasedTransaction(supabaseAdmin, transactionId);
 
     // Send final_paid notification email to creator (best-effort, non-blocking).
     try {

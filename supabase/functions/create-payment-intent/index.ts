@@ -18,12 +18,19 @@ function creatorFeePctFor(completedProjects: number, nextProjectFeePct?: number 
   return nextProjectFeePct != null ? Math.min(Number(nextProjectFeePct), loyaltyPct) : loyaltyPct;
 }
 
-function calculateTrustedFees(projectAmountCents: number, paymentType: 'retainer' | 'final', creatorFeePct: number, clientFeePct: number) {
+function calculateTrustedFees(
+  projectAmountCents: number,
+  paymentType: 'retainer' | 'final',
+  creatorFeePct: number,
+  clientFeePct: number,
+  creatorCreditAppliedCents = 0
+) {
   const total = Math.max(0, Math.round(Number(projectAmountCents || 0)));
   const retainerBase = Math.round(total * 0.5);
   const finalBase = total - retainerBase;
   const base = paymentType === 'final' ? finalBase : retainerBase;
-  const totalCreatorFeeAmountCents = Math.round(total * (creatorFeePct / 100));
+  const baseCreatorFeeAmountCents = Math.round(total * (creatorFeePct / 100));
+  const totalCreatorFeeAmountCents = Math.max(0, baseCreatorFeeAmountCents - Math.max(0, Math.round(creatorCreditAppliedCents)));
   const totalClientFeeAmountCents = Math.round(total * (clientFeePct / 100));
   const chargeClientFeeAmountCents = Math.round(base * (clientFeePct / 100));
 
@@ -33,10 +40,38 @@ function calculateTrustedFees(projectAmountCents: number, paymentType: 'retainer
     finalAmountCents: finalBase,
     chargeAmountCents: base + chargeClientFeeAmountCents,
     platformFeeCents: totalCreatorFeeAmountCents + totalClientFeeAmountCents,
+    creatorFeeBeforeCreditCents: baseCreatorFeeAmountCents,
+    creatorCreditAppliedCents: Math.max(0, baseCreatorFeeAmountCents - totalCreatorFeeAmountCents),
     creatorFeeAmountCents: totalCreatorFeeAmountCents,
     clientFeeAmountCents: totalClientFeeAmountCents,
     chargeClientFeeAmountCents,
   };
+}
+
+async function creatorUserIdForListing(supabaseAdmin: ReturnType<typeof createClient>, creatorId: string) {
+  const { data: listing } = await supabaseAdmin
+    .from('creator_listings')
+    .select('user_id')
+    .eq('id', creatorId)
+    .maybeSingle();
+  return listing?.user_id ?? null;
+}
+
+async function availableCreatorCreditCents(supabaseAdmin: ReturnType<typeof createClient>, creatorUserId?: string | null) {
+  if (!creatorUserId) return 0;
+  const { data } = await supabaseAdmin
+    .from('creator_credit_ledger')
+    .select('amount_cents')
+    .eq('creator_user_id', creatorUserId);
+
+  return Math.max(0, (data || []).reduce((sum: number, row: Record<string, unknown>) => {
+    return sum + Number(row.amount_cents || 0);
+  }, 0));
+}
+
+function auditIpFromRequest(req: Request) {
+  const rawForwardedFor = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '';
+  return /^[0-9a-fA-F:.]+$/.test(rawForwardedFor) ? rawForwardedFor : null;
 }
 
 Deno.serve(async (req) => {
@@ -106,7 +141,7 @@ Deno.serve(async (req) => {
 
     const { data: listing, error: listingError } = await supabaseAdmin
       .from('creator_listings')
-      .select('id, stripe_account_id, completed_projects, next_project_fee_pct')
+      .select('id, stripe_account_id, completed_projects, next_project_fee_pct, user_id')
       .eq('id', creatorId)
       .maybeSingle();
 
@@ -215,11 +250,18 @@ Deno.serve(async (req) => {
     const trustedProjectAmountCents = Math.round(trustedProjectAmount * 100);
     const trustedCreatorFeePct = creatorFeePctFor(listing.completed_projects, listing.next_project_fee_pct);
     const trustedClientFeePct = profile?.first_booking_fee_waived || profile?.next_booking_fee_waived ? 0 : 5;
+    const creatorUserId = listing.user_id ?? await creatorUserIdForListing(supabaseAdmin, creatorId);
+    const baseCreatorFeeAmountCents = Math.round(trustedProjectAmountCents * (trustedCreatorFeePct / 100));
+    const availableCreditCents = await availableCreatorCreditCents(supabaseAdmin, creatorUserId);
+    const applyCreatorCredit = normalizedPaymentType === 'retainer'
+      ? Math.min(availableCreditCents, baseCreatorFeeAmountCents)
+      : 0;
     const trustedFees = calculateTrustedFees(
       trustedProjectAmountCents,
       normalizedPaymentType,
       trustedCreatorFeePct,
-      trustedClientFeePct
+      trustedClientFeePct,
+      applyCreatorCredit
     );
 
     if (!trustedFees.chargeAmountCents || trustedFees.chargeAmountCents <= 0) {
@@ -238,6 +280,8 @@ Deno.serve(async (req) => {
         paymentType: normalizedPaymentType,
         creatorId:   creatorId ?? '',
         clientId:    clientId  ?? '',
+        creatorUserId: creatorUserId ?? '',
+        creatorCreditAppliedCents: String(trustedFees.creatorCreditAppliedCents),
         paymentFlow: 'platform_charge_then_transfer',
       },
     }, {
@@ -253,10 +297,14 @@ Deno.serve(async (req) => {
       final_amount:        trustedFees.finalAmountCents,
       creator_fee_pct:     trustedCreatorFeePct,
       client_fee_pct:      trustedClientFeePct,
+      creator_fee_before_credit: trustedFees.creatorFeeBeforeCreditCents,
+      creator_credit_applied: trustedFees.creatorCreditAppliedCents,
       creator_fee_amount:  trustedFees.creatorFeeAmountCents,
       client_fee_amount:   trustedFees.clientFeeAmountCents,
       platform_revenue:    trustedFees.platformFeeCents,
       payment_flow:        'platform_charge_then_transfer',
+      booking_ip:          auditIpFromRequest(req),
+      booking_user_agent:  req.headers.get('user-agent') || null,
       updated_at:          new Date().toISOString(),
       ...(normalizedPaymentType === 'final'
         ? { final_status: 'pending', final_payment_intent: paymentIntent.id }

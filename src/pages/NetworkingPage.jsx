@@ -1239,7 +1239,7 @@ export function NetworkingPage({ dark, user, profile }) {
                   <svg className="w-3.5 h-3.5 text-[var(--gold)] mt-0.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
                   </svg>
-                  <span>Referrals earn 3% of completed project value.</span>
+                  <span>Client invites create credits only after completed projects.</span>
                 </li>
                 <li className="flex gap-2 items-start">
                   <svg className="w-3.5 h-3.5 text-[var(--gold)] mt-0.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">

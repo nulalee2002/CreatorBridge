@@ -10,8 +10,9 @@ function getReferralCode(userId) {
   return userId ? userId.replace(/-/g, '').slice(0, 8).toUpperCase() : 'LOADING';
 }
 
-function getReferralLink(userId) {
-  return `https://www.creatorbridge.studio/?ref=${getReferralCode(userId)}`;
+function getReferralLink(userId, creatorListingId) {
+  const path = creatorListingId ? `/creator/${creatorListingId}` : '/find';
+  return `https://www.creatormatch.studio${path}?ref=${getReferralCode(userId)}`;
 }
 
 function loadLocalReferralStats(userId) {
@@ -98,6 +99,7 @@ export function ReferralSection({ dark, userType = 'creator' }) {
   const { user } = useAuth();
   const [copied, setCopied] = useState(false);
   const [stats, setStats]   = useState({ sent: 0, signedUp: 0, completed: 0, rewards: 0 });
+  const [creatorListingId, setCreatorListingId] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -109,10 +111,25 @@ export function ReferralSection({ dark, userType = 'creator' }) {
     return () => { alive = false; };
   }, [user]);
 
+  useEffect(() => {
+    let alive = true;
+    async function loadCreatorListingId() {
+      if (!user?.id || userType !== 'creator' || !supabaseConfigured || !supabase) return;
+      const { data } = await supabase
+        .from('creator_listings')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (alive) setCreatorListingId(data?.id || null);
+    }
+    loadCreatorListingId();
+    return () => { alive = false; };
+  }, [user?.id, userType]);
+
   const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
   const cardCls = `rounded-2xl border shadow-[0_24px_80px_rgba(0,0,0,0.16)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`;
 
-  const referralLink = user ? getReferralLink(user.id) : '';
+  const referralLink = user ? getReferralLink(user.id, creatorListingId) : '';
 
   function copyLink() {
     navigator.clipboard.writeText(referralLink).then(() => {
@@ -121,24 +138,22 @@ export function ReferralSection({ dark, userType = 'creator' }) {
     });
   }
 
+  const policyLine = 'CreatorBridge does not pay rewards for signups, referrals of other creators, or recruiting activity. Credits are tied only to completed client projects.';
+  const inviteCopy = 'Invite new clients to book through CreatorBridge. New clients may receive a first-booking credit, and creators may receive a platform credit after a completed project.';
+
   const rewards = userType === 'creator'
     ? [
         {
-          title: 'You refer a Creator',
-          trigger: 'They complete their first paid project',
-          reward: 'Your platform fee drops from 10% to 7% on your very next project',
-        },
-        {
-          title: 'You refer a Client',
-          trigger: 'They complete their first booking',
-          reward: 'You earn 1 extra completed project toward your Silver or Gold tier',
+          title: 'New client books through your link',
+          trigger: 'Their first paid project is completed and released',
+          reward: 'A small platform credit may be added to offset your future creator fee.',
         },
       ]
     : [
         {
-          title: 'You refer a Client',
-          trigger: 'They complete their first booking',
-          reward: 'Your 5% booking fee is waived on your very next project',
+          title: 'New client joins through a creator link',
+          trigger: 'They book their first project on CreatorBridge',
+          reward: 'Their first client booking fee may be credited on that booking.',
         },
       ];
 
@@ -150,9 +165,7 @@ export function ReferralSection({ dark, userType = 'creator' }) {
           <h2 className={`font-display font-bold text-base ${dark ? 'text-white' : 'text-gray-900'}`}>Referral Program</h2>
         </div>
 
-        <p className={`text-sm mb-4 ${textSub}`}>
-          Share your unique link. When someone signs up through your link and completes their first transaction, you both get rewarded.
-        </p>
+        <p className={`text-sm mb-4 ${textSub}`}>{inviteCopy}</p>
 
         {/* Referral link */}
         <div>
@@ -208,9 +221,7 @@ export function ReferralSection({ dark, userType = 'creator' }) {
               Their reward: First client booking fee waived (the 5% booking fee is removed on their very first project)
             </p>
           </div>
-          <p className={`text-[10px] ${textSub}`}>
-            Rewards apply only after a real paid transaction is completed, not on signup alone.
-          </p>
+          <p className={`text-[10px] ${textSub}`}>{policyLine}</p>
         </div>
       </div>
     </div>

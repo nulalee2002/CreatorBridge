@@ -35,6 +35,15 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  async function recordSignupAudit() {
+    if (!supabaseConfigured) return;
+    try {
+      await supabase.functions.invoke('record-signup-audit', { body: {} });
+    } catch {
+      // Best-effort audit trail only; auth should never fail because this call did.
+    }
+  }
+
   async function fetchProfile(userId) {
     try {
       const { data, error } = await supabase
@@ -69,11 +78,13 @@ export function AuthProvider({ children }) {
     if (!error && referralCode) {
       try { sessionStorage.removeItem('cm-referral-code'); } catch {}
     }
+    if (!error) recordSignupAudit();
     return { data, error };
   }
 
   async function signIn({ email, password }) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) recordSignupAudit();
     return { data, error };
   }
 

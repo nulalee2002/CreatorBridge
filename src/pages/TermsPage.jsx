@@ -179,6 +179,9 @@ export function TermsPage({ dark }) {
                 decrease as you complete more projects through CreatorBridge.
               </p>
               <p>
+                Invite new clients to book through CreatorBridge. New clients may receive a first-booking credit, and creators may receive a platform credit after a completed project. CreatorBridge does not pay rewards for signups, referrals of other creators, or recruiting activity. Credits are tied only to completed client projects.
+              </p>
+              <p>
                 <strong className={dark ? 'text-white' : 'text-gray-900'}>Payment structure:</strong> Projects are split into two payments.
                 50% is due as a retainer when the project is accepted and before work begins.
                 The remaining 50% is due upon project completion and client approval.

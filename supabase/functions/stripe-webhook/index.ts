@@ -16,67 +16,57 @@ function calculateCreatorTier(completedProjects: number, rating = 0, completionR
   return 'launch';
 }
 
-async function issueReferralRewards(supabaseAdmin: ReturnType<typeof createClient>, txn: Record<string, any>) {
+async function markInviteReferralCompleted(supabaseAdmin: ReturnType<typeof createClient>, txn: Record<string, any>) {
   const now = new Date().toISOString();
-  const { data: referral } = await supabaseAdmin
-    .from('referrals')
-    .select('*')
-    .eq('referred_user_id', txn.client_id)
-    .eq('reward_issued', false)
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (!referral) return;
-
-  if (referral.reward_type === 'tier_boost') {
-    const { data: listing } = await supabaseAdmin
-      .from('creator_listings')
-      .select('id, completed_projects, rating, completion_rate')
-      .eq('user_id', referral.referrer_id)
-      .maybeSingle();
-
-    if (listing?.id) {
-      const completed = Number(listing.completed_projects || 0) + 1;
-      await supabaseAdmin
-        .from('creator_listings')
-        .update({
-          completed_projects: completed,
-          tier: calculateCreatorTier(completed, Number(listing.rating || 0), Number(listing.completion_rate || 100)),
-        })
-        .eq('id', listing.id);
-    }
-  }
-
-  if (referral.reward_type === 'booking_fee_waived') {
-    await supabaseAdmin
-      .from('profiles')
-      .update({ next_booking_fee_waived: true })
-      .eq('id', referral.referrer_id);
-    await supabaseAdmin
-      .from('client_profiles')
-      .update({ next_booking_fee_waived: true })
-      .eq('user_id', referral.referrer_id);
-  }
-
-  if (referral.reward_type === 'fee_reduction') {
-    await supabaseAdmin
-      .from('creator_listings')
-      .update({ next_project_fee_pct: 7 })
-      .eq('user_id', referral.referrer_id);
-  }
-
   await supabaseAdmin
     .from('referrals')
     .update({
       status: 'completed',
-      reward_issued: true,
-      reward_issued_at: now,
       completed_at: now,
       completed_project_id: txn.project_id,
       completed_transaction_id: txn.id,
+      review_reason: 'creator_credit_grants_after_released_project',
     })
-    .eq('id', referral.id);
+    .eq('referred_user_id', txn.client_id)
+    .eq('reward_type', 'creator_platform_credit')
+    .eq('reward_issued', false);
+}
+
+async function grantReferralCreditForReleasedTransaction(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  transactionId: string
+) {
+  const { error } = await supabaseAdmin.rpc('grant_referral_credit_for_released_transaction', {
+    p_transaction_id: transactionId,
+  });
+  if (error) {
+    console.warn('stripe-webhook: referral credit grant skipped', error.message);
+  }
+}
+
+async function paymentFingerprintFromIntent(pi: Stripe.PaymentIntent) {
+  const paymentMethod = pi.payment_method;
+  if (!paymentMethod) {
+    return { paymentMethodId: null, fingerprint: null };
+  }
+
+  if (typeof paymentMethod === 'string') {
+    try {
+      const retrieved = await stripe.paymentMethods.retrieve(paymentMethod);
+      return {
+        paymentMethodId: paymentMethod,
+        fingerprint: retrieved.card?.fingerprint ?? null,
+      };
+    } catch (error) {
+      console.warn('stripe-webhook: payment method fingerprint unavailable', error.message);
+      return { paymentMethodId: paymentMethod, fingerprint: null };
+    }
+  }
+
+  return {
+    paymentMethodId: paymentMethod.id ?? null,
+    fingerprint: paymentMethod.card?.fingerprint ?? null,
+  };
 }
 
 async function markProjectCompleted(supabaseAdmin: ReturnType<typeof createClient>, txn: Record<string, any>) {
@@ -104,7 +94,7 @@ async function markProjectCompleted(supabaseAdmin: ReturnType<typeof createClien
     .update({ status: 'final_paid', approved_at: now })
     .eq('id', txn.project_id);
 
-  await issueReferralRewards(supabaseAdmin, txn);
+  await markInviteReferralCompleted(supabaseAdmin, txn);
 }
 
 async function releaseCreatorPayout(supabaseAdmin: ReturnType<typeof createClient>, txn: Record<string, any>) {
@@ -191,6 +181,8 @@ async function releaseCreatorPayout(supabaseAdmin: ReturnType<typeof createClien
       paymentFlow: 'platform_charge_then_transfer',
     },
   });
+
+  await grantReferralCreditForReleasedTransaction(supabaseAdmin, txn.id);
 }
 
 async function paymentIntentChargeId(paymentIntentId?: string | null) {
@@ -217,6 +209,29 @@ async function consumeClientFeeWaiver(supabaseAdmin: ReturnType<typeof createCli
     .from('client_profiles')
     .update({ first_booking_fee_waived: false, next_booking_fee_waived: false })
     .eq('user_id', txn.client_id);
+}
+
+async function consumeAppliedCreatorCredit(supabaseAdmin: ReturnType<typeof createClient>, txn: Record<string, any>) {
+  const appliedCents = Math.max(0, Number(txn.creator_credit_applied || 0));
+  if (!appliedCents || !txn.creator_id || !txn.id) return;
+
+  const { data: creatorListing } = await supabaseAdmin
+    .from('creator_listings')
+    .select('user_id')
+    .eq('id', txn.creator_id)
+    .maybeSingle();
+
+  if (!creatorListing?.user_id) return;
+
+  await supabaseAdmin
+    .from('creator_credit_ledger')
+    .insert({
+      creator_user_id: creatorListing.user_id,
+      amount_cents: -appliedCents,
+      source: 'creator_fee_offset',
+      transaction_id: txn.id,
+      reason: 'applied_to_creator_fee',
+    });
 }
 
 async function triggerWebhookEmail(
@@ -347,22 +362,28 @@ Deno.serve(async (req) => {
         const { projectId, paymentType, creatorId, clientId } = pi.metadata;
 
         if (paymentType === 'retainer') {
+          const paymentAudit = await paymentFingerprintFromIntent(pi);
           await supabaseAdmin
             .from('transactions')
             .update({
               retainer_status:         'paid',
               retainer_payment_intent: pi.id,
               retainer_paid_at:        new Date().toISOString(),
+              client_payment_method_id: paymentAudit.paymentMethodId,
+              client_payment_fingerprint: paymentAudit.fingerprint,
               updated_at:              new Date().toISOString(),
             })
             .eq('retainer_payment_intent', pi.id);
         } else if (paymentType === 'final') {
+          const paymentAudit = await paymentFingerprintFromIntent(pi);
           await supabaseAdmin
             .from('transactions')
             .update({
               final_status:         'paid',
               final_payment_intent: pi.id,
               final_paid_at:        new Date().toISOString(),
+              client_payment_method_id: paymentAudit.paymentMethodId,
+              client_payment_fingerprint: paymentAudit.fingerprint,
               updated_at:           new Date().toISOString(),
             })
             .eq('final_payment_intent', pi.id);
@@ -402,6 +423,7 @@ Deno.serve(async (req) => {
                 .eq('status', 'accepted');
             }
             await consumeClientFeeWaiver(supabaseAdmin, txn);
+            await consumeAppliedCreatorCredit(supabaseAdmin, txn);
             await triggerWebhookEmail(supabaseAdmin, txn, 'retainer_paid');
           }
         }
