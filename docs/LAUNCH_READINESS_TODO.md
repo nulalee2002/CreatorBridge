@@ -1,11 +1,12 @@
 # CreatorBridge Launch Readiness Todo
 
-Updated: 2026-06-10
+Updated: 2026-06-16
 
 This file is intentionally short. Only items that can block a public launch belong in the Launch Gate. Optional features, design polish, and future upgrades stay out of the gate so the finish line does not keep moving.
 
-## Launch Gate: 3 Items Left
+## Launch Gate: 4 Items Left
 
+- [ ] Resolve Twilio production sending before public launch. Live phone-gate UI and Supabase functions are wired, but Twilio returned `403` for the QA recipient because trial accounts can only send to verified numbers.
 - [ ] Run the remaining live browser smoke pass for logged-in/support/admin actions: support ticket submit, notification center unread/read behavior, admin support view/update, admin operations search, admin finance CSV export, admin analytics, and creator agreement print.
 - [ ] Review Supabase/Resend bounce logs and remove or correct bad recipient addresses before opening the platform to real users.
 - [ ] Run the final `npm run verify:launch-sweep` after the last visual/content change and keep the passing output as launch evidence.
@@ -50,6 +51,7 @@ This file is intentionally short. Only items that can block a public launch belo
 - The search migration `20260525102500_update_search_for_three_pillar_taxonomy.sql` was corrected and applied to production.
 - The old orphaned payment transactions are no longer orphaned: both queried records show `final_status = released` with transfer ids.
 - In-app notification center code now exists for quote requests, direct messages, and accepted proposals with 24-hour response due dates.
+- Live production phone-gate browser pass on 2026-06-16 confirmed an unverified client sees "Please verify your phone to post a brief" plus the SMS controls, and a verified client sees the full "Post Project" form.
 
 ## Corrected On 2026-05-25
 
