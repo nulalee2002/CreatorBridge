@@ -27,14 +27,26 @@ begin
   new.vimeo := null;
   new.linkedin := null;
 
-  if public.creator_text_has_outbound_leak(new.name)
-    or public.creator_text_has_outbound_leak(new.business_name)
-    or public.creator_text_has_outbound_leak(new.bio) then
+  if (
+    (tg_op = 'INSERT' or new.name is distinct from old.name)
+    and public.creator_text_has_outbound_leak(new.name)
+  ) or (
+    (tg_op = 'INSERT' or new.business_name is distinct from old.business_name)
+    and public.creator_text_has_outbound_leak(new.business_name)
+  ) or (
+    (tg_op = 'INSERT' or new.bio is distinct from old.bio)
+    and public.creator_text_has_outbound_leak(new.bio)
+  ) then
     raise exception 'Keep contact details and outside links off your CreatorBridge profile.'
       using errcode = '23514';
   end if;
 
   if coalesce(new.review_status, 'pending_review') in ('pending_review', 'approved')
+    and (
+      tg_op = 'INSERT'
+      or new.review_status is distinct from old.review_status
+      or new.video_intro_url is distinct from old.video_intro_url
+    )
     and coalesce(new.video_intro_url, '') not like 'bunny:%' then
     raise exception 'Upload your CreatorBridge intro video before submitting your profile.'
       using errcode = '23514';
@@ -58,10 +70,22 @@ declare
   v_video_count integer;
   v_photo_count integer;
 begin
-  if public.creator_text_has_outbound_leak(new.title)
-    or public.creator_text_has_outbound_leak(new.description) then
+  if (
+    (tg_op = 'INSERT' or new.title is distinct from old.title)
+    and public.creator_text_has_outbound_leak(new.title)
+  ) or (
+    (tg_op = 'INSERT' or new.description is distinct from old.description)
+    and public.creator_text_has_outbound_leak(new.description)
+  ) then
     raise exception 'Keep contact details and outside links off portfolio text.'
       using errcode = '23514';
+  end if;
+
+  if tg_op = 'UPDATE'
+    and new.media_type is not distinct from old.media_type
+    and new.bunny_video_id is not distinct from old.bunny_video_id
+    and new.image_url is not distinct from old.image_url then
+    return new;
   end if;
 
   if coalesce(new.media_type, 'image') = 'video' then
