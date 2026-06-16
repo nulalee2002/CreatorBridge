@@ -15,6 +15,7 @@ import { DisputeModal } from '../components/DisputeModal.jsx';
 import { CancellationModal } from '../components/CancellationModal.jsx';
 import { ClientReputationBadge, loadClientReputation, RateClientModal } from '../components/ClientReputationBadge.jsx';
 import { ReferralSection } from '../components/ReferralSection.jsx';
+import { ClientVerification } from '../components/ClientVerification.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { appendReferenceLinksToText, parseReferenceLinks, sanitizeLongText, sanitizePlainText, sanitizeTagList, clampNumber, sanitizeUrl } from '../utils/inputSecurity.js';
 import { checkMessage, logFilterEvent } from '../utils/messageFilter.js';
@@ -406,6 +407,8 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
   });
   const [errors, setErrors] = useState({});
   const [isPosting, setIsPosting] = useState(false);
+  const [clientProfile, setClientProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
   const set = (k, v) => {
     setForm(f => ({ ...f, [k]: v }));
     setErrors(e => ({ ...e, [k]: '' }));
@@ -417,6 +420,41 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
       : dark ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
              : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
   }`;
+  const clientPhoneVerified = !!clientProfile?.phone_verified && !!clientProfile?.phone_verified_at;
+  const clientProfileComplete = !!clientProfile?.display_name && !!clientProfile?.tos_accepted_at;
+  const canPostBrief = !supabaseConfigured || (!!user && clientProfileComplete && clientPhoneVerified);
+
+  useEffect(() => {
+    let active = true;
+    async function loadClientProfile() {
+      if (!supabaseConfigured || !user) {
+        if (active) setProfileLoading(false);
+        return;
+      }
+      setProfileLoading(true);
+      const { data } = await supabase
+        .from('client_profiles')
+        .select('display_name, phone, phone_verified, phone_verified_at, tos_accepted_at')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (active) {
+        setClientProfile(data || null);
+        setProfileLoading(false);
+      }
+    }
+    loadClientProfile();
+    return () => { active = false; };
+  }, [user]);
+
+  async function reloadClientProfile() {
+    if (!supabaseConfigured || !user) return;
+    const { data } = await supabase
+      .from('client_profiles')
+      .select('display_name, phone, phone_verified, phone_verified_at, tos_accepted_at')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    setClientProfile(data || null);
+  }
 
   function validate() {
     const next = {};
@@ -452,6 +490,10 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
   }
 
   async function handlePost() {
+    if (!canPostBrief) {
+      setErrors({ submit: 'Please verify your phone to post a brief.' });
+      return;
+    }
     if (!validate()) return;
     setErrors({});
     setIsPosting(true);
@@ -521,6 +563,29 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
             Share one clear primary pillar, budget, timeline, and production context so verified creators can judge fit before they apply.
           </p>
 
+          {profileLoading ? (
+            <div className={`rounded-2xl border p-5 ${dark ? 'border-white/[0.08] bg-charcoal-900/70 text-charcoal-300' : 'border-gray-200 bg-gray-50 text-gray-600'}`}>
+              Checking your client verification...
+            </div>
+          ) : !canPostBrief ? (
+            <div className="space-y-4">
+              <div className={`rounded-2xl border p-4 ${dark ? 'border-gold-500/25 bg-gold-500/10' : 'border-gold-200 bg-gold-50'}`}>
+                <p className={`text-sm font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>
+                  Please verify your phone to post a brief.
+                </p>
+                <p className={`mt-2 text-xs leading-5 ${textSub}`}>
+                  This keeps fake briefs off the public board and protects creators from wasting time on spam.
+                </p>
+              </div>
+              {user ? (
+                <ClientVerification user={user} dark={dark} requireLevel="contact" onComplete={reloadClientProfile} />
+              ) : (
+                <p className={`text-sm ${textSub}`}>Sign in before posting a production brief.</p>
+              )}
+              {errors.submit && <p className="text-xs text-red-400">{errors.submit}</p>}
+            </div>
+          ) : (
+          <>
           <div className="space-y-4">
             <div>
               <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Project title *</p>
@@ -649,6 +714,8 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
             <p className="mt-3 text-xs text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl px-3 py-2">
               {errors.submit}
             </p>
+          )}
+          </>
           )}
         </div>
       </div>

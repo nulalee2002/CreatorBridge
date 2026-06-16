@@ -486,7 +486,7 @@ export function ClientProfilePage({ dark }) {
             </div>
           </div>
 
-          <ClientVerification user={user} dark={dark} requireLevel="basic" onComplete={loadClientData} />
+          <ClientVerification user={user} dark={dark} requireLevel="contact" onComplete={loadClientData} />
 
           <form onSubmit={saveProfile} className={`${panelCls} p-5`}>
             <p className="mb-2 text-gold-400" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>

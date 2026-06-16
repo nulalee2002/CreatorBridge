@@ -66,6 +66,11 @@ async function runTests() {
   const creatorUserId = creatorAuth.user.id;
   console.log(`- Creator logged in. User ID: ${creatorUserId}`);
 
+  let originalClientProfile = null;
+  let projectId = null;
+  let transactionId = null;
+  let disputeId = null;
+
   const { data: clientAuth, error: clientAuthErr } = await clientClient.auth.signInWithPassword({
     email: clientEmail,
     password: clientPass
@@ -73,6 +78,27 @@ async function runTests() {
   if (clientAuthErr) throw clientAuthErr;
   const clientUserId = clientAuth.user.id;
   console.log(`- Client logged in. User ID: ${clientUserId}`);
+
+  const { data: existingClientProfile, error: existingClientProfileErr } = await serviceClient
+    .from('client_profiles')
+    .select('phone, phone_verified, phone_verified_at, display_name, tos_accepted_at')
+    .eq('user_id', clientUserId)
+    .maybeSingle();
+  if (existingClientProfileErr) throw existingClientProfileErr;
+  originalClientProfile = existingClientProfile;
+
+  const qaVerifiedAt = new Date().toISOString();
+  const { error: qaClientProfileErr } = await serviceClient.from('client_profiles').upsert({
+    user_id: clientUserId,
+    display_name: existingClientProfile?.display_name || 'Avery Thompson',
+    phone: existingClientProfile?.phone || '+14805550142',
+    phone_verified: true,
+    phone_verified_at: existingClientProfile?.phone_verified_at || qaVerifiedAt,
+    tos_accepted_at: existingClientProfile?.tos_accepted_at || qaVerifiedAt,
+    updated_at: qaVerifiedAt,
+  }, { onConflict: 'user_id' });
+  if (qaClientProfileErr) throw qaClientProfileErr;
+  console.log('- QA client phone verification is present for the project lifecycle test.');
 
   const { data: adminAuth, error: adminAuthErr } = await adminClient.auth.signInWithPassword({
     email: adminEmail,
@@ -106,7 +132,7 @@ async function runTests() {
     });
 
   if (projectErr) throw projectErr;
-  const projectId = project.id;
+  projectId = project.id;
   console.log(`✅ Project created successfully. ID: ${projectId}`);
 
   // 2. Set creator as accepted_creator_id and transition project status to in_progress
@@ -145,7 +171,7 @@ async function runTests() {
     .single();
 
   if (txnErr) throw txnErr;
-  const transactionId = transaction.id;
+  transactionId = transaction.id;
   console.log(`✅ Transaction created successfully. ID: ${transactionId}`);
 
   // 4. Creator submits delivery
@@ -218,7 +244,7 @@ async function runTests() {
     .single();
 
   if (disputeErr) throw disputeErr;
-  const disputeId = dispute.id;
+  disputeId = dispute.id;
   console.log(`✅ Dispute submitted successfully. ID: ${disputeId}`);
 
   // Transition project status to disputed
@@ -273,6 +299,18 @@ async function runTests() {
 
   const { error: cleanProjErr } = await serviceClient.from('projects').delete().eq('id', projectId);
   if (cleanProjErr) console.warn('Warning during project cleanup:', cleanProjErr.message);
+
+  if (originalClientProfile) {
+    const { error: restoreClientErr } = await serviceClient.from('client_profiles').update({
+      phone: originalClientProfile.phone,
+      phone_verified: originalClientProfile.phone_verified,
+      phone_verified_at: originalClientProfile.phone_verified_at,
+      display_name: originalClientProfile.display_name,
+      tos_accepted_at: originalClientProfile.tos_accepted_at,
+      updated_at: new Date().toISOString(),
+    }).eq('user_id', clientUserId);
+    if (restoreClientErr) console.warn('Warning during client profile restore:', restoreClientErr.message);
+  }
 
   console.log('✅ Cleanup complete.');
   console.log('\n--- ALL PROJECT LIFECYCLE AND DISPUTE TESTS PASSED SUCCESSFULLY! ---');

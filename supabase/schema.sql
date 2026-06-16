@@ -887,6 +887,7 @@ CREATE TABLE IF NOT EXISTS client_profiles (
   tos_accepted_at         timestamptz,
   email_verified          boolean DEFAULT false,
   phone_verified          boolean DEFAULT false,
+  phone_verified_at       timestamptz,
   payment_method_on_file  boolean DEFAULT false,
   first_booking_fee_waived boolean DEFAULT false,
   next_booking_fee_waived boolean DEFAULT false,
@@ -897,6 +898,7 @@ CREATE TABLE IF NOT EXISTS client_profiles (
 
 ALTER TABLE client_profiles ADD COLUMN IF NOT EXISTS first_booking_fee_waived boolean DEFAULT false;
 ALTER TABLE client_profiles ADD COLUMN IF NOT EXISTS next_booking_fee_waived boolean DEFAULT false;
+ALTER TABLE client_profiles ADD COLUMN IF NOT EXISTS phone_verified_at timestamptz;
 
 ALTER TABLE client_profiles ENABLE ROW LEVEL SECURITY;
 

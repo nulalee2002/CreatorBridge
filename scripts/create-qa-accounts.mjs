@@ -96,13 +96,15 @@ async function upsertProfile(user, account) {
 }
 
 async function upsertClient(user) {
+  const now = new Date().toISOString();
   const { error } = await admin.from('client_profiles').upsert({
     user_id: user.id,
     display_name: 'Avery Thompson',
     company_name: 'Sonoran Launch Group',
-    phone: '480-555-0142',
+    phone: '+14805550142',
     email_verified: true,
-    phone_verified: false,
+    phone_verified: true,
+    phone_verified_at: now,
     payment_method_on_file: false,
     spam_score: 0,
     avg_rating: 0,
@@ -110,6 +112,8 @@ async function upsertClient(user) {
     cancellation_rate: 0,
     total_reviews: 0,
     fast_match_count: 0,
+    tos_accepted_at: now,
+    updated_at: now,
   }, { onConflict: 'user_id' });
   if (error) throw error;
 }
