@@ -35,7 +35,7 @@ export function getBunnyThumbnailUrl(videoId, libraryId) {
 }
 
 export function getPublicBunnyLibraryId() {
-  return import.meta.env?.VITE_BUNNY_STREAM_LIBRARY_ID || '';
+  return import.meta.env?.VITE_BUNNY_STREAM_LIBRARY_ID || '684921';
 }
 
 function validateVideo(file, purpose) {
