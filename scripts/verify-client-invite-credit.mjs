@@ -57,7 +57,8 @@ assert(
   'create-payment-intent must apply creator credit to future creator fees and record before/after amounts'
 );
 assert(
-  createPaymentIntent.includes('Math.min(availableCreditCents, baseCreatorFeeAmountCents)'),
+  createPaymentIntent.includes('Math.min(availableCreditCents, creatorFeeBeforeCreditCents)') ||
+    createPaymentIntent.includes('Math.min(availableCreditCents, baseCreatorFeeAmountCents)'),
   'Creator credit must never exceed the creator fee'
 );
 assert(

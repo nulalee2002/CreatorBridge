@@ -9,6 +9,10 @@ import { fromSupabaseProject, upsertLocalProject } from '../utils/projectStorage
 import { clampNumber, sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
 import { checkMessage, logFilterEvent } from '../utils/messageFilter.js';
 import { getPlatformGuideResponse, getSupportFallbackResponse, shouldUsePaidAi } from '../data/supportKnowledge.js';
+import {
+  CLIENT_MINIMUM_PROJECT_ERROR,
+  MINIMUM_PROJECT_BUDGET_DOLLARS,
+} from '../config/margins.js';
 
 const BRIDGE_BODY_SVG = `
 <svg viewBox="0 0 72 110" fill="none" class="bridge-face bridge-body-svg" aria-hidden="true">
@@ -289,7 +293,7 @@ const BOOKING_STEPS = [
     step: 4, field: 'budget',
     question: 'What is your budget range?',
     type: 'options',
-    options: ['Under $500','$500 to $2,000','$2,000 to $5,000','$5,000 to $10,000','$10,000+'],
+    options: ['$250 to $500','$500 to $2,000','$2,000 to $5,000','$5,000 to $10,000','$10,000+'],
   },
   {
     step: 5, field: 'description',
@@ -344,7 +348,7 @@ const CREATOR_STEPS = [
     step: 3, field: 'rate',
     question: 'What is your rate for this project?',
     type: 'options',
-    options: ['Under $500','$500 to $1,000','$1,000 to $2,500','$2,500 to $5,000','$5,000 to $10,000','$10,000+','Custom rate'],
+    options: ['$250 to $500','$500 to $1,000','$1,000 to $2,500','$2,500 to $5,000','$5,000 to $10,000','$10,000+','Custom rate'],
   },
   {
     step: 4, field: 'turnaround',
@@ -787,6 +791,11 @@ export function SupportChatbot({ dark = true }) {
     const { project, quote } = buildBookingRecords(bookingData, user, profile);
     let savedProject = project;
     let savedQuote = quote;
+    if (project.budgetMax < MINIMUM_PROJECT_BUDGET_DOLLARS || project.budgetMin < MINIMUM_PROJECT_BUDGET_DOLLARS) {
+      push({ role: 'assistant', content: CLIENT_MINIMUM_PROJECT_ERROR });
+      setLoading(false);
+      return;
+    }
 
     if (supabaseConfigured && supabase && user) {
       try {

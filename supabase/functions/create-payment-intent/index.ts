@@ -23,6 +23,7 @@ function calculateTrustedFees(
   paymentType: 'retainer' | 'final',
   creatorFeePct: number,
   clientFeePct: number,
+  minimumPlatformFeeCents = 0,
   creatorCreditAppliedCents = 0
 ) {
   const total = Math.max(0, Math.round(Number(projectAmountCents || 0)));
@@ -30,7 +31,8 @@ function calculateTrustedFees(
   const finalBase = total - retainerBase;
   const base = paymentType === 'final' ? finalBase : retainerBase;
   const baseCreatorFeeAmountCents = Math.round(total * (creatorFeePct / 100));
-  const totalCreatorFeeAmountCents = Math.max(0, baseCreatorFeeAmountCents - Math.max(0, Math.round(creatorCreditAppliedCents)));
+  const creatorFeeBeforeCreditCents = Math.max(baseCreatorFeeAmountCents, Math.max(0, Math.round(minimumPlatformFeeCents)));
+  const totalCreatorFeeAmountCents = Math.max(0, creatorFeeBeforeCreditCents - Math.max(0, Math.round(creatorCreditAppliedCents)));
   const totalClientFeeAmountCents = Math.round(total * (clientFeePct / 100));
   const chargeClientFeeAmountCents = Math.round(base * (clientFeePct / 100));
 
@@ -40,11 +42,12 @@ function calculateTrustedFees(
     finalAmountCents: finalBase,
     chargeAmountCents: base + chargeClientFeeAmountCents,
     platformFeeCents: totalCreatorFeeAmountCents + totalClientFeeAmountCents,
-    creatorFeeBeforeCreditCents: baseCreatorFeeAmountCents,
-    creatorCreditAppliedCents: Math.max(0, baseCreatorFeeAmountCents - totalCreatorFeeAmountCents),
+    creatorFeeBeforeCreditCents,
+    creatorCreditAppliedCents: Math.max(0, creatorFeeBeforeCreditCents - totalCreatorFeeAmountCents),
     creatorFeeAmountCents: totalCreatorFeeAmountCents,
     clientFeeAmountCents: totalClientFeeAmountCents,
     chargeClientFeeAmountCents,
+    minimumPlatformFeeAppliedCents: Math.max(0, creatorFeeBeforeCreditCents - baseCreatorFeeAmountCents),
   };
 }
 
@@ -67,6 +70,29 @@ async function availableCreatorCreditCents(supabaseAdmin: ReturnType<typeof crea
   return Math.max(0, (data || []).reduce((sum: number, row: Record<string, unknown>) => {
     return sum + Number(row.amount_cents || 0);
   }, 0));
+}
+
+async function loadPlatformMarginSettings(supabaseAdmin: ReturnType<typeof createClient>) {
+  const fallback = {
+    minimumProjectBudgetCents: 25000,
+    minimumPlatformFeeCents: 500,
+  };
+
+  const { data, error } = await supabaseAdmin
+    .from('platform_margin_settings')
+    .select('minimum_project_budget_cents, minimum_platform_fee_cents')
+    .eq('id', true)
+    .maybeSingle();
+
+  if (error || !data) {
+    if (error) console.warn('platform margin settings fallback:', error.message);
+    return fallback;
+  }
+
+  return {
+    minimumProjectBudgetCents: Math.max(0, Number(data.minimum_project_budget_cents ?? fallback.minimumProjectBudgetCents)),
+    minimumPlatformFeeCents: Math.max(0, Number(data.minimum_platform_fee_cents ?? fallback.minimumPlatformFeeCents)),
+  };
 }
 
 function auditIpFromRequest(req: Request) {
@@ -248,19 +274,29 @@ Deno.serve(async (req) => {
     }
 
     const trustedProjectAmountCents = Math.round(trustedProjectAmount * 100);
+    const marginSettings = await loadPlatformMarginSettings(supabaseAdmin);
+    if (trustedProjectAmountCents < marginSettings.minimumProjectBudgetCents) {
+      return new Response(
+        JSON.stringify({ error: "Projects start at $250 on CreatorBridge. Please set your budget to $250 or more so your project is worth a professional creator's time and fully covered by our protected payment process." }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const trustedCreatorFeePct = creatorFeePctFor(listing.completed_projects, listing.next_project_fee_pct);
     const trustedClientFeePct = profile?.first_booking_fee_waived || profile?.next_booking_fee_waived ? 0 : 5;
     const creatorUserId = listing.user_id ?? await creatorUserIdForListing(supabaseAdmin, creatorId);
     const baseCreatorFeeAmountCents = Math.round(trustedProjectAmountCents * (trustedCreatorFeePct / 100));
+    const creatorFeeBeforeCreditCents = Math.max(baseCreatorFeeAmountCents, marginSettings.minimumPlatformFeeCents);
     const availableCreditCents = await availableCreatorCreditCents(supabaseAdmin, creatorUserId);
     const applyCreatorCredit = normalizedPaymentType === 'retainer'
-      ? Math.min(availableCreditCents, baseCreatorFeeAmountCents)
+      ? Math.min(availableCreditCents, creatorFeeBeforeCreditCents)
       : 0;
     const trustedFees = calculateTrustedFees(
       trustedProjectAmountCents,
       normalizedPaymentType,
       trustedCreatorFeePct,
       trustedClientFeePct,
+      marginSettings.minimumPlatformFeeCents,
       applyCreatorCredit
     );
 
@@ -299,6 +335,7 @@ Deno.serve(async (req) => {
       client_fee_pct:      trustedClientFeePct,
       creator_fee_before_credit: trustedFees.creatorFeeBeforeCreditCents,
       creator_credit_applied: trustedFees.creatorCreditAppliedCents,
+      minimum_platform_fee_applied: trustedFees.minimumPlatformFeeAppliedCents,
       creator_fee_amount:  trustedFees.creatorFeeAmountCents,
       client_fee_amount:   trustedFees.clientFeeAmountCents,
       platform_revenue:    trustedFees.platformFeeCents,

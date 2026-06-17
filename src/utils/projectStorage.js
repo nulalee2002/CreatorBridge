@@ -1,4 +1,5 @@
 import { clampNumber, sanitizeLongText, sanitizePlainText, sanitizeTagList, sanitizeUrl } from './inputSecurity.js';
+import { MINIMUM_PROJECT_BUDGET_DOLLARS } from '../config/margins.js';
 
 export const PROJECTS_KEY = 'cm-projects';
 
@@ -73,8 +74,8 @@ export function toSupabaseProject(project, userId) {
     title: sanitizePlainText(project.title, 120),
     service_id: sanitizePlainText(project.serviceId || project.service_id || '', 80) || null,
     description: sanitizeLongText(project.description, 4000),
-    budget_min: clampNumber(project.budgetMin ?? project.budget_min, { min: 0, max: 1000000, fallback: null }),
-    budget_max: clampNumber(project.budgetMax ?? project.budget_max, { min: 0, max: 1000000, fallback: null }),
+    budget_min: clampNumber(project.budgetMin ?? project.budget_min, { min: MINIMUM_PROJECT_BUDGET_DOLLARS, max: 1000000, fallback: null }),
+    budget_max: clampNumber(project.budgetMax ?? project.budget_max, { min: MINIMUM_PROJECT_BUDGET_DOLLARS, max: 1000000, fallback: null }),
     project_duration: sanitizePlainText(project.projectDuration || project.project_duration || '', 80) || null,
     location: typeof project.location === 'string'
       ? sanitizePlainText(project.location, 160)
@@ -98,8 +99,8 @@ export function sanitizeProjectDraft(project) {
     title: sanitizePlainText(project.title, 120),
     description: sanitizeLongText(project.description, 4000),
     serviceId: sanitizePlainText(project.serviceId || project.service_id || '', 80),
-    budgetMin: clampNumber(project.budgetMin ?? project.budget_min, { min: 0, max: 1000000, fallback: null }),
-    budgetMax: clampNumber(project.budgetMax ?? project.budget_max, { min: 0, max: 1000000, fallback: null }),
+    budgetMin: clampNumber(project.budgetMin ?? project.budget_min, { min: MINIMUM_PROJECT_BUDGET_DOLLARS, max: 1000000, fallback: null }),
+    budgetMax: clampNumber(project.budgetMax ?? project.budget_max, { min: MINIMUM_PROJECT_BUDGET_DOLLARS, max: 1000000, fallback: null }),
     projectDuration: sanitizePlainText(project.projectDuration || project.project_duration || '', 80),
     deadline: sanitizePlainText(project.deadline || project.projectDate || project.timeline || '', 80) || null,
     location: sanitizePlainText(typeof project.location === 'string'

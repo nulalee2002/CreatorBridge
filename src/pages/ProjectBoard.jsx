@@ -30,6 +30,13 @@ import {
 } from '../utils/projectStorage.js';
 import { HandoffPage } from '../components/HandoffPage.jsx';
 import { handoffPages } from '../data/handoffPages.js';
+import {
+  CLIENT_MINIMUM_PROJECT_ERROR,
+  CLIENT_MINIMUM_PROJECT_NOTE,
+  CREATOR_MINIMUM_PROJECT_ERROR,
+  CREATOR_MINIMUM_PROJECT_NOTE,
+  MINIMUM_PROJECT_BUDGET_DOLLARS,
+} from '../config/margins.js';
 
 // ── localStorage helpers ────────────────────────────────────────
 function loadProjects() {
@@ -470,8 +477,8 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
     if (cleanDescription.length < 80) next.description = 'Add at least 80 characters so creators understand the scope.';
     if (referenceCheck.invalid.length) next.referenceLinks = 'Use full links that start with https:// or http://.';
     if (!form.projectDuration) next.projectDuration = 'Select how long you need the creator or crew.';
-    if (!form.budgetMin || !Number.isFinite(minBudget) || minBudget <= 0) next.budgetMin = 'Add a minimum budget above $0.';
-    if (!form.budgetMax || !Number.isFinite(maxBudget) || maxBudget <= 0) next.budgetMax = 'Add a maximum budget above $0.';
+    if (!form.budgetMin || !Number.isFinite(minBudget) || minBudget < MINIMUM_PROJECT_BUDGET_DOLLARS) next.budgetMin = CLIENT_MINIMUM_PROJECT_ERROR;
+    if (!form.budgetMax || !Number.isFinite(maxBudget) || maxBudget < MINIMUM_PROJECT_BUDGET_DOLLARS) next.budgetMax = CLIENT_MINIMUM_PROJECT_ERROR;
     if (form.budgetMin && form.budgetMax && minBudget > maxBudget) next.budgetMax = 'Max budget should be higher than min budget.';
     const contactFieldChecks = [
       ['title', cleanTitle],
@@ -640,16 +647,20 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
               {errors.serviceId && <p className="mt-1 text-xs text-red-400">{errors.serviceId}</p>}
             </div>
 
+            <div className={`rounded-xl border px-4 py-3 text-xs leading-relaxed ${dark ? 'border-gold-500/25 bg-gold-500/10 text-gold-100' : 'border-gold-200 bg-gold-50 text-gold-800'}`}>
+              {CLIENT_MINIMUM_PROJECT_NOTE}
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Budget min · USD *</p>
-                <input type="number" min={0} value={form.budgetMin} onChange={e => set('budgetMin', e.target.value)}
+                <input type="number" min={MINIMUM_PROJECT_BUDGET_DOLLARS} value={form.budgetMin} onChange={e => set('budgetMin', e.target.value)}
                   placeholder="Enter minimum" className={inputCls('budgetMin')} />
                 {errors.budgetMin && <p className="mt-1 text-xs text-red-400">{errors.budgetMin}</p>}
               </div>
               <div>
                 <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Budget max · USD *</p>
-                <input type="number" min={0} value={form.budgetMax} onChange={e => set('budgetMax', e.target.value)}
+                <input type="number" min={MINIMUM_PROJECT_BUDGET_DOLLARS} value={form.budgetMax} onChange={e => set('budgetMax', e.target.value)}
                   placeholder="Enter maximum" className={inputCls('budgetMax')} />
                 {errors.budgetMax && <p className="mt-1 text-xs text-red-400">{errors.budgetMax}</p>}
               </div>
@@ -743,6 +754,10 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
     const cleanCreatorName = sanitizePlainText(creatorName, 100);
     const cleanRate = clampNumber(rate, { min: 0, max: 1000000, fallback: null });
     if (!cleanProposal) return;
+    if (cleanRate === null || cleanRate < MINIMUM_PROJECT_BUDGET_DOLLARS) {
+      setError(CREATOR_MINIMUM_PROJECT_ERROR);
+      return;
+    }
 
     const { blocked, patternType } = checkMessage(cleanProposal);
     if (blocked) {
@@ -829,9 +844,10 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
                   <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Your Proposed Rate ($)</p>
                   <div className="relative">
                     <DollarSign size={13} className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${textSub}`} />
-                  <input type="number" min={0} value={rate} onChange={e => setRate(e.target.value)}
+                  <input type="number" min={MINIMUM_PROJECT_BUDGET_DOLLARS} value={rate} onChange={e => setRate(e.target.value)}
                       placeholder={project.budgetMax || '1500'} className={`${inputCls} pl-8`} />
                   </div>
+                  <p className={`mt-1 text-[10px] leading-4 ${textSub}`}>{CREATOR_MINIMUM_PROJECT_NOTE}</p>
                 </div>
                 <div>
                   <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Proposal / Cover Letter *</p>

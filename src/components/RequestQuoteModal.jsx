@@ -10,6 +10,11 @@ import { fromSupabaseProject, upsertLocalProject } from '../utils/projectStorage
 import { appendReferenceLinksToText, parseReferenceLinks, sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
 import { checkMessage } from '../utils/messageFilter.js';
 import { parseBudgetRange } from '../utils/matchingAlgorithm.js';
+import {
+  CLIENT_MINIMUM_PROJECT_ERROR,
+  CLIENT_MINIMUM_PROJECT_NOTE,
+  MINIMUM_PROJECT_BUDGET_DOLLARS,
+} from '../config/margins.js';
 
 // ── Static option sets ───────────────────────────────────────
 
@@ -59,7 +64,7 @@ const DELIVERABLE_OPTIONS = [
 ];
 
 const BUDGET_OPTIONS = [
-  'Under $500',
+  '$250 to $500',
   '$500 to $1,500',
   '$1,500 to $5,000',
   '$5,000 to $10,000',
@@ -237,6 +242,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
     if (cleanDescription.length < 100)   e.description        = 'Please provide at least 100 characters so creators understand your vision.';
     if (referenceCheck.invalid.length)   e.referenceLinks     = 'Use full links that start with https:// or http://.';
     if (!form.budgetRange)               e.budgetRange        = 'Selecting a budget range helps match you with creators who fit your project.';
+    else if (parseBudgetRange(form.budgetRange).budgetMax < MINIMUM_PROJECT_BUDGET_DOLLARS) e.budgetRange = CLIENT_MINIMUM_PROJECT_ERROR;
     if (!form.locationPreference)        e.locationPreference = 'Let creators know if they need to be in your area.';
     const contactFieldChecks = [
       ['projectTitle', cleanTitle],
@@ -574,6 +580,11 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
                 {errors._submit}
               </div>
             )}
+
+            {/* 1. Project Title */}
+            <div className={`rounded-xl border px-4 py-3 text-xs leading-relaxed ${dark ? 'border-gold-500/25 bg-gold-500/10 text-gold-100' : 'border-gold-200 bg-gold-50 text-gold-800'}`}>
+              {CLIENT_MINIMUM_PROJECT_NOTE}
+            </div>
 
             {/* 1. Project Title */}
             <div>

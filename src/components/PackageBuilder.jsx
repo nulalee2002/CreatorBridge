@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react';
 import { Check, Package, Save } from 'lucide-react';
 import { SERVICES } from '../data/rates.js';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
+import {
+  CREATOR_MINIMUM_PROJECT_ERROR,
+  CREATOR_MINIMUM_PROJECT_NOTE,
+  MINIMUM_PROJECT_BUDGET_DOLLARS,
+} from '../config/margins.js';
 
 const PACKAGE_TEMPLATES = {
   Basic:    { color: 'text-charcoal-300', bg: 'bg-white/[0.035]',    border: 'border-white/[0.08]', label: 'Basic' },
@@ -372,6 +377,14 @@ export function PackageBuilder({ creatorId, dark, serviceIds = [] }) {
 
   async function handleSave() {
     setSaveError('');
+    const hasBelowFloorPackage = packages.some(pkg => {
+      const price = toNumberOrNull(pkg.price);
+      return price === null || price < MINIMUM_PROJECT_BUDGET_DOLLARS;
+    });
+    if (hasBelowFloorPackage) {
+      setSaveError(CREATOR_MINIMUM_PROJECT_ERROR);
+      return;
+    }
     setLoading(true);
     try {
       const persisted = await persistPackages(creatorId, packages);
@@ -397,6 +410,9 @@ export function PackageBuilder({ creatorId, dark, serviceIds = [] }) {
             {loading ? 'Syncing package data...' : 'Create tiered packages clients can choose from'}
           </p>
           {saveError && <p className="text-[11px] mt-1 text-red-400">{saveError}</p>}
+          <p className={`text-[10px] mt-1 max-w-xl leading-4 ${textSub}`}>
+            {CREATOR_MINIMUM_PROJECT_NOTE}
+          </p>
         </div>
         <button type="button" onClick={handleSave} disabled={loading}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
@@ -443,9 +459,9 @@ export function PackageBuilder({ creatorId, dark, serviceIds = [] }) {
                 <p className={labelCls}>Price *</p>
                 <div className="relative">
                   <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none ${textSub}`}>$</span>
-                  <input type="number" min={0} value={pkg.price}
+                  <input type="number" min={MINIMUM_PROJECT_BUDGET_DOLLARS} value={pkg.price}
                     onChange={e => onUpdate('price', e.target.value)}
-                    placeholder="0"
+                    placeholder={String(MINIMUM_PROJECT_BUDGET_DOLLARS)}
                     className={`${inputCls} pl-6`} />
                 </div>
               </div>
