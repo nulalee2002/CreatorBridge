@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MapPin, Star, ArrowRight } from 'lucide-react';
 import { SERVICES } from '../data/rates.js';
 import { REGIONS } from '../data/regions.js';
+import { CreatorAvatar } from './CreatorAvatar.jsx';
 
 function loadListings() {
   try { return JSON.parse(localStorage.getItem('creator-directory') || '[]'); } catch { return []; }
@@ -63,8 +64,8 @@ export function SimilarCreators({ creator, dark }) {
               onClick={() => navigate(`/creator/${c.id}`)}
             >
               {/* Avatar */}
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 ${dark ? 'bg-white/[0.08]' : 'bg-gray-200'}`}>
-                {c.avatar || primaryService?.icon || '🎬'}
+              <div className={`w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center text-xl shrink-0 ${dark ? 'bg-white/[0.08]' : 'bg-gray-200'}`}>
+                <CreatorAvatar src={c.avatar} alt={c.businessName || c.name || 'Creator'} fallback={primaryService?.icon || '🎬'} />
               </div>
 
               {/* Info */}

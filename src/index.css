@@ -1157,7 +1157,7 @@ body.mouse-active .mouse-glow {
   background: linear-gradient(to top, rgba(0,0,0,0.55), transparent 55%);
 }
 .creator-card .avatar {
-  position: absolute; bottom: -20px; left: 1rem;
+  position: absolute; bottom: 1rem; left: 1rem; z-index: 2;
   width: 54px; height: 54px;
   border-radius: 12px;
   overflow: hidden;
@@ -1165,7 +1165,7 @@ body.mouse-active .mouse-glow {
   box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
 .creator-card .avatar img { width: 100%; height: 100%; object-fit: cover; }
-.creator-card .body { padding: 2rem 1.25rem 1.25rem; flex: 1; display: flex; flex-direction: column; }
+.creator-card .body { padding: 1.25rem; flex: 1; display: flex; flex-direction: column; }
 .creator-card .tier-chips {
   position: absolute; top: 0.75rem; right: 0.75rem;
   display: flex; gap: 0.35rem;

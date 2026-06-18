@@ -11,6 +11,7 @@ import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { SERVICES, normalizeServiceId } from '../data/rates.js';
 import { fromSupabaseProject, upsertLocalProject } from '../utils/projectStorage.js';
+import { CreatorAvatar } from '../components/CreatorAvatar.jsx';
 
 // ── Helpers ──────────────────────────────────────────────────────
 function loadProject(projectId) {
@@ -103,8 +104,8 @@ function ReviewStep({ project, creator, fees, dark, paymentType, creatorFeePct, 
       {/* Creator info */}
       <div className={`${cardCls} p-5`}>
         <div className="flex items-center gap-3 mb-3">
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl ${dark ? 'bg-white/[0.04] ring-1 ring-white/[0.07]' : 'bg-gray-100'}`}>
-            {creator?.avatar || svc?.icon || '🎬'}
+          <div className={`w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center text-2xl ${dark ? 'bg-white/[0.04] ring-1 ring-white/[0.07]' : 'bg-gray-100'}`}>
+            <CreatorAvatar src={creator?.avatar} alt={creator?.businessName || creator?.name || 'Creator'} fallback={svc?.icon || '🎬'} />
           </div>
           <div>
             <p className={`font-bold text-sm ${dark ? 'text-white' : 'text-gray-900'}`}>

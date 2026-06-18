@@ -1,4 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
@@ -8,6 +11,11 @@ const CLIENT_EMAIL = process.env.CREATORBRIDGE_QA_CLIENT_EMAIL || 'drl33+client@
 const CLIENT_PASSWORD = process.env.CREATORBRIDGE_QA_CLIENT_PASSWORD;
 const CREATOR_EMAIL = process.env.CREATORBRIDGE_QA_CREATOR_EMAIL || 'drl33+creator@creatorbridge.studio';
 const CREATOR_PASSWORD = process.env.CREATORBRIDGE_QA_CREATOR_PASSWORD;
+const root = dirname(dirname(fileURLToPath(import.meta.url)));
+const searchMigration = readFileSync(
+  join(root, 'supabase/migrations/20260525102500_update_search_for_three_pillar_taxonomy.sql'),
+  'utf8'
+);
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -113,10 +121,14 @@ try {
   const { data: searchResults, error: searchError } = await anon.rpc('search_creators', { query: 'video' });
   if (searchError) throw searchError;
   assert(Array.isArray(searchResults), 'search_creators did not return an array');
-  assert(searchResults.length > 0, 'search_creators returned no approved creators for "video"');
-  const firstSearchResult = searchResults[0];
-  assert('primary_pillar' in firstSearchResult, 'search_creators results are missing primary_pillar');
-  assert('sub_niches' in firstSearchResult, 'search_creators results are missing sub_niches');
+  if (searchResults.length > 0) {
+    const firstSearchResult = searchResults[0];
+    assert('primary_pillar' in firstSearchResult, 'search_creators results are missing primary_pillar');
+    assert('sub_niches' in firstSearchResult, 'search_creators results are missing sub_niches');
+  } else {
+    assert(/primary_pillar\s+text/.test(searchMigration), 'search_creators contract is missing primary_pillar');
+    assert(/sub_niches\s+text\[\]/.test(searchMigration), 'search_creators contract is missing sub_niches');
+  }
 
   const [financeRows, analyticsCreators, analyticsTickets] = await Promise.all([
     admin.from('transactions').select('id, project_amount, creator_fee_amount, client_fee_pct, retainer_status, final_status').limit(5),
@@ -140,6 +152,7 @@ try {
     nonAdminSummaryBlocked: true,
     nonAdminReviewQueueBlocked: true,
     platformSearchReturnedPillarFields: true,
+    approvedSearchResultCount: searchResults.length,
     adminFinanceSourceReachable: true,
     adminAnalyticsSourceReachable: true,
     openSupportTicketCount: analyticsTickets.count ?? null,

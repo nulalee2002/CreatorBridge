@@ -4,6 +4,7 @@ import { Search as SearchIcon, MapPin, ExternalLink, Loader } from 'lucide-react
 import { supabase } from '../lib/supabase.js';
 import { SEO } from '../components/SEO.jsx';
 import { getPillar, getSubNiche } from '../data/taxonomy.js';
+import { CreatorAvatar } from '../components/CreatorAvatar.jsx';
 
 const TIER_COLOURS = {
   Launch:    'bg-charcoal-800/60 text-charcoal-300  border-white/[0.08]',
@@ -43,11 +44,9 @@ function CreatorCard({ creator, dark, onView }) {
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-3">
           {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt={displayName}
-              className="w-10 h-10 rounded-full object-cover shrink-0 border border-white/[0.08]"
-            />
+            <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/[0.08]">
+              <CreatorAvatar src={avatarUrl} alt={displayName} fallback={displayName?.charAt(0) ?? '?'} />
+            </div>
           ) : (
             <div className={`w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-sm font-bold ${dark ? 'bg-charcoal-800 text-gold-400' : 'bg-gray-100 text-gray-600'}`}>
               {displayName?.charAt(0) ?? '?'}

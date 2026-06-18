@@ -23,6 +23,8 @@ import { handoffPages } from '../data/handoffPages.js';
 // Initialize seed data (version-gated — replaces stale seeds automatically)
 initSeedData();
 
+const CREATOR_AVATAR_FALLBACK = '/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg';
+
 function parseYearsExperience(value) {
   if (value === '2 years') return 2;
   if (value === '3 to 5 years') return 3;
@@ -204,7 +206,15 @@ function CreatorCard({ creator, dark, onDelete, onViewProfile }) {
         {/* Overlapping Avatar */}
         <div className="avatar">
           {creator.avatar?.startsWith('http') || (creator.avatar && creator.avatar.includes('/')) ? (
-            <img src={creator.avatar} alt={creator.name} />
+            <img
+              src={creator.avatar}
+              alt={creator.name || creator.businessName || 'Creator'}
+              onError={(event) => {
+                if (event.currentTarget.dataset.fallbackApplied) return;
+                event.currentTarget.dataset.fallbackApplied = 'true';
+                event.currentTarget.src = CREATOR_AVATAR_FALLBACK;
+              }}
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-charcoal-800 text-xl border-none">
               {creator.avatar || '🎬'}

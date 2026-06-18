@@ -4,6 +4,7 @@ import { SEO } from '../components/SEO.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { SEED_CREATORS } from '../data/seedCreators.js';
 import { getBunnyEmbedUrl, getBunnyThumbnailUrl, isBunnyVideoRef } from '../utils/bunnyStream.js';
+import { Play } from 'lucide-react';
 
 const useTweaks = (defaults) => [defaults, () => {}];
 const TweaksPanel = () => null;
@@ -189,9 +190,17 @@ function HeroInfo({ onJumpBook, onMessage, onPlayReel, saved, setSaved }) {
   return (
     <div className="space-y-5">
       <div className="flex items-start gap-4">
-        <button type="button" onClick={onPlayReel} className="parallax-wrap relative w-16 h-16 rounded-2xl overflow-hidden shrink-0 ring-1 ring-[var(--border)]">
+        <button
+          type="button"
+          onClick={onPlayReel}
+          aria-label="Watch intro"
+          title="Watch intro"
+          className="parallax-wrap group relative w-16 h-16 rounded-2xl overflow-hidden shrink-0 ring-1 ring-[var(--border)]"
+        >
           <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg'; } }}/>
-          <span className="absolute inset-x-1 bottom-1 rounded-full bg-[var(--gold)] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-[var(--bg)]">Watch intro</span>
+          <span className="absolute bottom-1 right-1 inline-flex h-6 w-6 items-center justify-center rounded-full border border-black/10 bg-[var(--gold)] text-[var(--bg)] shadow-md transition-transform group-hover:scale-105">
+            <Play size={10} fill="currentColor" aria-hidden="true" />
+          </span>
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">

@@ -229,9 +229,9 @@ check('Stripe webhook completion path', 'supabase/functions/stripe-webhook/index
   { label: 'marks final-paid projects complete after Stripe success', test: includes('markProjectCompleted') },
   { label: 'releases creator payout after confirmed final payment', test: includes('releaseCreatorPayout') },
   { label: 'records Stripe event ids to prevent replay processing', test: includes('stripe_event_id') },
-  { label: 'issues referral rewards after completed paid work', test: includes('issueReferralRewards') },
+  { label: 'grants invite credits only after completed paid work', test: includes('grant_referral_credit_for_released_transaction') },
   { label: 'consumes client fee waiver after retainer payment', test: includes('consumeClientFeeWaiver') },
-  { label: 'supports creator one-project fee reduction reward', test: includes("referral.reward_type === 'fee_reduction'") },
+  { label: 'consumes applied creator credit after successful payment', test: includes('consumeAppliedCreatorCredit') },
 ]);
 
 check('Payment release hardening', 'supabase/functions/release-payment/index.ts', [

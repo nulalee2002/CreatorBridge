@@ -22,6 +22,7 @@ import { calculateTier } from '../config/tiers.js';
 import { dollarsToDisplay, statusBadgeClass, PROJECT_STATUSES } from '../config/fees.js';
 import { ReferralSection } from '../components/ReferralSection.jsx';
 import { uploadVideoToBunny, isBunnyVideoRef } from '../utils/bunnyStream.js';
+import { CreatorAvatar } from '../components/CreatorAvatar.jsx';
 
 // ── Data helpers ────────────────────────────────────────────────
 function loadMyListing(userId) {
@@ -374,8 +375,8 @@ export function CreatorDashboard({ dark }) {
           <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-gold-500/10 blur-3xl" />
           <div className="relative flex items-center justify-between gap-5 flex-wrap">
           <div className="flex items-center gap-4">
-            <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center text-3xl ${dark ? 'bg-white/[0.035] border-gold-500/20' : 'bg-white border-gray-200'}`}>
-              {creator.avatar || '🎬'}
+            <div className={`w-14 h-14 rounded-2xl overflow-hidden border flex items-center justify-center text-3xl ${dark ? 'bg-white/[0.035] border-gold-500/20' : 'bg-white border-gray-200'}`}>
+              <CreatorAvatar src={creator.avatar} alt={creator.businessName || creator.name || 'Creator'} />
             </div>
             <div>
               <p className="text-gold-400 mb-1" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
