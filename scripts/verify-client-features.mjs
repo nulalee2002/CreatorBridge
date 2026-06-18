@@ -46,6 +46,15 @@ async function runTests() {
   const clientUserId = clientAuth.user.id;
   console.log(`- Client logged in. User ID: ${clientUserId}`);
 
+  const { data: originalProfile, error: originalProfileErr } = await clientClient
+    .from('client_profiles')
+    .select('user_id,display_name,company_name,phone,website,bio,email_verified')
+    .eq('user_id', clientUserId)
+    .maybeSingle();
+  if (originalProfileErr) throw originalProfileErr;
+
+  try {
+
   // 1. Verify Client Profile Upsert
   console.log(`\n1. Testing Client Profile updates...`);
   const testBio = 'Arizona based tech company specializing in video content production and brand stories. Fully verified test client profile.';
@@ -67,8 +76,7 @@ async function runTests() {
     }, { onConflict: 'user_id' });
 
   if (upsertErr) {
-    console.error('❌ Client profile upsert error:', upsertErr.message);
-    process.exit(1);
+    throw new Error(`Client profile upsert error: ${upsertErr.message}`);
   }
 
   // Fetch and check
@@ -87,8 +95,7 @@ async function runTests() {
   });
 
   if (profileAfter.website !== testWebsite || profileAfter.bio !== testBio) {
-    console.error('❌ Failed: Client profile updates did not persist correctly!');
-    process.exit(1);
+    throw new Error('Client profile updates did not persist correctly');
   }
   console.log('✅ Client profile successfully updated and verified in DB!');
 
@@ -100,8 +107,7 @@ async function runTests() {
     .eq('referrer_id', clientUserId);
 
   if (refErr) {
-    console.error('❌ Failed to query referrals table:', refErr.message);
-    process.exit(1);
+    throw new Error(`Failed to query referrals table: ${refErr.message}`);
   }
   console.log(`✅ Referrals queried successfully! Found ${referrals.length} referral records associated with this client.`);
   for (const ref of referrals) {
@@ -109,6 +115,21 @@ async function runTests() {
   }
 
   console.log('\n--- ALL CLIENT FEATURES TESTS PASSED SUCCESSFULLY! ---');
+  } finally {
+    if (originalProfile) {
+      const { error: restoreErr } = await clientClient
+        .from('client_profiles')
+        .upsert(originalProfile, { onConflict: 'user_id' });
+      if (restoreErr) throw new Error(`Could not restore client QA profile: ${restoreErr.message}`);
+    } else {
+      const { error: cleanupErr } = await clientClient
+        .from('client_profiles')
+        .delete()
+        .eq('user_id', clientUserId);
+      if (cleanupErr) throw new Error(`Could not remove temporary client QA profile: ${cleanupErr.message}`);
+    }
+    console.log('✅ Client QA profile restored.');
+  }
 }
 
 runTests().catch(err => {

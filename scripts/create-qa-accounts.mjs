@@ -148,7 +148,7 @@ async function seedCreator(user) {
     completed_projects: 14,
     tier: 'proven',
     completion_rate: 96,
-    video_intro_url: 'https://example.com/creatorbridge-test/60-second-intro-video',
+    video_intro_url: 'bunny:qa-creator-intro',
     updated_at: now,
   };
 

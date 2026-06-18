@@ -258,7 +258,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
       }`}>
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/60 to-transparent" />
         {/* Close */}
-        <button type="button" onClick={onClose}
+        <button type="button" onClick={onClose} aria-label="Close account access"
           className={`absolute top-4 right-4 p-1.5 rounded-lg transition-colors ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
           <X size={16} />
         </button>
@@ -486,6 +486,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
                                 onChange={e => set('password', e.target.value)}
                                 className={`${inputCls} pl-10 pr-10`} />
                               <button type="button" onClick={() => setShowPass(s => !s)}
+                                aria-label={showPass ? 'Hide password' : 'Show password'}
                                 className={`absolute right-3 top-1/2 -translate-y-1/2 ${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-400 hover:text-gray-900'}`}>
                                 {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
                               </button>

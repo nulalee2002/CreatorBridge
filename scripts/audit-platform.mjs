@@ -54,6 +54,24 @@ check('Guest contact protection', 'src/pages/CreatorProfilePage.jsx', [
   { label: 'prompts guests to create a client account', test: includes('Create a free client account to contact creators') },
 ]);
 
+check('Interactive accessibility contracts', 'src/components/auth/AuthModal.jsx', [
+  { label: 'auth dialog close control has an accessible name', test: includes('aria-label="Close account access"') },
+  { label: 'password visibility control has an accessible name', test: includes("aria-label={showPass ? 'Hide password' : 'Show password'}") },
+]);
+
+check('Creator profile accessibility contracts', 'src/pages/CreatorProfilePage.jsx', [
+  { label: 'featured intro control has an accessible name', test: includes('aria-label="Watch featured intro"') },
+  { label: 'intro modal close control has an accessible name', test: includes('aria-label="Close intro"') },
+]);
+
+check('Directory accessibility contracts', 'src/components/CreatorDirectory.jsx', [
+  { label: 'creator sorting control has an accessible name', test: includes('aria-label="Sort creators"') },
+]);
+
+check('Network accessibility contracts', 'src/pages/NetworkingPage.jsx', [
+  { label: 'state selector has an accessible name', test: includes('aria-label="Choose another state"') },
+]);
+
 check('Smart Match reliability', 'src/utils/matchingAlgorithm.js', [
   { label: 'normalizes services before matching', test: includes('normalizeServiceId') },
   { label: 'excludes pending or unapproved creators', test: includes('isApprovedCreator') },
@@ -65,6 +83,12 @@ check('Availability calendar hardening', 'src/components/AvailabilityCalendar.js
   { label: 'uses targeted availability upsert instead of broad replace', test: includes(".upsert(rows, { onConflict: 'listing_id,date' })") },
   { label: 'only deletes stale availability dates after successful save', test: includes('const staleDates') },
   { label: 'records availability source for synced data', test: includes('source,') },
+]);
+
+check('Creator dashboard availability completion', 'src/pages/CreatorDashboard.jsx', [
+  { label: 'loads saved availability into dashboard profile state', test: includes('fetchAvailability') },
+  { label: 'computes availability completion from real saved dates', test: includes("Object.keys(creator.availabilityMap || {}).length > 0") },
+  { label: 'does not hard-code availability as incomplete', test: notIncludes("{ label: 'Availability set',             done: false }") },
 ]);
 
 check('Google Calendar session sync', 'src/components/GoogleCalendarConnect.jsx', [

@@ -149,7 +149,7 @@ function Hero({ onPlayReel, onJumpBook, onMessage, layout, saved, setSaved }) {
           <div className="aspect-[21/9] relative">
             <img src={getIntroPoster()} alt="Reel" className="absolute inset-0 w-full h-full object-cover scale-105" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg'; } }}/>
             <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/60 to-transparent"></div>
-            <button onClick={onPlayReel} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-[var(--gold)]/90 hover:bg-[var(--gold-light)] transition-all flex items-center justify-center hover:scale-110">
+            <button type="button" onClick={onPlayReel} aria-label="Watch featured intro" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-[var(--gold)]/90 hover:bg-[var(--gold-light)] transition-all flex items-center justify-center hover:scale-110">
               <svg className="w-6 h-6 text-[var(--bg)] ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             </button>
             <div className="absolute bottom-0 left-0 right-0 p-8">
@@ -172,7 +172,7 @@ function Hero({ onPlayReel, onJumpBook, onMessage, layout, saved, setSaved }) {
           <div className="aspect-[4/5] relative">
             <img src={getIntroPoster()} alt="Reel" className="absolute inset-0 w-full h-full object-cover scale-105 group-hover:scale-110 transition-transform duration-700" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg'; } }}/>
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20"></div>
-            <button className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-[var(--gold)]/90 group-hover:bg-[var(--gold-light)] transition-all flex items-center justify-center group-hover:scale-110">
+            <button type="button" aria-label="Watch featured intro" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-[var(--gold)]/90 group-hover:bg-[var(--gold-light)] transition-all flex items-center justify-center group-hover:scale-110">
               <svg className="w-6 h-6 text-[var(--bg)] ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             </button>
             <div className="absolute bottom-0 left-0 right-0 p-6">
@@ -588,7 +588,7 @@ function ReelModal({ open, onClose }) {
               </div>
             </>
           )}
-          <button onClick={onClose} className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white">
+          <button type="button" onClick={onClose} aria-label="Close intro" className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>

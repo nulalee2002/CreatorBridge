@@ -20,7 +20,7 @@ export const SEED_CREATORS = [
     user_id: null,
     name: 'Marcus Chen',
     businessName: 'Elevation Films',
-    avatar: '/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg',
+    avatar: '/images/creatorbridge/handoff/photo-1507003211169-0a1dd7228f2d.jpg',
     cover: '/images/creatorbridge/backgrounds/03-featured-work/featured-warehouse-film-set.jpg',
     primary_pillar: 'video_production',
     sub_niches: ['vp_brand_films', 'vp_documentary', 'vp_drone_video'],
@@ -301,7 +301,7 @@ export const SEED_CREATORS = [
     user_id: null,
     name: 'Jordan Mitchell',
     businessName: 'SoundWave Podcast Co.',
-    avatar: '/images/creatorbridge/handoff/photo-1507003211169-0a1dd7228f2d.jpg',
+    avatar: '/images/creatorbridge/handoff/photo-1599566150163-29194dcaad36.jpg',
     cover: '/images/creatorbridge/backgrounds/08-sitewide/bg-podcast-home-studio.jpg',
     primary_pillar: 'post_production',
     sub_niches: ['pp_podcast_audio', 'pp_sound_design', 'pp_short_form_edit'],
@@ -682,6 +682,18 @@ const SEED_REVIEWS = [
 ];
 
 // ── Initialize localStorage ───────────────────────────────────────
+function getSeedContentSignature() {
+  const content = JSON.stringify({ creators: SEED_CREATORS, reviews: SEED_REVIEWS });
+  let hash = 2166136261;
+
+  for (let index = 0; index < content.length; index += 1) {
+    hash ^= content.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return `${SEED_VERSION}:${(hash >>> 0).toString(36)}`;
+}
+
 export function initSeedData() {
   // If demo creators are disabled, remove any existing seed entries and exit.
   if (!SHOW_DEMO_CREATORS) {
@@ -689,14 +701,17 @@ export function initSeedData() {
       const all = JSON.parse(localStorage.getItem('creator-directory') || '[]');
       const userListings = all.filter(l => !l.id.startsWith('seed-'));
       localStorage.setItem('creator-directory', JSON.stringify(userListings));
+      localStorage.removeItem('creator-seed-signature');
     } catch {}
     return;
   }
 
   try {
     const storedVersion = parseInt(localStorage.getItem('creator-seed-version') || '0', 10);
+    const currentSignature = getSeedContentSignature();
+    const storedSignature = localStorage.getItem('creator-seed-signature');
 
-    if (storedVersion < SEED_VERSION) {
+    if (storedVersion < SEED_VERSION || storedSignature !== currentSignature) {
       // ── Re-write seed creators ─────────────────────────────────
       // Always keep user-added listings (anything not prefixed 'seed-').
       const all = JSON.parse(localStorage.getItem('creator-directory') || '[]');
@@ -716,11 +731,13 @@ export function initSeedData() {
 
       // ── Stamp version so this only runs once per seed version ──
       localStorage.setItem('creator-seed-version', String(SEED_VERSION));
+      localStorage.setItem('creator-seed-signature', currentSignature);
     }
   } catch {
     // Hard fallback: write seeds regardless
     localStorage.setItem('creator-directory', JSON.stringify(SEED_CREATORS));
     localStorage.setItem('creator-reviews', JSON.stringify(SEED_REVIEWS));
     localStorage.setItem('creator-seed-version', String(SEED_VERSION));
+    localStorage.setItem('creator-seed-signature', getSeedContentSignature());
   }
 }
