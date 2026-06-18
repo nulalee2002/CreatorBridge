@@ -26,6 +26,7 @@ import { SupportChatbot } from './components/SupportChatbot.jsx';
 import { HandoffPage } from './components/HandoffPage.jsx';
 import { handoffPages } from './data/handoffPages.js';
 import { NotificationBell } from './components/NotificationBell.jsx';
+import { CreatorAvatar } from './components/CreatorAvatar.jsx';
 
 function makeId() {
   return globalThis.crypto?.randomUUID?.() || `id-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -988,7 +989,11 @@ export default function App() {
                 className={`min-h-[34px] min-w-[34px] rounded-full overflow-hidden flex items-center justify-center text-xs font-bold transition-opacity hover:opacity-80 ${dark ? 'bg-gold-500/20 text-gold-400' : 'bg-gold-100 text-gold-600'}`}
               >
                 {authProfile?.avatar_url ? (
-                  <img src={authProfile.avatar_url} alt={`${authProfile?.full_name ?? 'Your'} avatar`} className="w-full h-full object-cover" />
+                  <CreatorAvatar
+                    src={authProfile.avatar_url}
+                    alt={`${authProfile?.full_name ?? 'Your'} avatar`}
+                    fallback={(authProfile?.full_name || user.email || 'U')[0].toUpperCase()}
+                  />
                 ) : (
                   (authProfile?.full_name || user.email || 'U')[0].toUpperCase()
                 )}

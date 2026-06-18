@@ -5,6 +5,7 @@ import { sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
 import { checkMessage, logFilterEvent } from '../utils/messageFilter.js';
 import { HandoffPage } from '../components/HandoffPage.jsx';
 import { handoffPages } from '../data/handoffPages.js';
+import { CreatorAvatar } from '../components/CreatorAvatar.jsx';
 
 const US_STATES = [
   { code: 'AL', name: 'Alabama' }, { code: 'AK', name: 'Alaska' },
@@ -398,7 +399,7 @@ function PostCard({ post, dark, isVerified, onLike, onReport, onReply }) {
       <div className="post-meta">
         {avatarUrl ? (
           <div className="post-avatar">
-            <img src={avatarUrl} alt={post.user_display_name} />
+            <CreatorAvatar src={avatarUrl} alt={post.user_display_name} fallback={getInitials(post.user_display_name)} />
           </div>
         ) : (
           <div className="w-9 h-9 rounded-[10px] bg-gold-500/20 text-gold-400 flex items-center justify-center text-xs font-bold shrink-0 border border-white/[0.08]">

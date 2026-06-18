@@ -10,6 +10,7 @@ import { SERVICES } from '../data/rates.js';
 import { sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
 import { checkMessage, logFilterEvent } from '../utils/messageFilter.js';
 import { ClientReputationBadge, loadClientReputation } from '../components/ClientReputationBadge.jsx';
+import { CreatorAvatar } from '../components/CreatorAvatar.jsx';
 
 // ── localStorage helpers ────────────────────────────────────────
 const LOCAL_MESSAGE_KEY = 'cm-messages';
@@ -347,7 +348,9 @@ function NewConversationModal({ dark, onClose, onStart, myUser, myProfile }) {
               {results.map(c => (
                 <button key={c.id} type="button" onClick={() => selectCreator(c)}
                   className={`w-full flex items-center gap-2 p-3 text-left hover:bg-gold-500/10 transition-colors`}>
-                  <span className="text-base">{c.avatar || '🎬'}</span>
+                  <span className="h-8 w-8 overflow-hidden rounded-lg bg-white/[0.06] text-base">
+                    <CreatorAvatar src={c.avatar} alt={c.businessName || c.name || 'Creator'} />
+                  </span>
                   <span className={`text-sm ${dark ? 'text-white' : 'text-gray-900'}`}>{c.businessName || c.name}</span>
                 </button>
               ))}

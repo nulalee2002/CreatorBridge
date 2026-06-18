@@ -5,6 +5,7 @@ import { matchCreators, loadAllCreatorsForMatching } from '../utils/matchingAlgo
 import { SERVICES } from '../data/rates.js';
 import { TierBadge } from './TierBadge.jsx';
 import { VerificationBadge } from './VerificationFlow.jsx';
+import { CreatorAvatar } from './CreatorAvatar.jsx';
 
 const FAST_MATCH_FEE = 25; // $ after first free use
 const FAST_MATCH_FREE_KEY = 'cm-fast-match-used-free';
@@ -184,8 +185,8 @@ function FastMatchResult({ result, dark, onViewProfile }) {
       {/* Match pct badge */}
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="flex items-center gap-3">
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0 ${dark ? 'bg-charcoal-950/70 ring-1 ring-white/[0.08]' : 'bg-white border border-gray-200'}`}>
-            {creator.avatar || '🎬'}
+          <div className={`w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center text-2xl shrink-0 ${dark ? 'bg-charcoal-950/70 ring-1 ring-white/[0.08]' : 'bg-white border border-gray-200'}`}>
+            <CreatorAvatar src={creator.avatar} alt={creator.businessName || creator.name || 'Creator'} />
           </div>
           <div>
             <p className={`font-bold text-sm ${dark ? 'text-white' : 'text-gray-900'}`}>
