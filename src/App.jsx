@@ -1441,7 +1441,7 @@ export default function App() {
               <FooterCol title="Company">
                 <button type="button" onClick={() => navigate('/terms')}>Terms</button>
                 <button type="button" onClick={() => navigate('/privacy')}>Privacy</button>
-                <button type="button" onClick={() => user ? setShowSupportTicket(true) : setShowAuth(true)}>Contact Support</button>
+                <button type="button" onClick={() => user ? setShowSupportTicket(true) : setShowAuth(true)}>Report an Issue</button>
               </FooterCol>
             </div>
             <div className="bottom">
@@ -1449,7 +1449,7 @@ export default function App() {
               <div className="bottom-links">
                 <button type="button" onClick={() => navigate('/terms')}>Terms</button>
                 <button type="button" onClick={() => navigate('/privacy')}>Privacy</button>
-                <button type="button" onClick={() => user ? setShowSupportTicket(true) : setShowAuth(true)}>Support</button>
+                <button type="button" onClick={() => user ? setShowSupportTicket(true) : setShowAuth(true)}>Report an Issue</button>
               </div>
             </div>
           </div>

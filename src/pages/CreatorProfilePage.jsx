@@ -195,11 +195,12 @@ function HeroInfo({ onJumpBook, onMessage, onPlayReel, saved, setSaved }) {
           onClick={onPlayReel}
           aria-label="Watch intro"
           title="Watch intro"
-          className="parallax-wrap group relative w-16 h-16 rounded-2xl overflow-hidden shrink-0 ring-1 ring-[var(--border)]"
+          className="parallax-wrap group relative w-20 h-20 md:w-28 md:h-28 rounded-2xl overflow-hidden shrink-0 ring-1 ring-[var(--border)]"
         >
           <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg'; } }}/>
-          <span className="absolute bottom-1 right-1 inline-flex h-6 w-6 items-center justify-center rounded-full border border-black/10 bg-[var(--gold)] text-[var(--bg)] shadow-md transition-transform group-hover:scale-105">
-            <Play size={10} fill="currentColor" aria-hidden="true" />
+          <span className="absolute inset-x-1 bottom-1 inline-flex items-center justify-center gap-1 rounded-full bg-[var(--gold)] px-1.5 py-0.5 text-[9px] font-semibold text-[var(--bg)] shadow-md transition-transform group-hover:scale-[1.03]">
+            <Play size={8} fill="currentColor" aria-hidden="true" />
+            Watch intro
           </span>
         </button>
         <div className="flex-1 min-w-0">
