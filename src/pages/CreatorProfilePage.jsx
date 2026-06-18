@@ -197,7 +197,7 @@ function HeroInfo({ onJumpBook, onMessage, onPlayReel, saved, setSaved }) {
           title="Watch intro"
           className="parallax-wrap group relative w-20 h-20 md:w-28 md:h-28 rounded-2xl overflow-hidden shrink-0 ring-1 ring-[var(--border)]"
         >
-          <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg'; } }}/>
+          <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover object-top" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg'; } }}/>
           <span className="absolute inset-x-1 bottom-1 inline-flex items-center justify-center gap-1 rounded-full bg-[var(--gold)] px-1.5 py-0.5 text-[9px] font-semibold text-[var(--bg)] shadow-md transition-transform group-hover:scale-[1.03]">
             <Play size={8} fill="currentColor" aria-hidden="true" />
             Watch intro
@@ -769,7 +769,7 @@ function StickyBook({ selectedPkg, onBook, show }) {
     <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[80] liquid-glass rounded-2xl px-5 py-3 flex items-center gap-5 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
       <div className="flex items-center gap-3">
         <div className="w-9 h-9 rounded-lg overflow-hidden">
-          <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg'; } }}/>
+          <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover object-top" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg'; } }}/>
         </div>
         <div>
           <div className="text-[10px] text-[var(--text-dim)] leading-none mb-0.5">{pkg.name} package</div>
