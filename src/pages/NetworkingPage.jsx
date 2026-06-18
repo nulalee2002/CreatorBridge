@@ -927,6 +927,7 @@ export function NetworkingPage({ dark, user, profile }) {
             <div className="state-tile relative flex flex-col justify-center items-center">
               <select
                 value=""
+                aria-label="Choose another state"
                 onChange={e => {
                   const code = e.target.value;
                   if (code) setSelectedState(code);

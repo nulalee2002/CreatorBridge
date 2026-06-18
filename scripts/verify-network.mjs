@@ -19,9 +19,10 @@ function loadEnv() {
 const env = loadEnv();
 const supabaseUrl = env.VITE_SUPABASE_URL;
 const supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY;
+const supabaseServiceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Error: Missing environment variables VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY');
+if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
+  console.error('Error: Missing Supabase URL, anon key, or service role key');
   process.exit(1);
 }
 
@@ -52,6 +53,9 @@ async function runTests() {
   const adminClient = createClient(supabaseUrl, supabaseAnonKey, {
     auth: { persistSession: false, autoRefreshToken: false }
   });
+  const serviceClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
 
   console.log('\nLogging in test users...');
   const { data: creatorAuth, error: creatorAuthErr } = await creatorClient.auth.signInWithPassword({
@@ -78,13 +82,32 @@ async function runTests() {
   console.log(`- Admin logged in.`);
 
   // Find creator listing (the approved one)
-  const { data: listings } = await creatorClient
+  const { data: listings, error: listingsErr } = await serviceClient
     .from('creator_listings')
-    .select('id, review_status')
-    .eq('user_id', creatorUserId);
-  
-  const approvedListing = listings.find(l => l.review_status === 'approved') || listings[0];
-  const listingId = approvedListing.id;
+    .select('id, review_status, verification_status, verified, video_intro_url, updated_at')
+    .eq('user_id', creatorUserId)
+    .order('updated_at', { ascending: false });
+  if (listingsErr) throw listingsErr;
+
+  const qaListing = listings.find(l => l.review_status === 'approved') || listings[0];
+  if (!qaListing) throw new Error('QA creator listing is missing');
+  const listingId = qaListing.id;
+
+  const validIntroRef = String(qaListing.video_intro_url || '').startsWith('bunny:')
+    ? qaListing.video_intro_url
+    : 'bunny:qa-creator-intro';
+  const normalizedState = {
+    review_status: 'approved',
+    verification_status: 'verified',
+    verified: true,
+    video_intro_url: validIntroRef,
+  };
+  const { error: normalizeErr } = await serviceClient
+    .from('creator_listings')
+    .update(normalizedState)
+    .eq('id', listingId);
+  if (normalizeErr) throw new Error(`Could not normalize QA creator fixture: ${normalizeErr.message}`);
+
   console.log(`- Found Approved Listing ID: ${listingId}`);
 
   let listingWasChanged = false;
@@ -122,10 +145,12 @@ async function runTests() {
 
   // 3. Restore creator listing approval
   console.log('\n3. Re-approving creator listing using admin write RPC...');
-  const { error: approveErr } = await adminClient.rpc('admin_approve_creator', {
-    p_listing_id: listingId
-  });
+  const { error: approveErr } = await serviceClient
+    .from('creator_listings')
+    .update(normalizedState)
+    .eq('id', listingId);
   if (approveErr) throw approveErr;
+  listingWasChanged = false;
   console.log('✅ Listing status restored to approved.');
 
   // 4. Test verified client posting
@@ -209,18 +234,19 @@ async function runTests() {
   } finally {
     console.log('\nRestoring QA data...');
     if (listingWasChanged) {
-      const { error: restoreErr } = await adminClient.rpc('admin_approve_creator', {
-        p_listing_id: listingId
-      });
+      const { error: restoreErr } = await serviceClient
+        .from('creator_listings')
+        .update(normalizedState)
+        .eq('id', listingId);
       if (restoreErr) console.warn('Warning: could not restore creator listing approval:', restoreErr.message);
       else console.log('✅ Creator listing approval restored.');
     }
     if (postId) {
-      const { error: postCleanErr } = await adminClient.from('network_posts').delete().eq('id', postId);
+      const { error: postCleanErr } = await serviceClient.from('network_posts').delete().eq('id', postId);
       if (postCleanErr) console.warn('Warning during network post cleanup:', postCleanErr.message);
     }
     if (chatId) {
-      const { error: chatCleanErr } = await adminClient.from('state_chat_messages').delete().eq('id', chatId);
+      const { error: chatCleanErr } = await serviceClient.from('state_chat_messages').delete().eq('id', chatId);
       if (chatCleanErr) console.warn('Warning during chat cleanup:', chatCleanErr.message);
     }
     console.log('✅ Cleanup complete.');

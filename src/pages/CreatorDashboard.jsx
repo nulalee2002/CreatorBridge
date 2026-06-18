@@ -10,7 +10,7 @@ import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { SERVICES, normalizeServiceId } from '../data/rates.js';
 import { PILLARS, LEGACY_SERVICE_TO_PILLAR, getPillar } from '../data/taxonomy.js';
 import { PackageBuilder } from '../components/PackageBuilder.jsx';
-import { AvailabilityEditor } from '../components/AvailabilityCalendar.jsx';
+import { AvailabilityEditor, fetchAvailability } from '../components/AvailabilityCalendar.jsx';
 import { GoogleCalendarConnect } from '../components/GoogleCalendarConnect.jsx';
 import { StripeOnboarding } from '../components/StripeOnboarding.jsx';
 import { EarningsTab } from '../components/EarningsTab.jsx';
@@ -258,7 +258,8 @@ export function CreatorDashboard({ dark }) {
         .maybeSingle();
       if (data) {
         const normalizedCreator = normalizeCreatorListing(data);
-        setCreator(normalizedCreator);
+        const availabilityMap = await fetchAvailability(data.id);
+        setCreator({ ...normalizedCreator, availabilityMap });
         const { data: qData } = await supabase
           .from('quote_requests')
           .select('*')
@@ -267,7 +268,8 @@ export function CreatorDashboard({ dark }) {
         setQuotes((qData || []).map(normalizeQuoteRequest));
       } else {
         const found = loadMyListing(user.id);
-        setCreator(normalizeCreatorListing(found));
+        const availabilityMap = found?.id ? await fetchAvailability(found.id) : {};
+        setCreator({ ...normalizeCreatorListing(found), availabilityMap });
         if (found) setQuotes(loadQuoteRequests(found.id));
       }
     } else {
@@ -692,9 +694,18 @@ export function CreatorDashboard({ dark }) {
             <GoogleCalendarConnect
               creatorId={creator.id}
               dark={dark}
-              onSync={() => setAvailabilityRefreshKey(key => key + 1)}
+              onSync={async () => {
+                const availabilityMap = await fetchAvailability(creator.id);
+                setCreator(prev => ({ ...prev, availabilityMap }));
+                setAvailabilityRefreshKey(key => key + 1);
+              }}
             />
-            <AvailabilityEditor key={`${creator.id}-${availabilityRefreshKey}`} creatorId={creator.id} dark={dark} />
+            <AvailabilityEditor
+              key={`${creator.id}-${availabilityRefreshKey}`}
+              creatorId={creator.id}
+              dark={dark}
+              onSaved={availabilityMap => setCreator(prev => ({ ...prev, availabilityMap }))}
+            />
           </div>
         )}
 
@@ -735,7 +746,7 @@ function ProfileCompletion({ creator, dark, navigate }) {
     { label: 'Primary pillar selected',       done: !!(creator.primary_pillar || creator.services?.length) },
     { label: 'Intro video uploaded',         done: String(creator.video_intro_url || creator.videoIntroUrl || '').startsWith('bunny:') },
     { label: 'Portfolio media added',        done: (creator.portfolio || []).some(item => item.bunny_video_id || item.imageUrl || item.image_url) },
-    { label: 'Availability set',             done: false }, // would need to check localStorage
+    { label: 'Availability set',             done: Object.keys(creator.availabilityMap || {}).length > 0 },
   ];
   const score = checks.filter(c => c.done).length;
   const pct   = Math.round((score / checks.length) * 100);

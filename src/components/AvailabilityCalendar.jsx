@@ -276,7 +276,7 @@ export function AvailabilityMini({ creatorId, dark, onSelectDate, selectedDate }
 }
 
 // ── Full editor calendar for creators ────────────────────────
-export function AvailabilityEditor({ creatorId, dark }) {
+export function AvailabilityEditor({ creatorId, dark, onSaved }) {
   const today = new Date();
   const [viewYear,  setViewYear]  = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
@@ -332,7 +332,8 @@ export function AvailabilityEditor({ creatorId, dark }) {
   async function handleSave() {
     setSaveError('');
     try {
-      await persistAvailability(creatorId, availability);
+      const savedAvailability = await persistAvailability(creatorId, availability);
+      onSaved?.(savedAvailability);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (error) {

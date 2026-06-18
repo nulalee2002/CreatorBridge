@@ -63,9 +63,22 @@ async function runTests() {
   const listingId = activeListing.id;
   console.log(`- Found Creator Listing ID: ${listingId} (Status: ${activeListing.review_status})`);
 
+  if (!String(activeListing.video_intro_url || '').startsWith('bunny:')) {
+    throw new Error('QA creator fixture must have a CreatorBridge Bunny intro before profile verification');
+  }
+
+  const [{ data: originalAvailability, error: originalAvailabilityErr }, { data: originalPackages, error: originalPackagesErr }] = await Promise.all([
+    creatorClient.from('availability').select('*').eq('listing_id', listingId),
+    creatorClient.from('packages').select('*').eq('listing_id', listingId),
+  ]);
+  if (originalAvailabilityErr) throw originalAvailabilityErr;
+  if (originalPackagesErr) throw originalPackagesErr;
+
+  try {
+
   // 1. Verify Video Intro URL Persistence
   console.log(`\n1. Testing Video Intro URL persistence...`);
-  const testVideoUrl = 'https://www.youtube.com/embed/dQw4w9WgXcQ';
+  const testVideoUrl = 'bunny:qa-profile-feature-test';
   console.log(`- Updating video intro URL to: ${testVideoUrl}`);
   
   const { error: videoUpdateErr } = await creatorClient
@@ -73,8 +86,7 @@ async function runTests() {
     .update({ video_intro_url: testVideoUrl })
     .eq('id', listingId);
   if (videoUpdateErr) {
-    console.error('❌ Video update error:', videoUpdateErr.message);
-    process.exit(1);
+    throw new Error(`Video update error: ${videoUpdateErr.message}`);
   }
 
   // Retrieve and check
@@ -86,8 +98,7 @@ async function runTests() {
   if (retrieveErr) throw retrieveErr;
 
   if (listingAfter.video_intro_url !== testVideoUrl) {
-    console.error('❌ Failed: Video intro URL did not persist correctly!', listingAfter.video_intro_url);
-    process.exit(1);
+    throw new Error(`Video intro URL did not persist correctly: ${listingAfter.video_intro_url}`);
   }
   console.log('✅ Video intro URL successfully updated and verified in DB!');
 
@@ -115,8 +126,7 @@ async function runTests() {
     .from('availability')
     .upsert(rows, { onConflict: 'listing_id,date' });
   if (upsertAvailErr) {
-    console.error('❌ Availability upsert error:', upsertAvailErr.message);
-    process.exit(1);
+    throw new Error(`Availability upsert error: ${upsertAvailErr.message}`);
   }
 
   // Retrieve and check
@@ -131,8 +141,7 @@ async function runTests() {
   const tomorrowRow = availRows.find(r => r.date === tomorrowStr);
 
   if (!todayRow || todayRow.status !== 'available' || !tomorrowRow || tomorrowRow.status !== 'booked') {
-    console.error('❌ Failed: Availability did not persist correctly!');
-    process.exit(1);
+    throw new Error('Availability did not persist correctly');
   }
   console.log('✅ Availability calendar successfully updated and verified in DB!');
 
@@ -176,8 +185,7 @@ async function runTests() {
     .from('packages')
     .insert(pkgRows);
   if (insertPkgsErr) {
-    console.error('❌ Package insert error:', insertPkgsErr.message);
-    process.exit(1);
+    throw new Error(`Package insert error: ${insertPkgsErr.message}`);
   }
 
   // Retrieve and check
@@ -194,12 +202,36 @@ async function runTests() {
   }
 
   if (retrievedPkgs.length !== 2 || retrievedPkgs[0].name !== 'QA Basic video package' || retrievedPkgs[1].name !== 'QA Premium video package') {
-    console.error('❌ Failed: Packages did not persist correctly!');
-    process.exit(1);
+    throw new Error('Packages did not persist correctly');
   }
   console.log('✅ Package builder successfully updated and verified in DB!');
 
   console.log('\n--- ALL CREATOR PROFILE FEATURES TESTS PASSED SUCCESSFULLY! ---');
+  } finally {
+    const cleanupErrors = [];
+    const { error: videoRestoreErr } = await creatorClient
+      .from('creator_listings')
+      .update({ video_intro_url: activeListing.video_intro_url })
+      .eq('id', listingId);
+    if (videoRestoreErr) cleanupErrors.push(videoRestoreErr.message);
+
+    const { error: clearAvailabilityErr } = await creatorClient.from('availability').delete().eq('listing_id', listingId);
+    if (clearAvailabilityErr) cleanupErrors.push(clearAvailabilityErr.message);
+    if (originalAvailability.length > 0) {
+      const { error: restoreAvailabilityErr } = await creatorClient.from('availability').insert(originalAvailability);
+      if (restoreAvailabilityErr) cleanupErrors.push(restoreAvailabilityErr.message);
+    }
+
+    const { error: clearPackagesErr } = await creatorClient.from('packages').delete().eq('listing_id', listingId);
+    if (clearPackagesErr) cleanupErrors.push(clearPackagesErr.message);
+    if (originalPackages.length > 0) {
+      const { error: restorePackagesErr } = await creatorClient.from('packages').insert(originalPackages);
+      if (restorePackagesErr) cleanupErrors.push(restorePackagesErr.message);
+    }
+
+    if (cleanupErrors.length > 0) throw new Error(`Could not restore creator QA data: ${cleanupErrors.join('; ')}`);
+    console.log('✅ Creator QA profile data restored.');
+  }
 }
 
 runTests().catch(err => {

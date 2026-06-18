@@ -19,11 +19,10 @@ import { checkCreatorText, logFilterEvent, CREATOR_TEXT_BLOCK_MESSAGE } from '..
 import { sendNotificationEmail } from '../lib/notifications.js';
 import { HandoffPage } from './HandoffPage.jsx';
 import { handoffPages } from '../data/handoffPages.js';
+import { CreatorAvatar } from './CreatorAvatar.jsx';
 
 // Initialize seed data (version-gated — replaces stale seeds automatically)
 initSeedData();
-
-const CREATOR_AVATAR_FALLBACK = '/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg';
 
 function parseYearsExperience(value) {
   if (value === '2 years') return 2;
@@ -205,21 +204,17 @@ function CreatorCard({ creator, dark, onDelete, onViewProfile }) {
 
         {/* Overlapping Avatar */}
         <div className="avatar">
-          {creator.avatar?.startsWith('http') || (creator.avatar && creator.avatar.includes('/')) ? (
-            <img
-              src={creator.avatar}
-              alt={creator.name || creator.businessName || 'Creator'}
-              onError={(event) => {
-                if (event.currentTarget.dataset.fallbackApplied) return;
-                event.currentTarget.dataset.fallbackApplied = 'true';
-                event.currentTarget.src = CREATOR_AVATAR_FALLBACK;
-              }}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-charcoal-800 text-xl border-none">
-              {creator.avatar || '🎬'}
-            </div>
-          )}
+          <CreatorAvatar
+            src={creator.avatar}
+            alt={creator.name || creator.businessName || 'Creator'}
+            fallback={(creator.name || creator.businessName || 'C')
+              .split(/\s+/)
+              .map(part => part.charAt(0))
+              .join('')
+              .slice(0, 2)
+              .toUpperCase()}
+            className="bg-charcoal-800 text-xs font-bold text-gold-400"
+          />
         </div>
       </div>
 
@@ -1785,6 +1780,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
             <select 
               value={sortBy} 
               onChange={e => setSortBy(e.target.value)}
+              aria-label="Sort creators"
               className="min-h-[34px] rounded-xl border border-white/[0.08] bg-charcoal-950/70 px-3 py-2 text-xs text-white outline-none focus:border-gold-500"
             >
               <option value="rating">Top Rated</option>
