@@ -22,7 +22,7 @@ The composer will not accept arbitrary URLs. CreatorBridge profile and project r
 
 Existing text moderation continues to block external URLs, domains, email addresses, phone numbers, social handles, named social platforms, and payment applications in posts, replies, chat, creator profile copy, and portfolio descriptions. Internal portfolio references bypass pasted-text link parsing because they are stored as verified IDs.
 
-Portfolio media remains part of the creator profile pipeline. Media submitted for public display will receive automated contact-information screening where a server-side vision provider is available. The scan looks for phone numbers, email addresses, URLs, social handles, QR codes, and outbound watermarks. A scan failure never silently approves an image; it remains pending for manual admin review. The existing manual creator review remains the final fallback, so current OpenAI quota limitations cannot create a moderation bypass.
+Portfolio media remains part of the existing creator profile and manual approval pipeline. The network will not introduce a second image-upload surface, so the proposed gear-photo OCR path is unnecessary. Only portfolio items attached to an approved creator listing can be shared in the network. This keeps image review in one established place and prevents current OpenAI quota limitations from becoming either a publishing outage or a moderation bypass.
 
 ## Network Rules and Tone
 
