@@ -482,10 +482,10 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
   const labelCls = `text-[11px] font-semibold uppercase tracking-[0.14em] ${dark ? 'text-charcoal-300' : 'text-gray-500'} mb-2`;
   const stepMeta = [
     { n: 1, label: 'About You', title: 'Start with the creator identity clients will see.', desc: 'Use clear professional details, location, and positioning that match the standard of work you want to book.' },
-    { n: 2, label: 'Standards', title: 'Confirm the marketplace requirements.', desc: 'CreatorBridge is built around experienced, US-based professionals with reviewed profiles.' },
+    { n: 2, label: 'Standards', title: 'Confirm the platform requirements.', desc: 'CreatorBridge is built around experienced, US-based professionals with reviewed profiles.' },
     { n: 3, label: 'Craft', title: 'Choose your craft and your specialties.', desc: 'Pick the pillar that matches your primary work, then choose up to 3 specialties within it. These show on your profile.' },
     { n: 4, label: 'Portfolio', title: 'Show proof of the work.', desc: 'Add your intro video and at least three portfolio samples from real client work.' },
-    { n: 5, label: 'Submit', title: 'Review contact details and final acknowledgments.', desc: 'These confirmations protect clients, creators, and the quality of the marketplace.' },
+    { n: 5, label: 'Submit', title: 'Review contact details and final acknowledgments.', desc: 'These confirmations protect clients, creators, and the quality of the platform.' },
   ];
   const currentStep = stepMeta[step - 1];
 
@@ -523,7 +523,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 
 	  const publishChecks = [
 	    { label: 'Creator identity', done: !!form.name && bioLen >= 100 },
-	    { label: 'Marketplace standards', done: !!form.yearsExperience && !expBlocked && usLocationMet && form.ageConfirm },
+	    { label: 'Platform standards', done: !!form.yearsExperience && !expBlocked && usLocationMet && form.ageConfirm },
 	    { label: 'Craft + specialties', done: pillarSelected },
 	    { label: 'Proof of work', done: videoIntroMet && portfolioMet },
 	    { label: 'Contact email', done: !!form.contact.email },
@@ -614,7 +614,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
               CreatorBridge Creator Standards
             </h3>
             <p className={`mt-3 text-sm leading-6 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
-              Every creator is manually reviewed before their profile goes live. To be approved, the application needs to meet all core marketplace standards.
+              Every creator is manually reviewed before their profile goes live. To be approved, the application needs to meet all core platform standards.
             </p>
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -1082,7 +1082,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	              Final review
 	            </p>
 	            <p className={`text-sm leading-6 ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>
-	              Confirm the contact details and platform rules before your profile goes into review. This protects clients, creators, and the quality of the marketplace.
+	              Confirm the contact details and platform rules before your profile goes into review. This protects clients, creators, and the quality of the platform.
 	            </p>
 	          </div>
 
@@ -1255,7 +1255,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
               {[
                 {
                   title: 'Section 1 — Platform Use',
-                  body: 'CreatorBridge is a US-only professional marketplace connecting verified media creators with clients. By creating an account you agree to use the platform lawfully and professionally.',
+                  body: 'CreatorBridge is a US-only professional platform connecting verified media creators with clients. By creating an account you agree to use the platform lawfully and professionally.',
                 },
                 {
                   title: 'Section 2 — Creator Standards',
@@ -1685,7 +1685,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
             Join <span className="text-gradient-gold">CreatorBridge</span>
           </h1>
           <p className={`text-sm md:text-base leading-7 ${textSub} max-w-2xl mx-auto`}>
-            Apply to claim one primary pillar, set professional rates, and get reviewed for a curated marketplace built for US-based media creators.
+            Apply to claim one primary pillar, set professional rates, and get reviewed for a curated platform built for US-based media creators.
           </p>
         </div>
 
@@ -2091,7 +2091,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
               Join CreatorBridge to continue
             </h2>
             <p className="text-sm text-charcoal-400 mb-6 leading-relaxed">
-              CreatorBridge is a verified professional marketplace. Create a free account to view full creator profiles, packages, rates, and submit project requests. It takes less than 2 minutes.
+              CreatorBridge is a verified professional platform. Create a free account to view full creator profiles, packages, rates, and submit project requests. It takes less than 2 minutes.
             </p>
             <button type="button"
               onClick={() => {

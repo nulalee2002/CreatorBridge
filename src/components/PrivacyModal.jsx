@@ -43,7 +43,7 @@ export function PrivacyModal({ dark, onClose }) {
                 1. What Data We Collect
               </h2>
               <p>
-                CreatorBridge collects only the information necessary to operate the marketplace. We collect:
+                CreatorBridge collects only the information necessary to operate the platform. We collect:
               </p>
               <ul className="list-disc list-inside space-y-1 ml-2 mt-2">
                 <li>Account registration information: your name, email address, and phone number</li>
@@ -81,7 +81,7 @@ export function PrivacyModal({ dark, onClose }) {
               </h2>
               <p>We use your information to:</p>
               <ul className="list-disc list-inside space-y-1 ml-2 mt-2">
-                <li>Operate the CreatorBridge marketplace and match clients with creators</li>
+                <li>Operate the CreatorBridge platform and match clients with creators</li>
                 <li>Process payments and manage project escrow through Stripe</li>
                 <li>Verify creator identities to maintain platform safety and trust</li>
                 <li>Send notifications about project updates, messages, and platform activity</li>

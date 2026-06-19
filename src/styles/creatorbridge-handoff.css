@@ -1117,7 +1117,7 @@ select.input { appearance:none; padding-right:2rem;
     min-width:max-content;
   }
 
-  /* Hero floating cards (Marketplace Pulse, Production Standards) lose
+  /* Hero floating cards (Platform Pulse, Production Standards) lose
      their anchor when the image grid stacks on mobile. Hide them here so
      the mobile hero stays clean. They reappear at >=768px where the
      image composition gives them somewhere natural to sit.
@@ -1534,7 +1534,7 @@ select.input:hover { border-color:rgba(201,168,76,0.45); }
 }
 
 /* --- Mobile hero strip ---
-   Compact replacement for the Production Standards / Marketplace Pulse
+   Compact replacement for the Production Standards / Platform Pulse
    float cards, which are hidden on phones. Desktop never sees this. */
 /* Retired June 12: the real float cards now scale down on mobile instead,
    so the summary strip duplicated their content. */
@@ -1808,7 +1808,7 @@ a:not(.btn-gold):not(.btn-ghost):not(.nav-link):not(.logo-mark):not(.lane-card):
 /* =======================================================================
    BRIDGE ASSISTANT — concierge chat widget
    Bottom-right floating button + sliding panel. Lives on every page.
-   Avatar is a stylized lens aperture (iris) — on-brand for a media marketplace.
+   Avatar is a stylized lens aperture (iris) — on-brand for a media platform.
    ======================================================================= */
 
 /* ----- FAB (floating action button) ----- */

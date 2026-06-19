@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { MapPin, Send, Flag, Heart, MessageSquare, ChevronDown, Users, Lock } from 'lucide-react';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
@@ -6,6 +7,8 @@ import { checkMessage, logFilterEvent } from '../utils/messageFilter.js';
 import { HandoffPage } from '../components/HandoffPage.jsx';
 import { handoffPages } from '../data/handoffPages.js';
 import { CreatorAvatar } from '../components/CreatorAvatar.jsx';
+import { getStorageDisplayUrl } from '../utils/storage.js';
+import { getBunnyThumbnailUrl } from '../utils/bunnyStream.js';
 
 const US_STATES = [
   { code: 'AL', name: 'Alabama' }, { code: 'AK', name: 'Alaska' },
@@ -83,7 +86,14 @@ const SEED_NETWORK_POSTS = [
     user_verification_status: 'pro_verified',
     user_primary_service: 'Video Production',
     post_type: 'portfolio',
-    content: 'Just wrapped a 3-day brand film shoot for a fintech startup in LA. Really proud of how the color grade turned out. Link to the final cut: https://vimeo.com/example',
+    creator_listing_id: 'demo',
+    portfolio_item_id: '1',
+    portfolio_item: {
+      id: '1',
+      title: 'Fintech Brand Film',
+      image_url: '/images/creatorbridge/backgrounds/03-featured-work/featured-warehouse-film-set.jpg',
+    },
+    content: 'Just wrapped a 3-day brand film shoot for a fintech startup in LA. I would love feedback on the pacing and color grade.',
     likes_count: 12,
     reply_count: 5,
     created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
@@ -140,10 +150,9 @@ const MOCK_CHAT = {
     { id: 'm-seed-8', name: "Naomi G.", time: "9:18", avatar: "/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg", text: "I'll bite — DMing now" },
     { id: 'm-seed-9', name: "David P.", time: "9:22", avatar: "/images/creatorbridge/handoff/photo-1438761681033-6461ffad8d80.jpg", text: "Aria solid pick, his Standard Hotels work was 10/10" }
   ],
-  gear: [
-    { id: 'm-seed-10', name: "David P.", time: "8:52", avatar: "/images/creatorbridge/handoff/photo-1438761681033-6461ffad8d80.jpg", text: "Selling FX6, see today's main feed for details" },
-    { id: 'm-seed-11', name: "Sofia P.", time: "9:01", avatar: "/images/creatorbridge/handoff/photo-1487412720507-e7ab37603c6f.jpg", text: "Renting Profoto B10 Plus duo · $80/day · Manhattan" },
-    { id: 'm-seed-12', name: "Mateo R.", time: "9:11", avatar: "/images/creatorbridge/handoff/photo-1500648767791-00dcc994a43e.jpg", text: "Anyone got an extra ND filter set in 4×5.65? Mine fell into Lake Travis on Saturday 🪦" }
+  portfolio: [
+    { id: 'm-seed-10', name: "Sofia P.", time: "9:01", avatar: "/images/creatorbridge/handoff/photo-1487412720507-e7ab37603c6f.jpg", text: "I shared a new hospitality edit in the feed and would value notes on the opening sequence." },
+    { id: 'm-seed-11', name: "Mateo R.", time: "9:11", avatar: "/images/creatorbridge/handoff/photo-1500648767791-00dcc994a43e.jpg", text: "The pacing feels strong. I would hold the wide shot two beats longer before the first close-up." }
   ],
   leads: [
     { id: 'm-seed-13', name: "Aria V.", time: "11:02", avatar: "/images/creatorbridge/handoff/photo-1494790108377-be9c29b29330.jpg", text: "Routing 2 commercial photo briefs to FL/CA — see today's main feed" },
@@ -151,21 +160,11 @@ const MOCK_CHAT = {
   ]
 };
 
-const BLOCKED_PHRASES = [
-  'project board', 'job posting', 'i posted a job', 'check the board',
-  'apply on the board',
-];
-
 const CONTACT_PATTERNS = [
   /@[a-zA-Z0-9_.]{2,}/,
   /\b[\w.-]+@[\w.-]+\.\w{2,}\b/,
   /\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/,
 ];
-
-function containsBlockedContent(text) {
-  const lower = text.toLowerCase();
-  return BLOCKED_PHRASES.some(p => lower.includes(p));
-}
 
 function containsContactInfo(text) {
   return CONTACT_PATTERNS.some(p => p.test(text));
@@ -190,16 +189,6 @@ function getInitials(name) {
   return sanitizePlainText(name || '?', 80).split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 }
 
-function linkifyText(text) {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const parts = text.split(urlRegex);
-  return parts.map((part, i) =>
-    urlRegex.test(part)
-      ? <a key={i} href={part} target="_blank" rel="noreferrer" className="inline-flex min-h-[34px] items-center text-gold-400 underline break-all">{part}</a>
-      : part
-  );
-}
-
 function getSeedAvatar(id) {
   const seedAvatars = {
     'net-seed-1': '/images/creatorbridge/handoff/photo-1507003211169-0a1dd7228f2d.jpg',
@@ -214,10 +203,11 @@ function getSeedAvatar(id) {
 function getPostTypeLabel(type) {
   switch (type) {
     case 'looking_for_creator': return 'Gig Lead';
-    case 'general': return 'Gear swap';
-    case 'collab': return 'Collab';
-    case 'portfolio': return 'Referral';
-    case 'industry_news': return 'Industry News';
+    case 'general': return 'General Discussion';
+    case 'collab': return 'Collaboration';
+    case 'portfolio': return 'Portfolio Work & Feedback';
+    case 'referral': return 'Referral';
+    case 'industry_news': return 'Industry Discussion';
     default: return 'General';
   }
 }
@@ -312,7 +302,7 @@ const encodeChannelMessage = (channel, text) => {
 };
 
 const decodeChannelMessage = (text) => {
-  const match = text.match(/^\[(general|referrals|gear|leads)\]\s*(.*)$/);
+  const match = text.match(/^\[(general|referrals|portfolio|leads)\]\s*(.*)$/);
   if (match) {
     return { channel: match[1], message: match[2] };
   }
@@ -354,6 +344,33 @@ function VerificationDot({ status }) {
   );
 }
 
+function PortfolioProjectPreview({ item }) {
+  const [imageUrl, setImageUrl] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    async function resolveImage() {
+      const rawUrl = item?.bunny_video_id
+        ? getBunnyThumbnailUrl(`bunny:${item.bunny_video_id}`)
+        : item?.image_url || '';
+      const resolved = await getStorageDisplayUrl(rawUrl);
+      if (active) setImageUrl(resolved || '');
+    }
+    resolveImage();
+    return () => { active = false; };
+  }, [item?.bunny_video_id, item?.image_url]);
+
+  if (!imageUrl) return null;
+  return (
+    <img
+      src={imageUrl}
+      alt=""
+      className="h-24 w-28 shrink-0 object-cover"
+      onError={event => { event.currentTarget.style.display = 'none'; }}
+    />
+  );
+}
+
 function PostCard({ post, dark, isVerified, onLike, onReport, onReply }) {
   const [showReplies, setShowReplies] = useState(false);
   const [replies, setReplies] = useState(post.replies || []);
@@ -381,9 +398,9 @@ function PostCard({ post, dark, isVerified, onLike, onReport, onReply }) {
     const cleanReply = sanitizeLongText(replyText, 280);
     if (!cleanReply || !isVerified) return;
     const { blocked, patternType } = checkMessage(cleanReply);
-    if (containsBlockedContent(cleanReply) || containsContactInfo(cleanReply) || blocked) {
+    if (containsContactInfo(cleanReply) || blocked) {
       logFilterEvent(post.user_id || post.id || 'network-reply', patternType || 'blocked_network_reply', supabase, supabaseConfigured);
-      alert('Your reply contains disallowed content. Please keep all communication professional and avoid contact info or job board references.');
+      alert('Your reply contains disallowed content. Please keep all communication on CreatorBridge and avoid contact information or external links.');
       return;
     }
     const savedReply = await onReply?.(post.id, cleanReply);
@@ -430,8 +447,22 @@ function PostCard({ post, dark, isVerified, onLike, onReport, onReply }) {
       </div>
 
       <p className="text-sm text-[var(--text)]/90 leading-relaxed mb-4">
-        {linkifyText(post.content)}
+        {post.content}
       </p>
+
+      {post.post_type === 'portfolio' && post.portfolio_item && post.creator_listing_id && (
+        <Link
+          to={`/creator/${post.creator_listing_id}?portfolio=${post.portfolio_item.id}`}
+          className="mb-4 flex min-h-[96px] overflow-hidden rounded-xl border border-white/[0.09] bg-charcoal-950/60 transition-colors hover:border-gold-500/50"
+        >
+          <PortfolioProjectPreview item={post.portfolio_item} />
+          <span className="flex min-w-0 flex-1 flex-col justify-center px-4 py-3">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-gold-400">CreatorBridge portfolio project</span>
+            <span className="mt-1 truncate text-sm font-semibold text-white">{post.portfolio_item.title || 'Selected work'}</span>
+            <span className="mt-1 text-xs text-charcoal-400">View this project on the creator profile →</span>
+          </span>
+        </Link>
+      )}
 
       <div className="flex items-center gap-4 text-[11px] text-[var(--text-dim)] pt-3 border-t border-[var(--border)]">
         <button
@@ -459,7 +490,7 @@ function PostCard({ post, dark, isVerified, onLike, onReport, onReply }) {
           {replies.map(r => (
             <div key={r.id} className="text-xs">
               <span className="font-semibold text-charcoal-200">{r.user_display_name}</span>
-              <span className="ml-2 text-charcoal-300">{linkifyText(r.content)}</span>
+              <span className="ml-2 text-charcoal-300">{r.content}</span>
               <span className="ml-2 text-charcoal-600">{timeAgo(r.created_at)}</span>
             </div>
           ))}
@@ -494,6 +525,9 @@ export function NetworkingPage({ dark, user, profile }) {
   const [messages, setMessages] = useState([]);
   const [postContent, setPostContent] = useState('');
   const [postType, setPostType] = useState('general');
+  const [creatorListingId, setCreatorListingId] = useState('');
+  const [shareableProjects, setShareableProjects] = useState([]);
+  const [selectedPortfolioItemId, setSelectedPortfolioItemId] = useState('');
   const [chatInput, setChatInput] = useState('');
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [postError, setPostError] = useState('');
@@ -547,6 +581,37 @@ export function NetworkingPage({ dark, user, profile }) {
   }, [selectedState]);
 
   useEffect(() => {
+    let active = true;
+    async function loadShareableProjects() {
+      setCreatorListingId('');
+      setShareableProjects([]);
+      setSelectedPortfolioItemId('');
+      if (!supabaseConfigured || !user?.id || !isVerified) return;
+
+      const { data: listing } = await supabase
+        .from('creator_listings')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('review_status', 'approved')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!active || !listing?.id) return;
+
+      const { data: projects } = await supabase
+        .from('portfolio_items')
+        .select('id, listing_id, title, description, image_url, media_type, bunny_video_id, service_id')
+        .eq('listing_id', listing.id)
+        .order('created_at', { ascending: false });
+      if (!active) return;
+      setCreatorListingId(listing.id);
+      setShareableProjects(projects || []);
+    }
+    loadShareableProjects();
+    return () => { active = false; };
+  }, [user?.id, isVerified]);
+
+  useEffect(() => {
     // Scroll only the chat's own message list to the newest message.
     // scrollIntoView scrolled every ancestor too, yanking the whole page
     // down to the chat panel every time the Network page opened.
@@ -561,7 +626,7 @@ export function NetworkingPage({ dark, user, profile }) {
     if (supabaseConfigured) {
       const { data, error } = await supabase
         .from('network_posts')
-        .select('*')
+        .select('*, portfolio_item:portfolio_items!network_posts_portfolio_item_id_fkey(id, title, description, image_url, media_type, bunny_video_id, service_id, listing_id)')
         .eq('state_code', selectedState)
         .eq('is_flagged', false)
         .gt('expires_at', new Date().toISOString())
@@ -638,8 +703,8 @@ export function NetworkingPage({ dark, user, profile }) {
     e.preventDefault();
     const cleanContent = sanitizeLongText(postContent, 500);
     if (!cleanContent || !isVerified) return;
-    if (containsBlockedContent(cleanContent)) {
-      setPostError('Your post mentions job board content which is not allowed in state networks. Please keep posts professional and relevant to media production.');
+    if (postType === 'portfolio' && (!creatorListingId || !selectedPortfolioItemId)) {
+      setPostError('Choose one approved portfolio project from your CreatorBridge profile before posting.');
       return;
     }
     const { blocked, patternType } = checkMessage(cleanContent);
@@ -658,6 +723,9 @@ export function NetworkingPage({ dark, user, profile }) {
       user_verification_status: getUserVerificationStatus(user, profile),
       user_primary_service: getUserPrimaryService(user, profile),
       post_type: postType,
+      creator_listing_id: postType === 'portfolio' ? creatorListingId : null,
+      portfolio_item_id: postType === 'portfolio' ? selectedPortfolioItemId : null,
+      portfolio_item: postType === 'portfolio' ? shareableProjects.find(item => item.id === selectedPortfolioItemId) : null,
       content: cleanContent,
       likes_count: 0,
       reply_count: 0,
@@ -672,6 +740,8 @@ export function NetworkingPage({ dark, user, profile }) {
         user_id: user.id,
         content: cleanContent,
         post_type: postType,
+        creator_listing_id: postType === 'portfolio' ? creatorListingId : null,
+        portfolio_item_id: postType === 'portfolio' ? selectedPortfolioItemId : null,
         user_display_name: newPost.user_display_name,
         user_verification_status: newPost.user_verification_status,
         user_primary_service: newPost.user_primary_service,
@@ -686,6 +756,7 @@ export function NetworkingPage({ dark, user, profile }) {
       setPosts(prev => [withSafeReplies(newPost), ...prev]);
     }
     setPostContent('');
+    setSelectedPortfolioItemId('');
   }
 
   async function handleSendMessage(e) {
@@ -693,9 +764,9 @@ export function NetworkingPage({ dark, user, profile }) {
     const cleanMessage = sanitizeLongText(chatInput, 300);
     if (!cleanMessage || !isVerified) return;
     const { blocked, patternType } = checkMessage(cleanMessage);
-    if (containsBlockedContent(cleanMessage) || containsContactInfo(cleanMessage) || blocked) {
+    if (containsContactInfo(cleanMessage) || blocked) {
       logFilterEvent(user?.id || 'network-chat', patternType || 'blocked_network_chat', supabase, supabaseConfigured);
-      setChatError('Message contains disallowed content. Keep chat professional and avoid contact info or job board references.');
+      setChatError('Message contains disallowed content. Keep chat on CreatorBridge and avoid contact information or external links.');
       return;
     }
     setChatError('');
@@ -878,7 +949,7 @@ export function NetworkingPage({ dark, user, profile }) {
                 A trusted local circuit. <span className="gold-text">Verified only.</span>
               </h1>
               <p className="text-sm text-[var(--text-secondary)] max-w-xl mt-4 leading-relaxed">
-                Referrals, gear swaps, collab requests, and gig leads — organized by state so the conversation stays local. No DM scraping, no contact poaching, no general-marketplace noise.
+                Portfolio feedback, referrals, collaboration requests, and Project Board leads — organized by state so professional conversation stays local and on CreatorBridge.
               </p>
             </div>
             
@@ -997,13 +1068,13 @@ export function NetworkingPage({ dark, user, profile }) {
                 onClick={() => setFilterType('portfolio')}
                 className={`filter-pill ${filterType === 'portfolio' ? 'active' : ''}`}
               >
-                Referrals
+                Portfolio feedback
               </button>
               <button
-                onClick={() => setFilterType('general')}
-                className={`filter-pill ${filterType === 'general' ? 'active' : ''}`}
+                onClick={() => setFilterType('referral')}
+                className={`filter-pill ${filterType === 'referral' ? 'active' : ''}`}
               >
-                Gear swap
+                Referrals
               </button>
               <button
                 onClick={() => setFilterType('collab')}
@@ -1022,7 +1093,7 @@ export function NetworkingPage({ dark, user, profile }) {
             {/* Post composer */}
             <div className="liquid-glass rounded-2xl p-5">
               <div className="rounded-xl p-3 mb-4 text-xs bg-charcoal-950/75 text-charcoal-400 border border-white/[0.07] leading-relaxed">
-                Keep all posts professional and relevant to media production. Mentioning job postings from the Project Board is not allowed here. Violations result in strikes against your account.
+                Share approved portfolio work for feedback, referrals, collaboration ideas, and industry discussion. Gig leads should point members to the Project Board. External links and contact details stay off the network.
               </div>
 
               {isVerified ? (
@@ -1043,11 +1114,12 @@ export function NetworkingPage({ dark, user, profile }) {
                   {/* Post type pills for creator choice */}
                   <div className="flex gap-2 flex-wrap mb-4">
                     {[
-                      { id: 'general', label: 'Gear swap' },
-                      { id: 'collab', label: 'Collab' },
+                      { id: 'general', label: 'General discussion' },
+                      { id: 'portfolio', label: 'Portfolio work & feedback' },
+                      { id: 'collab', label: 'Collaboration' },
+                      { id: 'referral', label: 'Referral' },
                       { id: 'looking_for_creator', label: 'Gig lead' },
-                      { id: 'portfolio', label: 'Referral' },
-                      { id: 'industry_news', label: 'Industry News' }
+                      { id: 'industry_news', label: 'Industry discussion' }
                     ].map(pt => (
                       <button
                         key={pt.id}
@@ -1064,13 +1136,38 @@ export function NetworkingPage({ dark, user, profile }) {
                     ))}
                   </div>
 
+                  {postType === 'portfolio' && (
+                    <div className="mb-4 rounded-xl border border-white/[0.09] bg-charcoal-950/60 p-3">
+                      <label htmlFor="network-portfolio-project" className="mb-2 block text-xs font-semibold text-charcoal-200">
+                        Choose an approved portfolio project
+                      </label>
+                      {shareableProjects.length ? (
+                        <select
+                          id="network-portfolio-project"
+                          value={selectedPortfolioItemId}
+                          onChange={event => setSelectedPortfolioItemId(event.target.value)}
+                          className="w-full rounded-lg border border-white/[0.09] bg-charcoal-950 px-3 py-2 text-sm text-white outline-none focus:border-gold-500"
+                        >
+                          <option value="">Select work from your profile…</option>
+                          {shareableProjects.map(project => (
+                            <option key={project.id} value={project.id}>{project.title || 'Untitled project'}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <p className="text-xs leading-relaxed text-charcoal-400">
+                          Add portfolio work to your creator profile and complete approval before sharing it here. Network posts cannot upload separate images.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   {postError && (
                     <p className="text-xs text-red-400 mb-3">{postError}</p>
                   )}
 
                   <button
                     type="submit"
-                    disabled={!postContent.trim()}
+                    disabled={!postContent.trim() || (postType === 'portfolio' && !selectedPortfolioItemId)}
                     className="min-h-[34px] w-full py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 disabled:cursor-not-allowed text-charcoal-900 text-sm font-bold transition-all cursor-pointer"
                   >
                     Post to {activeStateObj.name} Network
@@ -1148,10 +1245,10 @@ export function NetworkingPage({ dark, user, profile }) {
                   <span className="hash mr-0.5 font-serif font-medium text-[13px]">#</span>referrals
                 </button>
                 <button
-                  onClick={() => setSelectedChannel('gear')}
-                  className={`chat-channel min-h-[34px] cursor-pointer ${selectedChannel === 'gear' ? 'active' : ''}`}
+                  onClick={() => setSelectedChannel('portfolio')}
+                  className={`chat-channel min-h-[34px] cursor-pointer ${selectedChannel === 'portfolio' ? 'active' : ''}`}
                 >
-                  <span className="hash mr-0.5 font-serif font-medium text-[13px]">#</span>gear-swap
+                  <span className="hash mr-0.5 font-serif font-medium text-[13px]">#</span>portfolio-feedback
                 </button>
                 <button
                   onClick={() => setSelectedChannel('leads')}
@@ -1241,13 +1338,13 @@ export function NetworkingPage({ dark, user, profile }) {
                   <svg className="w-3.5 h-3.5 text-[var(--gold)] mt-0.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
                   </svg>
-                  <span>Client invites create credits only after completed projects.</span>
+                  <span>Portfolio feedback links only to approved work on CreatorBridge.</span>
                 </li>
                 <li className="flex gap-2 items-start">
                   <svg className="w-3.5 h-3.5 text-[var(--gold)] mt-0.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
                   </svg>
-                  <span>Be local. State conversations stay state-specific.</span>
+                  <span>No gear sales, rentals, or swaps. Private equipment arrangements are not facilitated, verified, insured, or accepted as CreatorBridge responsibility.</span>
                 </li>
               </ul>
             </div>

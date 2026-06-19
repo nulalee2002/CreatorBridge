@@ -844,7 +844,7 @@ export default function App() {
 
           {/* Logo */}
           <button type="button" className="logo-mark" onClick={() => navigate('/')} aria-label="CreatorBridge home">
-            <img src="/images/creatorbridge/handoff/logo.png" alt="CreatorBridge — Verified Media Marketplace" className="logo-img" />
+            <img src="/images/creatorbridge/handoff/logo.png" alt="CreatorBridge — Verified Media Platform" className="logo-img" />
           </button>
 
           {/* Main tab switcher */}
@@ -1418,7 +1418,7 @@ export default function App() {
                   <img src="/images/creatorbridge/handoff/logo.png" alt="CreatorBridge" className="logo-img" />
                 </button>
                 <p style={{ fontSize: 12, color: 'var(--text-secondary)', maxWidth: '24rem', lineHeight: 1.6 }}>
-                  The verified US marketplace connecting brands with professional media specialists across three production pillars — without building an internal media department.
+                  The verified US platform connecting brands with professional media specialists across three production pillars — without building an internal media department.
                 </p>
                 <div className="footer-pillar-row">
                   <span className="footer-pill">Video Production</span>
@@ -1445,7 +1445,7 @@ export default function App() {
               </FooterCol>
             </div>
             <div className="bottom">
-              <div>© 2026 CreatorBridge · US-only verified media marketplace · All bookings in USD.</div>
+              <div>© 2026 CreatorBridge · US-only verified media platform · All bookings in USD.</div>
               <div className="bottom-links">
                 <button type="button" onClick={() => navigate('/terms')}>Terms</button>
                 <button type="button" onClick={() => navigate('/privacy')}>Privacy</button>

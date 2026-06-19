@@ -194,7 +194,7 @@ export function CreatorAgreement({ dark }) {
 
             <Section id="strikes" title="6. Violations & The Three-Strike Rule" dark={dark}>
               <p>
-                To ensure a trustworthy marketplace, we operate a three-strike rule for infractions:
+                To ensure a trustworthy platform, we operate a three-strike rule for infractions:
               </p>
               <div className="space-y-3 mt-2">
                 <div className="p-3.5 rounded-xl border border-gold-500/20 bg-gold-500/5">

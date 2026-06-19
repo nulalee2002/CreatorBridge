@@ -509,7 +509,7 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
           {showOnboarding && (
             <div className="space-y-5">
               <div className={`rounded-xl border px-4 py-3 text-xs leading-relaxed ${dark ? 'border-white/[0.07] bg-charcoal-900/50 text-charcoal-300' : 'border-gray-200 bg-gray-50 text-gray-600'}`}>
-                Welcome to CreatorBridge. You are joining a professional marketplace where every creator is verified and vetted. To maintain quality for both sides, we ask a few quick questions before you start browsing. This takes about 2 minutes.
+                Welcome to CreatorBridge. You are joining a professional platform where every creator is verified and vetted. To maintain quality for both sides, we ask a few quick questions before you start browsing. This takes about 2 minutes.
               </div>
 
               {/* Q1 */}

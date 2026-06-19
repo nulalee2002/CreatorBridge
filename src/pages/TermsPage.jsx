@@ -97,13 +97,13 @@ export function TermsPage({ dark }) {
               </p>
               <p>
                 These terms apply to all users of the platform: creators offering services, clients seeking services,
-                and any visitors browsing the marketplace.
+                and any visitors browsing the platform.
               </p>
             </Section>
 
             <Section id="how-it-works" title="2. How CreatorBridge Works" dark={dark}>
               <p>
-                CreatorBridge operates as a two-sided marketplace. Creators list their services, packages, and rates.
+                CreatorBridge operates as a two-sided platform. Creators list their services, packages, and rates.
                 Clients browse the directory, request quotes, and book projects through the platform.
               </p>
               <p>
@@ -296,14 +296,14 @@ export function TermsPage({ dark }) {
               </ul>
               <p>
                 By listing on CreatorBridge, creators grant us a non-exclusive license to display portfolio items
-                and profile content for the purpose of operating the marketplace. This license ends when you remove
+                and profile content for the purpose of operating the platform. This license ends when you remove
                 the content or delete your account.
               </p>
             </Section>
 
             <Section id="privacy" title="11. Privacy" dark={dark}>
               <p>
-                CreatorBridge collects only the information necessary to operate the marketplace. This includes:
+                CreatorBridge collects only the information necessary to operate the platform. This includes:
                 account registration data, profile content you provide, project and payment records,
                 and usage data for platform improvement.
               </p>

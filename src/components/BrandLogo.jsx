@@ -21,7 +21,7 @@ export function BrandLogo({ compact = false, className = '' }) {
   return (
     <img
       src={BRAND_LOCKUP}
-      alt="CreatorBridge, verified media marketplace"
+      alt="CreatorBridge, verified media platform"
       className={`block h-10 w-auto max-w-[220px] object-contain sm:h-12 sm:max-w-[320px] lg:max-w-[360px] ${className}`}
       loading="eager"
       decoding="async"

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SEO } from '../components/SEO.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { SEED_CREATORS } from '../data/seedCreators.js';
@@ -397,7 +397,7 @@ function Portfolio({ onOpen }) {
   const videoItems = items.filter(p => p.mediaType === 'video');
   const renderItems = [...videoItems, ...photoItems];
   return (
-    <section className="mb-16">
+    <section id="portfolio-section" className="mb-16 scroll-mt-24">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
         <div>
           <Eyebrow>Portfolio</Eyebrow>
@@ -418,7 +418,7 @@ function Portfolio({ onOpen }) {
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
         {renderItems.map(p => (
-          <div key={p.id} onClick={() => onOpen(p)} className={"lane-card cursor-pointer " + p.ratio}>
+          <div id={`portfolio-${p.id}`} key={p.id} onClick={() => onOpen(p)} className={"lane-card cursor-pointer scroll-mt-24 " + p.ratio}>
             <img src={p.src} alt={p.title} onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg'; } }}/>
             <div className="lane-content">
               <div className="text-[9px] uppercase tracking-[0.2em] text-[var(--gold)] mb-1">{p.cat}</div>
@@ -797,6 +797,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 
 function HandoffCreatorProfile() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const [selectedPkg, setSelectedPkg] = useState("signature");
@@ -805,6 +806,17 @@ function HandoffCreatorProfile() {
   const [bookOpen, setBookOpen] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showSticky, setShowSticky] = useState(false);
+
+  useEffect(() => {
+    const portfolioItemId = searchParams.get('portfolio');
+    if (!portfolioItemId) return;
+    const selectedItem = portfolio.find(item => String(item.id) === portfolioItemId);
+    if (!selectedItem) return;
+    setLightbox(selectedItem);
+    window.requestAnimationFrame(() => {
+      document.getElementById(`portfolio-${portfolioItemId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }, [searchParams]);
 
   // Sticky book bar appears after hero scroll
   useEffect(() => {

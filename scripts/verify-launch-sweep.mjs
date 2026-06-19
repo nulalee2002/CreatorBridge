@@ -6,6 +6,8 @@ const checks = [
   ['email provider', ['npm', ['run', 'verify:email-provider']]],
   ['chatbot guide', ['npm', ['run', 'verify:chatbot-guide']]],
   ['profile media', ['npm', ['run', 'verify:profile-media']]],
+  ['network portfolio sharing', ['npm', ['run', 'verify:network-portfolio-sharing']]],
+  ['platform language', ['npm', ['run', 'verify:platform-language']]],
   ['support reporting', ['npm', ['run', 'verify:support-reporting']]],
   ['client phone gate', ['npm', ['run', 'verify:client-phone-gate']]],
   ['release-payment security', ['npm', ['run', 'verify:release-payment-security']]],

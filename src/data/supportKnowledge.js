@@ -6,7 +6,7 @@ export function getPlatformGuideResponse(question = '') {
   }
 
   if (q.includes('creator approval') || q.includes('creator apply') || q.includes('creator application') || q.includes('become a creator')) {
-    return 'Creators go through manual review before they are visible as approved marketplace creators. The application asks for identity, bio, US location, one primary production pillar, 1 to 3 specialties, portfolio work, intro video, and required acknowledgments. Submitted listings start as pending review, then admin approves or rejects them.';
+    return 'Creators go through manual review before they are visible as approved platform creators. The application asks for identity, bio, US location, one primary production pillar, 1 to 3 specialties, portfolio work, intro video, and required acknowledgments. Submitted listings start as pending review, then admin approves or rejects them.';
   }
 
   if (q.includes('admin') || q.includes('approve') || q.includes('approval') || q.includes('review creators') || q.includes('creator review')) {
@@ -78,7 +78,7 @@ export function getPlatformGuideResponse(question = '') {
   }
 
   if (q.includes('verif') || q.includes('verified') || q.includes('trusted') || q.includes('legit')) {
-    return 'Creators are reviewed before they can operate as verified marketplace creators. The profile should show a clear production lane, relevant specialties, portfolio evidence, and account verification status so clients know who they are booking.';
+    return 'Creators are reviewed before they can operate as verified platform creators. The profile should show a clear production lane, relevant specialties, portfolio evidence, and account verification status so clients know who they are booking.';
   }
 
   if (q.includes('tier') || q.includes('launch') || q.includes('proven') || q.includes('elite') || q.includes('signature')) {
