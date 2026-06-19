@@ -31,5 +31,6 @@ dist-verify/
 # Local QA/session leftovers; never commit.
 .playwright-cli/
 .superpowers/
+.worktrees/
 /output/
 /backgrounds/
