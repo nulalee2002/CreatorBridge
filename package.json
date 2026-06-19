@@ -20,6 +20,8 @@
     "verify:client-invite-credit": "node scripts/verify-client-invite-credit.mjs",
     "verify:margin-protection": "node scripts/verify-margin-protection.mjs",
     "verify:profile-media": "node scripts/verify-profile-media.mjs",
+    "verify:support-reporting": "node scripts/verify-support-reporting.mjs",
+    "verify:support-cleanup-live": "node --env-file=.env scripts/verify-support-cleanup-live.mjs",
     "verify:messaging": "node --env-file=.env scripts/verify-messaging.mjs",
     "verify:project-lifecycle": "node --env-file=.env scripts/verify-project-lifecycle.mjs",
     "verify:network": "node --env-file=.env scripts/verify-network.mjs",

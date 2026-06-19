@@ -67,10 +67,11 @@ for (const [id, expected] of expectedSeedMedia) {
 }
 
 assert(profile.includes('aria-label="Watch intro"'), 'Intro control must remain accessible');
-assert(profile.includes('<Play size={10}'), 'Intro control must use a compact play icon');
+assert(profile.includes('w-20 h-20 md:w-28 md:h-28'), 'Profile intro thumbnail must use the approved responsive size');
+assert(profile.includes('<Play size={8}'), 'Approved Watch intro pill must use a compact play icon');
 assert(
-  !profile.includes('text-[8px] font-bold uppercase tracking-[0.08em] text-[var(--bg)]">Watch intro</span>'),
-  'Large text pill must not cover the creator portrait'
+  profile.includes('absolute inset-x-1 bottom-1') && profile.includes('Watch intro'),
+  'Approved Watch intro pill placement must remain unchanged'
 );
 
 assert(directory.includes("import { CreatorAvatar } from './CreatorAvatar.jsx';"), 'Directory cards must use the shared avatar renderer');
