@@ -27,7 +27,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): { subjec
         <p><strong>What happens next:</strong></p>
         <ul>
           <li><strong>Manual Review:</strong> Our team is manually reviewing your application, portfolio samples, and intro video. This typically takes 3 to 5 business days.</li>
-          <li><strong>90-Day profile Lock:</strong> To protect marketplace integrity, once your profile is approved, critical identity details (including business name, full name, and location) are locked for 90 days. Minor modifications like bio, packages, and calendar remain editable at any time.</li>
+          <li><strong>90-Day profile Lock:</strong> To protect platform integrity, once your profile is approved, critical identity details (including business name, full name, and location) are locked for 90 days. Minor modifications like bio, packages, and calendar remain editable at any time.</li>
           <li><strong>Stripe Connect:</strong> Once approved, you will need to complete your Stripe Connect Express setup to connect a bank account or debit card. Listings go live only after payout details are linked.</li>
         </ul>
         <p>If you have any questions during this time, please reach out to <a href="mailto:drl33@creatorbridge.studio" style="color: #d4a941; text-decoration: underline;">drl33@creatorbridge.studio</a>.</p>
@@ -39,7 +39,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): { subjec
       bodyContent = `
         <h2 style="color: #d4a941; margin-top: 0; font-size: 20px;">Welcome to CreatorBridge!</h2>
         <p>Hi ${data.client_name || 'Client'},</p>
-        <p>Your client account is now active and ready. CreatorBridge is a professional creative marketplace designed to make finding and hiring US-based creative talent simple and secure.</p>
+        <p>Your client account is now active and ready. CreatorBridge is a professional media production platform designed to make finding and hiring US-based creative talent simple and secure.</p>
         <p><strong>Next steps:</strong></p>
         <ul>
           <li><strong>Post a Brief:</strong> Create a project brief specifying deliverables, budget, and location.</li>
@@ -80,7 +80,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): { subjec
         <p>Hi ${data.creator_name || 'Creator'},</p>
         <p>${data.client_name || 'A client'} sent you a quote request for <strong>"${data.project_title || 'a new project'}"</strong>.</p>
         <p>Please log in to CreatorBridge, review the project details, and respond inside the platform within <strong>24 hours</strong>.</p>
-        <p>For marketplace protection, keep communication and booking activity inside CreatorBridge until the booking is active.</p>
+        <p>For platform protection, keep communication and booking activity inside CreatorBridge until the booking is active.</p>
       `;
       break;
 
@@ -129,6 +129,24 @@ function getEmailTemplate(template: string, data: Record<string, any>): { subjec
       `;
       break;
 
+    case 'support_ticket_admin_alert':
+      subject = `New ${data.category_label || data.category || 'support'} report — ${data.subject || 'CreatorBridge'}`;
+      bodyContent = `
+        <h2 style="color: #d4a941; margin-top: 0; font-size: 20px;">New issue report</h2>
+        <p>A user submitted a report on CreatorBridge.</p>
+        <table cellpadding="0" cellspacing="0" style="width:100%; font-size:13px; line-height:1.6; color:#c8cbd0;">
+          <tr><td style="padding:4px 0; width:120px; color:#8a8d94;">Reference</td><td style="padding:4px 0;"><strong>#${data.ticket_reference || 'unknown'}</strong></td></tr>
+          <tr><td style="padding:4px 0; color:#8a8d94;">Category</td><td style="padding:4px 0;">${data.category_label || data.category || 'N/A'}</td></tr>
+          <tr><td style="padding:4px 0; color:#8a8d94;">From</td><td style="padding:4px 0;">${data.submitter_name || 'Unknown'} (${data.submitter_email || 'no email'}) · ${data.user_type || 'user'}</td></tr>
+          <tr><td style="padding:4px 0; color:#8a8d94;">Page</td><td style="padding:4px 0;">${data.page_path || 'N/A'}</td></tr>
+          <tr><td style="padding:4px 0; color:#8a8d94;">Device</td><td style="padding:4px 0;">${data.viewport || 'N/A'}</td></tr>
+        </table>
+        <p style="margin-top:16px;"><strong>Subject:</strong> ${data.subject || 'N/A'}</p>
+        <p style="white-space:pre-wrap;"><strong>Description:</strong><br>${data.description || 'N/A'}</p>
+        ${data.screenshot_url ? `<p style="margin-top:16px;"><a href="${data.screenshot_url}" style="color:#d4a941;">View screenshot</a> (link valid ~7 days)</p>` : '<p style="margin-top:16px; color:#8a8d94;">No screenshot attached.</p>'}
+      `;
+      break;
+
     default:
       subject = `Notification from CreatorBridge`;
       bodyContent = `
@@ -169,7 +187,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): { subjec
               <!-- Footer -->
               <tr>
                 <td align="center" style="padding: 30px 40px; border-top: 1px solid #232429; font-size: 11px; color: #6b6e76;">
-                  <p style="margin: 0 0 8px 0;">This is a transactional email from the CreatorBridge Marketplace platform.</p>
+                  <p style="margin: 0 0 8px 0;">This is a transactional email from the CreatorBridge platform.</p>
                   <p style="margin: 0;">CreatorBridge Inc. &middot; <a href="mailto:drl33@creatorbridge.studio" style="color: #d4a941; text-decoration: none;">drl33@creatorbridge.studio</a></p>
                 </td>
               </tr>
