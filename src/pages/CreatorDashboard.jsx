@@ -49,6 +49,7 @@ function normalizeQuoteRequest(quote) {
     ...quote,
     id: quote.id,
     creatorId: quote.creatorId || quote.listing_id,
+    clientId: quote.clientId || quote.client_id || '',
     clientName: quote.clientName || quote.client_name || 'Client',
     clientEmail: quote.clientEmail || quote.client_email || '',
     serviceId: normalizeServiceId(quote.serviceId || quote.service_id || quote.serviceType),
@@ -159,7 +160,7 @@ function StatCard({ icon: Icon, label, value, sub, color = 'text-gold-400', dark
 }
 
 // ── Quote request row ───────────────────────────────────────────
-function QuoteRow({ quote, dark, onMarkRead }) {
+function QuoteRow({ quote, dark, onMarkRead, onReply }) {
   const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
   const normalized = normalizeQuoteRequest(quote);
   const svc = SERVICES[normalized.serviceId];
@@ -194,7 +195,7 @@ function QuoteRow({ quote, dark, onMarkRead }) {
               <Calendar size={9} /> {date}
             </span>
           )}
-          <span className={`text-[11px] ${textSub}`}>{normalized.clientEmail}</span>
+          <span className={`text-[11px] ${textSub}`}>Reply securely through CreatorBridge</span>
         </div>
       </div>
       <div className="flex flex-col items-end gap-2 shrink-0">
@@ -207,10 +208,10 @@ function QuoteRow({ quote, dark, onMarkRead }) {
             Mark read
           </button>
         )}
-        <a href={`mailto:${normalized.clientEmail}`}
+        <button type="button" onClick={() => onReply(normalized)}
           className="text-[10px] text-gold-400 hover:text-gold-300 transition-colors font-medium">
-          Reply
-        </a>
+          Reply in Messages
+        </button>
       </div>
     </div>
   );
@@ -298,6 +299,13 @@ export function CreatorDashboard({ dark }) {
       const patched = all.map(q => q.id === quoteId ? { ...q, read: true } : q);
       localStorage.setItem('quote-requests', JSON.stringify(patched));
     } catch {}
+  }
+
+  function replyToQuote(quote) {
+    const params = new URLSearchParams();
+    if (quote.clientId) params.set('with', quote.clientId);
+    if (quote.id) params.set('quote', quote.id);
+    navigate(`/messages${params.size ? `?${params.toString()}` : ''}`);
   }
 
   // Stats
@@ -496,7 +504,7 @@ export function CreatorDashboard({ dark }) {
                   <div>
                     <p className="text-sm font-bold text-gold-400 mb-1">Profile Locked for 90 Days</p>
                     <p className="text-xs text-charcoal-300 leading-relaxed">
-                      Your profile information is locked for 90 days from your submission date. This protects the integrity of creator profiles on CreatorBridge. If you need to make a correction, email support at drl33@creatorbridge.studio with the subject line "Profile Correction Request".
+                      Your profile information is locked for 90 days from your submission date. This protects the integrity of creator profiles on CreatorBridge. If you need a correction, use Report an Issue and choose Account Access so the request stays on the platform.
                     </p>
                   </div>
                 </div>
@@ -615,7 +623,7 @@ export function CreatorDashboard({ dark }) {
               ) : (
                 <div className="space-y-2">
                   {quotes.slice(0, 3).map(q => (
-                    <QuoteRow key={q.id} quote={q} dark={dark} onMarkRead={markRead} />
+                    <QuoteRow key={q.id} quote={q} dark={dark} onMarkRead={markRead} onReply={replyToQuote} />
                   ))}
                 </div>
               )}
@@ -673,7 +681,7 @@ export function CreatorDashboard({ dark }) {
               </div>
             ) : (
               <div className="space-y-2">
-                {quotes.map(q => <QuoteRow key={q.id} quote={q} dark={dark} onMarkRead={markRead} />)}
+                {quotes.map(q => <QuoteRow key={q.id} quote={q} dark={dark} onMarkRead={markRead} onReply={replyToQuote} />)}
               </div>
             )}
           </div>

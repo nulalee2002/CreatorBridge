@@ -4,6 +4,8 @@ import { SEO } from '../components/SEO.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { SEED_CREATORS } from '../data/seedCreators.js';
 import { getBunnyEmbedUrl, getBunnyThumbnailUrl, isBunnyVideoRef } from '../utils/bunnyStream.js';
+import { getStorageDisplayUrl } from '../utils/storage.js';
+import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { Play } from 'lucide-react';
 
 const useTweaks = (defaults) => [defaults, () => {}];
@@ -647,14 +649,13 @@ function BookingSheet({ open, onClose, selectedPkg }) {
   const [date, setDate] = useState("");
   const [location, setLocation] = useState("Miami, FL");
   const [submitted, setSubmitted] = useState(false);
-  const pkg = packages.find(p => p.id === selectedPkg) || packages[1];
+  const pkg = packages.find(p => p.id === selectedPkg) || packages[1] || packages[0] || null;
+  if (!open || !pkg) return null;
   const subtotal = pkg.price;
   const fee = Math.round(subtotal * 0.05);
   const total = subtotal + fee;
   const retainer = Math.round(total / 2);
   const remainder = total - retainer;
-
-  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-[200] flex justify-end bg-black/70 backdrop-blur-sm" onClick={onClose}>
@@ -763,8 +764,8 @@ function Row({ k, v, tone, bold }) {
 }
 
 function StickyBook({ selectedPkg, onBook, show }) {
-  const pkg = packages.find(p => p.id === selectedPkg) || packages[1];
-  if (!show) return null;
+  const pkg = packages.find(p => p.id === selectedPkg) || packages[1] || packages[0] || null;
+  if (!show || !pkg) return null;
   return (
     <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[80] liquid-glass rounded-2xl px-5 py-3 flex items-center gap-5 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
       <div className="flex items-center gap-3">
@@ -997,6 +998,37 @@ function buildListingPortfolio(listing, adaptedCreator) {
   });
 }
 
+function buildListingPackages(listing) {
+  const items = Array.isArray(listing.packages) ? listing.packages : [];
+  return [...items]
+    .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+    .map((pkg, index) => ({
+      id: pkg.id,
+      name: pkg.name || `Package ${index + 1}`,
+      price: Number(pkg.price || 0),
+      popular: index === 1,
+      tagline: pkg.description || 'A focused CreatorBridge production package.',
+      items: [
+        ...(Array.isArray(pkg.deliverables) ? pkg.deliverables : []),
+        ...(pkg.turnaround_days ? [`${pkg.turnaround_days}-day turnaround`] : []),
+        ...(Number.isFinite(Number(pkg.revisions)) ? [`${pkg.revisions} revision${Number(pkg.revisions) === 1 ? '' : 's'}`] : []),
+      ],
+    }));
+}
+
+function buildListingReviews(listing) {
+  const items = Array.isArray(listing.reviews) ? listing.reviews : [];
+  return items.map(item => ({
+    id: item.id,
+    client: item.reviewer_name || 'Verified client',
+    role: 'CreatorBridge client',
+    rating: item.rating || 5,
+    project: item.service_id || 'Completed project',
+    date: item.created_at ? new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '',
+    body: item.comment || 'Verified CreatorBridge booking.',
+  }));
+}
+
 function getLocalListing(id) {
   try {
     const all = JSON.parse(localStorage.getItem('creator-directory') || '[]');
@@ -1030,14 +1062,7 @@ function getCreatorData(id) {
   }
   const seed = SEED_CREATORS.find(s => s.id === id);
   if (!seed) {
-    // Unknown id, fall back to the Aria sample so the page still renders.
-    return {
-      creator: ARIA_CREATOR,
-      portfolio: ARIA_PORTFOLIO,
-      packages: ARIA_PACKAGES,
-      reviews: ARIA_REVIEWS,
-      verification: ARIA_VERIFICATION,
-    };
+    return null;
   }
   const adapted = adaptSeedCreator(seed);
   // Generate verification entries based on what the seed actually has
@@ -1076,9 +1101,87 @@ function getCreatorData(id) {
   };
 }
 
+async function fetchCreatorData(id) {
+  if (!supabaseConfigured || !id) return null;
+  const { data: listing, error } = await supabase
+    .from('creator_listings')
+    .select('*, creator_services(*), portfolio_items(*), packages(*), reviews(*)')
+    .eq('id', id)
+    .eq('review_status', 'approved')
+    .maybeSingle();
+  if (error || !listing) return null;
+
+  const resolvedAvatar = await getStorageDisplayUrl(listing.avatar || '');
+  const resolvedPortfolio = await Promise.all((listing.portfolio_items || []).map(async item => ({
+    ...item,
+    imageUrl: item.bunny_video_id
+      ? item.image_url || ''
+      : await getStorageDisplayUrl(item.image_url || ''),
+  })));
+  const normalizedListing = {
+    ...listing,
+    businessName: listing.business_name,
+    yearsExperience: listing.years_experience,
+    primary_pillar: listing.primary_pillar,
+    location: { city: listing.city, state: listing.state },
+    tags: listing.sub_niches || listing.tags || [],
+    avatar: resolvedAvatar || listing.avatar || '',
+    portfolio: resolvedPortfolio,
+    services: listing.creator_services || [],
+    packages: listing.packages || [],
+  };
+  const adapted = adaptSeedCreator(normalizedListing);
+  const listingPackages = buildListingPackages(normalizedListing);
+  const listingReviews = buildListingReviews(listing);
+  return {
+    creator: adapted,
+    portfolio: buildListingPortfolio(normalizedListing, adapted),
+    packages: listingPackages,
+    reviews: listingReviews,
+    verification: [
+      { label: 'Profile Gate', value: `${listing.years_experience || 2}+ yrs verified` },
+      { label: 'Proof Layer', value: `${resolvedPortfolio.length} published` },
+      { label: 'Intro Check', value: isBunnyVideoRef(listing.video_intro_url) ? 'Passed' : 'Pending' },
+      { label: 'ID & Tax', value: listing.verification_status === 'verified' ? 'On file' : 'Pending' },
+    ],
+  };
+}
+
 export function CreatorProfilePage() {
   const { id } = useParams();
-  const data = useMemo(() => getCreatorData(id), [id]);
+  const immediateData = useMemo(() => getCreatorData(id), [id]);
+  const [data, setData] = useState(immediateData);
+  const [loadingProfile, setLoadingProfile] = useState(!immediateData);
+
+  useEffect(() => {
+    let active = true;
+    const localData = getCreatorData(id);
+    if (localData) {
+      setData(localData);
+      setLoadingProfile(false);
+      return () => { active = false; };
+    }
+    setLoadingProfile(true);
+    fetchCreatorData(id).then(remoteData => {
+      if (!active) return;
+      setData(remoteData);
+      setLoadingProfile(false);
+    });
+    return () => { active = false; };
+  }, [id]);
+
+  if (loadingProfile) {
+    return <div className="min-h-[70vh] flex items-center justify-center text-sm text-[var(--text-dim)]">Loading creator profile…</div>;
+  }
+
+  if (!data) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center px-6 text-center">
+        <h1 className="serif text-3xl text-[var(--text)]">Profile unavailable</h1>
+        <p className="mt-3 max-w-md text-sm text-[var(--text-dim)]">This creator profile is unavailable or has not been approved.</p>
+      </div>
+    );
+  }
 
   // Module-level vars used by HandoffCreatorProfile and its child components.
   // Swap them in for this render before mounting the tree.

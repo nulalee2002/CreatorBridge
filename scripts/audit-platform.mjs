@@ -64,6 +64,14 @@ check('Creator profile accessibility contracts', 'src/pages/CreatorProfilePage.j
   { label: 'intro modal close control has an accessible name', test: includes('aria-label="Close intro"') },
 ]);
 
+check('Creator profile live listing resolution', 'src/pages/CreatorProfilePage.jsx', [
+  { label: 'loads requested creator listing from Supabase', test: includes(".from('creator_listings')") },
+  { label: 'queries the exact route listing id', test: includes(".eq('id', id)") },
+  { label: 'resolves private storage media for display', test: includes('getStorageDisplayUrl') },
+  { label: 'does not substitute demo data for unknown profile ids', test: includes('Profile unavailable') },
+  { label: 'handles approved listings with no packages without crashing', test: includes('packages[0] || null') },
+]);
+
 check('Directory accessibility contracts', 'src/components/CreatorDirectory.jsx', [
   { label: 'creator sorting control has an accessible name', test: includes('aria-label="Sort creators"') },
 ]);
@@ -89,6 +97,13 @@ check('Creator dashboard availability completion', 'src/pages/CreatorDashboard.j
   { label: 'loads saved availability into dashboard profile state', test: includes('fetchAvailability') },
   { label: 'computes availability completion from real saved dates', test: includes("Object.keys(creator.availabilityMap || {}).length > 0") },
   { label: 'does not hard-code availability as incomplete', test: notIncludes("{ label: 'Availability set',             done: false }") },
+]);
+
+check('Creator dashboard contact protection', 'src/pages/CreatorDashboard.jsx', [
+  { label: 'does not expose quote-request client email in the UI', test: notIncludes('{normalized.clientEmail}') },
+  { label: 'does not create direct client mailto reply links', test: notIncludes('mailto:${normalized.clientEmail}') },
+  { label: 'routes quote replies through platform messages', test: includes("params.set('with', quote.clientId)") },
+  { label: 'routes profile corrections through in-platform reporting', test: includes('use Report an Issue and choose Account Access') },
 ]);
 
 check('Google Calendar session sync', 'src/components/GoogleCalendarConnect.jsx', [

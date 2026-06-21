@@ -18,7 +18,7 @@ if (authError) throw authError;
 
 const { data: listing, error: listingError } = await service
   .from('creator_listings')
-  .select('id')
+  .select('*')
   .eq('user_id', auth.user.id)
   .eq('review_status', 'approved')
   .limit(1)
@@ -27,13 +27,14 @@ if (listingError) throw listingError;
 
 const { data: ownItem, error: ownItemError } = await service
   .from('portfolio_items')
-  .select('id, listing_id')
+  .select('*')
   .eq('listing_id', listing.id)
   .limit(1)
   .single();
 if (ownItemError) throw ownItemError;
 
 let validPostId = null;
+let temporaryUserId = null;
 try {
   const base = {
     state_code: 'AZ',
@@ -53,26 +54,66 @@ try {
   if (validError) throw new Error(`Owner portfolio share failed: ${validError.message}`);
   validPostId = validPost.id;
 
-  const { data: foreignItem } = await service
+  let { data: foreignItem } = await service
     .from('portfolio_items')
     .select('id, listing_id')
     .neq('listing_id', listing.id)
     .limit(1)
     .maybeSingle();
 
-  let crossOwnerBlocked = null;
-  if (foreignItem) {
-    const { error } = await creator.from('network_posts').insert({
-      ...base,
-      creator_listing_id: foreignItem.listing_id,
-      portfolio_item_id: foreignItem.id,
+  if (!foreignItem) {
+    const temporaryEmail = `qa-cross-owner-${crypto.randomUUID()}@example.invalid`;
+    const { data: temporaryAuth, error: temporaryAuthError } = await service.auth.admin.createUser({
+      email: temporaryEmail,
+      email_confirm: true,
+      user_metadata: { role: 'creator', full_name: 'QA Cross Owner' },
     });
-    crossOwnerBlocked = Boolean(error);
-    if (!crossOwnerBlocked) throw new Error('Cross-owner portfolio share was not blocked.');
+    if (temporaryAuthError) throw temporaryAuthError;
+    temporaryUserId = temporaryAuth.user.id;
+
+    const listingCopy = { ...listing };
+    for (const key of ['id', 'created_at', 'updated_at', 'search_vector']) delete listingCopy[key];
+    Object.assign(listingCopy, {
+      user_id: temporaryUserId,
+      name: 'QA Cross Owner',
+      business_name: 'QA Cross Owner Studio',
+      email: temporaryEmail,
+      phone: null,
+      stripe_account_id: null,
+    });
+    const { data: temporaryListing, error: temporaryListingError } = await service
+      .from('creator_listings')
+      .insert(listingCopy)
+      .select('id')
+      .single();
+    if (temporaryListingError) throw temporaryListingError;
+
+    const itemCopy = { ...ownItem };
+    for (const key of ['id', 'created_at']) delete itemCopy[key];
+    Object.assign(itemCopy, {
+      listing_id: temporaryListing.id,
+      title: 'QA cross-owner guard fixture',
+    });
+    const { data: temporaryItem, error: temporaryItemError } = await service
+      .from('portfolio_items')
+      .insert(itemCopy)
+      .select('id, listing_id')
+      .single();
+    if (temporaryItemError) throw temporaryItemError;
+    foreignItem = temporaryItem;
   }
+
+  const { error: crossOwnerError } = await creator.from('network_posts').insert({
+    ...base,
+    creator_listing_id: foreignItem.listing_id,
+    portfolio_item_id: foreignItem.id,
+  });
+  const crossOwnerBlocked = Boolean(crossOwnerError);
+  if (!crossOwnerBlocked) throw new Error('Cross-owner portfolio share was not blocked.');
 
   console.log(JSON.stringify({ ok: true, ownerShareWorked: true, crossOwnerBlocked }, null, 2));
 } finally {
   if (validPostId) await service.from('network_posts').delete().eq('id', validPostId);
+  if (temporaryUserId) await service.auth.admin.deleteUser(temporaryUserId);
   await creator.auth.signOut();
 }
