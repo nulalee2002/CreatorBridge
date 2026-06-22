@@ -20,6 +20,7 @@
     "verify:client-invite-credit": "node scripts/verify-client-invite-credit.mjs",
     "verify:margin-protection": "node scripts/verify-margin-protection.mjs",
     "verify:profile-media": "node scripts/verify-profile-media.mjs",
+    "verify:creator-collaboration-foundation": "node scripts/verify-creator-collaboration-foundation.mjs",
     "verify:support-reporting": "node scripts/verify-support-reporting.mjs",
     "verify:support-cleanup-live": "node --env-file=.env scripts/verify-support-cleanup-live.mjs",
     "verify:messaging": "node --env-file=.env scripts/verify-messaging.mjs",

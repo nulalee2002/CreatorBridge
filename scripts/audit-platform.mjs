@@ -173,6 +173,16 @@ check('Admin database foundation', 'supabase/migrations/20260516235356_admin_con
   { label: 'adds admin read policy for payment events', test: includes('Platform admins can read payment_events') },
 ]);
 
+check('Creator collaboration authorization foundation', 'supabase/migrations/20260622212955_creator_capabilities_project_roles.sql', [
+  { label: 'stores trusted account capabilities outside editable auth metadata', test: includes('create table if not exists public.account_capabilities') },
+  { label: 'stores outside client, prime, and subcontractor project roles', test: includes("participant_role in ('outside_client', 'prime_contractor', 'subcontractor')") },
+  { label: 'enables RLS on account capabilities', test: includes('alter table public.account_capabilities enable row level security') },
+  { label: 'enables RLS on project participants', test: includes('alter table public.project_participants enable row level security') },
+  { label: 'keeps authorization helpers in the private schema', test: includes('creatorbridge_private.has_account_capability') },
+  { label: 'blocks ordinary users from granting capabilities', test: includes('revoke insert, update, delete on table public.account_capabilities from anon, authenticated') },
+  { label: 'blocks ordinary users from writing project membership', test: includes('revoke insert, update, delete on table public.project_participants from anon, authenticated') },
+]);
+
 checks.push(
   { name: 'Shared input sanitizer exists', pass: fileExists('src/utils/inputSecurity.js')(), path: 'src/utils/inputSecurity.js' },
 );
