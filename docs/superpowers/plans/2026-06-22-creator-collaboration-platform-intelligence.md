@@ -30,27 +30,27 @@ One verified identity can offer services and hire collaborators. Editable auth m
 - Produces `public.has_account_capability(uuid, text) returns boolean` and `public.is_project_participant(uuid, uuid, text[]) returns boolean` in the private schema where authorization helpers are not Data API exposed.
 - Preserves `profiles.role` temporarily for display and backward compatibility.
 
-- [ ] **Step 1: Write the failing foundation verifier**
+- [x] **Step 1: Write the failing foundation verifier**
 
 Create a verifier that reads all migrations and asserts capability constraints for `client`, `creator`, and `admin`; participant roles for `outside_client`, `prime_contractor`, and `subcontractor`; unique participant membership; RLS; private authorization helpers; and no use of `raw_user_meta_data` in authorization policies.
 
-- [ ] **Step 2: Run the verifier and confirm failure**
+- [x] **Step 2: Run the verifier and confirm failure**
 
 Run `node scripts/verify-creator-collaboration-foundation.mjs`. Expected: nonzero exit with missing capability and participant contracts.
 
-- [ ] **Step 3: Generate and implement the migration**
+- [x] **Step 3: Generate and implement the migration**
 
 Run `supabase migration new creator_capabilities_project_roles`. In the emitted file, create both tables, constraints, indexes, private-schema helper functions, explicit grants, RLS policies, and a backfill that grants `creator` capability to users owning creator listings and `client` capability to existing project owners or client profiles. Never remove an existing role during backfill.
 
-- [ ] **Step 4: Verify static contracts and existing audit**
+- [x] **Step 4: Verify static contracts and existing audit**
 
 Run `node scripts/verify-creator-collaboration-foundation.mjs && npm run audit:platform`. Expected: all checks pass.
 
-- [ ] **Step 5: Apply and verify live isolation**
+- [x] **Step 5: Apply and verify live isolation**
 
 Run `supabase db push`, then extend the verifier to authenticate QA client and creator accounts and prove ordinary users cannot grant capabilities, cannot insert another user's participant row, and cannot read unrelated private project participation.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Commit the migration, verifier, package script, and audit changes with `Add trusted creator collaboration roles`.
 
@@ -70,31 +70,31 @@ Commit the migration, verifier, package script, and audit changes with `Add trus
 - Produces server RPC `record_directional_platform_event(p_event_name text, p_event_version integer, p_entity_type text, p_entity_id uuid, p_surface text, p_properties jsonb)` with strict allowlists.
 - Produces browser helper `recordDirectionalEvent({ name, version, entityType, entityId, surface, properties })`.
 
-- [ ] **Step 1: Write failing privacy and authority tests**
+- [x] **Step 1: Write failing privacy and authority tests**
 
 Assert rejection of keys named `message`, `body`, `content`, `file`, `workspace_contents`, email, phone, address, payment token, and arbitrary free text. Assert event authority values `server_authoritative` and `browser_directional`.
 
-- [ ] **Step 2: Run and confirm failure**
+- [x] **Step 2: Run and confirm failure**
 
 Run `node scripts/verify-platform-intelligence.mjs`. Expected: missing ledger, registry, and privacy enforcement.
 
-- [ ] **Step 3: Create the ledger migration**
+- [x] **Step 3: Create the ledger migration**
 
 Create definition and event tables with event UUID, idempotency key, name, version, authority, actor, session, entity, surface, occurred/ingested timestamps, privacy class, retention class, and validated JSON properties. Enable RLS, revoke ordinary reads, and restrict writes to the directional RPC or trusted service operations.
 
-- [ ] **Step 4: Seed versioned definitions**
+- [x] **Step 4: Seed versioned definitions**
 
 Seed the approved platform-wide taxonomy for authentication, onboarding, discovery, quotes, projects, applications, bookings, collaboration, payments, messaging-safety outcomes, Network, workspaces, delivery, reviews, disputes, support, referrals, retention, rehire, and admin actions.
 
-- [ ] **Step 5: Add the safe browser helper**
+- [x] **Step 5: Add the safe browser helper**
 
 Implement a non-blocking helper that sends only allowlisted structured properties, never throws into the user workflow, and attaches no user identity from caller input.
 
-- [ ] **Step 6: Add authoritative outbox writes**
+- [x] **Step 6: Add authoritative outbox writes**
 
 Update trusted project, payment, dispute, support, and admin state transitions to record events transactionally or through an idempotent outbox. A failed analytics delivery must not roll back or repeat payment behavior.
 
-- [ ] **Step 7: Verify and commit**
+- [x] **Step 7: Verify and commit**
 
 Run the intelligence verifier, platform audit, build, and live RLS checks. Commit as `Add governed platform intelligence ledger`.
 
