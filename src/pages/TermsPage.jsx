@@ -317,6 +317,13 @@ export function TermsPage({ dark }) {
                 logged by pattern type only. The actual message text is not stored in violation logs.
               </p>
               <p>
+                <strong className={dark ? 'text-white' : 'text-gray-900'}>Private-message analytics boundary:</strong>{' '}
+                CreatorBridge does not collect, read, or analyze direct-message or private-message contents for product
+                analytics. We do not analyze creative files or the contents of external project workspaces. Platform
+                intelligence is limited to actions, outcomes, categories, timings, and operational metadata. Automated
+                message filtering remains limited to enforcing safety and contact-sharing rules at send time.
+              </p>
+              <p>
                 You may request deletion of your account and associated data at any time by contacting
                 {' '}<a href="mailto:drl33@creatorbridge.studio" className={linkCls}>drl33@creatorbridge.studio</a>.
                 Note that transaction records may be retained for legal and accounting purposes.

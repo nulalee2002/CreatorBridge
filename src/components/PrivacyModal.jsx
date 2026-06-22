@@ -34,7 +34,7 @@ export function PrivacyModal({ dark, onClose }) {
 
         {/* Scrollable content */}
         <div className={`flex-1 overflow-y-auto px-6 py-5 ${dark ? 'bg-[radial-gradient(circle_at_25%_0%,rgba(212,169,65,0.06),transparent_34%)]' : ''}`}>
-          <p className={`text-xs mb-6 ${textSub}`}>Effective April 17, 2026. Last updated April 17, 2026.</p>
+          <p className={`text-xs mb-6 ${textSub}`}>Effective April 17, 2026. Last updated June 22, 2026.</p>
 
           <div className={`space-y-3 text-sm leading-relaxed ${textBody}`}>
 
@@ -54,6 +54,15 @@ export function PrivacyModal({ dark, onClose }) {
                 <li>Usage data: pages visited, features used, and session timestamps for platform improvement</li>
                 <li>Device and browser information for security monitoring and abuse prevention</li>
               </ul>
+              <div className={cardCls}>
+                <p className={`font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>Private communications stay outside product analytics.</p>
+                <p className="mt-1">
+                  CreatorBridge does not collect, read, or analyze the contents of direct messages or private platform
+                  messages for product analytics. We also do not collect or analyze the contents of creative files or
+                  external project workspaces such as Google Drive, Dropbox, Frame.io, Blackmagic Cloud, or MASV.
+                  Analytics is limited to platform actions, outcomes, categories, timings, and other operational metadata.
+                </p>
+              </div>
             </section>
 
             <section className="mb-8">
@@ -89,6 +98,11 @@ export function PrivacyModal({ dark, onClose }) {
                 <li>Detect and prevent fraud, abuse, and violations of our Terms of Service</li>
                 <li>Comply with legal obligations including tax reporting requirements</li>
               </ul>
+              <p className="mt-2">
+                Automated message filtering may inspect a message at the time it is sent solely to enforce safety and
+                contact-sharing rules. Analytics and violation logs record only the resulting action or detected pattern
+                category, not the private message body.
+              </p>
             </section>
 
             <section className="mb-8">

@@ -185,6 +185,13 @@ check('Message abuse prevention', 'src/pages/MessagesPage.jsx', [
   { label: 'does not directly insert messages from browser code', test: notIncludes(".from('messages')\n        .insert") },
 ]);
 
+check('Privacy analytics boundary', 'src/pages/TermsPage.jsx', [
+  { label: 'excludes private message contents from product analytics', test: includes('does not collect, read, or analyze direct-message or private-message contents') },
+  { label: 'excludes creative files and external workspaces from analytics', test: includes('We do not analyze creative files or the contents of external project workspaces') },
+  { label: 'limits platform intelligence to operational metadata', test: includes('actions, outcomes, categories, timings, and operational metadata') },
+  { label: 'keeps automated filtering limited to safety enforcement', test: includes('message filtering remains limited to enforcing safety and contact-sharing rules') },
+]);
+
 check('Project board input hardening', 'src/pages/ProjectBoard.jsx', [
   { label: 'sanitizes posted project title', test: includes('sanitizePlainText(form.title, 120)') },
   { label: 'sanitizes posted project description', test: includes('sanitizeLongText(form.description, 4000)') },
