@@ -183,6 +183,21 @@ check('Creator collaboration authorization foundation', 'supabase/migrations/202
   { label: 'blocks ordinary users from writing project membership', test: includes('revoke insert, update, delete on table public.project_participants from anon, authenticated') },
 ]);
 
+check('Platform Intelligence foundation', 'supabase/migrations/20260622213810_platform_intelligence_ledger.sql', [
+  { label: 'defines versioned analytics events', test: includes('create table if not exists public.platform_event_definitions') },
+  { label: 'separates authoritative and directional event trust', test: includes("authority in ('server_authoritative', 'browser_directional')") },
+  { label: 'keeps the event ledger private', test: includes('revoke all on table public.platform_events from public, anon, authenticated') },
+  { label: 'rejects private-message and file property keys', test: includes("'message', 'body', 'content', 'file', 'files', 'workspace_contents'") },
+  { label: 'rejects contact details in directional properties', test: includes('Directional properties cannot contain email addresses') },
+  { label: 'queues trusted state transitions without failing primary workflows', test: includes("raise warning 'Platform Intelligence enqueue failed") },
+]);
+
+check('Platform Intelligence browser helper', 'src/lib/platformIntelligence.js', [
+  { label: 'uses the restricted directional event RPC', test: includes("supabase.rpc('record_directional_platform_event'") },
+  { label: 'does not throw analytics failures into user workflows', test: includes("return { recorded: false, reason: 'unavailable' }") },
+  { label: 'does not accept caller-supplied actor identity', test: notIncludes('actorId') },
+]);
+
 checks.push(
   { name: 'Shared input sanitizer exists', pass: fileExists('src/utils/inputSecurity.js')(), path: 'src/utils/inputSecurity.js' },
 );
