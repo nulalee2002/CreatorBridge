@@ -17,6 +17,8 @@ The prime contractor owns the outside-client relationship, scope, price, and fin
 
 The platform follows controlled exposure rather than pretending off-platform leakage can be eliminated. Discovery, scope, payment, approvals, disputes, reviews, and transaction evidence remain inside CreatorBridge. Large working files may use approved external providers only after the subcontract is funded. CreatorBridge makes staying on-platform safer and easier than leaving, but does not claim it can inspect or control private external workspaces.
 
+The Creator Agreement and Terms will include a legally reviewed non-circumvention provision covering relationships introduced through CreatorBridge. The provision must define a reasonable duration, available remedies, and exceptions without treating analytics signals as proof of a violation.
+
 Platform Intelligence records actions and outcomes, not private content. CreatorBridge will not use direct-message bodies, private-message contents, creative files, or external workspace contents for product analytics or AI analysis.
 
 ## Creator Collaboration Model
@@ -24,6 +26,14 @@ Platform Intelligence records actions and outcomes, not private content. Creator
 ### Identity and modes
 
 The current single `profiles.role` presentation model will be replaced or supplemented by capabilities. A verified creator may enter a hiring mode without changing or duplicating their account. Navigation and dashboards must expose both work offered and work commissioned.
+
+Creator collaboration must be deliberately discoverable rather than left for creators to find accidentally. The feature will appear in four natural surfaces: the creator dashboard, creator discovery, individual creator profiles, and active projects. A first-visit guided introduction in the creator dashboard will explain that one verified creator account can both offer services and hire collaborators.
+
+Profile actions are contextual. An outside client viewing a creator profile continues to see `Request a Quote` as the primary action. A verified creator viewing another eligible creator sees `Hire as a Collaborator`; the interface will not use the less clear phrase `Let's subcontract`. When the creator arrives with an active project context, the action becomes `Add to This Project` and preserves the existing project so the prime only needs to define the collaborator's scope, price, deadline, and workspace.
+
+The creator dashboard will provide a permanent `Build Your Team` action. It opens creator discovery with collaboration-oriented filters for Post Production, software, specialty, turnaround, location requirements, and collaboration availability. Post-production discovery will reinforce the workflow with `Find Your Finishing Team`, and opted-in eligible profiles will display an `Open to Creator Collaborations` badge.
+
+Selecting `Hire as a Collaborator` presents exactly two starting paths: attach the creator to an existing eligible project or create a standalone creator collaboration. Before an invitation is sent, the prime must see the $250 minimum, ACH requirement, disclosed processing cost, private team-workspace model, and a clear statement that the outside client will not see the subcontractor.
 
 Authorization must never rely on user-editable authentication metadata. Hiring, listing ownership, project participation, payment authority, and admin access must be determined from trusted database records and server-side checks.
 
@@ -43,7 +53,7 @@ The minimum collaboration amount remains $250. Smaller tasks are bundled into pr
 
 Creator-to-creator collaboration payments are ACH-only during the initial release. The hiring prime contractor pays the disclosed ACH processing cost. The subcontractor does not begin work until the server records settlement. Failed payments, returns, refunds, and disputes are handled by explicit collaboration terms and authoritative Stripe webhook events.
 
-The initial payment structure follows the protected 50/50 workflow unless the implementation plan establishes a safer ACH-specific settlement sequence. The platform must never describe funds as legally regulated escrow unless counsel confirms that terminology is accurate for the implemented Stripe flow.
+The initial payment structure follows the protected 50/50 workflow unless the implementation plan establishes a safer ACH-specific settlement sequence. Before collaboration launches, counsel must review the use of `escrow` across the entire existing platform—not only collaboration screens. If the implemented Stripe flow is not legally regulated escrow, every customer-facing occurrence must be replaced with accurate protected-payment language.
 
 After approximately 20 completed collaborations, CreatorBridge reviews completed amounts, attempted sub-floor amounts, abandonment points, processing costs, support load, disputes, and qualitative survey responses before considering a separate $100-$150 collaboration minimum.
 
@@ -188,6 +198,8 @@ Browser verification must cover desktop and mobile flows for creator hiring mode
 The implementation plan will divide this design into independently verifiable phases. The required dependency order is trusted identity and project-role model; event ledger, definition registry, and privacy controls; collaboration booking and ACH payments; workspace and delivery evidence; reputation and anti-gaming; admin views and AI exports; retention and deletion jobs; report scheduler and archive; policy updates; then full browser and live-service verification.
 
 Instrumentation for an interaction ships before or with that interaction, never afterward. No collaboration feature is considered launch-ready if its ephemeral abandonment and failure events are absent.
+
+The complete Platform Intelligence governance foundation is a collaboration launch requirement. Public creator collaboration does not launch until the event ledger, definition registry, privacy boundary, retention and pseudonymization jobs, deletion propagation, governed admin views, AI export, report archive, and scheduled-report scaffold have passed their verification gates. Individual phases may be exercised with isolated QA accounts before that public launch gate.
 
 ## Decisions Reserved for Later Evidence
 
