@@ -198,6 +198,24 @@ check('Platform Intelligence browser helper', 'src/lib/platformIntelligence.js',
   { label: 'does not accept caller-supplied actor identity', test: notIncludes('actorId') },
 ]);
 
+check('Creator collaboration lifecycle', 'supabase/migrations/20260622231219_creator_collaboration_lifecycle.sql', [
+  { label: 'persists the complete collaboration state machine', test: includes('create table if not exists public.creator_collaborations') },
+  { label: 'enforces the $250 creator collaboration floor', test: includes('p_amount_cents < 25000') },
+  { label: 'blocks creator self-hiring', test: includes('You cannot hire yourself') },
+  { label: 'isolates collaboration records from outside clients', test: includes('Creator collaboration members can read') },
+]);
+
+check('Creator collaboration profile discovery', 'src/pages/CreatorProfilePage.jsx', [
+  { label: 'shows contextual creator hiring action', test: includes('HireCollaboratorButton') },
+  { label: 'retains Request a Quote for non-creator visitors', test: includes('Request a Quote') },
+  { label: 'opens the real collaboration composer', test: includes('CollaborationComposer') },
+]);
+
+check('Creator team dashboard discovery', 'src/pages/CreatorDashboard.jsx', [
+  { label: 'keeps Build Your Team permanently visible', test: includes('Build Your Team') },
+  { label: 'shows first-visit collaboration guidance', test: includes('CreatorCollaborationIntro') },
+]);
+
 checks.push(
   { name: 'Shared input sanitizer exists', pass: fileExists('src/utils/inputSecurity.js')(), path: 'src/utils/inputSecurity.js' },
 );

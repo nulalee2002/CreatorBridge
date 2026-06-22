@@ -50,6 +50,7 @@ const PresetManager = lazy(() => import('./components/PresetManager.jsx').then(m
 const ProfileSettings = lazy(() => import('./components/ProfileSettings.jsx').then(m => ({ default: m.ProfileSettings })));
 const CreatorProfilePage = lazy(() => import('./pages/CreatorProfilePage.jsx').then(m => ({ default: m.CreatorProfilePage })));
 const CreatorDashboard = lazy(() => import('./pages/CreatorDashboard.jsx').then(m => ({ default: m.CreatorDashboard })));
+const CreatorHiringDashboard = lazy(() => import('./pages/CreatorHiringDashboard.jsx').then(m => ({ default: m.CreatorHiringDashboard })));
 const MessagesPage = lazy(() => import('./pages/MessagesPage.jsx').then(m => ({ default: m.MessagesPage })));
 const ProjectBoard = lazy(() => import('./pages/ProjectBoard.jsx').then(m => ({ default: m.ProjectBoard })));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage.jsx').then(m => ({ default: m.CheckoutPage })));
@@ -1028,6 +1029,11 @@ export default function App() {
         <Route path="/dashboard" element={
           <AuthRequired dark={dark} user={user} loading={authLoading} role="creator" title="Sign in to manage your creator account." copy="Creator tools, Stripe setup, packages, availability, earnings, and verification need an authenticated account.">
             <LazyRoute dark={dark}><CreatorDashboard dark={dark} /></LazyRoute>
+          </AuthRequired>
+        } />
+        <Route path="/dashboard/build-team" element={
+          <AuthRequired dark={dark} user={user} loading={authLoading} role="creator" title="Sign in to build your creator team." copy="Creator collaboration discovery belongs to verified creator accounts.">
+            <LazyRoute dark={dark}><CreatorHiringDashboard dark={dark} /></LazyRoute>
           </AuthRequired>
         } />
         <Route path="/client" element={
