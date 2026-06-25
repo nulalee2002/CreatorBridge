@@ -39,7 +39,13 @@ if(Object.values(cfg).every(Boolean)){
   const {data:p,error:pe}=await admin.from('projects').insert({title:'QA ACH collaboration',description:'Temporary payment verification.',status:'collaboration_draft'}).select('id').single();if(pe)throw pe;pid=p.id;
   await admin.from('project_participants').insert([{project_id:pid,user_id:auth.user.id,participant_role:'prime_contractor',creator_listing_id:source.id,status:'active'},{project_id:pid,user_id:uid,participant_role:'subcontractor',creator_listing_id:lid,status:'active'}]);
   const {data:c,error:ce}=await admin.from('creator_collaborations').insert({project_id:pid,prime_user_id:auth.user.id,prime_listing_id:source.id,collaborator_user_id:uid,collaborator_listing_id:lid,service_category:'Post Production',scope:'Temporary ACH payment verification collaboration scope.',amount_cents:25000,deadline:'2030-01-01',project_context:'standalone',status:'accepted'}).select('id').single();if(ce)throw ce;cid=c.id;
-  const {data:created,error:fe}=await prime.functions.invoke('create-collaboration-payment',{body:{collaborationId:cid}});if(fe||created?.error)throw new Error(created?.error||fe.message);intentId=created.paymentIntentId;
+  const {data:created,error:fe}=await prime.functions.invoke('create-collaboration-payment',{body:{collaborationId:cid}});
+  if(fe||created?.error){
+    let detail=created?.error||fe?.message||'Collaboration payment function failed';
+    if(fe?.context){try{detail += `: ${await fe.context.text()}`}catch{}}
+    throw new Error(detail);
+  }
+  intentId=created.paymentIntentId;
   const pi=await stripe.paymentIntents.retrieve(intentId);if(!pi.payment_method_types.includes('us_bank_account'))throw new Error('Live intent was not ACH-only');
   const {data:pay}=await admin.from('collaboration_payments').select('id,buyer_platform_fee_cents,ach_processing_cost_cents,status').eq('stripe_payment_intent_id',intentId).single();paymentId=pay.id;if(pay.buyer_platform_fee_cents!==0||pay.ach_processing_cost_cents<=0)throw new Error('Live fee isolation failed');
   live={achOnly:true,buyerFeeWaived:true,processingCostAssignedToPrime:true,status:'processing'};

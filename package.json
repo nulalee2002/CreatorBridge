@@ -28,6 +28,7 @@
     "verify:collaboration-reputation": "node scripts/verify-collaboration-reputation.mjs",
     "verify:platform-intelligence-governance": "node scripts/verify-platform-intelligence-governance.mjs",
     "verify:platform-intelligence-reports": "node scripts/verify-platform-intelligence-reports.mjs",
+    "verify:collaboration-launch": "node scripts/verify-collaboration-launch.mjs",
     "verify:support-reporting": "node scripts/verify-support-reporting.mjs",
     "verify:support-cleanup-live": "node --env-file=.env scripts/verify-support-cleanup-live.mjs",
     "verify:messaging": "node --env-file=.env scripts/verify-messaging.mjs",
