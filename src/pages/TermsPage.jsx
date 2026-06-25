@@ -150,11 +150,15 @@ export function TermsPage({ dark }) {
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li>Clients may not contact, hire, or pay creators discovered on CreatorBridge outside of the platform during this 24-month period.</li>
                 <li>Creators may not solicit, accept, or fulfill work from clients introduced through CreatorBridge outside of the platform during this 24-month period.</li>
+                <li>Creators may not move creator-to-creator collaborations introduced or arranged through CreatorBridge off-platform during this same 24-month period.</li>
               </ul>
               <p>
                 Circumventing this requirement is a serious violation and may result in account suspension and recovery
                 of any platform fees that would have been due. We implement monitoring systems including message filtering
                 and usage analysis to detect off-platform arrangements.
+              </p>
+              <p>
+                Creator collaboration work is private between verified creators. The prime creator remains the only party visible to the outside client, and internal collaborator reviews are labeled as Verified Creator Collaboration feedback rather than public client ratings.
               </p>
               <p>
                 This policy exists to protect the sustainability of the platform and ensure that the creators and
@@ -172,6 +176,7 @@ export function TermsPage({ dark }) {
                   <div className="flex justify-between"><span>Creator platform fee (Standard tier)</span><span className="font-bold">10% of earnings</span></div>
                   <div className="flex justify-between"><span>Creator platform fee (Silver tier, 10+ projects)</span><span className="font-bold">8% of earnings</span></div>
                   <div className="flex justify-between"><span>Creator platform fee (Gold tier, 25+ projects)</span><span className="font-bold">6% of earnings</span></div>
+                  <div className="flex justify-between"><span>Creator collaboration buyer platform fee</span><span className="font-bold">0%</span></div>
                 </div>
               </div>
               <p>
@@ -190,6 +195,9 @@ export function TermsPage({ dark }) {
                 All payments are processed through Stripe and are subject to Stripe's standard processing fees,
                 which are included in the amounts displayed at checkout. CreatorBridge does not charge additional
                 payment processing fees beyond those shown.
+              </p>
+              <p>
+                For creator-to-creator collaboration bookings, the hiring creator pays the disclosed payment-processing cost, the hired creator pays their earned creator platform fee, and the collaboration starts only after payment settlement is confirmed.
               </p>
             </Section>
 

@@ -136,6 +136,9 @@ export function CreatorAgreement({ dark }) {
               <p>
                 Fees are automatically computed and deducted at the time payouts are transferred to your Connect account.
               </p>
+              <p>
+                When you hire another verified creator as a collaborator, you pay no buyer platform fee, but you are responsible for the disclosed payment-processing cost. When you are hired by another creator, your normal earned creator platform fee applies and internal collaboration reviews do not count toward public ratings, loyalty progress, or public tier movement.
+              </p>
             </Section>
 
             <Section id="payments" title="3. Payment Structure & Stripe Connect" dark={dark}>
@@ -172,10 +175,14 @@ export function CreatorAgreement({ dark }) {
                 <li>Sharing email addresses, phone numbers, websites, or social media handles in messages before a paid booking is finalized.</li>
                 <li>Requesting direct invoicing, checks, cash, bank wires, or any payment method other than checkout links provided by the Platform.</li>
                 <li>Completing subsequent projects off-platform with any client met through CreatorBridge.</li>
+                <li>Moving creator-to-creator collaborations, subcontracting work, or repeat collaborator bookings introduced or arranged through CreatorBridge off-platform.</li>
               </ul>
               <p>
                 We use automated pattern filtering to block contact details in conversations. Violation of this non-circumvention clause
                 is grounds for immediate account termination.
+              </p>
+              <p>
+                Creator collaboration workspaces may use approved external file links after booking. You remain responsible for file permissions, backups, copyright, and retention, and you may not use external workspaces to solicit off-platform payment or contact arrangements.
               </p>
             </Section>
 
