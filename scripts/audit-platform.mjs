@@ -173,6 +173,61 @@ check('Admin database foundation', 'supabase/migrations/20260516235356_admin_con
   { label: 'adds admin read policy for payment events', test: includes('Platform admins can read payment_events') },
 ]);
 
+check('Creator collaboration authorization foundation', 'supabase/migrations/20260622212955_creator_capabilities_project_roles.sql', [
+  { label: 'stores trusted account capabilities outside editable auth metadata', test: includes('create table if not exists public.account_capabilities') },
+  { label: 'stores outside client, prime, and subcontractor project roles', test: includes("participant_role in ('outside_client', 'prime_contractor', 'subcontractor')") },
+  { label: 'enables RLS on account capabilities', test: includes('alter table public.account_capabilities enable row level security') },
+  { label: 'enables RLS on project participants', test: includes('alter table public.project_participants enable row level security') },
+  { label: 'keeps authorization helpers in the private schema', test: includes('creatorbridge_private.has_account_capability') },
+  { label: 'blocks ordinary users from granting capabilities', test: includes('revoke insert, update, delete on table public.account_capabilities from anon, authenticated') },
+  { label: 'blocks ordinary users from writing project membership', test: includes('revoke insert, update, delete on table public.project_participants from anon, authenticated') },
+]);
+
+check('Platform Intelligence foundation', 'supabase/migrations/20260622213810_platform_intelligence_ledger.sql', [
+  { label: 'defines versioned analytics events', test: includes('create table if not exists public.platform_event_definitions') },
+  { label: 'separates authoritative and directional event trust', test: includes("authority in ('server_authoritative', 'browser_directional')") },
+  { label: 'keeps the event ledger private', test: includes('revoke all on table public.platform_events from public, anon, authenticated') },
+  { label: 'rejects private-message and file property keys', test: includes("'message', 'body', 'content', 'file', 'files', 'workspace_contents'") },
+  { label: 'rejects contact details in directional properties', test: includes('Directional properties cannot contain email addresses') },
+  { label: 'queues trusted state transitions without failing primary workflows', test: includes("raise warning 'Platform Intelligence enqueue failed") },
+]);
+
+check('Platform Intelligence browser helper', 'src/lib/platformIntelligence.js', [
+  { label: 'uses the restricted directional event RPC', test: includes("supabase.rpc('record_directional_platform_event'") },
+  { label: 'does not throw analytics failures into user workflows', test: includes("return { recorded: false, reason: 'unavailable' }") },
+  { label: 'does not accept caller-supplied actor identity', test: notIncludes('actorId') },
+]);
+
+check('Creator collaboration lifecycle', 'supabase/migrations/20260622231219_creator_collaboration_lifecycle.sql', [
+  { label: 'persists the complete collaboration state machine', test: includes('create table if not exists public.creator_collaborations') },
+  { label: 'enforces the $250 creator collaboration floor', test: includes('p_amount_cents < 25000') },
+  { label: 'blocks creator self-hiring', test: includes('You cannot hire yourself') },
+  { label: 'isolates collaboration records from outside clients', test: includes('Creator collaboration members can read') },
+]);
+
+check('Creator collaboration profile discovery', 'src/pages/CreatorProfilePage.jsx', [
+  { label: 'shows contextual creator hiring action', test: includes('HireCollaboratorButton') },
+  { label: 'retains Request a Quote for non-creator visitors', test: includes('Request a Quote') },
+  { label: 'opens the real collaboration composer', test: includes('CollaborationComposer') },
+]);
+
+check('Creator team dashboard discovery', 'src/pages/CreatorDashboard.jsx', [
+  { label: 'keeps Build Your Team permanently visible', test: includes('Build Your Team') },
+  { label: 'shows first-visit collaboration guidance', test: includes('CreatorCollaborationIntro') },
+]);
+
+check('Creator collaboration ACH payments', 'supabase/functions/create-collaboration-payment/index.ts', [
+  { label: 'accepts only US bank account payments', test: includes("payment_method_types: ['us_bank_account']") },
+  { label: 'loads collaboration amount from trusted storage', test: includes("from('creator_collaborations')") },
+  { label: 'waives the buyer platform fee', test: includes('buyer_platform_fee_cents: 0') },
+  { label: 'warns creators not to start before settlement', test: includes('Do not begin work until funded') },
+]);
+
+check('Collaboration Stripe settlement', 'supabase/functions/stripe-webhook/index.ts', [
+  { label: 'marks collaboration funded only from Stripe success', test: includes("status: 'funded'") },
+  { label: 'records collaboration payment failures', test: includes("from('collaboration_payments').update({ status: 'failed'") },
+]);
+
 checks.push(
   { name: 'Shared input sanitizer exists', pass: fileExists('src/utils/inputSecurity.js')(), path: 'src/utils/inputSecurity.js' },
 );

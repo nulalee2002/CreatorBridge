@@ -7,6 +7,8 @@ import { getBunnyEmbedUrl, getBunnyThumbnailUrl, isBunnyVideoRef } from '../util
 import { getStorageDisplayUrl } from '../utils/storage.js';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { Play } from 'lucide-react';
+import { HireCollaboratorButton } from '../components/creator/HireCollaboratorButton.jsx';
+import { CollaborationComposer } from '../components/collaboration/CollaborationComposer.jsx';
 
 const useTweaks = (defaults) => [defaults, () => {}];
 const TweaksPanel = () => null;
@@ -143,7 +145,7 @@ function Breadcrumb() {
   );
 }
 
-function Hero({ onPlayReel, onJumpBook, onMessage, layout, saved, setSaved }) {
+function Hero({ onPlayReel, onJumpBook, onMessage, layout, saved, setSaved, collaborationAction }) {
   if (layout === "banner") {
     return (
       <section>
@@ -160,14 +162,14 @@ function Hero({ onPlayReel, onJumpBook, onMessage, layout, saved, setSaved }) {
             </div>
           </div>
         </div>
-        <HeroInfo onJumpBook={onJumpBook} onMessage={onMessage} onPlayReel={onPlayReel} saved={saved} setSaved={setSaved}/>
+        <HeroInfo onJumpBook={onJumpBook} onMessage={onMessage} onPlayReel={onPlayReel} saved={saved} setSaved={setSaved} collaborationAction={collaborationAction}/>
       </section>
     );
   }
   return (
     <section className="grid lg:grid-cols-12 gap-8 lg:gap-10 mb-12">
       <div className="lg:col-span-7">
-        <HeroInfo onJumpBook={onJumpBook} onMessage={onMessage} onPlayReel={onPlayReel} saved={saved} setSaved={setSaved}/>
+        <HeroInfo onJumpBook={onJumpBook} onMessage={onMessage} onPlayReel={onPlayReel} saved={saved} setSaved={setSaved} collaborationAction={collaborationAction}/>
       </div>
       <div className="lg:col-span-5">
         <div className="relative rounded-2xl overflow-hidden parallax-wrap group cursor-pointer" onClick={onPlayReel}>
@@ -188,7 +190,7 @@ function Hero({ onPlayReel, onJumpBook, onMessage, layout, saved, setSaved }) {
   );
 }
 
-function HeroInfo({ onJumpBook, onMessage, onPlayReel, saved, setSaved }) {
+function HeroInfo({ onJumpBook, onMessage, onPlayReel, saved, setSaved, collaborationAction }) {
   return (
     <div className="space-y-5">
       <div className="flex items-start gap-4">
@@ -214,6 +216,7 @@ function HeroInfo({ onJumpBook, onMessage, onPlayReel, saved, setSaved }) {
             </span>
             {creator.tiers.map(t => <Pill key={t}>{t}</Pill>)}
             <Pill tone="green">Available now</Pill>
+            {creator.openToCollaborations && <Pill tone="green">Open to Creator Collaborations</Pill>}
           </div>
           <h1 className="text-3xl md:text-4xl lg:text-5xl serif font-medium leading-[1.05] mb-1">
             {creator.studio}
@@ -244,10 +247,10 @@ function HeroInfo({ onJumpBook, onMessage, onPlayReel, saved, setSaved }) {
       </div>
 
       <div className="flex flex-wrap gap-2 pt-2">
-        <button onClick={onJumpBook} className="btn-gold min-h-[34px]">
+        {collaborationAction || <button onClick={onJumpBook} className="btn-gold min-h-[34px]">
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-          Check availability
-        </button>
+          Request a Quote
+        </button>}
         <button onClick={onMessage} className="btn-ghost min-h-[34px]" aria-label={CLIENT_ACCOUNT_PROMPT}>
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
           Message
@@ -807,6 +810,15 @@ function HandoffCreatorProfile() {
   const [bookOpen, setBookOpen] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showSticky, setShowSticky] = useState(false);
+  const [canHire, setCanHire] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const projectContextId = searchParams.get('project');
+
+  useEffect(() => {
+    if (!user?.id || !supabase) { setCanHire(false); return; }
+    supabase.from('account_capabilities').select('capability').eq('user_id', user.id).eq('capability', 'creator').maybeSingle()
+      .then(({ data }) => setCanHire(Boolean(data) && creator.userId !== user.id && creator.openToCollaborations));
+  }, [user?.id, creator.userId, creator.openToCollaborations]);
 
   useEffect(() => {
     const portfolioItemId = searchParams.get('portfolio');
@@ -865,7 +877,8 @@ function HandoffCreatorProfile() {
         <div className="max-w-[1400px] mx-auto">
           <Breadcrumb/>
           <Hero onPlayReel={() => setReelOpen(true)} onJumpBook={jumpToBook} onMessage={startMessage}
-                layout={t.heroLayout} saved={saved} setSaved={setSaved}/>
+                layout={t.heroLayout} saved={saved} setSaved={setSaved}
+                collaborationAction={canHire ? <HireCollaboratorButton projectId={projectContextId} onClick={() => setComposerOpen(true)} /> : null}/>
           <StatStrip/>
           <About/>
           <ServiceOffers/>
@@ -880,6 +893,7 @@ function HandoffCreatorProfile() {
       <ReelModal open={reelOpen} onClose={() => setReelOpen(false)}/>
       <LightboxModal item={lightbox} onClose={() => setLightbox(null)}/>
       <BookingSheet open={bookOpen} onClose={() => setBookOpen(false)} selectedPkg={selectedPkg}/>
+      <CollaborationComposer open={composerOpen} creator={creator} initialProjectId={projectContextId} onClose={() => setComposerOpen(false)} />
 
       <TweaksPanel>
         <TweakSection label="Layout"/>
@@ -930,8 +944,10 @@ function adaptSeedCreator(seed) {
     return nums.length ? Math.min(...nums) : 1000;
   })();
   return {
+    listingId: seed.id,
     studio: seed.businessName || seed.name,
     userId: seed.user_id || null,
+    openToCollaborations: seed.open_to_creator_collaborations !== false,
     name: seed.name,
     city: cityState,
     years: expLabel,

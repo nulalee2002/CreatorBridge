@@ -8,6 +8,7 @@ const checks = [
   ['profile media', ['npm', ['run', 'verify:profile-media']]],
   ['network portfolio sharing', ['npm', ['run', 'verify:network-portfolio-sharing']]],
   ['platform language', ['npm', ['run', 'verify:platform-language']]],
+  ['creator collaboration launch', ['npm', ['run', 'verify:collaboration-launch']]],
   ['support reporting', ['npm', ['run', 'verify:support-reporting']]],
   ['client phone gate', ['npm', ['run', 'verify:client-phone-gate']]],
   ['release-payment security', ['npm', ['run', 'verify:release-payment-security']]],

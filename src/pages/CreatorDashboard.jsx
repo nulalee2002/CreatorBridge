@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   LayoutDashboard, Eye, MessageSquare, Heart, Star, TrendingUp,
   Package, Edit3, ExternalLink, Check, Clock, ChevronRight,
-  Plus, Trash2, AlertCircle, Bell, BarChart2, Calendar, DollarSign, BadgeCheck, Video, Link, Save, Upload,
+  Plus, Trash2, AlertCircle, Bell, BarChart2, Calendar, DollarSign, BadgeCheck, Video, Link, Save, Upload, Users,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
@@ -23,6 +23,8 @@ import { dollarsToDisplay, statusBadgeClass, PROJECT_STATUSES } from '../config/
 import { ReferralSection } from '../components/ReferralSection.jsx';
 import { uploadVideoToBunny, isBunnyVideoRef } from '../utils/bunnyStream.js';
 import { CreatorAvatar } from '../components/CreatorAvatar.jsx';
+import { CreatorCollaborationIntro } from '../components/collaboration/CreatorCollaborationIntro.jsx';
+import { recordDirectionalEvent } from '../lib/platformIntelligence.js';
 
 // ── Data helpers ────────────────────────────────────────────────
 function loadMyListing(userId) {
@@ -230,6 +232,7 @@ export function CreatorDashboard({ dark }) {
   const [violations, setViolations] = useState([]);
   const [tierUpBanner, setTierUpBanner] = useState(null);
   const [availabilityRefreshKey, setAvailabilityRefreshKey] = useState(0);
+  const [showCollaborationIntro, setShowCollaborationIntro] = useState(false);
 
   const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
   const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`;
@@ -245,6 +248,12 @@ export function CreatorDashboard({ dark }) {
     if (!user) { setLoading(false); return; }
     loadData();
   }, [user]);
+
+  useEffect(() => {
+    if (!user?.id || !authProfile || authProfile.collaboration_intro_seen_at) return;
+    setShowCollaborationIntro(true);
+    recordDirectionalEvent({ name: 'onboarding.intro_viewed', version: 1, entityType: 'creator_dashboard', surface: 'creator_dashboard', properties: { surface: 'creator_dashboard' } });
+  }, [user?.id, authProfile]);
 
   async function loadData() {
     setLoading(true);
@@ -399,6 +408,10 @@ export function CreatorDashboard({ dark }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button type="button" onClick={() => navigate('/dashboard/build-team')}
+              className="flex items-center gap-1.5 rounded-xl border border-gold-500/35 bg-gold-500/10 px-3 py-2 text-xs font-bold text-gold-400 transition hover:bg-gold-500/20">
+              <Users size={13} /> Build Your Team
+            </button>
             {unreadCount > 0 && (
               <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold-500/15 text-gold-400 text-xs font-bold">
                 <Bell size={12} /> {unreadCount} new {unreadCount === 1 ? 'request' : 'requests'}
@@ -742,6 +755,7 @@ export function CreatorDashboard({ dark }) {
         )}
 
       </div>
+      <CreatorCollaborationIntro open={showCollaborationIntro} dark={dark} onClose={() => setShowCollaborationIntro(false)} onBuildTeam={() => navigate('/dashboard/build-team')} />
     </div>
   );
 }

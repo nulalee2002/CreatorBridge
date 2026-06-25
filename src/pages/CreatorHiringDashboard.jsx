@@ -1,0 +1,7 @@
+import { useState } from 'react';
+import { CreatorDirectory } from '../components/CreatorDirectory.jsx';
+
+export function CreatorHiringDashboard({ dark = true }) {
+  const [software, setSoftware] = useState('all');
+  return <div className="mx-auto max-w-[1520px] px-5 py-8 sm:px-8"><section className="mb-6 rounded-2xl border border-gold-500/20 bg-charcoal-950/80 p-7 text-white"><p className="text-[10px] uppercase tracking-[0.25em] text-gold-400">Build Your Team</p><h1 className="mt-2 font-display text-4xl font-bold">Find Your Finishing Team</h1><p className="mt-3 max-w-2xl text-sm text-charcoal-300">Discover verified creators who are Open to Creator Collaborations. Filter for Post Production, software, specialty, turnaround, location requirements, and availability for collaboration.</p><div className="mt-5 flex flex-wrap gap-2"><a href="/find?pillar=post_production&collaboration=true" className="btn-gold">Post Production</a><select aria-label="Software" value={software} onChange={(e) => setSoftware(e.target.value)} className="rounded-xl border border-white/10 bg-charcoal-900 px-3 text-sm"><option value="all">Any software</option><option>Adobe Premiere Pro</option><option>DaVinci Resolve</option><option>Final Cut Pro</option><option>After Effects</option></select><span className="btn-ghost">Specialty</span><span className="btn-ghost">Turnaround</span><span className="btn-ghost">Location requirements</span><span className="btn-ghost">Available for collaboration</span></div></section><CreatorDirectory dark={dark} mode="search" /></div>;
+}

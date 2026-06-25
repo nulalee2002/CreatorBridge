@@ -38,7 +38,7 @@ try {
   const creatorUser = await signIn(creatorSupabase, CREATOR_EMAIL, CREATOR_PASSWORD);
 
   const conversationId = crypto.randomUUID();
-  const token = Date.now();
+  const token = crypto.randomUUID().slice(0, 8);
   const { data: message, error: messageError } = await clientSupabase.rpc('send_creatorbridge_message', {
     p_recipient_id: creatorUser.id,
     p_body: `Codex notification QA ${token}`,
