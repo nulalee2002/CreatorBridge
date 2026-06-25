@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Users, DollarSign, Briefcase, MessageSquare,
-  TrendingUp, TrendingDown, Minus,
+  TrendingUp, TrendingDown, Minus, ShieldCheck,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase.js';
 import { centsToDisplay, PLATFORM_FEES } from '../config/fees.js';
@@ -152,6 +152,8 @@ export function AdminAnalytics({ dark }) {
   const [creators,     setCreators]     = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [openTickets,  setOpenTickets]  = useState(0);
+  const [intelligenceReports, setIntelligenceReports] = useState([]);
+  const [intelligenceRollups, setIntelligenceRollups] = useState([]);
 
   // ── Admin guard ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -165,7 +167,7 @@ export function AdminAnalytics({ dark }) {
     if (authError) return;
     async function fetch() {
       setLoading(true);
-      const [crRes, txRes, tkRes] = await Promise.all([
+      const [crRes, txRes, tkRes, reportRes, rollupRes] = await Promise.all([
         supabase
           .from('creator_listings')
           .select('tier, review_status, verified, is_suspended, created_at'),
@@ -176,10 +178,19 @@ export function AdminAnalytics({ dark }) {
           .from('support_tickets')
           .select('id', { count: 'exact', head: true })
           .eq('status', 'open'),
+        supabase
+          .from('platform_intelligence_reports')
+          .select('id,report_type,period_key,status,row_count,suppression_count,generated_at,stale_source_warning')
+          .order('generated_at', { ascending: false })
+          .limit(5),
+        supabase
+          .rpc('get_admin_platform_intelligence_rollups', { p_since: new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10) }),
       ]);
       setCreators(crRes.data     || []);
       setTransactions(txRes.data || []);
       setOpenTickets(tkRes.count  || 0);
+      setIntelligenceReports(reportRes.data || []);
+      setIntelligenceRollups(rollupRes.data || []);
       setLoading(false);
     }
     fetch();
@@ -255,6 +266,14 @@ export function AdminAnalytics({ dark }) {
 
   const activeJobs = txHealth[2].value;
   const revChange  = mom(revenueThisMonth, revenueLastMonth);
+  const intelligenceEvents = intelligenceRollups.reduce((sum, row) => sum + Number(row.event_count || 0), 0);
+  const authoritativeEvents = intelligenceRollups
+    .filter(row => row.authority === 'server_authoritative')
+    .reduce((sum, row) => sum + Number(row.event_count || 0), 0);
+  const directionalEvents = intelligenceRollups
+    .filter(row => row.authority === 'browser_directional')
+    .reduce((sum, row) => sum + Number(row.event_count || 0), 0);
+  const suppressedRows = intelligenceRollups.filter(row => row.suppressed).length;
 
   // ── Render ───────────────────────────────────────────────────────────────────
   if (authError) {
@@ -398,6 +417,47 @@ export function AdminAnalytics({ dark }) {
                 </div>
               </Section>
             </div>
+
+            <Section
+              title="Platform Intelligence Reports"
+              sub="Governed analytics only: actions, outcomes, categories, timings, and operational metadata. No DM contents, creative files, or external workspace contents."
+              dark={dark}
+            >
+              <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
+                <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                  <div className={`rounded-xl border p-4 ${dark ? 'border-white/[0.07] bg-charcoal-950/45' : 'border-gray-200 bg-gray-50'}`}>
+                    <p className={`text-[10px] uppercase tracking-wider ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>30-day events</p>
+                    <p className={`mt-1 font-display text-2xl font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{intelligenceEvents.toLocaleString()}</p>
+                  </div>
+                  <div className={`rounded-xl border p-4 ${dark ? 'border-white/[0.07] bg-charcoal-950/45' : 'border-gray-200 bg-gray-50'}`}>
+                    <p className={`text-[10px] uppercase tracking-wider ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>Server vs directional</p>
+                    <p className={`mt-1 text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{authoritativeEvents.toLocaleString()} / {directionalEvents.toLocaleString()}</p>
+                  </div>
+                  <div className={`rounded-xl border p-4 ${dark ? 'border-white/[0.07] bg-charcoal-950/45' : 'border-gray-200 bg-gray-50'}`}>
+                    <p className={`text-[10px] uppercase tracking-wider ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>Suppressed rows</p>
+                    <p className="mt-1 flex items-center gap-2 text-sm font-bold text-gold-400"><ShieldCheck size={14} /> {suppressedRows.toLocaleString()}</p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {intelligenceReports.length === 0 ? (
+                    <p className={`rounded-xl border p-4 text-sm ${dark ? 'border-white/[0.07] bg-charcoal-950/45 text-charcoal-300' : 'border-gray-200 bg-gray-50 text-gray-600'}`}>
+                      No archived intelligence reports yet. Empty training reports are allowed until real platform activity accumulates.
+                    </p>
+                  ) : intelligenceReports.map(report => (
+                    <div key={report.id} className={`rounded-xl border p-4 ${dark ? 'border-white/[0.07] bg-charcoal-950/45' : 'border-gray-200 bg-gray-50'}`}>
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className={`text-sm font-bold capitalize ${dark ? 'text-white' : 'text-gray-900'}`}>{report.report_type} · {report.period_key}</p>
+                        <span className="rounded-full border border-gold-500/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-400">{report.status}</span>
+                      </div>
+                      <p className={`mt-1 text-[11px] ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
+                        {report.row_count} rows · {report.suppression_count} suppressed · {report.generated_at ? new Date(report.generated_at).toLocaleString() : 'not generated'}
+                      </p>
+                      {report.stale_source_warning && <p className="mt-2 text-[11px] text-gold-300">{report.stale_source_warning}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Section>
 
             {/* Revenue MoM strip */}
             <div className={`rounded-2xl border p-5 flex flex-wrap gap-6 items-center ${

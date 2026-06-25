@@ -33,6 +33,7 @@ import { handoffPages } from '../data/handoffPages.js';
 import { ProjectWorkspaces } from '../components/collaboration/ProjectWorkspaces.jsx';
 import { DeliveryAnchorForm } from '../components/collaboration/DeliveryAnchorForm.jsx';
 import { CollaborationReviewActions } from '../components/collaboration/CollaborationReviewActions.jsx';
+import { CollaborationSurvey } from '../components/analytics/CollaborationSurvey.jsx';
 import {
   CLIENT_MINIMUM_PROJECT_ERROR,
   CLIENT_MINIMUM_PROJECT_NOTE,
@@ -1239,6 +1240,7 @@ function CollaborationWorkspacePanel({ project, dark, user }) {
                   <ProjectWorkspaces collaboration={collaboration} userId={user.id} onChanged={loadCollaborations} />
                   {isCollaborator && <DeliveryAnchorForm collaboration={collaboration} onSubmitted={loadCollaborations} />}
                   <CollaborationReviewActions collaboration={collaboration} userId={user.id} onChanged={loadCollaborations} />
+                  <CollaborationSurvey collaboration={collaboration} userId={user.id} onSubmitted={loadCollaborations} />
                 </div>
               )}
             </article>
