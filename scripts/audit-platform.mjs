@@ -216,6 +216,18 @@ check('Creator team dashboard discovery', 'src/pages/CreatorDashboard.jsx', [
   { label: 'shows first-visit collaboration guidance', test: includes('CreatorCollaborationIntro') },
 ]);
 
+check('Creator collaboration ACH payments', 'supabase/functions/create-collaboration-payment/index.ts', [
+  { label: 'accepts only US bank account payments', test: includes("payment_method_types: ['us_bank_account']") },
+  { label: 'loads collaboration amount from trusted storage', test: includes("from('creator_collaborations')") },
+  { label: 'waives the buyer platform fee', test: includes('buyer_platform_fee_cents: 0') },
+  { label: 'warns creators not to start before settlement', test: includes('Do not begin work until funded') },
+]);
+
+check('Collaboration Stripe settlement', 'supabase/functions/stripe-webhook/index.ts', [
+  { label: 'marks collaboration funded only from Stripe success', test: includes("status: 'funded'") },
+  { label: 'records collaboration payment failures', test: includes("from('collaboration_payments').update({ status: 'failed'") },
+]);
+
 checks.push(
   { name: 'Shared input sanitizer exists', pass: fileExists('src/utils/inputSecurity.js')(), path: 'src/utils/inputSecurity.js' },
 );

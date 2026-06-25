@@ -359,6 +359,14 @@ Deno.serve(async (req) => {
 
       case 'payment_intent.succeeded': {
         const pi = event.data.object as Stripe.PaymentIntent;
+        if (pi.metadata?.paymentType === 'creator_collaboration') {
+          const settledAt = new Date().toISOString();
+          const { data: payment } = await supabaseAdmin.from('collaboration_payments').update({ status: 'succeeded', stripe_event_id: event.id, settled_at: settledAt, updated_at: settledAt }).eq('stripe_payment_intent_id', pi.id).select('collaboration_id').maybeSingle();
+          if (payment?.collaboration_id) {
+            await supabaseAdmin.from('creator_collaborations').update({ status: 'funded', funded_at: settledAt, updated_at: settledAt }).eq('id', payment.collaboration_id).eq('status', 'funding_pending');
+          }
+          break;
+        }
         const { projectId, paymentType, creatorId, clientId } = pi.metadata;
 
         if (paymentType === 'retainer') {
@@ -432,6 +440,11 @@ Deno.serve(async (req) => {
 
       case 'payment_intent.payment_failed': {
         const pi = event.data.object as Stripe.PaymentIntent;
+        if (pi.metadata?.paymentType === 'creator_collaboration') {
+          await supabaseAdmin.from('collaboration_payments').update({ status: 'failed', stripe_event_id: event.id, updated_at: new Date().toISOString() }).eq('stripe_payment_intent_id', pi.id);
+          await supabaseAdmin.from('creator_collaborations').update({ status: 'accepted', updated_at: new Date().toISOString() }).eq('id', pi.metadata.collaborationId).eq('status', 'funding_pending');
+          break;
+        }
         const { paymentType } = pi.metadata;
 
         // Find and log

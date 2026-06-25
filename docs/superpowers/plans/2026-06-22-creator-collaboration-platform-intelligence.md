@@ -162,19 +162,19 @@ Run static, live RLS, and browser flows. Commit as `Add creator hiring and colla
 - Prime pays disclosed ACH cost; card payment methods are rejected for collaboration PaymentIntents.
 - `funded` requires authoritative settlement, not browser success.
 
-- [ ] **Step 1: Write failing fee and payment tests**
+- [x] **Step 1: Write failing fee and payment tests**
 
 Cover 10/8/6 percent tiers, $5 floor, zero buyer fee, $250 minimum, ACH-only methods, processing-cost disclosure, failed/returned ACH, idempotent webhooks, and no internal tier advancement.
 
-- [ ] **Step 2: Implement trusted server calculations**
+- [x] **Step 2: Implement trusted server calculations**
 
 Never accept fee percentages or settlement state from the browser. Store base amount, ACH processing cost, platform fee, subcontractor net, payment status, Stripe IDs, and idempotency keys.
 
-- [ ] **Step 3: Implement checkout and settlement UI**
+- [x] **Step 3: Implement checkout and settlement UI**
 
 Show project amount, ACH cost, subcontractor fee treatment, settlement delay, and `Do not begin work until funded`. Disable collaboration workspaces until settled.
 
-- [ ] **Step 4: Verify live Stripe test mode and commit**
+- [x] **Step 4: Verify live Stripe test mode and commit**
 
 Test success, pending, failure, return, duplicate webhook, refund, and cancellation. Commit as `Add protected ACH collaboration payments`.
 

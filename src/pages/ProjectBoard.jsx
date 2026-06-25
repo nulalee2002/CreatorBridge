@@ -30,6 +30,8 @@ import {
 } from '../utils/projectStorage.js';
 import { HandoffPage } from '../components/HandoffPage.jsx';
 import { handoffPages } from '../data/handoffPages.js';
+import { ProjectWorkspaces } from '../components/collaboration/ProjectWorkspaces.jsx';
+import { DeliveryAnchorForm } from '../components/collaboration/DeliveryAnchorForm.jsx';
 import {
   CLIENT_MINIMUM_PROJECT_ERROR,
   CLIENT_MINIMUM_PROJECT_NOTE,
@@ -1168,6 +1170,83 @@ function getProjectCoverImage(project) {
   }
 }
 
+function CollaborationWorkspacePanel({ project, dark, user }) {
+  const navigate = useNavigate();
+  const [collaborations, setCollaborations] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
+
+  async function loadCollaborations() {
+    if (!supabaseConfigured || !user?.id || !isUuid(project?.id)) return;
+    setLoading(true);
+    const { data } = await supabase
+      .from('creator_collaborations')
+      .select('id,status,service_category,scope,amount_cents,deadline,prime_user_id,collaborator_user_id,project_context,created_at')
+      .eq('project_id', project.id)
+      .order('created_at', { ascending: false });
+    setCollaborations(data || []);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    loadCollaborations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.id, user?.id]);
+
+  if (!user?.id || !isUuid(project?.id)) return null;
+
+  return (
+    <section className={`rounded-xl border p-4 ${dark ? 'border-white/[0.07] bg-charcoal-900/40' : 'border-gray-200 bg-gray-50'}`}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className={`text-[10px] font-bold uppercase tracking-wider ${textSub}`}>Creator collaboration</p>
+          <h3 className={`mt-1 font-display text-lg font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>Build the team for this project</h3>
+          <p className={`mt-1 max-w-xl text-xs leading-5 ${textSub}`}>Add verified collaborators privately. The outside client does not see subcontractors or production-team links.</p>
+        </div>
+        <button type="button" onClick={() => navigate(`/find?project=${project.id}&collaboration=true`)} className="btn-gold text-xs">
+          Add to This Project
+        </button>
+      </div>
+
+      {loading && <p className={`mt-4 text-xs ${textSub}`}>Loading collaborations…</p>}
+      {!loading && collaborations.length === 0 && (
+        <p className={`mt-4 rounded-xl border p-3 text-xs ${dark ? 'border-white/[0.06] bg-black/20 text-charcoal-300' : 'border-gray-200 bg-white text-gray-600'}`}>
+          No collaborators have been attached to this project yet.
+        </p>
+      )}
+
+      <div className="mt-4 space-y-4">
+        {collaborations.map((collaboration) => {
+          const isPrime = collaboration.prime_user_id === user.id;
+          const isCollaborator = collaboration.collaborator_user_id === user.id;
+          return (
+            <article key={collaboration.id} className={`rounded-2xl border p-4 ${dark ? 'border-white/10 bg-black/20' : 'border-gray-200 bg-white'}`}>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className={`text-xs font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{collaboration.service_category || 'Creator collaboration'}</p>
+                  <p className={`mt-1 text-[11px] ${textSub}`}>${Number((collaboration.amount_cents || 0) / 100).toLocaleString()} · {collaboration.status.replaceAll('_', ' ')}</p>
+                </div>
+                {isPrime && collaboration.status === 'accepted' && (
+                  <button type="button" onClick={() => navigate(`/collaboration/${collaboration.id}/payment`)} className="btn-gold text-xs">
+                    Fund collaboration
+                  </button>
+                )}
+              </div>
+              {collaboration.scope && <p className={`mt-3 text-xs leading-5 ${textSub}`}>{collaboration.scope}</p>}
+              {(isPrime || isCollaborator) && (
+                <div className="mt-4 space-y-4">
+                  <ProjectWorkspaces collaboration={collaboration} userId={user.id} onChanged={loadCollaborations} />
+                  {isCollaborator && <DeliveryAnchorForm collaboration={collaboration} onSubmitted={loadCollaborations} />}
+                </div>
+              )}
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 // ── Project Detail Pane ─────────────────────────────────────────
 function ProjectDetailPane({ project, dark, onApply, myApplications, applications, isClient, canApply, onStatusChange }) {
   const navigate    = useNavigate();
@@ -1294,6 +1373,10 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
           <ProjectTimeline status={localProject.status} dark={dark} />
         </div>
       </div>
+
+      {!isClient && (
+        <CollaborationWorkspacePanel project={localProject} dark={dark} user={user} />
+      )}
 
       {/* Description */}
       <div>
