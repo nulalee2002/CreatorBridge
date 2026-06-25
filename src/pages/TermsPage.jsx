@@ -332,6 +332,12 @@ export function TermsPage({ dark }) {
                 message filtering remains limited to enforcing safety and contact-sharing rules at send time.
               </p>
               <p>
+                <strong className={dark ? 'text-white' : 'text-gray-900'}>Platform intelligence retention:</strong>{' '}
+                Identifiable behavioral analytics events are retained for up to 13 months, then converted into
+                pseudonymized detail for up to 24 months. Non-identifying aggregate metrics may be kept indefinitely.
+                Financial, tax, dispute, fraud-prevention, and legal records follow their own legally required retention periods.
+              </p>
+              <p>
                 You may request deletion of your account and associated data at any time by contacting
                 {' '}<a href="mailto:drl33@creatorbridge.studio" className={linkCls}>drl33@creatorbridge.studio</a>.
                 Note that transaction records may be retained for legal and accounting purposes.

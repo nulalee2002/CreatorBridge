@@ -26,6 +26,7 @@
     "verify:collaboration-payments": "node scripts/verify-collaboration-payments.mjs",
     "verify:collaboration-workspaces": "node scripts/verify-collaboration-workspaces.mjs",
     "verify:collaboration-reputation": "node scripts/verify-collaboration-reputation.mjs",
+    "verify:platform-intelligence-governance": "node scripts/verify-platform-intelligence-governance.mjs",
     "verify:support-reporting": "node scripts/verify-support-reporting.mjs",
     "verify:support-cleanup-live": "node --env-file=.env scripts/verify-support-cleanup-live.mjs",
     "verify:messaging": "node --env-file=.env scripts/verify-messaging.mjs",
