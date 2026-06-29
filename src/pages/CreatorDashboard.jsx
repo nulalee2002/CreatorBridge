@@ -389,7 +389,7 @@ export function CreatorDashboard({ dark }) {
           style={{ boxShadow: dark ? '0 28px 90px rgba(0,0,0,0.22)' : '0 22px 70px rgba(0,0,0,0.08)' }}>
           <div
             className="absolute inset-x-0 top-0 h-1"
-            style={{ background: 'linear-gradient(90deg, transparent, rgba(212,169,65,0.85), transparent)' }}
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(156,74,51,0.85), transparent)' }}
           />
           <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-gold-500/10 blur-3xl" />
           <div className="relative flex items-center justify-between gap-5 flex-wrap">
@@ -475,7 +475,7 @@ export function CreatorDashboard({ dark }) {
             <button key={id} type="button" onClick={() => setActiveTab(id)}
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                 activeTab === id
-                  ? 'bg-gold-500 text-charcoal-900 shadow-[0_8px_24px_rgba(212,169,65,0.14)]'
+                  ? 'bg-gold-500 text-charcoal-900 shadow-[0_8px_24px_rgba(156,74,51,0.14)]'
                   : dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.035]' : 'text-gray-500 hover:text-gray-900'
               }`}>
               <Icon size={12} /> {label}

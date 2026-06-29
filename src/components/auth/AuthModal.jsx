@@ -310,7 +310,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
             <>
               {/* Logo */}
               <div className="text-center mb-6">
-                <BrandMark className="mx-auto h-16 w-16 rounded-2xl shadow-[0_0_24px_rgba(212,169,65,0.14)]" />
+                <BrandMark className="mx-auto h-16 w-16 rounded-2xl shadow-[0_0_24px_rgba(156,74,51,0.14)]" />
                 <p className="text-gold-400 mt-4 mb-2" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
                   Account Access
                 </p>

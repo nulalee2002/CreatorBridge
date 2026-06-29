@@ -196,7 +196,11 @@ function CreatorCard({ creator, dark, onDelete, onViewProfile }) {
             </span>
           )}
           {creator.tier && creator.tier !== 'launch' && (
-            <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/90 text-white font-semibold tracking-wider uppercase shadow-sm">
+            <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold tracking-wider uppercase shadow-sm ${
+              ['elite', 'signature'].includes(String(creator.tier).toLowerCase())
+                ? 'bg-oxblood-500/90 text-white'
+                : 'bg-gold-500/90 text-white'
+            }`}>
               {creator.tier}
             </span>
           )}
@@ -644,7 +648,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
           <div key={n} className="flex items-center gap-1 flex-1">
             <button type="button" onClick={() => n < step && setStep(n)}
               className={`w-8 h-8 rounded-full text-[10px] font-bold flex items-center justify-center transition-all shrink-0 ${
-                n <= step ? 'bg-gold-500 text-charcoal-950 shadow-[0_0_24px_rgba(212,169,65,0.2)]' : dark ? 'bg-white/[0.04] text-charcoal-500' : 'bg-gray-200 text-gray-400'
+                n <= step ? 'bg-gold-500 text-charcoal-950 shadow-[0_0_24px_rgba(156,74,51,0.2)]' : dark ? 'bg-white/[0.04] text-charcoal-500' : 'bg-gray-200 text-gray-400'
               }`}>{n}</button>
             <span className={`text-[10px] hidden sm:inline uppercase tracking-[0.14em] ${n === step ? 'text-gold-400 font-bold' : dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
               {label}

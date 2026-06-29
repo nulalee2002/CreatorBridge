@@ -9,8 +9,8 @@ import { CreatorAvatar } from '../components/CreatorAvatar.jsx';
 const TIER_COLOURS = {
   Launch:    'bg-charcoal-800/60 text-charcoal-300  border-white/[0.08]',
   Proven:    'bg-gold-500/10    text-gold-400       border-gold-500/20',
-  Elite:     'bg-gold-500/20    text-gold-300       border-gold-500/30',
-  Signature: 'bg-gold-500/30    text-gold-200       border-gold-500/40',
+  Elite:     'bg-oxblood-500/25 text-oxblood-100    border-oxblood-500/35',
+  Signature: 'bg-oxblood-500/35 text-oxblood-50     border-oxblood-500/45',
 };
 
 function TierChip({ tier }) {

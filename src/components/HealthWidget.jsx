@@ -89,7 +89,7 @@ export function HealthWidget({ serviceId, regionKey, lineItems, experienceLevel 
             <path
               d="M 8 50 A 42 42 0 0 1 92 50"
               fill="none"
-              stroke={tier === 'low' ? '#f87171' : tier === 'high' ? '#efc970' : '#d4a941'}
+              stroke={tier === 'low' ? '#f87171' : tier === 'high' ? '#B85A3E' : '#9C4A33'}
               strokeWidth="8"
               strokeLinecap="round"
               strokeDasharray={`${strokeDash} ${circumference}`}
@@ -97,7 +97,7 @@ export function HealthWidget({ serviceId, regionKey, lineItems, experienceLevel 
             />
             {/* Score text */}
             <text x="50" y="46" textAnchor="middle" fontSize="18" fontWeight="bold"
-              fill={tier === 'low' ? '#f87171' : tier === 'high' ? '#efc970' : '#d4a941'}
+              fill={tier === 'low' ? '#f87171' : tier === 'high' ? '#B85A3E' : '#9C4A33'}
               fontFamily="Space Grotesk, sans-serif">
               {score}
             </text>

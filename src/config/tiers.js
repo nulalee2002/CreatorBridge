@@ -137,7 +137,7 @@ export function checkPricingFloor(tierId, serviceId, rateValue, rateType = 'proj
  */
 export function tierBadgeClass(tierId) {
   switch (tierId) {
-    case 'signature': return 'bg-gold-500/20 text-gold-400 ring-1 ring-gold-500/40 shadow-[0_0_8px_rgba(212,169,65,0.2)]';
+    case 'signature': return 'bg-gold-500/20 text-gold-400 ring-1 ring-gold-500/40 shadow-[0_0_8px_rgba(156,74,51,0.2)]';
     case 'elite':     return 'bg-gold-500/15 text-gold-300 ring-1 ring-gold-500/35';
     case 'proven':    return 'bg-gold-500/10 text-gold-400 ring-1 ring-gold-500/25';
     default:          return 'bg-gray-500/15 text-gray-400 ring-1 ring-gray-500/20';

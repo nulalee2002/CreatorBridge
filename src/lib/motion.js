@@ -127,12 +127,12 @@ function splitHeadlineLines(h1) {
           const w = document.createElement('span');
           w.className = 'cb-w';
           w.style.display = 'inline-block';
-          // Gradient-clipped text (.gold-text) does not survive being split:
+          // Accent text (.gold-text) does not survive being split:
           // child spans lose the background but inherit the transparent
-          // fill, turning words invisible. Give gold words a solid gold
+          // fill, turning words invisible. Give gold words a solid accent
           // fill during the animation; the original markup (and its
           // animated gradient) is restored by revert() after the intro.
-          if (insideGold) w.style.webkitTextFillColor = 'var(--gold, #c9a84c)';
+          if (insideGold) w.style.webkitTextFillColor = 'var(--gold, #9C4A33)';
           w.textContent = part;
           frag.appendChild(w);
         });
@@ -177,7 +177,7 @@ function initLandingShowcase(mobile) {
       );
     });
     // After the intro settles, restore the original markup so the gold
-    // gradient (and its slow goldShift animation) returns, then ignite.
+    // gradient (and its subtle accent animation) returns, then ignite.
     tl.add(() => {
       split.revert();
       const idx = activeSplits.indexOf(split);
