@@ -52,8 +52,8 @@ export function EmailCapture({ source = 'homepage', compact = false, dark = true
   if (done) {
     return (
       <div className={`flex items-center gap-2 ${compact ? 'text-xs' : 'text-sm'}`}>
-        <CheckCircle size={compact ? 14 : 18} className="text-[#c9a84c] shrink-0" />
-        <span className="text-[#c9a84c] font-semibold">You're on the list — we'll be in touch.</span>
+        <CheckCircle size={compact ? 14 : 18} className="text-[#9C4A33] shrink-0" />
+        <span className="text-[#9C4A33] font-semibold">You're on the list — we'll be in touch.</span>
       </div>
     );
   }
@@ -68,7 +68,7 @@ export function EmailCapture({ source = 'homepage', compact = false, dark = true
       )}
 
       <div className={`flex rounded-xl border border-white/[0.08] bg-white/[0.02] p-1.5
-        focus-within:border-[#c9a84c] focus-within:bg-white/[0.04] transition-all`}>
+        focus-within:border-[#9C4A33] focus-within:bg-white/[0.04] transition-all`}>
         <input
           type="email"
           value={email}

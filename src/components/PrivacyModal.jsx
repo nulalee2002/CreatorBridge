@@ -33,7 +33,7 @@ export function PrivacyModal({ dark, onClose }) {
         </div>
 
         {/* Scrollable content */}
-        <div className={`flex-1 overflow-y-auto px-6 py-5 ${dark ? 'bg-[radial-gradient(circle_at_25%_0%,rgba(212,169,65,0.06),transparent_34%)]' : ''}`}>
+        <div className={`flex-1 overflow-y-auto px-6 py-5 ${dark ? 'bg-[radial-gradient(circle_at_25%_0%,rgba(156,74,51,0.06),transparent_34%)]' : ''}`}>
           <p className={`text-xs mb-6 ${textSub}`}>Effective April 17, 2026. Last updated June 22, 2026.</p>
 
           <div className={`space-y-3 text-sm leading-relaxed ${textBody}`}>

@@ -496,7 +496,7 @@ function Packages({ selected, setSelected, style, onBook }) {
           return (
             <div key={p.id} onClick={() => setSelected(p.id)}
               className={"relative liquid-glass rounded-2xl p-6 cursor-pointer transition-all " +
-                (isSel ? "ring-1 ring-[var(--gold)] -translate-y-1 shadow-[0_0_40px_rgba(201,168,76,0.12)]" : "")}>
+                (isSel ? "ring-1 ring-[var(--gold)] -translate-y-1 shadow-[0_0_40px_rgba(156,74,51,0.12)]" : "")}>
               {p.popular && (
                 <div className="absolute -top-2 left-6">
                   <Pill>Most booked</Pill>
@@ -829,7 +829,7 @@ function HandoffCreatorProfile() {
   // Density → padding scale
   const padScale = t.density === "compact" ? "py-8 md:py-10" : t.density === "comfy" ? "py-16 md:py-24" : "py-12 md:py-16";
 
-  // Accent → animated gold body wash
+  // Accent → subtle accent body wash
   useEffect(() => {
     document.body.classList.toggle("accent-bold", t.accent === "bold");
   }, [t.accent]);

@@ -47,7 +47,7 @@ export function TermsOfService({ dark }) {
   const linkCls  = 'text-gold-400 hover:text-gold-300 underline';
 
   return (
-    <div className={`min-h-screen ${dark ? 'bg-charcoal-950 bg-[radial-gradient(circle_at_50%_0%,rgba(212,169,65,0.08),transparent_34%)]' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen ${dark ? 'bg-charcoal-950 bg-[radial-gradient(circle_at_50%_0%,rgba(156,74,51,0.08),transparent_34%)]' : 'bg-gray-50'}`}>
       <div className="max-w-4xl mx-auto px-4 py-10">
 
         {/* Header */}

@@ -10,7 +10,7 @@ export function JoinAsCreator({ dark }) {
   }`;
 
   return (
-    <div className={`min-h-screen pb-20 ${dark ? 'bg-charcoal-950 bg-[radial-gradient(circle_at_50%_0%,rgba(212,169,65,0.08),transparent_34%)]' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen pb-20 ${dark ? 'bg-charcoal-950 bg-[radial-gradient(circle_at_50%_0%,rgba(156,74,51,0.08),transparent_34%)]' : 'bg-gray-50'}`}>
       
       {/* Hero Section */}
       <section className="relative max-w-5xl mx-auto px-4 pt-16 pb-12 text-center">
@@ -28,7 +28,7 @@ export function JoinAsCreator({ dark }) {
         </p>
         <button
           onClick={() => navigate('/register')}
-          className="px-8 py-4 rounded-full bg-gold-500 hover:bg-gold-600 text-charcoal-950 font-bold text-sm transition-all shadow-[0_4px_24px_rgba(212,169,65,0.3)] hover:scale-105 inline-flex items-center gap-2"
+          className="px-8 py-4 rounded-full bg-gold-500 hover:bg-gold-600 text-charcoal-950 font-bold text-sm transition-all shadow-[0_4px_24px_rgba(156,74,51,0.3)] hover:scale-105 inline-flex items-center gap-2"
         >
           Apply as a Creator <ArrowRight size={16} />
         </button>
@@ -214,7 +214,7 @@ export function JoinAsCreator({ dark }) {
         </p>
         <button
           onClick={() => navigate('/register')}
-          className="px-8 py-4 rounded-full bg-gold-500 hover:bg-gold-600 text-charcoal-950 font-bold text-sm transition-all shadow-[0_4px_24px_rgba(212,169,65,0.3)] hover:scale-105"
+          className="px-8 py-4 rounded-full bg-gold-500 hover:bg-gold-600 text-charcoal-950 font-bold text-sm transition-all shadow-[0_4px_24px_rgba(156,74,51,0.3)] hover:scale-105"
         >
           Apply as a Creator
         </button>

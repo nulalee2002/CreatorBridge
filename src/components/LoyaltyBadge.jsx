@@ -10,7 +10,7 @@ export function LoyaltyBadge({ completedProjects = 0 }) {
 
   if (badge === 'gold') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-gold-500/20 text-gold-400 ring-1 ring-gold-500/40 shadow-[0_0_8px_rgba(212,169,65,0.25)]">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-gold-500/20 text-gold-400 ring-1 ring-gold-500/40 shadow-[0_0_8px_rgba(156,74,51,0.25)]">
         Gold Creator
       </span>
     );

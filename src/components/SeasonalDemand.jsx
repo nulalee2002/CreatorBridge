@@ -1,12 +1,12 @@
 import { SEASONAL_DEMAND } from '../data/regions.js';
 
 const SERVICE_COLORS = {
-  video:          { key: 'video',   label: 'Video',   color: '#d4a941' },
-  photography:    { key: 'photo',   label: 'Photo',   color: '#efc970' },
-  podcast:        { key: 'podcast', label: 'Podcast', color: '#d4a941' },
-  drone:          { key: 'drone',   label: 'Drone',   color: '#efc970' },
-  social:         { key: 'social',  label: 'Social',  color: '#d4a941' },
-  postProduction: { key: 'post',    label: 'Post',    color: '#efc970' },
+  video:          { key: 'video',   label: 'Video',   color: '#9C4A33' },
+  photography:    { key: 'photo',   label: 'Photo',   color: '#B85A3E' },
+  podcast:        { key: 'podcast', label: 'Podcast', color: '#9C4A33' },
+  drone:          { key: 'drone',   label: 'Drone',   color: '#B85A3E' },
+  social:         { key: 'social',  label: 'Social',  color: '#9C4A33' },
+  postProduction: { key: 'post',    label: 'Post',    color: '#B85A3E' },
 };
 
 const PEAK_LABELS = {
@@ -38,7 +38,7 @@ export function SeasonalDemand({ serviceId, dark = true }) {
 
   const fillD = `${pathD} L 100 100 L 0 100 Z`;
 
-  const color = svc?.color || '#d4a941';
+  const color = svc?.color || '#9C4A33';
 
   return (
     <div className={`rounded-2xl border p-5 shadow-[0_24px_80px_rgba(0,0,0,0.16)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`}>

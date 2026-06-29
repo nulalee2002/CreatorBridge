@@ -62,7 +62,7 @@ export function TermsModal({ dark, onClose }) {
         </div>
 
         {/* Scrollable content */}
-        <div ref={scrollRef} className={`flex-1 overflow-y-auto px-6 py-5 space-y-1 ${dark ? 'bg-[radial-gradient(circle_at_25%_0%,rgba(212,169,65,0.06),transparent_34%)]' : ''}`}>
+        <div ref={scrollRef} className={`flex-1 overflow-y-auto px-6 py-5 space-y-1 ${dark ? 'bg-[radial-gradient(circle_at_25%_0%,rgba(156,74,51,0.06),transparent_34%)]' : ''}`}>
           <p className={`text-xs mb-6 ${textSub}`}>Effective April 9, 2026. Last updated April 9, 2026.</p>
 
           {/* Table of contents */}
