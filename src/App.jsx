@@ -32,6 +32,33 @@ function makeId() {
   return globalThis.crypto?.randomUUID?.() || `id-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+function getRouteTitle(pathname) {
+  if (pathname === '/') return 'Hire Verified Media Creators | CreatorBridge';
+  if (pathname.startsWith('/find')) return 'Find Creators | CreatorBridge';
+  if (pathname.startsWith('/projects')) return 'Project Board | CreatorBridge';
+  if (pathname.startsWith('/network')) return 'Creator Network | CreatorBridge';
+  if (pathname.startsWith('/calculator')) return 'Rate Calculator | CreatorBridge';
+  if (pathname.startsWith('/dashboard/build-team')) return 'Build Your Team | CreatorBridge';
+  if (pathname.startsWith('/dashboard')) return 'Creator Dashboard | CreatorBridge';
+  if (pathname.startsWith('/client')) return 'Client Dashboard | CreatorBridge';
+  if (pathname.startsWith('/messages')) return 'Messages | CreatorBridge';
+  if (pathname.startsWith('/admin/analytics')) return 'Platform Intelligence | CreatorBridge';
+  if (pathname.startsWith('/admin/support')) return 'Admin Support | CreatorBridge';
+  if (pathname.startsWith('/admin/operations')) return 'Admin Operations | CreatorBridge';
+  if (pathname.startsWith('/admin/finance')) return 'Admin Finance | CreatorBridge';
+  if (pathname.startsWith('/admin')) return 'Admin Dashboard | CreatorBridge';
+  if (pathname.startsWith('/terms')) return 'Terms | CreatorBridge';
+  if (pathname.startsWith('/privacy')) return 'Privacy | CreatorBridge';
+  if (pathname.startsWith('/creator-agreement')) return 'Creator Agreement | CreatorBridge';
+  if (pathname.startsWith('/dispute-policy')) return 'Dispute Policy | CreatorBridge';
+  if (pathname.startsWith('/register')) return 'Apply to Join | CreatorBridge';
+  if (pathname.startsWith('/login')) return 'Sign In | CreatorBridge';
+  if (pathname.startsWith('/signup')) return 'Create Account | CreatorBridge';
+  if (pathname.startsWith('/search')) return 'Search | CreatorBridge';
+  if (pathname.startsWith('/creator/')) return null;
+  return 'CreatorBridge';
+}
+
 import { SERVICES, RATES, PACKAGE_TIERS } from './data/rates.js';
 import { DEFAULT_EXCHANGE_RATES } from './data/regions.js';
 import { getRegionRates, buildQuote, getRate } from './utils/pricing.js';
@@ -635,6 +662,14 @@ export default function App() {
       clearTimeout(timer);
       mod?.killPageMotion();
     };
+  }, [displayedLocation.pathname]);
+
+  // Keep the browser tab in sync after SPA navigation. Creator profile pages
+  // own their dynamic title; the app shell resets all other routes so a profile
+  // title cannot linger on Project Board, Network, or Rate Calculator.
+  useEffect(() => {
+    const title = getRouteTitle(displayedLocation.pathname);
+    if (title) document.title = title;
   }, [displayedLocation.pathname]);
 
   // Mouse-reactive depth — background layers drift toward the cursor so the
