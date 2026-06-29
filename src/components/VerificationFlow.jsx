@@ -11,14 +11,14 @@ export function VerificationBadge({ status }) {
 
   if (status === 'pro_verified') {
     return (
-      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-gold-500/15 text-gold-400 text-[10px] font-bold ring-1 ring-gold-500/30">
+      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-forest-500/20 text-forest-100 text-[10px] font-bold ring-1 ring-forest-300/35">
         <BadgeCheck size={10} /> Pro Verified
       </span>
     );
   }
 
   return (
-    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-gold-500/10 text-gold-300 text-[10px] font-bold ring-1 ring-gold-500/20">
+    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-forest-500/15 text-forest-100 text-[10px] font-bold ring-1 ring-forest-300/25">
       <BadgeCheck size={10} /> Verified
     </span>
   );
@@ -29,8 +29,8 @@ function StepRow({ number, title, description, status, children, dark }) {
 
   const icon =
     status === 'done' ? (
-      <div className="w-7 h-7 rounded-full bg-gold-500/20 ring-1 ring-gold-500/25 flex items-center justify-center shrink-0">
-        <Check size={13} className="text-gold-400" />
+      <div className="w-7 h-7 rounded-full bg-forest-500/20 ring-1 ring-forest-300/25 flex items-center justify-center shrink-0">
+        <Check size={13} className="text-forest-100" />
       </div>
     ) : status === 'partial' ? (
       <div className="w-7 h-7 rounded-full bg-gold-500/10 ring-1 ring-gold-500/20 flex items-center justify-center shrink-0">

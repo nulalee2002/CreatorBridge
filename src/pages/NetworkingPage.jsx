@@ -338,7 +338,7 @@ function saveLocalMessage(stateCode, msg) {
 function VerificationDot({ status }) {
   if (!status || status === 'unverified') return null;
   return (
-    <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-gold-500/15 text-gold-400 text-[8px] font-bold ml-1" title="Verified Creator">
+    <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-forest-500/20 text-forest-100 ring-1 ring-forest-300/25 text-[8px] font-bold ml-1" title="Verified Creator">
       ✓
     </span>
   );

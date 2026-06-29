@@ -262,12 +262,12 @@ function HeroInfo({ onJumpBook, onMessage, onPlayReel, saved, setSaved, collabor
       </div>
 
       <div className="liquid-glass rounded-xl p-4 grid grid-cols-2 gap-x-6 gap-y-2 max-w-md">
-        <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--gold)] col-span-2 mb-1">Verification Ledger</div>
+        <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--forest-bright)] col-span-2 mb-1">Verification Ledger</div>
         {verification.map(v => (
           <div key={v.label} className="flex items-center justify-between text-xs py-1">
             <span className="text-[var(--text-dim)]">{v.label}</span>
             <span className="text-[var(--text)] flex items-center gap-1.5">
-              <svg className="w-3 h-3 text-[var(--gold)]" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+              <svg className="w-3 h-3 text-[var(--forest-bright)]" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
               {v.value}
             </span>
           </div>

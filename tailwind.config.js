@@ -19,6 +19,8 @@ export default {
           950: '#0a0807',
         },
         gold: {
+          // Legacy class name kept for compatibility. Visually this is now
+          // CreatorBridge clay from the approved brand direction, not gold.
           50:  '#fbf0ec',
           100: '#f2d5ca',
           200: '#e6b29f',

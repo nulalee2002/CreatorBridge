@@ -146,7 +146,7 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 const DAYS   = ['Su','Mo','Tu','We','Th','Fr','Sa'];
 
 const STATUS_STYLES = {
-  available:  { bg: 'bg-gold-500/20 text-gold-300 hover:bg-gold-500/30 border-gold-500/30', dot: 'bg-gold-400', label: 'Available' },
+  available:  { bg: 'bg-forest-500/20 text-forest-100 hover:bg-forest-500/30 border-forest-300/30', dot: 'bg-forest-300', label: 'Available' },
   booked:     { bg: 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border-red-500/30',     dot: 'bg-red-400',  label: 'Booked' },
   tentative:  { bg: 'bg-white/[0.06] text-charcoal-200 hover:bg-white/[0.09] border-white/[0.12]', dot: 'bg-charcoal-300', label: 'Tentative' },
 };
