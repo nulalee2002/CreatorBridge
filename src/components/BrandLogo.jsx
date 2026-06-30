@@ -1,3 +1,4 @@
+const BRAND_LOCKUP = '/images/creatorbridge/handoff/logo.png';
 const BRAND_MARK = '/images/brand/creatorbridge-mark.png';
 
 export function BrandMark({ className = '', title = 'CreatorBridge' }) {
@@ -18,13 +19,12 @@ export function BrandLogo({ compact = false, className = '' }) {
   }
 
   return (
-    <span className={`cb-brand-lockup ${className}`} aria-label="CreatorBridge, verified media platform">
-      <BrandMark className="cb-brand-lockup-mark" title="" />
-      <span className="cb-brand-lockup-divider" aria-hidden="true" />
-      <span className="cb-brand-lockup-text">
-        <span className="cb-brand-lockup-name">CreatorBridge</span>
-        <span className="cb-brand-lockup-tagline">Verified Media Platform</span>
-      </span>
-    </span>
+    <img
+      src={BRAND_LOCKUP}
+      alt="CreatorBridge, verified media platform"
+      className={`cb-brand-lockup-img ${className}`}
+      loading="eager"
+      decoding="async"
+    />
   );
 }
