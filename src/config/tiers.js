@@ -137,9 +137,12 @@ export function checkPricingFloor(tierId, serviceId, rateValue, rateType = 'proj
  */
 export function tierBadgeClass(tierId) {
   switch (tierId) {
-    case 'signature': return 'bg-gold-500/20 text-gold-400 ring-1 ring-gold-500/40 shadow-[0_0_8px_rgba(156,74,51,0.2)]';
-    case 'elite':     return 'bg-gold-500/15 text-gold-300 ring-1 ring-gold-500/35';
-    case 'proven':    return 'bg-gold-500/10 text-gold-400 ring-1 ring-gold-500/25';
+    // Premium tiers read oxblood (deep luxury red); Proven reads forest (the
+    // "Trusted Creator" green). Light text variants keep them legible on the
+    // dark chrome. Kept subtle on purpose so the palette reads, not shouts.
+    case 'signature': return 'bg-oxblood-500/25 text-oxblood-100 ring-1 ring-oxblood-500/45 shadow-[0_0_8px_rgba(90,16,18,0.25)]';
+    case 'elite':     return 'bg-oxblood-500/15 text-oxblood-100 ring-1 ring-oxblood-500/35';
+    case 'proven':    return 'bg-forest-500/15 text-forest-100 ring-1 ring-forest-300/35';
     default:          return 'bg-gray-500/15 text-gray-400 ring-1 ring-gray-500/20';
   }
 }
