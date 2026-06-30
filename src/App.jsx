@@ -27,6 +27,7 @@ import { HandoffPage } from './components/HandoffPage.jsx';
 import { handoffPages } from './data/handoffPages.js';
 import { NotificationBell } from './components/NotificationBell.jsx';
 import { CreatorAvatar } from './components/CreatorAvatar.jsx';
+import { BrandLogo } from './components/BrandLogo.jsx';
 
 function makeId() {
   return globalThis.crypto?.randomUUID?.() || `id-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -881,7 +882,7 @@ export default function App() {
 
           {/* Logo */}
           <button type="button" className="logo-mark" onClick={() => navigate('/')} aria-label="CreatorBridge home">
-            <img src="/images/creatorbridge/handoff/logo.png" alt="CreatorBridge — Verified Media Platform" className="logo-img" />
+            <BrandLogo className="logo-img" />
           </button>
 
           {/* Main tab switcher */}
@@ -1462,7 +1463,7 @@ export default function App() {
             <div className="grid">
               <div className="brand-col">
                 <button type="button" onClick={() => navigate('/')} className="logo-mark" style={{ marginBottom: '1.25rem' }}>
-                  <img src="/images/creatorbridge/handoff/logo.png" alt="CreatorBridge" className="logo-img" />
+                  <BrandLogo className="logo-img" />
                 </button>
                 <p style={{ fontSize: 12, color: 'var(--text-secondary)', maxWidth: '24rem', lineHeight: 1.6 }}>
                   The verified US platform connecting brands with professional media specialists across three production pillars — without building an internal media department.
