@@ -34,3 +34,6 @@ dist-verify/
 .worktrees/
 /output/
 /backgrounds/
+
+# Local image previews (not for commit)
+_preview_*.png

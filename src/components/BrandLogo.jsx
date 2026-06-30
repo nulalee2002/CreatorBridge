@@ -1,4 +1,4 @@
-const PLATFORM_LOGO = '/images/brand/creatorbridge-platform-logo.png';
+const PLATFORM_LOGO = '/images/brand/creatorbridge-platform-logo-transparent.png';
 
 export function BrandMark({ className = '', title = 'CreatorBridge' }) {
   return (

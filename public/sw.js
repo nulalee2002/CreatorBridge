@@ -1,4 +1,4 @@
-const CACHE_NAME = 'creatorbridge-v2026-05-17-network-icons-v9';
+const CACHE_NAME = 'creatorbridge-v2026-05-17-network-icons-v10';
 
 const APP_SHELL = [
   '/',

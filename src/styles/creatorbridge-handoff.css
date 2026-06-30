@@ -2953,7 +2953,9 @@ textarea::placeholder {
   .nav,
   header,
   .site-header {
-    background-color:rgba(20,15,13,0.9);
+    /* Fully opaque on mobile so page text does not bleed through the
+       blurred header while scrolling at the very top of the screen. */
+    background-color:#14100d;
   }
 }
 
