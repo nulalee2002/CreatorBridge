@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -18,20 +18,20 @@
   --forest-hover: #28533F;
   --forest-bright: #65B685;
   --forest-soft: rgba(31, 58, 46, 0.28);
-  --oxblood: #8A1D22;
-  --oxblood-hover: #A3292F;
-  --oxblood-bright: #B33A3E;
-  --oxblood-soft: rgba(138, 29, 34, 0.24);
+  --oxblood: #5A1012;
+  --oxblood-hover: #74181B;
+  --oxblood-bright: #9B2C30;
+  --oxblood-soft: rgba(90, 16, 18, 0.26);
   --ivory: #F2E8D6;
   --stone: #B8B0A6;
   --stone-muted: #8C867E;
   --bg: var(--espresso);
   --bg-card: var(--glass);
   --border: var(--glass-border);
-  --border-hover: rgba(138, 29, 34, 0.36);
-  --gold: var(--oxblood);
-  --gold-light: var(--oxblood-hover);
-  --gold-dim: var(--oxblood-soft);
+  --border-hover: rgba(156, 74, 51, 0.42);
+  --gold: var(--clay);
+  --gold-light: var(--clay-hover);
+  --gold-dim: var(--clay-soft);
   --text: var(--ivory);
   --text-secondary: var(--stone);
   --text-dim: var(--stone-muted);
@@ -45,7 +45,7 @@
   }
 
   html {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
     scroll-behavior: smooth;
   }
 
@@ -365,7 +365,7 @@
 
 /* ===== REDESIGN DESIGN SYSTEM STYLES ===== */
 .serif {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cormorant Garamond', Georgia, serif;
 }
 
 .liquid-glass {
@@ -699,7 +699,7 @@
 }
 
 .primary-pillar-badge .value {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cormorant Garamond', serif;
   font-size: 12px;
   color: #9C4A33;
 }
@@ -774,7 +774,7 @@
   align-items: center;
   gap: 0.65rem;
   padding: 0.6rem 1.4rem;
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cormorant Garamond', serif;
   font-size: 1.6rem;
   font-weight: 500;
   color: rgba(240, 240, 240, 0.55);
@@ -981,7 +981,7 @@ footer.site .bottom {
 .ticker-pill strong {
   color: #F2E8D6;
   font-weight: 500;
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cormorant Garamond', serif;
   font-size: 0.85rem;
 }
 .ticker-pill em {
@@ -1280,7 +1280,7 @@ body.mouse-active .mouse-glow {
   box-shadow: 0 0 24px rgba(90, 16, 18,0.1);
 }
 .state-tile .abbr {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cormorant Garamond', serif;
   font-size: 22px; line-height: 1;
 }
 .state-tile.active .abbr { color: var(--gold); }
@@ -1341,7 +1341,7 @@ body.mouse-active .mouse-glow {
   color: var(--gold);
 }
 .chat-channel .hash {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cormorant Garamond', serif;
   opacity: 0.6;
 }
 .chat-channel.active .hash { opacity: 1; }
@@ -1470,8 +1470,8 @@ header {
 }
 
 /* CreatorBridge brand refresh — platform-wide visibility and liquid-glass polish.
-   Class names keep the old "gold" compatibility layer, but the visual language is now
-   oxblood / forest over espresso glass. Clay is tertiary only. */
+   Older accent class names remain for compatibility, but the visible language
+   is clay, forest, oxblood, ivory, and stone. */
 body,
 .cb-handoff-page {
   color: var(--text);
@@ -1623,8 +1623,8 @@ textarea {
   color: var(--text);
 }
 
-/* Legacy Tailwind utility compatibility. These old "gold" classes now render
-   as oxblood/red; when used as a filled button, force readable ivory text. */
+/* Legacy Tailwind utility compatibility. Older accent classes now render with
+   the new palette; when used as a filled button, force readable ivory text. */
 [class*="bg-gold-500"][class*="text-charcoal-900"],
 [class*="bg-gold-600"][class*="text-charcoal-900"],
 [class*="hover:bg-gold-600"][class*="text-charcoal-900"] {
@@ -2178,7 +2178,7 @@ textarea::placeholder {
   padding-top: 0.65rem;
 }
 .cb-chat-name {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cormorant Garamond', serif;
   font-size: 16px;
   font-weight: 500;
   color: var(--text, #e8e6e3);
@@ -2211,7 +2211,7 @@ textarea::placeholder {
   font-style: italic;
 }
 .cb-take-num {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cormorant Garamond', serif;
   font-style: normal;
   color: var(--gold, #9C4A33);
   font-size: 11px;
@@ -2349,7 +2349,7 @@ textarea::placeholder {
   animation: msgFadeIn 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 .cb-chat-path .num {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cormorant Garamond', serif;
   font-size: 11px;
   color: var(--gold, #9C4A33);
   opacity: 0.7;
