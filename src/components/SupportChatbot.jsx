@@ -915,6 +915,30 @@ export function SupportChatbot({ dark = true }) {
     }
   }
 
+  // ── Answer a canned prompt inline (used by the welcome buttons) ─
+  // Keeps Bridge assisting INSIDE the chat instead of navigating away.
+  // Uses the local platform guide, so it works even while live AI is off.
+  function answerInChat(question) {
+    const text = sanitizeLongText(question, 1500);
+    if (!text || loading) return;
+    if (isBookingIntent(text)) {
+      setMessages(prev => [...prev, { role: 'user', content: text }]);
+      startBooking();
+      return;
+    }
+    if (isCreatorIntent(text)) {
+      setMessages(prev => [...prev, { role: 'user', content: text }]);
+      startQuote();
+      return;
+    }
+    const reply = getPlatformGuideResponse(text) || getSupportFallbackResponse(text);
+    setAssistantMode('guide');
+    setMessages(prev => [...prev,
+      { role: 'user', content: text },
+      { role: 'assistant', content: reply },
+    ]);
+  }
+
   // ── Main send handler ─────────────────────────────────────────
   async function handleSend() {
     const text = sanitizeLongText(input, 1500);
@@ -1199,30 +1223,20 @@ export function SupportChatbot({ dark = true }) {
                 {/* Welcome prompt buttons */}
                 {msg.kind === 'welcome-prompts' && i === lastWelcomeIdx && !bookingMode && !quoteMode && (
                   <div className="cb-chat-quick">
-                    <p className="cb-chat-quick-label">Quick paths</p>
+                    <p className="cb-chat-quick-label">Ask Bridge</p>
                     {[
-                      { label: 'Find a videographer', action: () => { setOpen(false); navigate('/find?pillar=video'); } },
-                      { label: 'Find a photographer', action: () => { setOpen(false); navigate('/find?pillar=photo'); } },
-                      { label: 'Find an editor / colorist', action: () => { setOpen(false); navigate('/find?pillar=post'); } },
-                      { label: 'Post a production brief', action: () => { setOpen(false); navigate('/projects'); } },
-                      { label: 'Calculate a rate (creators)', action: () => { setOpen(false); navigate('/calculator'); } },
                       { label: 'How CreatorBridge works', text: 'How does CreatorBridge work?' },
+                      { label: 'Fees & payments', text: 'What are the fees and how do payments work?' },
+                      { label: 'Help me scope a brief', text: 'Help me write a brief' },
+                      { label: 'Creator verification & tiers', text: 'How does creator verification and tiers work?' },
+                      { label: 'Start a booking request', action: () => startBooking() },
+                      { label: "I'm a creator — build a quote", action: () => startQuote() },
+                      { label: 'Contact support', action: () => openSupportTicket() },
                     ].map(({ label, text, action }, index) => (
                       <button key={label} type="button"
                         onClick={() => {
-                          if (action) {
-                            action();
-                            return;
-                          }
-                          setInput(text);
-                          setTimeout(() => {
-                            const syntheticInput = text;
-                            setInput('');
-                            const userMsg = { role: 'user', content: syntheticInput };
-                            setMessages(prev => [...prev, userMsg]);
-                            if (isBookingIntent(syntheticInput)) { startBooking(); return; }
-                            if (isCreatorIntent(syntheticInput)) { startQuote(); return; }
-                          }, 100);
+                          if (action) { action(); return; }
+                          answerInChat(text);
                         }}
                         className="cb-chat-path"
                         style={{ animationDelay: `${index * 0.04}s` }}>
