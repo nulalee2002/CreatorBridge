@@ -201,7 +201,7 @@ function QuoteRow({ quote, dark, onMarkRead, onReply }) {
         </div>
       </div>
       <div className="flex flex-col items-end gap-2 shrink-0">
-        <span className={`text-[10px] ${dark ? 'text-charcoal-600' : 'text-gray-400'}`}>
+        <span className={`text-[10px] ${dark ? 'text-charcoal-400' : 'text-gray-400'}`}>
           {normalized.createdAt ? new Date(normalized.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
         </span>
         {!normalized.read && (

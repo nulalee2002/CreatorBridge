@@ -3068,7 +3068,7 @@ textarea::placeholder {
 
 .cb-landing-hero .float-card span[class*="text-\\[var\\(--gold\\)\\]"],
 .cb-landing-hero .float-card .serif {
-  color:var(--oxblood-bright) !important;
+  color:#C46540 !important;
 }
 
 .eyebrow,

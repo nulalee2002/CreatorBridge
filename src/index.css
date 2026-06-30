@@ -489,7 +489,7 @@
   font-size: 10px;
   letter-spacing: 0.25em;
   text-transform: uppercase;
-  color: #9C4A33;
+  color: #C46540;
 }
 
 .parallax-wrap {
@@ -606,10 +606,10 @@
   top: 1rem;
   right: 1.25rem;
   z-index: 2;
-  color: rgba(90, 16, 18, 0.85);
+  color: rgba(242, 232, 214, 0.95);
   font-size: 2.6rem;
   line-height: 1;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 2px 14px rgba(0, 0, 0, 0.75);
 }
 .pillar-body {
   display: flex;
@@ -1130,14 +1130,14 @@ body.mouse-active .mouse-glow {
 .filter-chip:hover { background: rgba(255,255,255,0.03); color: var(--text); }
 .filter-chip.active {
   background: var(--gold-dim);
-  border-color: rgba(90, 16, 18,0.2);
-  color: var(--gold);
+  border-color: rgba(196, 101, 64, 0.5);
+  color: var(--text);
 }
 .filter-chip .count {
   font-size: 10px; color: var(--text-dim);
   font-variant-numeric: tabular-nums;
 }
-.filter-chip.active .count { color: var(--gold); opacity: 0.8; }
+.filter-chip.active .count { color: var(--text); opacity: 0.85; }
 
 .specialty-list {
   margin-top: 0.5rem;
@@ -1197,9 +1197,9 @@ body.mouse-active .mouse-glow {
   gap: 0.4rem;
   border: 1px solid rgba(90, 16, 18,0.2);
   border-radius: 6px;
-  background: rgba(14,11,9,0.72);
+  background: rgba(14,11,9,0.82);
   padding: 0.3rem 0.6rem;
-  color: var(--gold);
+  color: var(--text);
   font-size: 10px;
   letter-spacing: 0.04em;
   backdrop-filter: blur(10px);

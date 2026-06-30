@@ -491,7 +491,7 @@ function PostCard({ post, dark, isVerified, onLike, onReport, onReply }) {
             <div key={r.id} className="text-xs">
               <span className="font-semibold text-charcoal-200">{r.user_display_name}</span>
               <span className="ml-2 text-charcoal-300">{r.content}</span>
-              <span className="ml-2 text-charcoal-600">{timeAgo(r.created_at)}</span>
+              <span className="ml-2 text-charcoal-400">{timeAgo(r.created_at)}</span>
             </div>
           ))}
           {isVerified ? (
@@ -509,7 +509,7 @@ function PostCard({ post, dark, isVerified, onLike, onReport, onReply }) {
               </button>
             </form>
           ) : (
-            <p className="text-xs italic mt-1 text-charcoal-600">Verify your account to reply.</p>
+            <p className="text-xs italic mt-1 text-charcoal-400">Verify your account to reply.</p>
           )}
         </div>
       )}
@@ -1311,7 +1311,7 @@ export function NetworkingPage({ dark, user, profile }) {
                     </button>
                   </form>
                 ) : (
-                  <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-xl bg-charcoal-950/75 text-charcoal-600">
+                  <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-xl bg-charcoal-950/75 text-charcoal-400">
                     <Lock size={12} /> Verify your account to join the chat
                   </div>
                 )}
