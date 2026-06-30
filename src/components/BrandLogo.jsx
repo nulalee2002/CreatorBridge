@@ -2,12 +2,12 @@ const BRAND_MARK = '/images/brand/creatorbridge-mark.png';
 
 export function BrandMark({ className = '', title = 'CreatorBridge' }) {
   return (
-    <span
-      role={title ? 'img' : undefined}
-      aria-label={title || undefined}
-      aria-hidden={title ? undefined : 'true'}
-      className={`cb-brand-mark-mask ${className}`}
-      style={{ '--cb-brand-mark-url': `url("${BRAND_MARK}")` }}
+    <img
+      src={BRAND_MARK}
+      alt={title}
+      className={`cb-brand-mark-img ${className}`}
+      loading="eager"
+      decoding="async"
     />
   );
 }

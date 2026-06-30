@@ -259,21 +259,13 @@ body.mouse-active .mouse-glow { opacity:1; }
   display:block;
   transition: filter 0.3s, transform 0.3s;
 }
-.cb-brand-mark-mask {
+.cb-brand-mark-img {
   display:block;
   width:44px;
   height:44px;
   flex:0 0 auto;
-  background:
-    linear-gradient(135deg, var(--oxblood-bright), var(--oxblood) 58%, #5f1014);
-  -webkit-mask-image:var(--cb-brand-mark-url);
-  mask-image:var(--cb-brand-mark-url);
-  -webkit-mask-size:contain;
-  mask-size:contain;
-  -webkit-mask-repeat:no-repeat;
-  mask-repeat:no-repeat;
-  -webkit-mask-position:center;
-  mask-position:center;
+  object-fit:contain;
+  filter:saturate(1.08) hue-rotate(338deg) brightness(0.98) contrast(1.12);
 }
 .cb-brand-lockup.logo-img,
 .cb-brand-lockup {
@@ -2863,9 +2855,8 @@ textarea::placeholder {
    Oxblood and forest are the visible brand colors. Clay stays as quiet warmth,
    never the single replacement for the old gold system. */
 .cb-brand-lockup-mark,
-.cb-brand-mark-mask {
-  background:
-    linear-gradient(135deg, var(--oxblood-bright), var(--oxblood) 58%, #5f1014) !important;
+.cb-brand-mark-img {
+  filter:saturate(1.08) hue-rotate(338deg) brightness(0.98) contrast(1.12) !important;
 }
 
 .cb-brand-lockup-divider,
@@ -2992,5 +2983,39 @@ textarea:focus,
 @media (max-width:767px) {
   .cb-brand-lockup-divider {
     background:linear-gradient(180deg, transparent, var(--forest-bright), transparent) !important;
+  }
+
+  .cb-landing-hero .grid > .space-y-6:first-child {
+    margin:-0.25rem;
+    padding:1rem;
+    border-radius:1.15rem;
+    background:linear-gradient(135deg, rgba(8,7,6,0.84), rgba(14,11,9,0.64));
+    border:1px solid rgba(242,232,214,0.14);
+    box-shadow:
+      0 18px 42px rgba(0,0,0,0.42),
+      inset 0 1px 0 rgba(242,232,214,0.08);
+    backdrop-filter:blur(10px) saturate(1.08);
+    -webkit-backdrop-filter:blur(10px) saturate(1.08);
+  }
+
+  .cb-landing-hero h1,
+  .cb-landing-hero p,
+  .cb-landing-hero .eyebrow,
+  .cb-landing-hero .forest-text,
+  .cb-landing-hero .gold-text {
+    text-shadow:0 2px 18px rgba(0,0,0,0.82);
+  }
+
+  .cb-landing-hero p {
+    color:rgba(242,232,214,0.94) !important;
+  }
+
+  .cb-landing-hero .gold-text {
+    color:#C9444B !important;
+  }
+
+  .cb-landing-hero .forest-text,
+  .cb-landing-hero p span {
+    color:#7BCF99 !important;
   }
 }
