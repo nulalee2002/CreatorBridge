@@ -10,24 +10,25 @@
   --glass-highlight: rgba(242, 232, 214, 0.08);
   --clay: #9C4A33;
   --clay-hover: #B85A3E;
-  --clay-soft: rgba(156, 74, 51, 0.12);
-  --forest: #1F5A3E;
-  --forest-bright: #6FC494;
-  --forest-soft: rgba(31, 90, 62, 0.2);
-  --oxblood: #5A1012;
-  --oxblood-hover: #6F171A;
-  --oxblood-bright: #8C2528;
-  --oxblood-soft: rgba(90, 16, 18, 0.24);
+  --clay-soft: rgba(156, 74, 51, 0.1);
+  --forest: #1F3A2E;
+  --forest-hover: #28533F;
+  --forest-bright: #65B685;
+  --forest-soft: rgba(31, 58, 46, 0.28);
+  --oxblood: #8A1D22;
+  --oxblood-hover: #A3292F;
+  --oxblood-bright: #B33A3E;
+  --oxblood-soft: rgba(138, 29, 34, 0.24);
   --ivory: #F2E8D6;
   --stone: #B8B0A6;
   --stone-muted: #8C867E;
   --bg: var(--espresso);
   --bg-card: var(--glass);
   --border: var(--glass-border);
-  --border-hover: rgba(156, 74, 51, 0.34);
-  --gold: var(--clay);
-  --gold-light: var(--clay-hover);
-  --gold-dim: var(--clay-soft);
+  --border-hover: rgba(138, 29, 34, 0.36);
+  --gold: var(--oxblood);
+  --gold-light: var(--oxblood-hover);
+  --gold-dim: var(--oxblood-soft);
   --text: var(--ivory);
   --text-secondary: var(--stone);
   --text-dim: var(--stone-muted);
@@ -252,11 +253,27 @@ body.mouse-active .mouse-glow { opacity:1; }
   box-shadow:0 0 12px rgba(156, 74, 51,0.55);
 }
 
-/* ===== LOGO IMG ===== */
+/* ===== LOGO / BRAND LOCKUP ===== */
 .logo-img {
   height:42px; width:auto;
   display:block;
   transition: filter 0.3s, transform 0.3s;
+}
+.cb-brand-mark-mask {
+  display:block;
+  width:44px;
+  height:44px;
+  flex:0 0 auto;
+  background:
+    linear-gradient(135deg, var(--oxblood-bright), var(--oxblood) 58%, #5f1014);
+  -webkit-mask-image:var(--cb-brand-mark-url);
+  mask-image:var(--cb-brand-mark-url);
+  -webkit-mask-size:contain;
+  mask-size:contain;
+  -webkit-mask-repeat:no-repeat;
+  mask-repeat:no-repeat;
+  -webkit-mask-position:center;
+  mask-position:center;
 }
 .cb-brand-lockup.logo-img,
 .cb-brand-lockup {
@@ -281,7 +298,7 @@ body.mouse-active .mouse-glow { opacity:1; }
   width:1px;
   height:35px;
   flex:0 0 auto;
-  background:linear-gradient(180deg, transparent, var(--clay), transparent);
+  background:linear-gradient(180deg, transparent, var(--forest-bright), transparent);
   opacity:0.95;
 }
 .cb-brand-lockup-text {
@@ -317,7 +334,7 @@ footer.site .cb-brand-lockup { max-width:min(360px, 100%); }
 /* ===== SCROLL PROGRESS ===== */
 .scroll-progress {
   position:fixed; top:0; left:0; height:2px;
-  background:linear-gradient(90deg,var(--gold),var(--gold-light));
+  background:linear-gradient(90deg,var(--forest-bright),var(--oxblood-bright));
   z-index:10000; transform-origin:left;
   transform:scaleX(0);
 }
@@ -349,7 +366,7 @@ footer.site .cb-brand-lockup { max-width:min(360px, 100%); }
   transition:color 0.25s, background 0.25s;
 }
 .nav-link:hover { color:var(--text); background:rgba(255,255,255,0.04); }
-.nav-link.active { color:var(--ivory); background:var(--gold-dim); box-shadow:inset 0 -1px 0 rgba(156, 74, 51,0.55); }
+.nav-link.active { color:var(--ivory); background:var(--gold-dim); box-shadow:inset 0 -1px 0 rgba(138, 29, 34,0.7); }
 .cb-handoff-page a[href="/"] {
   min-height:34px;
   display:inline-flex;
@@ -360,7 +377,7 @@ footer.site .cb-brand-lockup { max-width:min(360px, 100%); }
 .btn-gold {
   display:inline-flex; align-items:center; gap:0.5rem;
   padding:0.65rem 1.25rem; border-radius:8px;
-  background:var(--gold); color:var(--bg);
+  background:var(--gold); color:var(--ivory);
   font-weight:600; font-size:0.78rem;
   letter-spacing:0.02em; cursor:pointer; border:none;
   transition:all 0.3s cubic-bezier(0.23,1,0.32,1);
@@ -369,7 +386,7 @@ footer.site .cb-brand-lockup { max-width:min(360px, 100%); }
 .btn-gold:hover:not(:disabled) {
   background:var(--gold-light);
   transform:translateY(-1px);
-  box-shadow:0 8px 24px rgba(90,16,18,0.32);
+  box-shadow:0 8px 24px rgba(138,29,34,0.34);
 }
 .btn-gold:disabled { opacity:0.4; cursor:not-allowed; }
 .btn-ghost {
@@ -394,7 +411,7 @@ footer.site .cb-brand-lockup { max-width:min(360px, 100%); }
   font-size:0.62rem; font-weight:500;
   letter-spacing:0.02em;
   background:var(--oxblood-soft);
-  color:#B85A3E; border:1px solid rgba(156, 74, 51,0.32);
+  color:#D46B70; border:1px solid rgba(138, 29, 34,0.46);
 }
 .tag-green {
   display:inline-flex; align-items:center;
@@ -428,7 +445,7 @@ footer.site .cb-brand-lockup { max-width:min(360px, 100%); }
   font-size:10px;
   letter-spacing:0.25em;
   text-transform:uppercase;
-  color:var(--gold);
+  color:var(--forest-bright);
 }
 
 /* ===== PARALLAX ===== */
@@ -2635,20 +2652,11 @@ a:not(.btn-gold):not(.btn-ghost):not(.nav-link):not(.logo-mark):not(.lane-card):
    the visible system now uses oxblood and forest on stronger espresso glass.
    Clay is tertiary warmth only. */
 .logo-img {
-  filter:
-    saturate(0.95)
-    hue-rotate(348deg)
-    brightness(0.92)
-    contrast(1.08);
+  filter:none;
 }
 
 .logo-mark:hover .logo-img {
-  filter:
-    saturate(1)
-    hue-rotate(348deg)
-    brightness(0.98)
-    contrast(1.08)
-    drop-shadow(0 0 12px rgba(90,16,18,0.34));
+  filter:drop-shadow(0 0 12px rgba(138,29,34,0.34));
 }
 
 .liquid-glass,
@@ -2683,8 +2691,8 @@ a:not(.btn-gold):not(.btn-ghost):not(.nav-link):not(.logo-mark):not(.lane-card):
 .state-tile.active,
 .pillar-pick.active .pill-check,
 .btn-secondary:hover {
-  background-color:var(--clay);
-  border-color:var(--clay);
+  background-color:var(--oxblood);
+  border-color:var(--oxblood);
   color:var(--ivory);
 }
 
@@ -2713,28 +2721,28 @@ a:not(.btn-gold):not(.btn-ghost):not(.nav-link):not(.logo-mark):not(.lane-card):
 .spec-pick.active,
 .input:focus,
 .input-area:focus {
-  border-color:rgba(156, 74, 51,0.46);
+  border-color:rgba(138, 29, 34,0.5);
 }
 
 .tag-green {
-  background:var(--forest-soft);
+  background:linear-gradient(180deg, rgba(31,58,46,0.52), rgba(31,58,46,0.28));
   color:var(--forest-bright);
-  border-color:rgba(102,193,139,0.38);
+  border-color:rgba(101,182,133,0.52);
 }
 
 .tag-gold,
 .primary-pillar-badge,
 .ticker-pill .ticker-dot.gold {
-  background:var(--clay-soft);
-  color:var(--clay-hover);
-  border-color:rgba(156, 74, 51,0.28);
+  background:var(--oxblood-soft);
+  color:#D46B70;
+  border-color:rgba(138, 29, 34,0.42);
 }
 
 .tag-oxblood,
 .premium-badge {
   background:var(--oxblood-soft);
-  color:#C06B68;
-  border-color:rgba(90,16,18,0.36);
+  color:#D46B70;
+  border-color:rgba(138,29,34,0.46);
 }
 
 .nav,
@@ -2759,7 +2767,7 @@ header,
 .nav-link.active {
   color:var(--ivory);
   background:rgba(90,16,18,0.32);
-  box-shadow:inset 0 -1px 0 rgba(156, 74, 51,0.72);
+  box-shadow:inset 0 -1px 0 rgba(138, 29, 34,0.72);
 }
 
 .input,
@@ -2848,5 +2856,141 @@ textarea::placeholder {
   header,
   .site-header {
     background-color:rgba(20,15,13,0.9);
+  }
+}
+
+/* ===== FINAL BRAND BALANCE PASS =====
+   Oxblood and forest are the visible brand colors. Clay stays as quiet warmth,
+   never the single replacement for the old gold system. */
+.cb-brand-lockup-mark,
+.cb-brand-mark-mask {
+  background:
+    linear-gradient(135deg, var(--oxblood-bright), var(--oxblood) 58%, #5f1014) !important;
+}
+
+.cb-brand-lockup-divider,
+.gold-line {
+  background:linear-gradient(90deg, var(--forest-bright), rgba(101,182,133,0)) !important;
+}
+
+.nav-link.active,
+.btn-gold,
+.btn-primary,
+.cb-chat-send,
+.filter-chip.active,
+.pillar-pick.active .pill-check,
+.btn-secondary:hover,
+.cb-skip-link:focus {
+  background-color:var(--oxblood) !important;
+  border-color:var(--oxblood) !important;
+  color:var(--ivory) !important;
+}
+
+.btn-gold:hover:not(:disabled),
+.btn-primary:hover,
+.cb-chat-send:hover {
+  background-color:var(--oxblood-hover) !important;
+  border-color:var(--oxblood-hover) !important;
+  box-shadow:0 10px 28px rgba(138,29,34,0.36) !important;
+}
+
+.gold-text,
+.text-gradient-gold,
+[class*="text-gold"],
+.pillar-pick.active .pnum,
+.spec-pick .mult,
+.ticker-pill em {
+  color:var(--oxblood-bright) !important;
+  -webkit-text-fill-color:currentColor !important;
+}
+
+.tag-gold,
+.primary-pillar-badge,
+.premium-badge,
+.tag-oxblood {
+  background:rgba(138,29,34,0.24) !important;
+  border-color:rgba(138,29,34,0.5) !important;
+  color:#D86D72 !important;
+}
+
+.tag-green,
+.verified-badge,
+[class*="bg-emerald"],
+[class*="bg-green"] {
+  background:linear-gradient(180deg, rgba(31,58,46,0.74), rgba(31,58,46,0.42)) !important;
+  border-color:rgba(101,182,133,0.58) !important;
+  color:#A7E0BC !important;
+}
+
+.ticker-pill .ticker-dot,
+.cb-chat-mascot .status-dot,
+[class*="text-emerald"],
+[class*="text-green"] {
+  color:var(--forest-bright) !important;
+}
+
+.ticker-pill .ticker-dot {
+  background:var(--forest-bright) !important;
+  box-shadow:0 0 10px rgba(101,182,133,0.7) !important;
+}
+
+.ticker-pill .ticker-dot.gold {
+  background:var(--oxblood-bright) !important;
+  box-shadow:0 0 10px rgba(138,29,34,0.72) !important;
+}
+
+.cb-landing-hero p span {
+  color:var(--forest-bright) !important;
+}
+
+.forest-text {
+  color:var(--forest-bright) !important;
+  -webkit-text-fill-color:currentColor !important;
+}
+
+.cb-landing-hero .btn-ghost {
+  border-color:rgba(101,182,133,0.42) !important;
+  color:var(--ivory) !important;
+  background:rgba(31,58,46,0.18) !important;
+  box-shadow:inset 0 1px 0 rgba(101,182,133,0.1);
+}
+
+.cb-landing-hero .btn-ghost:hover {
+  border-color:rgba(101,182,133,0.72) !important;
+  color:#A7E0BC !important;
+  background:rgba(31,58,46,0.32) !important;
+}
+
+.cb-landing-hero .float-card span[class*="text-\\[var\\(--gold\\)\\]"],
+.cb-landing-hero .float-card .serif {
+  color:var(--oxblood-bright) !important;
+}
+
+.eyebrow,
+.cb-landing-hero .eyebrow,
+.cb-section-discovery .eyebrow,
+.cb-section-featured .eyebrow,
+.cb-section-why .eyebrow {
+  color:var(--forest-bright) !important;
+}
+
+.input:focus,
+.input-area:focus,
+input:focus,
+select:focus,
+textarea:focus,
+.btn-ghost:hover,
+.filter-chip.active,
+.state-tile.active,
+.pillar-pick.active,
+.spec-pick.active,
+:focus-visible {
+  border-color:rgba(138,29,34,0.52) !important;
+  outline-color:var(--oxblood-bright) !important;
+}
+
+@media (max-width:767px) {
+  .cb-brand-lockup-divider {
+    background:linear-gradient(180deg, transparent, var(--forest-bright), transparent) !important;
   }
 }
