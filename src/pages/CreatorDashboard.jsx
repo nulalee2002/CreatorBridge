@@ -268,13 +268,17 @@ export function CreatorDashboard({ dark }) {
         .maybeSingle();
       if (data) {
         const normalizedCreator = normalizeCreatorListing(data);
-        const availabilityMap = await fetchAvailability(data.id);
+        // Availability and quote requests both depend only on the listing id and
+        // are independent, so fetch them in parallel instead of serially.
+        const [availabilityMap, { data: qData }] = await Promise.all([
+          fetchAvailability(data.id),
+          supabase
+            .from('quote_requests')
+            .select('*')
+            .eq('listing_id', data.id)
+            .order('created_at', { ascending: false }),
+        ]);
         setCreator({ ...normalizedCreator, availabilityMap });
-        const { data: qData } = await supabase
-          .from('quote_requests')
-          .select('*')
-          .eq('listing_id', data.id)
-          .order('created_at', { ascending: false });
         setQuotes((qData || []).map(normalizeQuoteRequest));
       } else {
         const found = loadMyListing(user.id);

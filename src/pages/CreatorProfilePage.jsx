@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SEO } from '../components/SEO.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
@@ -1127,13 +1127,17 @@ async function fetchCreatorData(id) {
     .maybeSingle();
   if (error || !listing) return null;
 
-  const resolvedAvatar = await getStorageDisplayUrl(listing.avatar || '');
-  const resolvedPortfolio = await Promise.all((listing.portfolio_items || []).map(async item => ({
-    ...item,
-    imageUrl: item.bunny_video_id
-      ? item.image_url || ''
-      : await getStorageDisplayUrl(item.image_url || ''),
-  })));
+  // The avatar signed URL is independent of the portfolio batch, so resolve both
+  // in parallel instead of serializing the avatar round-trip in front.
+  const [resolvedAvatar, resolvedPortfolio] = await Promise.all([
+    getStorageDisplayUrl(listing.avatar || ''),
+    Promise.all((listing.portfolio_items || []).map(async item => ({
+      ...item,
+      imageUrl: item.bunny_video_id
+        ? item.image_url || ''
+        : await getStorageDisplayUrl(item.image_url || ''),
+    }))),
+  ]);
   const normalizedListing = {
     ...listing,
     businessName: listing.business_name,
@@ -1165,9 +1169,10 @@ async function fetchCreatorData(id) {
 
 export function CreatorProfilePage() {
   const { id } = useParams();
-  const immediateData = useMemo(() => getCreatorData(id), [id]);
-  const [data, setData] = useState(immediateData);
-  const [loadingProfile, setLoadingProfile] = useState(!immediateData);
+  // Seed initial state from the synchronous local lookup; the effect below owns
+  // all subsequent updates (local on id change, remote fetch otherwise).
+  const [data, setData] = useState(() => getCreatorData(id));
+  const [loadingProfile, setLoadingProfile] = useState(!data);
 
   useEffect(() => {
     let active = true;

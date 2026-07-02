@@ -33,11 +33,12 @@ function RangePill({ value, range, dark }) {
   const span = high - low;
   const pct = span > 0 ? Math.max(4, Math.min(96, ((value - low) / span) * 100)) : 50;
 
-  let status, color;
-  if (value < low * 0.85)       { status = 'Below market'; color = 'text-[#9C4A33] bg-[#9C4A33]/10 border border-[#9C4A33]/15'; }
-  else if (value < low)         { status = 'Slightly low';  color = 'text-[#9C4A33] bg-[#9C4A33]/10 border border-[#9C4A33]/15'; }
-  else if (value > high * 1.1)  { status = 'Premium';       color = 'text-[#9C4A33] bg-[#9C4A33]/10 border border-[#9C4A33]/15'; }
-  else                          { status = 'Market rate';   color = 'text-[#9C4A33] bg-[#9C4A33]/10 border border-[#9C4A33]/15'; }
+  const color = 'text-[#9C4A33] bg-[#9C4A33]/10 border border-[#9C4A33]/15';
+  let status;
+  if (value < low * 0.85)       status = 'Below market';
+  else if (value < low)         status = 'Slightly low';
+  else if (value > high * 1.1)  status = 'Premium';
+  else                          status = 'Market rate';
 
   return (
     <div className="mt-2 space-y-1">

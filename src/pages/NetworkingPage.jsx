@@ -170,6 +170,19 @@ function containsContactInfo(text) {
   return CONTACT_PATTERNS.some(p => p.test(text));
 }
 
+// Anti-cross-posting: gig leads must route through the Project Board, not the
+// state network feeds/DMs. The network UI advertises this rule, so it is
+// enforced on posts, replies, and chat.
+const BLOCKED_PHRASES = [
+  'project board', 'job posting', 'i posted a job', 'check the board',
+  'apply on the board',
+];
+
+function containsBlockedContent(text) {
+  const lower = text.toLowerCase();
+  return BLOCKED_PHRASES.some(p => lower.includes(p));
+}
+
 function timeAgo(iso) {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
@@ -398,7 +411,7 @@ function PostCard({ post, dark, isVerified, onLike, onReport, onReply }) {
     const cleanReply = sanitizeLongText(replyText, 280);
     if (!cleanReply || !isVerified) return;
     const { blocked, patternType } = checkMessage(cleanReply);
-    if (containsContactInfo(cleanReply) || blocked) {
+    if (containsBlockedContent(cleanReply) || containsContactInfo(cleanReply) || blocked) {
       logFilterEvent(post.user_id || post.id || 'network-reply', patternType || 'blocked_network_reply', supabase, supabaseConfigured);
       alert('Your reply contains disallowed content. Please keep all communication on CreatorBridge and avoid contact information or external links.');
       return;
@@ -708,7 +721,7 @@ export function NetworkingPage({ dark, user, profile }) {
       return;
     }
     const { blocked, patternType } = checkMessage(cleanContent);
-    if (containsContactInfo(cleanContent) || blocked) {
+    if (containsBlockedContent(cleanContent) || containsContactInfo(cleanContent) || blocked) {
       logFilterEvent(user?.id || 'network-post', patternType || 'contact_info', supabase, supabaseConfigured);
       setPostError('Please do not include contact information such as email, phone, or social handles in posts.');
       return;
@@ -764,7 +777,7 @@ export function NetworkingPage({ dark, user, profile }) {
     const cleanMessage = sanitizeLongText(chatInput, 300);
     if (!cleanMessage || !isVerified) return;
     const { blocked, patternType } = checkMessage(cleanMessage);
-    if (containsContactInfo(cleanMessage) || blocked) {
+    if (containsBlockedContent(cleanMessage) || containsContactInfo(cleanMessage) || blocked) {
       logFilterEvent(user?.id || 'network-chat', patternType || 'blocked_network_chat', supabase, supabaseConfigured);
       setChatError('Message contains disallowed content. Keep chat on CreatorBridge and avoid contact information or external links.');
       return;
