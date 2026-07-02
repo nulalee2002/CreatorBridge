@@ -13,13 +13,33 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
   });
 }
 
-function getEmailTemplate(template: string, data: Record<string, any>): { subject: string; html: string } {
+// Escape user-controlled values before interpolating them into email HTML.
+// Report fields (subject, description, submitter name, page path) are attacker
+// controlled, so unescaped interpolation would let a reporter inject markup or
+// spoofed links into the admin inbox.
+function esc(value: unknown): string {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function getEmailTemplate(template: string, rawData: Record<string, any>): { subject: string; html: string } {
+  // Pre-escape every string field once so the templates below cannot emit raw
+  // user markup. Non-string fields (amounts, flags) pass through untouched and
+  // are still coerced with Number(...) where used.
+  const data: Record<string, any> = {};
+  for (const [key, value] of Object.entries(rawData || {})) {
+    data[key] = typeof value === 'string' ? esc(value) : value;
+  }
   let subject = '';
   let bodyContent = '';
 
   switch (template) {
     case 'welcome_creator':
-      subject = `Welcome to CreatorBridge, ${data.creator_name || 'Creator'}`;
+      subject = `Welcome to CreatorBridge, ${rawData.creator_name || 'Creator'}`;
       bodyContent = `
         <h2 style="color: #d4a941; margin-top: 0; font-size: 20px;">Your application has been received!</h2>
         <p>Hi ${data.creator_name || 'Creator'},</p>
@@ -62,7 +82,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): { subjec
       break;
 
     case 'application_accepted':
-      subject = `You've been hired for ${data.project_title || 'Project'}`;
+      subject = `You've been hired for ${rawData.project_title || 'Project'}`;
       bodyContent = `
         <h2 style="color: #d4a941; margin-top: 0; font-size: 20px;">Proposal Accepted!</h2>
         <p>Hi ${data.creator_name || 'Creator'},</p>
@@ -74,7 +94,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): { subjec
       break;
 
     case 'quote_request_received':
-      subject = `New quote request: ${data.project_title || 'CreatorBridge project'}`;
+      subject = `New quote request: ${rawData.project_title || 'CreatorBridge project'}`;
       bodyContent = `
         <h2 style="color: #d4a941; margin-top: 0; font-size: 20px;">New Quote Request</h2>
         <p>Hi ${data.creator_name || 'Creator'},</p>
@@ -96,7 +116,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): { subjec
       break;
 
     case 'delivery_submitted':
-      subject = `${data.creator_name || 'Creator'} submitted delivery for ${data.project_title || 'Project'}`;
+      subject = `${rawData.creator_name || 'Creator'} submitted delivery for ${rawData.project_title || 'Project'}`;
       bodyContent = `
         <h2 style="color: #d4a941; margin-top: 0; font-size: 20px;">Delivery Received!</h2>
         <p>Hi ${data.client_name || 'Client'},</p>
@@ -119,7 +139,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): { subjec
       break;
 
     case 'support_ticket_opened':
-      subject = `Support ticket #${data.ticket_reference || 'Ticket'} received`;
+      subject = `Support ticket #${rawData.ticket_reference || 'Ticket'} received`;
       bodyContent = `
         <h2 style="color: #d4a941; margin-top: 0; font-size: 20px;">Support Ticket Received</h2>
         <p>Hi ${data.user_name || 'User'},</p>
@@ -130,7 +150,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): { subjec
       break;
 
     case 'support_ticket_admin_alert':
-      subject = `New ${data.category_label || data.category || 'support'} report — ${data.subject || 'CreatorBridge'}`;
+      subject = `New ${rawData.category_label || rawData.category || 'support'} report — ${rawData.subject || 'CreatorBridge'}`;
       bodyContent = `
         <h2 style="color: #d4a941; margin-top: 0; font-size: 20px;">New issue report</h2>
         <p>A user submitted a report on CreatorBridge.</p>

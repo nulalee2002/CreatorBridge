@@ -14,7 +14,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
 
   const expected = Deno.env.get('PLATFORM_INTELLIGENCE_JOB_SECRET');
-  if (expected && req.headers.get('x-job-secret') !== expected) {
+  // Fail closed: if the job secret is not configured, refuse to run rather than
+  // leaving the service-role retention RPC open to any caller with the anon key.
+  if (!expected || req.headers.get('x-job-secret') !== expected) {
     return json({ error: 'Unauthorized retention job' }, 401);
   }
 
