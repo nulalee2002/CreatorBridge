@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "audit:platform": "node scripts/audit-platform.mjs",
+    "verify:collaboration-fee-parity": "node scripts/verify-collaboration-fee-parity.mjs",
     "audit:env": "node scripts/audit-env.mjs",
     "verify:notifications": "node --env-file=.env scripts/verify-notification-center.mjs",
     "verify:email-provider": "node --env-file=.env scripts/verify-email-provider.mjs",

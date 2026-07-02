@@ -1,6 +1,7 @@
 import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
+import { calculateCollaborationFees } from '../_shared/collaborationFees.js';
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', { apiVersion: '2024-06-20', httpClient: Stripe.createFetchHttpClient() });
 const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type', 'Content-Type': 'application/json' };
 const reply = (body: unknown, status=200) => new Response(JSON.stringify(body), { status, headers });
@@ -17,11 +18,12 @@ Deno.serve(async (req) => {
     if (!collaboration || collaboration.prime_user_id !== auth.user.id) return reply({ error: 'Only the hiring creator can fund this collaboration' }, 403);
     if (!['accepted','funding_pending'].includes(collaboration.status)) return reply({ error: 'The collaborator must accept before funding' }, 409);
     const { count } = await admin.from('transactions').select('id', { count: 'exact', head: true }).eq('creator_id', collaboration.collaborator_listing_id).eq('final_status', 'released');
-    const feePct = (count ?? 0) >= 25 ? 6 : (count ?? 0) >= 10 ? 8 : 10;
     const base = Number(collaboration.amount_cents);
-    const platformFee = Math.max(500, Math.round(base * feePct / 100));
-    const processingCost = Math.min(500, Math.round(base * 0.008));
-    const charge = base + processingCost;
+    const fees = calculateCollaborationFees(base, count ?? 0);
+    const feePct = fees.creatorFeePct;
+    const platformFee = fees.platformFeeCents;
+    const processingCost = fees.processingCostCents;
+    const charge = fees.primeChargeCents;
     const destination = collaboration.collaborator?.stripe_account_id;
     if (!destination) return reply({ error: 'Collaborator payout account is not ready' }, 409);
     const key = `collaboration:${collaboration.id}:ach:v1`;
