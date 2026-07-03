@@ -926,9 +926,8 @@ ALTER TABLE creator_listings ADD COLUMN IF NOT EXISTS verification_status text D
 ALTER TABLE creator_listings ADD COLUMN IF NOT EXISTS verification_steps  jsonb DEFAULT '{}';
 ALTER TABLE creator_listings ADD COLUMN IF NOT EXISTS submitted_at timestamptz DEFAULT now();
 ALTER TABLE creator_listings ADD COLUMN IF NOT EXISTS review_status text DEFAULT 'pending_review';
-ALTER TABLE creator_listings ADD COLUMN IF NOT EXISTS youtube text;
-ALTER TABLE creator_listings ADD COLUMN IF NOT EXISTS vimeo text;
-ALTER TABLE creator_listings ADD COLUMN IF NOT EXISTS linkedin text;
+-- No outside social media on creator profiles: youtube/vimeo/linkedin/website/instagram
+-- columns were removed (2026-07-03 migration).
 
 
 -- ── CREATOR TIER SYSTEM ──────────────────────────────────────────

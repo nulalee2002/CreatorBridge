@@ -56,7 +56,7 @@ export function TermsOfService({ dark }) {
           <h1 className={`font-display font-bold text-3xl mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>
             Terms of Service
           </h1>
-          <p className={`text-sm ${textSub}`}>Effective May 20, 2026. Last updated July 2, 2026.</p>
+          <p className={`text-sm ${textSub}`}>Effective May 20, 2026. Last updated July 3, 2026.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-8">
@@ -104,8 +104,8 @@ export function TermsOfService({ dark }) {
               <p>
                 All financial transactions are processed through CreatorBridge using Stripe, a licensed payment processor.
                 CreatorBridge never holds funds indefinitely: payment is split into a 50% retainer at booking and 50% upon
-                project completion and approval. Funds are released to the creator after client approval or after 72 hours
-                with no response.
+                project completion and approval. Funds are released to the creator after client approval, or automatically at the
+                end of the 5-day review window if the client takes no action.
               </p>
               <p>
                 CreatorBridge earns revenue through a platform fee charged to both parties. This fee structure is described
@@ -270,7 +270,7 @@ export function TermsOfService({ dark }) {
               </ul>
               <p>
                 During an active dispute, payment is held by the platform and not released to either party
-                until resolution. Disputes must be filed within 14 days of project delivery.
+                until resolution. Disputes must be filed within the 5-day review window after project delivery.
               </p>
             </Section>
 

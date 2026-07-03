@@ -49,7 +49,7 @@ export function DisputePolicy({ dark }) {
           <h1 className={`font-display font-bold text-3xl mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>
             Dispute Policy
           </h1>
-          <p className={`text-sm ${textSub}`}>Effective May 20, 2026. Last updated July 2, 2026.</p>
+          <p className={`text-sm ${textSub}`}>Effective May 20, 2026. Last updated July 3, 2026.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-8">
@@ -93,8 +93,9 @@ export function DisputePolicy({ dark }) {
                 <li><strong className={dark ? 'text-white' : 'text-gray-900'}>50% Final payment</strong> is paid once deliverables are completed and approved by the client.</li>
               </ul>
               <p>
-                Milestone payments are held securely by our processor and are only released upon approval, or automatically after
-                72 hours with no client response.
+                Milestone payments are held securely by our processor and are only released upon approval, or automatically at the
+                end of the 5-day review window if the client takes no action. Approving, requesting a revision, or opening a dispute
+                within that window pauses the automatic release.
               </p>
             </Section>
 
@@ -107,7 +108,7 @@ export function DisputePolicy({ dark }) {
                 A revision request must:
               </p>
               <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>Be filed within 72 hours of work delivery.</li>
+                <li>Be filed within the 5-day review window after work delivery.</li>
                 <li>Contain specific, actionable feedback aligned with the original project brief.</li>
                 <li>Not request new services or features outside the original project scope (scope creep).</li>
               </ul>
@@ -130,8 +131,9 @@ export function DisputePolicy({ dark }) {
                 <li>Provide a detailed description of why the work does not meet the brief, and attach any relevant communications or evidence.</li>
               </ul>
               <p>
-                Formal disputes must be submitted within **14 days** of the last delivery upload. Opening a dispute freezes all pending
-                milestone payments for that transaction.
+                Formal disputes must be submitted within the **5-day review window** after the last delivery upload — the same window
+                that governs automatic release, so opening a dispute always happens before funds can auto-release. Opening a dispute
+                freezes all pending milestone payments for that transaction until it is resolved.
               </p>
             </Section>
 

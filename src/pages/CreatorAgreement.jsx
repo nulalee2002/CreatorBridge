@@ -51,7 +51,7 @@ export function CreatorAgreement({ dark }) {
           <h1 className={`font-display font-bold text-3xl mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>
             Creator Agreement
           </h1>
-          <p className={`text-sm ${textSub}`}>Effective May 20, 2026. Last updated July 2, 2026.</p>
+          <p className={`text-sm ${textSub}`}>Effective May 20, 2026. Last updated July 3, 2026.</p>
           <button
             onClick={() => window.print()}
             className="cb-no-print mt-4 inline-flex items-center gap-2 rounded-xl border border-gold-500/30 px-4 py-2 text-xs font-bold text-gold-400 hover:bg-gold-500/10 transition-colors"
@@ -155,8 +155,8 @@ export function CreatorAgreement({ dark }) {
                 <li><strong className={dark ? 'text-white' : 'text-gray-900'}>50% Final Payout:</strong> Paid by the client upon content delivery. Funds are released to your Connect account once the client approves the final work.</li>
               </ul>
               <p>
-                If a client fails to take action (approve or request a revision) within 72 hours of delivery, the final payment is released
-                automatically to protect you from payment delays.
+                If a client fails to take action (approve, request a revision, or open a dispute) within the 5-day review window after
+                delivery, the final payment is released automatically to protect you from payment delays.
               </p>
             </Section>
 

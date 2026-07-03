@@ -44,7 +44,7 @@ FEES:
 Creators pay 10 percent platform fee. Fee drops to 8 percent after 10 completed projects and 6 percent after 25 projects. Clients pay a one-time 5 percent booking fee charged with the final payment when the project completes — nothing is added to the retainer, and no platform fees are charged on cancelled projects. No subscriptions, no monthly fees, no pay to apply.
 
 PAYMENTS:
-Clients pay 50 percent retainer upfront with no fees added. The remaining 50 percent plus the one-time 5 percent booking fee is due when the client approves delivery, or automatically after 72 hours if the client does not respond. All payments processed through Stripe.
+Clients pay 50 percent retainer upfront with no fees added. The remaining 50 percent plus the one-time 5 percent booking fee is due when the client approves delivery, or automatically after a 5-day review window if the client does not respond. All payments processed through Stripe.
 
 CANCELLATION POLICY:
 Rule 1: Before the retainer is paid, either party can cancel at no cost — no money has changed hands. Rule 2: After the retainer is paid, any time before delivery including mid-project, the 50 percent retainer splits evenly: the creator keeps 25 percent of the project total and the client is refunded 25 percent of the project total. No platform fees are charged on cancelled projects. Rule 3: After delivery there are no cancellations or refunds; the final 50 percent plus the 5 percent booking fee is due before final files are released.
@@ -53,7 +53,7 @@ DELIVERY AND REVISIONS:
 Creators deliver via link using approved project-workspace providers or direct upload where available. Files stored by CreatorBridge are retained for the posted retention window. Creators remain responsible for keeping their own delivery copy. 2 free revisions included on every project. Third revision requires a paid add-on.
 
 DISPUTES:
-Clients have 72 hours after delivery to open a dispute. After 72 hours with no action payment auto-releases and disputes cannot be opened. Valid dispute reasons: work does not match the agreed brief, significantly fewer deliverables than agreed, technical quality makes work unusable, creator abandoned the project. Not valid: client changed their mind after delivery, wanting more than the 2 included revisions, minor style preferences. For urgent disputes email drl33@creatorbridge.studio with URGENT in the subject line.
+After delivery, the client has a 5-day review window to approve, request a revision, or open a dispute — any of those actions pauses the automatic release. If the client takes no action within 5 days, payment auto-releases to the creator and disputes can no longer be opened. Valid dispute reasons: work does not match the agreed brief, significantly fewer deliverables than agreed, technical quality makes work unusable, creator abandoned the project. Not valid: client changed their mind after delivery, wanting more than the 2 included revisions, minor style preferences. For urgent disputes email drl33@creatorbridge.studio with URGENT in the subject line.
 
 CREATOR TIERS:
 Launch is for new creators with no requirements. Proven requires 10 or more completed projects with good ratings. Elite requires 25 or more completed projects and high ratings. Signature is the top tier for exceptional track records. Higher tiers rank higher in search results and build more client trust.

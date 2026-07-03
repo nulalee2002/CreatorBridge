@@ -63,7 +63,7 @@ export function TermsModal({ dark, onClose }) {
 
         {/* Scrollable content */}
         <div ref={scrollRef} className={`flex-1 overflow-y-auto px-6 py-5 space-y-1 ${dark ? 'bg-[radial-gradient(circle_at_25%_0%,rgba(156,74,51,0.06),transparent_34%)]' : ''}`}>
-          <p className={`text-xs mb-6 ${textSub}`}>Effective April 9, 2026. Last updated July 2, 2026.</p>
+          <p className={`text-xs mb-6 ${textSub}`}>Effective April 9, 2026. Last updated July 3, 2026.</p>
 
           {/* Table of contents */}
           <div className={`rounded-xl border p-4 mb-6 ${dark ? 'bg-white/[0.04] border-white/[0.08]' : 'bg-gray-50 border-gray-200'}`}>
@@ -107,8 +107,8 @@ export function TermsModal({ dark, onClose }) {
             <p>
               All financial transactions are processed through CreatorBridge using Stripe, a licensed payment processor.
               CreatorBridge never holds funds indefinitely: payment is split into a 50% retainer at booking and 50% upon
-              project completion and approval. Funds are released to the creator after client approval or after 72 hours
-              with no response.
+              project completion and approval. Funds are released to the creator after client approval, or automatically at the
+              end of the 5-day review window if the client takes no action.
             </p>
             <p>
               CreatorBridge earns revenue through a platform fee charged to both parties. This fee structure is described
@@ -253,7 +253,7 @@ export function TermsModal({ dark, onClose }) {
               within 2 business days and issues a final determination.
             </p>
             <p>
-              Disputes must be filed within 14 days of project delivery.
+              Disputes must be filed within the 5-day review window after project delivery.
             </p>
           </Section>
 

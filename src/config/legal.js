@@ -6,9 +6,9 @@
  * The acceptance gate also re-confirms monthly (REACCEPT_DAYS) regardless.
  */
 export const POLICY_VERSIONS = {
-  terms_of_service: '2026-07-02',
-  dispute_policy: '2026-07-02',
-  creator_agreement: '2026-07-02',
+  terms_of_service: '2026-07-03',
+  dispute_policy: '2026-07-03',
+  creator_agreement: '2026-07-03',
 };
 
 export const POLICY_LINKS = {

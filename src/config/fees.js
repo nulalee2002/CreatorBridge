@@ -2,7 +2,7 @@ export const PLATFORM_FEES = {
   creatorFeePct:     10,   // 10% taken from creator's earnings (Launch tier)
   clientFeePct:       5,   // 5% added on top of client's payment
   retainerPct:       50,   // 50% retainer upfront, 50% on delivery
-  autoApproveDays:    3,   // 72 hours (3 days) before auto-approval if client does not respond
+  autoApproveDays:    5,   // 5-day review window; approving, requesting a revision, or opening a dispute pauses it. No action for 5 days = auto-release to creator.
   cancellationFeePct: 25,  // After retainer paid, cancellation splits the retainer: creator keeps 25% of the total (half the retainer), client refunded 25%
 };
 

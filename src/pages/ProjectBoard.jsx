@@ -9,7 +9,7 @@ import {
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { normalizeServiceId } from '../data/rates.js';
 import { PILLARS, LEGACY_SERVICE_TO_PILLAR } from '../data/taxonomy.js';
-import { PROJECT_STATUSES, statusBadgeClass } from '../config/fees.js';
+import { PROJECT_STATUSES, statusBadgeClass, PLATFORM_FEES } from '../config/fees.js';
 import { ProjectTimeline } from '../components/ProjectTimeline.jsx';
 import { DisputeModal } from '../components/DisputeModal.jsx';
 import { CancellationModal } from '../components/CancellationModal.jsx';
@@ -1604,13 +1604,15 @@ export function ProjectBoard({ dark }) {
 
   useEffect(() => {
     let cancelled = false;
-    // Auto-approval: projects delivered 72+ hours ago become approved and ready for final payment.
+    // Auto-approval: projects delivered more than the review window ago become
+    // approved and ready for final payment (client took no action).
     const raw = loadProjects();
     const now = Date.now();
+    const reviewWindowMs = PLATFORM_FEES.autoApproveDays * 24 * 3600000;
     const autoApproved = raw.map(p => {
       if (p.status === 'delivered' && p.deliveredAt) {
         const elapsed = now - new Date(p.deliveredAt).getTime();
-        if (elapsed >= 72 * 3600000) {
+        if (elapsed >= reviewWindowMs) {
           return { ...p, status: 'approved', approvedAt: p.approvedAt || new Date().toISOString(), autoApproved: true };
         }
       }

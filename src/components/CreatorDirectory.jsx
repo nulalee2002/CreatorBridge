@@ -1268,7 +1268,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
                 },
                 {
                   title: 'Section 3 — Payments',
-                  body: 'All payments are processed through Stripe. Clients pay a 50% retainer upfront. The remaining 50% releases upon delivery approval or automatically after 72 hours. CreatorBridge charges creators a platform fee starting at 10%, dropping as you complete more projects.',
+                  body: 'All payments are processed through Stripe. Clients pay a 50% retainer upfront. The remaining 50% releases upon delivery approval or automatically after a 5-day review window with no client action. CreatorBridge charges creators a platform fee starting at 10%, dropping as you complete more projects.',
                 },
                 {
                   title: 'Section 4 — Cancellations',
@@ -1284,7 +1284,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
                 },
                 {
                   title: 'Section 7 — Disputes',
-                  body: 'Clients have 72 hours after delivery to open a dispute. After 72 hours with no action, payment releases automatically.',
+                  body: 'After delivery, clients have a 5-day review window to approve, request a revision, or open a dispute — any action pauses the automatic release. With no action for 5 days, payment releases automatically.',
                 },
               ].map(({ title, body }) => (
                 <div key={title}>
@@ -1332,7 +1332,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
                 },
                 {
                   title: 'Section 3 — Payments & Stripe Connect',
-                  body: 'You must onboard with Stripe Connect. Payments use an escrow-like structure: a 50% retainer paid upfront before work starts, and the remaining 50% final payout released upon delivery approval or 72-hour auto-approval.',
+                  body: 'You must onboard with Stripe Connect. Payments use an escrow-like structure: a 50% retainer paid upfront before work starts, and the remaining 50% final payout released upon delivery approval or a 5-day auto-approval with no client action.',
                 },
                 {
                   title: 'Section 4 — Non-Circumvention',
