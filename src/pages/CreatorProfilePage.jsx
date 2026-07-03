@@ -657,7 +657,9 @@ function BookingSheet({ open, onClose, selectedPkg }) {
   const subtotal = pkg.price;
   const fee = Math.round(subtotal * 0.05);
   const total = subtotal + fee;
-  const retainer = Math.round(total / 2);
+  // Retainer is 50% of the base package only — the one-time 5% booking fee is
+  // charged with the final payment on completion, never split into the retainer.
+  const retainer = Math.round(subtotal / 2);
   const remainder = total - retainer;
 
   return (
