@@ -65,8 +65,7 @@ export function FeeBreakdown({ projectAmount, viewMode = 'client', dark, creator
       {viewMode === 'client' ? (
         <>
           <SectionLabel>Retainer fee (50% due now)</SectionLabel>
-          <Row label="Retainer fee (50%)" amount={f.retainerAmount} />
-          <Row label={`Booking fee (${displayedClientFeePct}%)`} amount={f.clientFeeRetainer} sign="+" sub />
+          <Row label="Retainer fee (50%) — no fees added" amount={f.retainerAmount} />
           <Row label="Retainer due now" amount={f.retainerClientOwes} bold highlight accent="text-gold-400" />
 
           <SectionLabel>On Delivery (50%)</SectionLabel>
