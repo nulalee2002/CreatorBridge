@@ -102,7 +102,7 @@ export function DisputePolicy({ dark }) {
             <Section id="revisions" title="3. Built-In Revisions" dark={dark}>
               <p>
                 Disagreements are often simply stylistic preferences that can be resolved using revisions. Unless custom packages specify
-                otherwise, every project brief includes **2 rounds of standard revisions**.
+                otherwise, every project brief includes <strong className={dark ? 'text-white' : 'text-gray-900'}>2 rounds of standard revisions</strong>.
               </p>
               <p>
                 A revision request must:
@@ -131,7 +131,7 @@ export function DisputePolicy({ dark }) {
                 <li>Provide a detailed description of why the work does not meet the brief, and attach any relevant communications or evidence.</li>
               </ul>
               <p>
-                Formal disputes must be submitted within the **5-day review window** after the last delivery upload — the same window
+                Formal disputes must be submitted within the <strong className={dark ? 'text-white' : 'text-gray-900'}>5-day review window</strong> after the last delivery upload — the same window
                 that governs automatic release, so opening a dispute always happens before funds can auto-release. Opening a dispute
                 freezes all pending milestone payments for that transaction until it is resolved.
               </p>
