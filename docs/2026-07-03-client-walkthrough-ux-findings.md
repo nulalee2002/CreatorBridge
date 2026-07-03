@@ -32,8 +32,27 @@ creator profile → request a quote → reserve/escrow → reservation confirmat
    the current version; role-scoped (clients: ToS + Dispute Policy; creators:
    + Creator Agreement).
 6. **Signature tier fee corrected** from a doc-only 5% to 6% (matches the code).
+7. **Bridge chatbot mis-routed "cancel after paying retainer."** The offline
+   guide matched the payment intent before the cancellation intent, so the
+   question got the generic payment-structure blurb. Reordered so cancellation is
+   checked first, and rewrote the cancellation + fee answers to the locked model.
+   Verified live in the Bridge widget.
+8. **FeeBreakdown showed a "+$0.00 Booking fee" row** on the retainer section
+   (the fee is now zero there under the once-on-completion model). Removed the
+   dead row; retainer line now reads "no fees added."
+9. **Policy pages verified live** — Terms of Service and Dispute Policy both
+   render the reconciled 25/25 cancellation wording and "no fees on cancelled
+   projects," no console errors.
 
 ## Friction found — recommended, not yet changed
+
+A. **[MEDIUM · DECISION] Dispute window contradicts itself.** The Dispute Policy
+   (section 4) says a formal dispute must be filed "within **14 days** of the last
+   delivery upload," but the chatbot/payment rules say clients have **72 hours**
+   after delivery to dispute and funds auto-release at 72 hours. These can't both
+   be true — if funds release at hour 72, there's nothing to dispute on day 14.
+   Pick one window (72h or 14 days) and I'll reconcile the Dispute Policy, chatbot,
+   `PLATFORM_FEES.autoApproveDays`, and the delivery-review copy to match.
 
 7. **[MEDIUM] Logged-out "Post a brief" is a dead-end.** The homepage's primary
    client CTA routes a logged-out visitor to the Project Board (a list of other
