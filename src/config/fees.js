@@ -3,7 +3,7 @@ export const PLATFORM_FEES = {
   clientFeePct:       5,   // 5% added on top of client's payment
   retainerPct:       50,   // 50% retainer upfront, 50% on delivery
   autoApproveDays:    3,   // 72 hours (3 days) before auto-approval if client does not respond
-  cancellationFeePct: 10,  // Creator keeps 10% if client cancels after retainer paid
+  cancellationFeePct: 25,  // After retainer paid, cancellation splits the retainer: creator keeps 25% of the total (half the retainer), client refunded 25%
 };
 
 /** Loyalty tiers based on completed projects */
@@ -41,8 +41,10 @@ export function calcFees(projectAmountDollars, creatorFeePctOverride, clientFeeP
   const creatorPct = creatorFeePctOverride != null ? creatorFeePctOverride : PLATFORM_FEES.creatorFeePct;
   const clientPct  = clientFeePctOverride != null ? clientFeePctOverride : PLATFORM_FEES.clientFeePct;
 
-  const clientFeeRetainer  = retainer  * (clientPct / 100);
-  const clientFeeFinal     = final     * (clientPct / 100);
+  // Client booking fee is charged once, on completion (the final payment) — the
+  // full clientPct of the whole project total, with nothing added to the retainer.
+  const clientFeeRetainer  = 0;
+  const clientFeeFinal     = total     * (clientPct / 100);
   const creatorFeeRetainer = retainer  * (creatorPct / 100);
   const creatorFeeFinal    = final     * (creatorPct / 100);
 
@@ -89,48 +91,53 @@ export function dollarsToDisplay(dollars) {
 }
 
 /**
- * Simplified 3-rule cancellation policy.
+ * Cancellation policy. Only the retainer is ever collected before completion, so
+ * cancellation only ever concerns the retainer. keepPct is expressed as a
+ * percentage of the full project TOTAL.
  *
- * Rule 1 — Before work begins: creator keeps 25% (cancellation fee).
- *   Applies when: project accepted but creator has not started work yet.
+ * Rule 1 — Before the retainer is paid: either party may cancel at no cost.
+ *   Nothing has been charged. (open / accepted)
  *
- * Rule 2 — After work begins: creator keeps 50% of project total.
- *   Applies when: creator has actively started production (in_progress / revision).
+ * Rule 2 — After the retainer is paid, any time before delivery (including
+ *   mid-project): the 50% retainer is split evenly — the creator keeps 25% of the
+ *   total (half the retainer) and the client is refunded 25% of the total (the
+ *   other half). No platform fees apply, because fees are only charged on
+ *   successful completion. (retainer_paid / in_progress / revision)
  *
- * Rule 3 — After delivery: no refund. Creator keeps 100%.
- *   Applies when: work has been delivered or approved.
+ * Rule 3 — After delivery: no cancellation and no refund; the project proceeds to
+ *   final payment. (delivered / approved / final_paid)
  */
 export const CANCELLATION_RULES = [
   {
-    id:       'before_work',
-    label:    'Before Work Begins',
-    keepPct:  25,
-    description: 'Creator keeps 25% as a cancellation fee. Client receives a 75% refund.',
-    applies:  ['open', 'accepted', 'retainer_paid'],
+    id:       'before_retainer',
+    label:    'Before Retainer Paid',
+    keepPct:  0,
+    description: 'Either party may cancel at no cost. No money has changed hands.',
+    applies:  ['open', 'accepted'],
   },
   {
-    id:       'after_work_begins',
-    label:    'After Work Begins',
-    keepPct:  50,
-    description: 'Creator keeps 50% of the project total. Client receives a 50% refund.',
-    applies:  ['in_progress', 'revision'],
+    id:       'after_retainer',
+    label:    'After Retainer Paid',
+    keepPct:  25,
+    description: 'The 50% retainer is split evenly: the creator keeps 25% of the project total and the client is refunded 25% of the total. No platform fees apply.',
+    applies:  ['retainer_paid', 'in_progress', 'revision'],
   },
   {
     id:       'after_delivery',
     label:    'After Delivery',
-    keepPct:  100,
-    description: 'No refund once work has been delivered. Creator retains full payment.',
+    keepPct:  50,
+    description: 'No refund once work has been delivered. The retainer stays with the creator and the project proceeds to final payment.',
     applies:  ['delivered', 'approved', 'final_paid'],
   },
 ];
 
-/** Keep backward-compatible CANCELLATION_FEES shape for any component reading it */
+/** Keep backward-compatible CANCELLATION_FEES shape (creator-keep % of total) */
 export const CANCELLATION_FEES = {
   before_acceptance:  0,
-  after_acceptance:   25,
+  after_acceptance:   0,
   after_retainer:     25,
-  work_in_progress:   50,
-  after_delivery:     100,
+  work_in_progress:   25,
+  after_delivery:     50,
 };
 
 /** Returns the cancellation rule that applies to the given project status */
@@ -143,8 +150,8 @@ export function getCancellationRule(projectStatus) {
 export function getCancellationStage(projectStatus) {
   switch (projectStatus) {
     case 'open':
-    case 'accepted':
-    case 'retainer_paid': return 'before_acceptance';
+    case 'accepted':      return 'before_acceptance';
+    case 'retainer_paid': return 'after_retainer';
     case 'in_progress':
     case 'revision':      return 'work_in_progress';
     case 'delivered':
@@ -163,7 +170,13 @@ export function getCancellationFee(projectTotal, projectStatus) {
   const rule   = getCancellationRule(projectStatus);
   const total  = Number(projectTotal) || 0;
   const creatorKeepsDollars = (total * rule.keepPct) / 100;
-  const clientRefundDollars = total - creatorKeepsDollars;
+  // The client can only be refunded from what they have actually paid — the
+  // retainer (50% of total). Before the retainer is paid, nothing has changed
+  // hands, so the refund is 0.
+  const retainerPaidDollars = rule.id === 'before_retainer'
+    ? 0
+    : (total * PLATFORM_FEES.retainerPct) / 100;
+  const clientRefundDollars = Math.max(0, retainerPaidDollars - creatorKeepsDollars);
   return { rule, feePct: rule.keepPct, creatorKeepsDollars, clientRefundDollars };
 }
 

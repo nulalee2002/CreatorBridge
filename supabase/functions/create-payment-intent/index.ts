@@ -34,7 +34,10 @@ function calculateTrustedFees(
   const creatorFeeBeforeCreditCents = Math.max(baseCreatorFeeAmountCents, Math.max(0, Math.round(minimumPlatformFeeCents)));
   const totalCreatorFeeAmountCents = Math.max(0, creatorFeeBeforeCreditCents - Math.max(0, Math.round(creatorCreditAppliedCents)));
   const totalClientFeeAmountCents = Math.round(total * (clientFeePct / 100));
-  const chargeClientFeeAmountCents = Math.round(base * (clientFeePct / 100));
+  // Client booking fee is charged ONCE, on the final payment (on successful
+  // completion) — not split across the retainer and final. So the retainer
+  // charge carries no client fee; the final charge carries the full 5% of total.
+  const chargeClientFeeAmountCents = paymentType === 'final' ? totalClientFeeAmountCents : 0;
 
   return {
     projectAmountCents: total,
