@@ -43,6 +43,10 @@ creator profile → request a quote → reserve/escrow → reservation confirmat
 9. **Policy pages verified live** — Terms of Service and Dispute Policy both
    render the reconciled 25/25 cancellation wording and "no fees on cancelled
    projects," no console errors.
+10. **See-through notifications dropdown.** The panel used `bg-charcoal-950/96`,
+    which renders visibly translucent (≈50%, not 96%) with no backdrop behind it,
+    so the landing hero heading bled through and collided with the panel header.
+    Fixed to a solid background + backdrop-blur; verified live.
 
 ## Friction found — recommended, not yet changed
 
@@ -53,6 +57,15 @@ A. **[MEDIUM · DECISION] Dispute window contradicts itself.** The Dispute Polic
    be true — if funds release at hour 72, there's nothing to dispute on day 14.
    Pick one window (72h or 14 days) and I'll reconcile the Dispute Policy, chatbot,
    `PLATFORM_FEES.autoApproveDays`, and the delivery-review copy to match.
+
+B. **[LOW · pattern] `bg-charcoal-950/96` renders too translucent app-wide.**
+   The notification dropdown (fixed) proved the `/96` panel background renders
+   ~50% opaque, not 96%. It's used in ~13 components. Most are modals with a
+   dimming backdrop so it's masked, but other **backdrop-less dropdowns**
+   (StateCitySelector, RegionSelector, PresetManager, CurrencySettings,
+   ProfileSettings menus) may have the same bleed-through. Worth a one-pass audit
+   of backdrop-less dropdowns → solid background. Not auto-fixed to avoid a broad
+   unsupervised visual change.
 
 7. **[MEDIUM] Logged-out "Post a brief" is a dead-end.** The homepage's primary
    client CTA routes a logged-out visitor to the Project Board (a list of other
