@@ -50,13 +50,22 @@ creator profile → request a quote → reserve/escrow → reservation confirmat
 
 ## Friction found — recommended, not yet changed
 
-A. **[MEDIUM · DECISION] Dispute window contradicts itself.** The Dispute Policy
-   (section 4) says a formal dispute must be filed "within **14 days** of the last
-   delivery upload," but the chatbot/payment rules say clients have **72 hours**
-   after delivery to dispute and funds auto-release at 72 hours. These can't both
-   be true — if funds release at hour 72, there's nothing to dispute on day 14.
-   Pick one window (72h or 14 days) and I'll reconcile the Dispute Policy, chatbot,
-   `PLATFORM_FEES.autoApproveDays`, and the delivery-review copy to match.
+A. **[RESOLVED] Dispute-window contradiction fixed → one 5-day review window.**
+   Was: Dispute Policy said 14 days, chatbot/payment said 72h, funds auto-released
+   at 72h (contradiction). Now: a single **5-day review window** governs approval,
+   revisions, disputes, AND auto-release — and approving, requesting a revision, or
+   opening a dispute **pauses** the clock, so a dispute always lands before funds
+   can release. Reconciled everywhere: `PLATFORM_FEES.autoApproveDays = 5`, the
+   ProjectBoard auto-approve logic, both chatbots, CreatorDirectory help, Terms ×3,
+   Dispute Policy, Creator Agreement, and the two delivery emails. Policy versions
+   bumped to 2026-07-03. Verified live.
+
+C. **[RESOLVED] No outside social media on creator profiles.** `creator_listings`
+   had dormant, force-nulled website/instagram/youtube/vimeo/linkedin columns.
+   Dropped all five (migration) and recreated the walled-garden trigger without
+   them; the name/bio outbound-leak checks remain. Verified on live DB (columns
+   gone, trigger fires cleanly). Client contact info was already creator-invisible
+   (RLS owner+admin only; reputation badge exposes stats only — no phone/website).
 
 B. **[LOW · pattern] `bg-charcoal-950/96` renders too translucent app-wide.**
    The notification dropdown (fixed) proved the `/96` panel background renders
