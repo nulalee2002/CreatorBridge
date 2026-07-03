@@ -49,7 +49,7 @@ export function DisputePolicy({ dark }) {
           <h1 className={`font-display font-bold text-3xl mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>
             Dispute Policy
           </h1>
-          <p className={`text-sm ${textSub}`}>Effective May 20, 2026. Last updated May 20, 2026.</p>
+          <p className={`text-sm ${textSub}`}>Effective May 20, 2026. Last updated July 2, 2026.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-8">
@@ -160,11 +160,12 @@ export function DisputePolicy({ dark }) {
 
             <Section id="cancellation" title="6. Payout Release & Cancellation Guidelines" dark={dark}>
               <p>
-                If a project is cancelled by the client before work begins:
+                If a project is cancelled by the client:
               </p>
               <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>If cancelled before the retainer is paid: No charges apply.</li>
-                <li>If cancelled after the retainer is paid: The creator receives 10% of the retainer as a scheduling fee, and the remainder is refunded to the client. The 5% client booking fee is non-refundable.</li>
+                <li>If cancelled before the retainer is paid: No charges apply. No money has changed hands.</li>
+                <li>If cancelled after the retainer is paid — at any time before delivery, including mid-project: The 50% retainer is split evenly. The creator keeps 25% of the project total (half the retainer) and the client is refunded 25% of the project total (the other half). No platform fees are charged on cancelled projects — the 5% client booking fee applies only to successfully completed projects.</li>
+                <li>After delivery: No cancellations or refunds. The remaining 50% plus the one-time 5% booking fee is due before final files are released. Post-delivery concerns go through the dispute process above.</li>
               </ul>
               <p>
                 If a creator fails to communicate for 7 consecutive days or abandons a project after the retainer has been paid, the client

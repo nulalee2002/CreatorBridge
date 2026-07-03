@@ -51,7 +51,7 @@ export function CreatorAgreement({ dark }) {
           <h1 className={`font-display font-bold text-3xl mb-2 ${dark ? 'text-white' : 'text-gray-900'}`}>
             Creator Agreement
           </h1>
-          <p className={`text-sm ${textSub}`}>Effective May 20, 2026. Last updated May 20, 2026.</p>
+          <p className={`text-sm ${textSub}`}>Effective May 20, 2026. Last updated July 2, 2026.</p>
           <button
             onClick={() => window.print()}
             className="cb-no-print mt-4 inline-flex items-center gap-2 rounded-xl border border-gold-500/30 px-4 py-2 text-xs font-bold text-gold-400 hover:bg-gold-500/10 transition-colors"
@@ -127,9 +127,9 @@ export function CreatorAgreement({ dark }) {
                   <div className="flex justify-between">
                     <div>
                       <p className="font-bold text-white">Signature Tier</p>
-                      <p className={`text-[10px] ${textSub}`}>After 50 completed projects / custom invite</p>
+                      <p className={`text-[10px] ${textSub}`}>Top-tier recognition after 50 completed projects / custom invite</p>
                     </div>
-                    <span className="font-mono font-bold text-gold-400">5% Platform Fee</span>
+                    <span className="font-mono font-bold text-gold-400">6% Platform Fee</span>
                   </div>
                 </div>
               </div>

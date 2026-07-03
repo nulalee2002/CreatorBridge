@@ -1,5 +1,5 @@
 export const PLATFORM_FEES = {
-  creatorFeePct:     10,   // 10% taken from creator's earnings (Standard tier)
+  creatorFeePct:     10,   // 10% taken from creator's earnings (Launch tier)
   clientFeePct:       5,   // 5% added on top of client's payment
   retainerPct:       50,   // 50% retainer upfront, 50% on delivery
   autoApproveDays:    3,   // 72 hours (3 days) before auto-approval if client does not respond
@@ -8,9 +8,9 @@ export const PLATFORM_FEES = {
 
 /** Loyalty tiers based on completed projects */
 export const LOYALTY_TIERS = [
-  { name: 'Standard', minProjects: 0,  maxProjects: 9,  feePct: 10, badge: null },
-  { name: 'Silver',   minProjects: 10, maxProjects: 24, feePct: 8,  badge: 'silver' },
-  { name: 'Gold',     minProjects: 25, maxProjects: Infinity, feePct: 6, badge: 'gold' },
+  { name: 'Launch', minProjects: 0,  maxProjects: 9,  feePct: 10, badge: null },
+  { name: 'Proven', minProjects: 10, maxProjects: 24, feePct: 8,  badge: 'silver' },
+  { name: 'Elite',  minProjects: 25, maxProjects: Infinity, feePct: 6, badge: 'gold' },
 ];
 
 /**

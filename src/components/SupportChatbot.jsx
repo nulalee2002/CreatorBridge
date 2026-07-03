@@ -109,13 +109,13 @@ CREATOR STANDARDS:
 Every creator on CreatorBridge is manually reviewed and approved before going live. Requirements include 2 or more years of paid professional experience, minimum 3 portfolio samples, complete service packages with real pricing, a 60 to 90 second video intro, Stripe identity verification, and a US bank account. Profile information is locked for 90 days after submission.
 
 FEES:
-Creators pay 10 percent platform fee. Fee drops to 8 percent after 10 completed projects and 6 percent after 25 projects. Clients pay a 5 percent booking fee. No subscriptions, no monthly fees, no pay to apply.
+Creators pay 10 percent platform fee. Fee drops to 8 percent after 10 completed projects and 6 percent after 25 projects. Clients pay a one-time 5 percent booking fee charged with the final payment when the project completes — nothing is added to the retainer, and no platform fees are charged on cancelled projects. No subscriptions, no monthly fees, no pay to apply.
 
 PAYMENTS:
-Clients pay 50 percent retainer upfront. Remaining 50 percent releases when client approves delivery or automatically after 72 hours if client does not respond. All payments processed through Stripe.
+Clients pay 50 percent retainer upfront with no fees added. The remaining 50 percent plus the one-time 5 percent booking fee is due when the client approves delivery, or automatically after 72 hours if the client does not respond. All payments processed through Stripe.
 
 CANCELLATION POLICY:
-Rule 1: If client cancels before work begins, creator keeps 25 percent as a cancellation fee and client gets 75 percent back. Rule 2: If client cancels after work starts, creator keeps the full 50 percent retainer. Rule 3: After delivery there are no refunds.
+Rule 1: Before the retainer is paid, either party can cancel at no cost — no money has changed hands. Rule 2: After the retainer is paid, any time before delivery including mid-project, the 50 percent retainer splits evenly: the creator keeps 25 percent of the project total and the client is refunded 25 percent of the project total. No platform fees are charged on cancelled projects. Rule 3: After delivery there are no cancellations or refunds; the final 50 percent plus the 5 percent booking fee is due before final files are released.
 
 DELIVERY AND REVISIONS:
 Creators deliver via link (Google Drive, Dropbox, Vimeo, WeTransfer, Frame.io) or direct upload. Files stored for 7 days then deleted. Creators keep their own copy for 6 months. 2 free revisions included on every project. Third revision requires a paid add-on.

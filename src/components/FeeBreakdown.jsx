@@ -77,7 +77,7 @@ export function FeeBreakdown({ projectAmount, viewMode = 'client', dark, creator
           <div className={divider} />
           <Row label="Total You Pay" amount={f.totalClientPays} bold accent="text-white" />
           <p className={`text-[10px] mt-2 ${textSub}`}>
-            The {displayedClientFeePct}% booking fee is non-refundable once payment is processed.
+            The {displayedClientFeePct}% booking fee is charged once, with your final payment, and only on completed projects — cancelled projects are never charged the booking fee.
           </p>
         </>
       ) : (

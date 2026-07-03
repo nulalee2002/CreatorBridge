@@ -63,7 +63,7 @@ export function TermsModal({ dark, onClose }) {
 
         {/* Scrollable content */}
         <div ref={scrollRef} className={`flex-1 overflow-y-auto px-6 py-5 space-y-1 ${dark ? 'bg-[radial-gradient(circle_at_25%_0%,rgba(156,74,51,0.06),transparent_34%)]' : ''}`}>
-          <p className={`text-xs mb-6 ${textSub}`}>Effective April 9, 2026. Last updated April 9, 2026.</p>
+          <p className={`text-xs mb-6 ${textSub}`}>Effective April 9, 2026. Last updated July 2, 2026.</p>
 
           {/* Table of contents */}
           <div className={`rounded-xl border p-4 mb-6 ${dark ? 'bg-white/[0.04] border-white/[0.08]' : 'bg-gray-50 border-gray-200'}`}>
@@ -170,16 +170,16 @@ export function TermsModal({ dark, onClose }) {
             </p>
             <div className={`rounded-xl border p-4 my-3 ${dark ? 'border-white/[0.08] bg-charcoal-950/55' : 'border-gray-200 bg-gray-50'}`}>
               <div className="space-y-2 text-xs font-mono">
-                <div className="flex justify-between"><span>Client booking fee</span><span className="font-bold">5% of project total</span></div>
-                <div className="flex justify-between"><span>Creator platform fee (Standard tier)</span><span className="font-bold">10% of earnings</span></div>
-                <div className="flex justify-between"><span>Creator platform fee (Silver tier, 10+ projects)</span><span className="font-bold">8% of earnings</span></div>
-                <div className="flex justify-between"><span>Creator platform fee (Gold tier, 25+ projects)</span><span className="font-bold">6% of earnings</span></div>
+                <div className="flex justify-between"><span>Client booking fee (charged once, on the final payment)</span><span className="font-bold">5% of project total</span></div>
+                <div className="flex justify-between"><span>Creator platform fee (Launch tier)</span><span className="font-bold">10% of earnings</span></div>
+                <div className="flex justify-between"><span>Creator platform fee (Proven tier, 10+ projects)</span><span className="font-bold">8% of earnings</span></div>
+                <div className="flex justify-between"><span>Creator platform fee (Elite tier, 25+ projects)</span><span className="font-bold">6% of earnings</span></div>
               </div>
             </div>
             <p>
               <strong className={dark ? 'text-white' : 'text-gray-900'}>Payment structure:</strong> Projects are split into two payments.
-              50% is due as a retainer when the project is accepted and before work begins.
-              The remaining 50% is due upon project completion and client approval.
+              50% is due as a retainer when the project is accepted and before work begins — no fees are added to the retainer.
+              The remaining 50%, plus the one-time 5% client booking fee, is due upon project completion and client approval.
             </p>
             <p>
               Invite new clients to book through CreatorBridge. New clients may receive a first-booking credit, and creators may receive a platform credit after a completed project. CreatorBridge does not pay rewards for signups, referrals of other creators, or recruiting activity. Credits are tied only to completed client projects.
@@ -192,15 +192,17 @@ export function TermsModal({ dark, onClose }) {
             </p>
             <ul className="list-disc list-inside space-y-2 ml-2">
               <li>
-                <strong className={dark ? 'text-white' : 'text-gray-900'}>Rule 1 - Before work begins:</strong> Creator keeps 25% as a cancellation fee. Client receives a 75% refund.
-                This applies when the project has been accepted but the creator has not yet started production.
+                <strong className={dark ? 'text-white' : 'text-gray-900'}>Rule 1 - Before the retainer is paid:</strong> Either party may cancel at no cost.
+                No money has changed hands and no fees are charged.
               </li>
               <li>
-                <strong className={dark ? 'text-white' : 'text-gray-900'}>Rule 2 - After work begins:</strong> Creator keeps 50% of the total project value.
-                Client receives a 50% refund. This applies once the creator has actively started production.
+                <strong className={dark ? 'text-white' : 'text-gray-900'}>Rule 2 - After the retainer is paid, any time before delivery (including mid-project):</strong> The
+                50% retainer is split evenly. The creator keeps 25% of the project total (half the retainer) and the client is refunded 25% of the
+                project total (the other half). No platform fees are charged on cancelled projects.
               </li>
               <li>
-                <strong className={dark ? 'text-white' : 'text-gray-900'}>Rule 3 - After delivery:</strong> No refund. Creator retains 100% of the project payment once work has been delivered.
+                <strong className={dark ? 'text-white' : 'text-gray-900'}>Rule 3 - After delivery:</strong> No cancellations or refunds. The remaining 50% plus the one-time
+                5% booking fee is due before final files are released. Post-delivery concerns are handled through the dispute process.
               </li>
             </ul>
             <p>
