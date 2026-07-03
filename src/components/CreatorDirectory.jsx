@@ -6,6 +6,7 @@ import { SERVICES, RATES, MARKETPLACE_CATEGORIES, getMarketplaceServiceIds, serv
 import { PILLARS, SUB_NICHES_BY_PILLAR, getPillar, getSubNiche, LEGACY_SERVICE_TO_PILLAR, MAX_SUB_NICHES } from '../data/taxonomy.js';
 import { REGIONS } from '../data/regions.js';
 import { SEED_CREATORS, initSeedData, SHOW_DEMO_CREATORS } from '../data/seedCreators.js';
+import { POLICY_VERSIONS } from '../config/legal.js';
 import { zipToRegion, zipToCity } from '../data/zipCodes.js';
 import { VerificationBadge } from './VerificationFlow.jsx';
 import { LoyaltyBadge } from './LoyaltyBadge.jsx';
@@ -1641,14 +1642,14 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
         }));
         if (portfolioRows.length) await supabase.from('portfolio_items').insert(portfolioRows);
 
-        // Record creator agreement acceptance
+        // Record creator agreement acceptance at the current policy version.
         await supabase
           .from('legal_acceptances')
-          .insert({
+          .upsert({
             user_id: user.id,
             document_type: 'creator_agreement',
-            document_version: '1.0'
-          });
+            document_version: POLICY_VERSIONS.creator_agreement,
+          }, { onConflict: 'user_id,document_type,document_version', ignoreDuplicates: true });
 
         // Trigger welcome creator email
         sendNotificationEmail(enriched.contact?.email || user.email, 'welcome_creator', {

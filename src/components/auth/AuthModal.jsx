@@ -3,8 +3,8 @@ import { X, Mail, Lock, User, Building2, Users, Eye, EyeOff, Chrome, Phone } fro
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { supabase, supabaseConfigured } from '../../lib/supabase.js';
 import { TurnstileWidget, turnstileConfigured } from '../TurnstileWidget.jsx';
-import { BrandMark } from '../BrandLogo.jsx';
 import { sendNotificationEmail } from '../../lib/notifications.js';
+import { POLICY_VERSIONS, POLICY_LINKS, REACCEPT_DAYS, requiredPoliciesForRole } from '../../config/legal.js';
 
 export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = 'client', onOpenTerms, onOpenCreatorRegistration }) {
   const { signIn, signUp, signInWithGoogle, profile: authProfile } = useAuth();
@@ -22,9 +22,14 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
   const [forgotMode, setForgotMode]     = useState(false);
   const [forgotEmail, setForgotEmail]   = useState('');
   const [forgotSent, setForgotSent]     = useState(false);
-  // TOS Gate state
+  // Policy acceptance gate state. gateMode 'first' = brand-new member: reading
+  // confirmation checkbox is mandatory. 'reconfirm' = existing member re-prompted
+  // monthly or after a policy update: reading stays optional.
   const [showTosGate, setShowTosGate]   = useState(false);
   const [gateUser, setGateUser]         = useState(null);
+  const [gateMode, setGateMode]         = useState('first');
+  const [gateDocs, setGateDocs]         = useState(requiredPoliciesForRole('client'));
+  const [hasReadChecked, setHasReadChecked] = useState(false);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -118,6 +123,9 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
         const session = signUpData?.session;
         if (createdUser && session) {
           setGateUser(createdUser);
+          setGateDocs(requiredPoliciesForRole(role));
+          setGateMode('first');
+          setHasReadChecked(false);
           setShowTosGate(true);
         } else {
           onClose?.();
@@ -134,22 +142,42 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
       else {
         const loggedInUser = signInData?.user;
         if (loggedInUser) {
-          const { data: acceptance, error: fetchErr } = await supabase
-            .from('legal_acceptances')
-            .select('*')
-            .eq('user_id', loggedInUser.id)
-            .eq('document_type', 'terms_of_service')
-            .eq('document_version', '1.0')
-            .maybeSingle();
+          const [{ data: profileRow }, { data: acceptances, error: fetchErr }] = await Promise.all([
+            supabase.from('profiles').select('role').eq('id', loggedInUser.id).maybeSingle(),
+            supabase
+              .from('legal_acceptances')
+              .select('document_type, document_version, accepted_at')
+              .eq('user_id', loggedInUser.id),
+          ]);
 
           if (fetchErr) {
             console.error('Error checking terms acceptance:', fetchErr);
             onClose?.();
-          } else if (!acceptance) {
-            setGateUser(loggedInUser);
-            setShowTosGate(true);
           } else {
-            onClose?.();
+            const userRole = profileRow?.role || loggedInUser.user_metadata?.role || 'client';
+            const required = requiredPoliciesForRole(userRole);
+            const rows = acceptances || [];
+            const firstTime = rows.length === 0;
+            // A doc is satisfied only by an acceptance row at its CURRENT version,
+            // so bumping POLICY_VERSIONS re-prompts everyone after a policy update.
+            const currentRows = required.map(doc =>
+              rows.find(r => r.document_type === doc && r.document_version === POLICY_VERSIONS[doc]) || null
+            );
+            const missingCurrent = currentRows.some(r => !r);
+            const newestAcceptedAt = currentRows.reduce((newest, r) =>
+              r && (!newest || r.accepted_at > newest) ? r.accepted_at : newest, null);
+            const staleMonthly = !newestAcceptedAt
+              || (Date.now() - new Date(newestAcceptedAt).getTime()) > REACCEPT_DAYS * 86400000;
+
+            if (firstTime || missingCurrent || staleMonthly) {
+              setGateUser(loggedInUser);
+              setGateDocs(required);
+              setGateMode(firstTime ? 'first' : 'reconfirm');
+              setHasReadChecked(false);
+              setShowTosGate(true);
+            } else {
+              onClose?.();
+            }
           }
         } else {
           onClose?.();
@@ -163,33 +191,39 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
     if (!user) return;
     setLoading(true);
     try {
+      // One acceptance row per required document at its current version. The
+      // unique (user, type, version) constraint makes repeats no-ops.
+      const rows = gateDocs.map(doc => ({
+        user_id: user.id,
+        document_type: doc,
+        document_version: POLICY_VERSIONS[doc],
+      }));
       const { error: insertErr } = await supabase
         .from('legal_acceptances')
-        .insert({
-          user_id: user.id,
-          document_type: 'terms_of_service',
-          document_version: '1.0'
-        });
+        .upsert(rows, { onConflict: 'user_id,document_type,document_version', ignoreDuplicates: true });
       if (insertErr) {
         setError(insertErr.message || 'Failed to record terms acceptance.');
         setLoading(false);
         return;
       }
-      const acceptedRole = authProfile?.role
-        || (await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .maybeSingle()
-        ).data?.role
-        || user.user_metadata?.role
-        || role;
 
-      // Trigger client welcome email only for confirmed client accounts.
-      if (acceptedRole === 'client') {
-        sendNotificationEmail(user.email, 'welcome_client', {
-          client_name: form.fullName || user.user_metadata?.full_name || 'Client'
-        });
+      // Welcome email only for brand-new client accounts — not on the monthly
+      // or policy-update re-confirmations.
+      if (gateMode === 'first') {
+        const acceptedRole = authProfile?.role
+          || (await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .maybeSingle()
+          ).data?.role
+          || user.user_metadata?.role
+          || role;
+        if (acceptedRole === 'client') {
+          sendNotificationEmail(user.email, 'welcome_client', {
+            client_name: form.fullName || user.user_metadata?.full_name || 'Client'
+          });
+        }
       }
     } catch (e) {
       setError(e.message || 'Error recording terms acceptance.');
@@ -268,26 +302,31 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
             <div className="space-y-4 py-4 text-center">
               <div className="text-4xl mb-3">⚖️</div>
               <h3 className={`font-display font-bold text-xl ${dark ? 'text-white' : 'text-gray-900'}`}>
-                Review & Accept Terms
+                {gateMode === 'first' ? 'Review & Accept Terms' : 'Quick Policy Check-In'}
               </h3>
               <p className={`text-xs leading-relaxed max-w-sm mx-auto ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
-                Before you can proceed to the platform, you must read and agree to our Terms of Service, Creator Agreement, and Dispute Policy.
+                {gateMode === 'first'
+                  ? `Before you can proceed to the platform, please read and agree to the ${gateDocs.length} policies that apply to your account.`
+                  : 'Our policies were recently updated, or it has been a month since you last confirmed them. Feel free to review them again — then confirm to continue.'}
               </p>
-              
+
               <div className="flex flex-col gap-2.5 py-4 my-2 border-y border-white/[0.07]">
-                <a href="/terms-of-service" target="_blank" rel="noreferrer"
-                  className="text-xs text-gold-400 hover:text-gold-300 underline font-medium inline-flex items-center justify-center gap-1.5">
-                  Read Terms of Service
-                </a>
-                <a href="/creator-agreement" target="_blank" rel="noreferrer"
-                  className="text-xs text-gold-400 hover:text-gold-300 underline font-medium inline-flex items-center justify-center gap-1.5">
-                  Read Creator Agreement
-                </a>
-                <a href="/dispute-policy" target="_blank" rel="noreferrer"
-                  className="text-xs text-gold-400 hover:text-gold-300 underline font-medium inline-flex items-center justify-center gap-1.5">
-                  Read Dispute Policy
-                </a>
+                {gateDocs.map(doc => (
+                  <a key={doc} href={POLICY_LINKS[doc].href} target="_blank" rel="noreferrer"
+                    className="text-xs text-gold-400 hover:text-gold-300 underline font-medium inline-flex items-center justify-center gap-1.5">
+                    Read {POLICY_LINKS[doc].label}
+                  </a>
+                ))}
               </div>
+
+              {gateMode === 'first' && (
+                <label className={`flex items-start gap-2.5 text-left max-w-sm mx-auto cursor-pointer text-xs leading-relaxed ${dark ? 'text-charcoal-200' : 'text-gray-600'}`}>
+                  <input type="checkbox" checked={hasReadChecked}
+                    onChange={e => setHasReadChecked(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[#d4a941]" />
+                  <span>I have read and agree to the policies listed above.</span>
+                </label>
+              )}
 
               {error && (
                 <p className="text-xs text-red-400 bg-red-400/10 rounded-lg px-3 py-2">{error}</p>
@@ -300,9 +339,10 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
                   }`}>
                   Cancel
                 </button>
-                <button type="button" onClick={() => recordTosAcceptance(gateUser)} disabled={loading}
+                <button type="button" onClick={() => recordTosAcceptance(gateUser)}
+                  disabled={loading || (gateMode === 'first' && !hasReadChecked)}
                   className="flex-1 py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-xs font-bold transition-all disabled:opacity-50">
-                  {loading ? 'Processing...' : 'I Agree & Accept'}
+                  {loading ? 'Processing...' : gateMode === 'first' ? 'I Agree & Accept' : 'Confirm & Continue'}
                 </button>
               </div>
             </div>
@@ -310,7 +350,11 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
             <>
               {/* Logo */}
               <div className="text-center mb-6">
-                <BrandMark className="mx-auto h-16 w-16 rounded-2xl shadow-[0_0_24px_rgba(156,74,51,0.14)]" />
+                {/* Square brand mark — the wide lockup image gets cropped by the
+                    shared .cb-brand-platform-mark styles, so use the real 256px
+                    square asset here. */}
+                <img src="/images/brand/creatorbridge-mark.png" alt="CreatorBridge"
+                  className="mx-auto h-16 w-16 object-contain rounded-2xl shadow-[0_0_24px_rgba(156,74,51,0.14)]" />
                 <p className="text-gold-400 mt-4 mb-2" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
                   Account Access
                 </p>
