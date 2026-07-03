@@ -108,10 +108,45 @@ B. **[LOW · pattern] `bg-charcoal-950/96` renders too translucent app-wide.**
     password *label* with its value; the only recovery is "Forgot password?".
     Consider clearer field affordances for first-time users.
 
-## Not yet walked (needs the creator/admin side or the live soft-test)
+## Creator-side walkthrough (2026-07-03, logged in as the QA creator)
 
-- Retainer → delivery → final-payment checkout (needs a creator to accept the
-  booking — requires the creator account driven in parallel).
+**Validated live (all working):**
+- **Terms gate rework** — fired on login (version bump), role-scoped to the
+  creator's **3** policies (ToS + Dispute + Creator Agreement), mandatory "I have
+  read and agree" checkbox gated the Accept button. Confirmed in the DB: 3
+  acceptance rows recorded at version 2026-07-03 (also proves the migration that
+  allows `dispute_policy` in `legal_acceptances` applied).
+- **5-day review window** renders on the Earnings tab ("auto-approved after 5 days").
+- **No outside social media** on the public creator profile — no
+  instagram/website/linkedin links anywhere; profile page loads with no console
+  errors after the columns were dropped.
+
+**Fixed live this session:**
+- **[BUG] Earnings tab showed a flat 10% fee for every creator.** It rendered
+  `PLATFORM_FEES.creatorFeePct` (the 10% starting rate) instead of the creator's
+  loyalty tier, so a Proven creator with 14 completed projects — who actually pays
+  8% — was told 10%, misstating their earnings. Now derives from
+  `getLoyaltyTier(completed_projects)`. Verified live: now shows 8%.
+
+**Found — recommended / mostly seed-data:**
+- **[LOW·edge] Null primary_pillar → two different fabricated defaults.** The QA
+  listing has `primary_pillar = null`; the dashboard shows "Video Production" and
+  the public profile shows "Photography" — each view invents a different fallback.
+  Real onboarded creators always have a pillar (so low risk), but the null-fallback
+  should be one consistent value (or "not set"), not two conflicting guesses.
+- **[LOW·seed] Dashboard "Proven / 0 samples / 0 requests / 0 views" looks
+  contradictory.** This QA account has completed_projects=14 but 0 portfolio_items
+  and null pillar — an incomplete seed listing. Stat cards (samples/requests/views)
+  are legitimately 0; the confusion is the seed mismatch, resolved when real data
+  lands. Public profile also shows "24 projects delivered" vs DB's 14 (seed field
+  mismatch).
+
+## Not yet walked (needs delivery flow, admin, or the live soft-test)
+
+- Retainer → delivery → final-payment checkout (needs a live booking between the
+  two accounts driven in parallel).
 - Messaging / anti-poaching contact filter in an active booking.
 - Networking feed (incl. the restored job-board cross-posting filter).
+- Creator onboarding form fields (profile is 90-day locked on the QA account, so
+  the full edit form — and confirming no social inputs there — wasn't walkable).
 - Admin hub (review queue, run matching, violations, platform intelligence).
