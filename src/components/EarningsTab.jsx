@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DollarSign, TrendingUp, Clock, CheckCircle, Minus, Download } from 'lucide-react';
-import { centsToDisplay, PLATFORM_FEES } from '../config/fees.js';
+import { centsToDisplay, PLATFORM_FEES, getLoyaltyTier } from '../config/fees.js';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { exportCsv } from '../utils/exportCsv.js';
 
@@ -86,6 +86,9 @@ function StatCard({ icon: Icon, label, value, sub, color = 'text-gold-400', dark
 
 export function EarningsTab({ creator, dark }) {
   const [txns, setTxns] = useState([]);
+  // The creator's actual platform fee follows their loyalty tier (10/8/6 at
+  // 0/10/25 completed projects), not the flat starting rate.
+  const creatorFeePct = getLoyaltyTier(creator?.completed_projects ?? creator?.completedProjects ?? 0).feePct;
   const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
   const cardCls = `rounded-2xl border shadow-[0_24px_80px_rgba(0,0,0,0.16)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`;
 
@@ -158,7 +161,7 @@ export function EarningsTab({ creator, dark }) {
         />
         <StatCard
           icon={Minus} label="Platform Fees Paid" dark={dark} color="text-charcoal-400"
-          value={centsToDisplay(totalFeesPaid)} sub={`${PLATFORM_FEES.creatorFeePct}% platform fee`}
+          value={centsToDisplay(totalFeesPaid)} sub={`${creatorFeePct}% platform fee`}
         />
       </div>
 
@@ -166,7 +169,7 @@ export function EarningsTab({ creator, dark }) {
       <div className={`${cardCls} p-4 flex items-start gap-3`}>
         <CheckCircle size={16} className="text-gold-400 shrink-0 mt-0.5" />
         <p className={`text-xs leading-relaxed ${textSub}`}>
-          CreatorBridge takes a {PLATFORM_FEES.creatorFeePct}% platform fee from your earnings.
+          CreatorBridge takes a platform fee of {creatorFeePct}% from your earnings.
           Clients are also charged a {PLATFORM_FEES.clientFeePct}% booking fee on top of your rate.
           Payments are released after client approval or auto-approved after {PLATFORM_FEES.autoApproveDays} days.
         </p>
