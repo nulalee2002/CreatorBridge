@@ -89,8 +89,8 @@ export function NotificationBell({ user, dark, navigate }) {
       </button>
 
       {open && (
-        <div className={`absolute right-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border shadow-2xl ${
-          dark ? 'border-white/[0.09] bg-charcoal-950/96' : 'border-gray-200 bg-white'
+        <div className={`absolute right-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border shadow-2xl backdrop-blur-xl ${
+          dark ? 'border-white/[0.09] bg-charcoal-950' : 'border-gray-200 bg-white'
         }`}>
           <div className={`flex items-center justify-between border-b px-4 py-3 ${dark ? 'border-white/[0.07]' : 'border-gray-100'}`}>
             <div>
