@@ -1488,13 +1488,21 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 }
 
 // ── Main Component ───────────────────────────────────────────
-export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegister, onSwitchToSearch }) {
+export function CreatorDirectory({
+  dark = true,
+  mode = 'search',
+  onSwitchToRegister,
+  onSwitchToSearch,
+  initialSearchQuery = '',
+  initialPillarFilter = 'all',
+  collaborationOnly = false,
+}) {
   const { user } = useAuth();
   const [listings, setListings] = useState(loadListings);
   const availabilityLoadedFor = useRef('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [serviceFilter, setServiceFilter] = useState('all'); // DEPRECATED: kept for legacy refs, do not use in new code
-  const [pillarFilter, setPillarFilter] = useState('all'); // 'all' | pillar id
+  const [pillarFilter, setPillarFilter] = useState(initialPillarFilter); // 'all' | pillar id
   const [subNicheFilter, setSubNicheFilter] = useState('all'); // 'all' | sub_niche id
   const [budget, setBudget] = useState('');
   const [zip, setZip] = useState('');
@@ -1508,6 +1516,15 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
 
   const isGuest = !user;
   const approvedListingCount = listings.filter(isApprovedCreator).length;
+
+  useEffect(() => {
+    setSearchQuery(initialSearchQuery);
+  }, [initialSearchQuery]);
+
+  useEffect(() => {
+    setPillarFilter(initialPillarFilter);
+    setSubNicheFilter('all');
+  }, [initialPillarFilter]);
 
   useEffect(() => {
     if (!supabaseConfigured || !supabase || listings.length === 0) return;
@@ -1551,6 +1568,9 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
   // Filter and sort creators
   const filtered = useMemo(() => {
     let list = listings.filter(creator => isApprovedCreator(creator) || creator.user_id === user?.id);
+    if (collaborationOnly) {
+      list = list.filter(creator => creator.open_to_creator_collaborations !== false);
+    }
     const PILLAR_TO_LEGACY = { video_production: 'video', photography: 'photography', post_production: 'postProduction' };
     const creatorMatchesPillar = (creator, pillarId) => {
       if (pillarId === 'all') return true;
@@ -1580,10 +1600,12 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
 
     // Text search (name, bio, tags, location)
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+      const tokens = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
       list = list.filter(c => {
         const searchable = [
-          c.name, c.businessName, c.bio,
+          c.name, c.businessName, c.business_name, c.bio,
+          c.primary_pillar,
+          ...(c.sub_niches || []),
           ...(c.tags || []),
           c.location?.city, c.location?.state, c.location?.country,
           ...(c.services?.flatMap(s => [
@@ -1591,7 +1613,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
             ...(s.subtypes || []),
           ]) || []),
         ].filter(Boolean).join(' ').toLowerCase();
-        return searchable.includes(q);
+        return tokens.some(token => searchable.includes(token));
       });
     }
 
@@ -1694,7 +1716,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
     });
 
     return list;
-  }, [listings, pillarFilter, subNicheFilter, searchQuery, budgetNum, zipRegion, sortBy, user?.id, tierFilter, budgetFilter, availFilter]);
+  }, [listings, pillarFilter, subNicheFilter, searchQuery, budgetNum, zipRegion, sortBy, user?.id, tierFilter, budgetFilter, availFilter, collaborationOnly]);
 
   const displayListings = isGuest ? getRotatingPreviewCreators(filtered) : filtered;
 
