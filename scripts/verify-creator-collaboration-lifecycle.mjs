@@ -31,7 +31,7 @@ expect('profile collaborator CTA', ui.includes('Hire as a Collaborator') && prof
 expect('active project CTA', ui.includes('Add to This Project'));
 expect('outside client quote CTA', profile.includes('Request a Quote'));
 expect('dashboard team CTA', dashboard.includes('Build Your Team'));
-expect('finishing team language', ui.includes('Find Your Finishing Team'));
+expect('team platform language', ui.includes('Build Your Production Team') && !ui.includes('Find Your Finishing Team'));
 expect('collaboration badge', ui.includes('Open to Creator Collaborations'));
 expect('two hiring paths', ui.includes('Attach to an existing project') && ui.includes('Create a standalone collaboration'));
 expect('required disclosures', ['$250 minimum','ACH','processing cost','private team workspace','will not see the subcontractor'].every((text) => ui.includes(text)));

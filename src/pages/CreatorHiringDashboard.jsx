@@ -93,6 +93,9 @@ export function CreatorHiringDashboard({ dark = true }) {
             <p className={`mt-3 max-w-3xl text-sm leading-6 ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
               Search verified creators by name, studio, role, specialty, city, or software. Hire across Video Production, Photography, Post Production, and production support with fixed collaborator payouts funded before work begins.
             </p>
+            <p className={`mt-2 max-w-3xl text-xs leading-5 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
+              This platform view only shows creators marked Open to Creator Collaborations.
+            </p>
 
             <div className={`mt-6 flex flex-col gap-3 rounded-2xl border p-3 sm:flex-row sm:items-center ${dark ? 'border-white/[0.08] bg-charcoal-900/70' : 'border-gray-200 bg-gray-50'}`}>
               <Search size={17} className={dark ? 'text-charcoal-400' : 'text-gray-400'} />

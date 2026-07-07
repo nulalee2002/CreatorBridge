@@ -99,7 +99,7 @@ check('Creator hiring role language', 'src/pages/ClientProfilePage.jsx', [
 
 check('Directory accessibility contracts', 'src/components/CreatorDirectory.jsx', [
   { label: 'creator sorting control has an accessible name', test: includes('aria-label="Sort creators"') },
-  { label: 'tokenizes marketplace search terms', test: includes('split(/\\s+/)') && includes('tokens.some') && includes('business_name') },
+  { label: 'tokenizes platform search terms', test: includes('split(/\\s+/)') && includes('tokens.some') && includes('business_name') },
 ]);
 
 check('Network accessibility contracts', 'src/pages/NetworkingPage.jsx', [
@@ -242,12 +242,13 @@ check('Creator team dashboard discovery', 'src/pages/CreatorDashboard.jsx', [
   { label: 'shows first-visit collaboration guidance', test: includes('CreatorCollaborationIntro') },
 ]);
 
-check('Creator team marketplace discovery', 'src/pages/CreatorHiringDashboard.jsx', [
+check('Creator team platform discovery', 'src/pages/CreatorHiringDashboard.jsx', [
   { label: 'presents all-pillar team building instead of post-only finishing', test: includes('Build Your Production Team') && includes('Video Production') && includes('Photography') && includes('Post Production') && notIncludes('Find Your Finishing Team') },
+  { label: 'explains collaboration-only platform visibility', test: includes('This platform view only shows creators marked Open to Creator Collaborations') },
   { label: 'supports creator name and role search', test: includes('Search creator, studio, specialty, city') && includes('ROLE_GROUPS') && includes('selectedRole') },
   { label: 'uses adaptive filters instead of always showing software first', test: includes('adaptiveFilters') && includes('Software') && includes('Gear') && includes('Shoot type') },
   { label: 'explains fixed funded collaborator payouts', test: includes('Fixed collaborator payout') && includes('Funded upfront') && includes('released after approval or the auto-release window') },
-  { label: 'passes marketplace search into directory', test: includes('initialSearchQuery={directorySearchQuery}') && includes('collaborationOnly') },
+  { label: 'passes platform search into directory', test: includes('initialSearchQuery={directorySearchQuery}') && includes('collaborationOnly') },
 ]);
 
 check('Creator collaboration ACH payments', 'supabase/functions/create-collaboration-payment/index.ts', [
@@ -388,7 +389,7 @@ check('Supabase schema source', 'supabase/schema.sql', [
   { label: 'transactions are not client-insertable', test: source => !/CREATE POLICY "Users can insert transactions"/.test(source) },
 ]);
 
-check('Marketplace RLS tightening', 'supabase/migrations/20260514094138_tighten_marketplace_rls.sql', [
+check('Platform RLS tightening', 'supabase/migrations/20260514094138_tighten_marketplace_rls.sql', [
   { label: 'limits public creator listing browse to approved listings', test: includes('Approved listings are viewable by everyone') },
   { label: 'allows creators to view their own listings', test: includes('Creators can view own listings') },
   { label: 'limits public project browse to open projects', test: includes('Open projects viewable by everyone') },
