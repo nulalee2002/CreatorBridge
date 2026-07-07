@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DollarSign, TrendingUp, Clock, CheckCircle, Minus, Download } from 'lucide-react';
-import { centsToDisplay, PLATFORM_FEES, getLoyaltyTier } from '../config/fees.js';
+import { centsToDisplay, PLATFORM_FEES, getLoyaltyTier, LOYALTY_TIERS } from '../config/fees.js';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { exportCsv } from '../utils/exportCsv.js';
 
@@ -88,7 +88,9 @@ export function EarningsTab({ creator, dark }) {
   const [txns, setTxns] = useState([]);
   // The creator's actual platform fee follows their loyalty tier (10/8/6 at
   // 0/10/25 completed projects), not the flat starting rate.
-  const creatorFeePct = getLoyaltyTier(creator?.completed_projects ?? creator?.completedProjects ?? 0).feePct;
+  const completedProjects = creator?.completed_projects ?? creator?.completedProjects ?? 0;
+  const currentTier = getLoyaltyTier(completedProjects);
+  const creatorFeePct = currentTier.feePct;
   const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
   const cardCls = `rounded-2xl border shadow-[0_24px_80px_rgba(0,0,0,0.16)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`;
 
@@ -165,14 +167,41 @@ export function EarningsTab({ creator, dark }) {
         />
       </div>
 
-      {/* Platform fee reminder */}
-      <div className={`${cardCls} p-4 flex items-start gap-3`}>
-        <CheckCircle size={16} className="text-gold-400 shrink-0 mt-0.5" />
-        <p className={`text-xs leading-relaxed ${textSub}`}>
-          CreatorBridge takes a platform fee of {creatorFeePct}% from your earnings.
-          Clients are also charged a {PLATFORM_FEES.clientFeePct}% booking fee on top of your rate.
-          Payments are released after client approval or auto-approved after {PLATFORM_FEES.autoApproveDays} days.
-        </p>
+      {/* Loyalty fee ladder — your platform fee drops as you complete projects */}
+      <div className={`${cardCls} p-4`}>
+        <div className="flex items-start gap-3">
+          <CheckCircle size={16} className="text-gold-400 shrink-0 mt-0.5" />
+          <p className={`text-xs leading-relaxed ${textSub}`}>
+            Your platform fee drops as you complete more projects. Clients are also charged a {PLATFORM_FEES.clientFeePct}% booking fee on top of your rate.
+            Payments release after client approval or auto-approve after {PLATFORM_FEES.autoApproveDays} days.
+          </p>
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          {LOYALTY_TIERS.map(tier => {
+            const isCurrent = tier.name === currentTier.name;
+            const range = tier.maxProjects === Infinity
+              ? `${tier.minProjects}+ projects`
+              : `${tier.minProjects}–${tier.maxProjects} projects`;
+            return (
+              <div key={tier.name}
+                className={`rounded-xl border p-3 ${isCurrent
+                  ? 'border-gold-500/50 bg-gold-500/10'
+                  : dark ? 'border-white/[0.07] bg-charcoal-950/50' : 'border-gray-200 bg-gray-50'}`}>
+                <div className="flex items-center justify-between">
+                  <span className={`text-xs font-bold ${isCurrent ? 'text-gold-400' : dark ? 'text-white' : 'text-gray-900'}`}>{tier.name}</span>
+                  {isCurrent && <span className="text-[9px] font-black uppercase tracking-wider text-gold-400">You</span>}
+                </div>
+                <p className={`mt-1 text-lg font-black ${isCurrent ? 'text-gold-400' : textSub}`}>{tier.feePct}%</p>
+                <p className={`text-[10px] ${textSub}`}>{range}</p>
+              </div>
+            );
+          })}
+        </div>
+        {currentTier.nextTier && (
+          <p className={`mt-3 text-[11px] ${textSub}`}>
+            {currentTier.projectsToNext} more completed {currentTier.projectsToNext === 1 ? 'project' : 'projects'} to reach {currentTier.nextTier.name} ({currentTier.nextTier.feePct}%).
+          </p>
+        )}
       </div>
 
       {/* Transaction history */}

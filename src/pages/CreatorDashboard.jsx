@@ -386,7 +386,7 @@ export function CreatorDashboard({ dark }) {
 
   return (
     <div className={`min-h-screen ${dark ? 'bg-transparent' : 'bg-gray-50'}`}>
-      <div className="mx-auto w-full max-w-[1520px] px-5 sm:px-8 lg:px-12 py-6">
+      <div className="mx-auto w-full max-w-[1520px] px-5 sm:px-8 lg:px-12 pt-24 pb-6">
 
         {/* Header */}
         <div className={`relative overflow-hidden rounded-lg border p-6 sm:p-7 mb-5 ${dark ? 'bg-charcoal-950/80 border-gold-500/20' : 'bg-white border-gray-200'}`}
@@ -436,14 +436,16 @@ export function CreatorDashboard({ dark }) {
         </div>
 
         <section className="mb-6 grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)_360px]">
-          <div className="relative min-h-[260px] overflow-hidden rounded-2xl border border-gold-500/18 bg-charcoal-950/72">
-            <img src={dashboardVisual} alt="" className="absolute inset-0 h-full w-full object-cover opacity-72" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg'; } }}/>
+          <button type="button" onClick={() => navigate('/register')}
+            className="group relative min-h-[260px] overflow-hidden rounded-2xl border border-gold-500/18 bg-charcoal-950/72 text-left transition hover:border-gold-500/45 focus:outline-none focus:ring-2 focus:ring-gold-500/40">
+            <img src={dashboardVisual} alt="" className="absolute inset-0 h-full w-full object-cover opacity-72 transition group-hover:opacity-80" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg'; } }}/>
             <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/22 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-5">
               <h2 className="font-display text-2xl font-bold text-white">Creator identity</h2>
               <p className="mt-2 text-sm leading-6 text-charcoal-200">Profile, proof, packages, availability, and intro video stay tied to one professional listing.</p>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-gold-400">Manage your listing →</span>
             </div>
-          </div>
+          </button>
           <div className={`rounded-2xl border p-5 ${dark ? 'border-white/[0.08] bg-charcoal-900/72' : 'border-gray-200 bg-white'}`}>
             <p className="mb-3 text-gold-400" style={{ fontSize: '10px', letterSpacing: '2.6px', textTransform: 'uppercase' }}>
               Studio Desk OS
@@ -463,14 +465,16 @@ export function CreatorDashboard({ dark }) {
               ))}
             </div>
           </div>
-          <div className="relative min-h-[260px] overflow-hidden rounded-2xl border border-gold-500/18 bg-charcoal-950/72">
-            <img src={productionMathVisual} alt="" className="absolute inset-0 h-full w-full object-cover opacity-68" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg'; } }}/>
+          <button type="button" onClick={() => navigate('/calculator')}
+            className="group relative min-h-[260px] overflow-hidden rounded-2xl border border-gold-500/18 bg-charcoal-950/72 text-left transition hover:border-gold-500/45 focus:outline-none focus:ring-2 focus:ring-gold-500/40">
+            <img src={productionMathVisual} alt="" className="absolute inset-0 h-full w-full object-cover opacity-68 transition group-hover:opacity-80" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg'; } }}/>
             <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/22 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-5">
               <h2 className="font-display text-2xl font-bold text-white">Production math</h2>
               <p className="mt-2 text-sm leading-6 text-charcoal-200">Rates, costs, margins, quote requests, and delivery terms stay visible.</p>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-gold-400">Open rate calculator →</span>
             </div>
-          </div>
+          </button>
         </section>
 
         {/* Tab bar */}

@@ -10,7 +10,15 @@ function isImageSource(value) {
   );
 }
 
-export function CreatorAvatar({ src, alt = 'Creator', fallback = '🎬', className = '' }) {
+/** Two-letter initials from a name, e.g. "Copper Line Media" -> "CM". */
+function initialsFrom(name) {
+  const words = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return 'CB';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+}
+
+export function CreatorAvatar({ src, alt = 'Creator', fallback, className = '' }) {
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -28,9 +36,15 @@ export function CreatorAvatar({ src, alt = 'Creator', fallback = '🎬', classNa
     );
   }
 
+  // No usable image source: show initials derived from the name (or an explicit
+  // fallback the caller provided) — never a generic clapperboard placeholder.
+  const content = fallback ?? initialsFrom(alt);
   return (
-    <span className={`inline-flex h-full w-full items-center justify-center ${className}`} aria-hidden="true">
-      {fallback}
+    <span
+      className={`inline-flex h-full w-full items-center justify-center font-bold text-gold-400 ${className}`}
+      aria-hidden="true"
+    >
+      {content}
     </span>
   );
 }
