@@ -710,7 +710,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
               'Service packages with real pricing',
               '60 to 90 second professional intro video',
               'Stripe identity verification with government ID',
-              'Profile locked for 90 days after submission',
+              'Profile text remains editable; media uploads are limited for 30 days',
             ].map(item => (
               <div key={item} className={`flex items-start gap-2 rounded-xl border px-3 py-3 ${
                 dark ? 'border-white/[0.07] bg-white/[0.035]' : 'border-gold-200 bg-white'
@@ -1267,7 +1267,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	            <label className={`flex items-start gap-3 cursor-pointer rounded-xl border p-3 ${dark ? 'border-white/[0.06] bg-charcoal-950/35' : 'border-gold-200 bg-white'}`}>
 	              <input type="checkbox" checked={form.lockConfirm} onChange={e => set('lockConfirm', e.target.checked)} className="mt-0.5 accent-gold-500" />
 	              <span className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-700'}`}>
-	                I understand that my profile information cannot be changed for 90 days after submission. I have reviewed all details and confirm everything is accurate.
+	                I understand that profile text can be edited after submission, but my profile photo, intro video, and portfolio media uploads are limited for 30 days. I have double-checked my media and can request media change approval if something needs to be replaced sooner.
 	              </span>
 	            </label>
 	            <label className={`flex items-start gap-3 cursor-pointer rounded-xl border p-3 ${dark ? 'border-white/[0.06] bg-charcoal-950/35' : 'border-gold-200 bg-white'}`}>
@@ -1395,8 +1395,8 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
                   body: 'Users must not share contact information to work off-platform, post fake reviews, harass other users, or attempt to bypass platform fees. Violations result in account suspension.',
                 },
                 {
-                  title: 'Section 6 — Profile Lock',
-                  body: 'Creator profile information is locked for 90 days after submission to protect platform integrity.',
+                  title: 'Section 6 — Media Change Limit',
+                  body: 'Profile text can be edited after submission, but profile photo, intro video, and portfolio media uploads are limited for 30 days to protect review quality and platform storage. Creators may request media change approval when a time-sensitive correction is needed.',
                 },
                 {
                   title: 'Section 7 — Disputes',
@@ -1440,7 +1440,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
               {[
                 {
                   title: 'Section 1 — Introduction & Scope',
-                  body: 'This agreement details your rights and duties regarding payments, fees, client bookings, profile locks, and general operational standards on the CreatorBridge platform.',
+                  body: 'This agreement details your rights and duties regarding payments, fees, client bookings, media change limits, and general operational standards on the CreatorBridge platform.',
                 },
                 {
                   title: 'Section 2 — Platform Fee Structure & Tiers',
@@ -1455,8 +1455,8 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
                   body: 'All communications, bookings, and payments with clients introduced on CreatorBridge must stay on the platform. Exclusivity is required for 24 months. Off-platform activity is grounds for account removal.',
                 },
                 {
-                  title: 'Section 5 — 90-Day Profile Lock',
-                  body: 'To prevent rapid changes to bypass reviews, critical identity details (business name, full name, location) are locked for 90 days after profile approval.',
+                  title: 'Section 5 — 30-Day Media Change Limit',
+                  body: 'Profile text can be edited after submission, but profile photo, intro video, and portfolio media uploads are limited for 30 days after submission or approval. This prevents rapid media swaps that bypass review and protects CreatorBridge storage costs. Creators can request media change approval for urgent corrections.',
                 },
                 {
                   title: 'Section 6 — Violations (Three-Strike Rule)',

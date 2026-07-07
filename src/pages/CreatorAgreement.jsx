@@ -7,7 +7,7 @@ const SECTIONS = [
   { id: 'fees',         title: '2. Platform Fee Structure & Tiers' },
   { id: 'payments',     title: '3. Payment Structure & Stripe Connect' },
   { id: 'disintermediation', title: '4. Non-Circumvention & Off-Platform Policy' },
-  { id: 'profile-lock', title: '5. Profile Information & 90-Day Lock' },
+  { id: 'media-change-limit', title: '5. Profile Information & 30-Day Media Change Limit' },
   { id: 'strikes',      title: '6. Violations & The Three-Strike Rule' },
   { id: 'termination',  title: '7. Term and Termination' },
 ];
@@ -88,7 +88,7 @@ export function CreatorAgreement({ dark }) {
                 binding contract with CreatorBridge Inc.
               </p>
               <p>
-                This Agreement details your rights and duties regarding payments, fees, client bookings, profile locks, and general
+                This Agreement details your rights and duties regarding payments, fees, client bookings, media change limits, and general
                 operational standards on the Platform. This Agreement incorporates and supplements our general Terms of Service.
               </p>
             </Section>
@@ -186,16 +186,16 @@ export function CreatorAgreement({ dark }) {
               </p>
             </Section>
 
-            <Section id="profile-lock" title="5. Profile Information & 90-Day Lock" dark={dark}>
+            <Section id="media-change-limit" title="5. Profile Information & 30-Day Media Change Limit" dark={dark}>
               <p>
                 To maintain a safe and reliable directory, all registered profiles must pass standard verification.
                 Your business name, location, primary pillar, specialty selections, and full name are verified at signup.
               </p>
               <p>
-                <strong className={dark ? 'text-white' : 'text-gray-900'}>90-Day Profile Lock:</strong> Once approved and published, critical identity details (including business name, full name, and location) are locked for a period of 90 days. Minor modifications like bio, portfolio links, packages, and calendar availability are unlocked and editable at any time.
+                <strong className={dark ? 'text-white' : 'text-gray-900'}>30-Day Media Change Limit:</strong> Profile text can be edited after submission, but profile photo, intro video, and portfolio media uploads are limited for 30 days after submission or approval. This protects review quality and platform storage while still letting you keep normal business information current.
               </p>
               <p>
-                This lock prevents creators from changing identity details rapidly to bypass reviews or feedback. If a critical profile change is required (e.g., due to rebranding or moving location), you must submit a ticket to admin support.
+                This limit prevents rapid media swaps that bypass review or use CreatorBridge as unlimited file storage. If a time-sensitive media correction is required, you can submit a support request for media change approval.
               </p>
             </Section>
 

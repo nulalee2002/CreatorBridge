@@ -127,6 +127,46 @@ function hasProfilePhotoValue(value) {
   );
 }
 
+function requiredDashboardPortfolioMediaType(primaryPillar, subNicheId = '') {
+  if (primaryPillar === 'photography' || String(subNicheId).startsWith('ph_')) return 'image';
+  if (subNicheId === 'pp_photo_retouch') return 'image';
+  return 'video';
+}
+
+function portfolioItemReadyForPublicProfile(item, primaryPillar) {
+  const mediaType = item?.mediaType || item?.media_type || (item?.bunny_video_id ? 'video' : 'image');
+  const subNicheId = item?.subNicheId || item?.serviceId || item?.service_id || '';
+  const hasMedia = mediaType === 'video'
+    ? !!(item?.bunny_video_id || item?.videoRef)
+    : !!(item?.imageUrl || item?.image_url);
+
+  return Boolean(
+    mediaType === requiredDashboardPortfolioMediaType(primaryPillar, subNicheId) &&
+    hasMedia &&
+    String(item?.title || '').trim() &&
+    String(item?.description || '').trim()
+  );
+}
+
+function getPublicProfileReadinessChecks(creator) {
+  const matchingPortfolioCount = (creator?.portfolio || [])
+    .filter(item => portfolioItemReadyForPublicProfile(item, creator?.primary_pillar))
+    .length;
+  const hasPackages = (creator?.packages || [])
+    .some(pkg => Number(pkg?.price || 0) > 0 && String(pkg?.name || '').trim());
+  const hasVerifiedIdentity = ['verified', 'pro_verified'].includes(creator?.verification_status);
+
+  return [
+    { label: 'Real profile photo', done: hasProfilePhotoValue(creator?.avatar), action: 'Repair Listing' },
+    { label: 'Intro video', done: String(creator?.video_intro_url || creator?.videoIntroUrl || '').startsWith('bunny:'), action: 'Video Intro' },
+    { label: 'Primary pillar', done: !!(creator?.primary_pillar || creator?.services?.length), action: 'Repair Listing' },
+    { label: 'Specialties selected', done: (creator?.sub_niches || creator?.tags || []).length > 0, action: 'Repair Listing' },
+    { label: '3 matching portfolio samples', done: matchingPortfolioCount >= 3, action: 'Repair Listing', detail: `${matchingPortfolioCount}/3 ready` },
+    { label: 'Packages', done: hasPackages, action: 'Packages' },
+    { label: 'Verification', done: hasVerifiedIdentity, action: 'Verification' },
+  ];
+}
+
 function getPrimaryPillarName(value) {
   if (PILLARS[value]) return PILLARS[value].name;
   const pillarId = LEGACY_SERVICE_TO_PILLAR[normalizeServiceId(value)]?.pillar;
@@ -376,7 +416,7 @@ export function CreatorDashboard({ dark }) {
         <p className={`text-sm ${textSub} text-center max-w-xs`}>
           You haven't created a creator listing yet. Join as a creator to start receiving quote requests.
         </p>
-        <button type="button" onClick={() => navigate('/register')}
+        <button type="button" onClick={() => navigate('/register?repair=listing')}
           className="px-5 py-2.5 rounded-xl bg-gold-500 text-charcoal-900 font-bold text-sm flex items-center gap-2">
           <Plus size={14} /> Create Your Listing
         </button>
@@ -453,9 +493,9 @@ export function CreatorDashboard({ dark }) {
               }`}>
               <ExternalLink size={12} /> View Profile
             </button>
-            <button type="button" onClick={() => navigate('/register')}
+            <button type="button" onClick={() => navigate('/register?repair=listing')}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-xs font-bold transition-all">
-              <Edit3 size={12} /> Edit Listing
+              <Edit3 size={12} /> Repair Listing
             </button>
           </div>
           </div>
@@ -542,16 +582,25 @@ export function CreatorDashboard({ dark }) {
               Your CreatorBridge profile is your professional identity on the platform. Keep it focused and up to date.
             </div>
 
-            {/* 90-day profile lock notice */}
+            <PublicProfileReadiness
+              creator={creator}
+              dark={dark}
+              onRepairListing={() => navigate('/register?repair=listing')}
+              onVideo={() => setActiveTab('video')}
+              onPackages={() => setActiveTab('packages')}
+              onVerification={() => setActiveTab('verification')}
+            />
+
+            {/* Media-change limit notice */}
             {(creator.submitted_at ||
               ['verified', 'pro_verified', 'pending'].includes(creator.verification_status)) && (
               <div className="rounded-xl border border-gold-500/40 bg-gold-500/10 p-5">
                 <div className="flex items-start gap-3 mb-4">
-                  <span className="text-lg shrink-0">🔒</span>
+                  <span className="text-lg shrink-0">🖼️</span>
                   <div>
-                    <p className="text-sm font-bold text-gold-400 mb-1">Profile Locked for 90 Days</p>
+                    <p className="text-sm font-bold text-gold-400 mb-1">Media Changes Limited for 30 Days</p>
                     <p className="text-xs text-charcoal-300 leading-relaxed">
-                      Your profile information is locked for 90 days from your submission date. This protects the integrity of creator profiles on CreatorBridge. If you need a correction, use Report an Issue and choose Account Access so the request stays on the platform.
+                      Profile text can be edited after submission, but profile photo, intro video, and portfolio media uploads are limited for 30 days. This protects review quality and platform storage. If you need to replace media sooner, use Report an Issue and choose Account Access to request media change approval.
                     </p>
                   </div>
                 </div>
@@ -683,7 +732,7 @@ export function CreatorDashboard({ dark }) {
                 {[
                   { icon: Package,  label: 'Manage Packages',   sub: 'Edit your Basic/Standard/Premium tiers',  tab: 'packages'     },
                   { icon: Calendar, label: 'Set Availability',  sub: 'Mark days you are available for bookings', tab: 'availability' },
-                  { icon: Edit3,    label: 'Edit Listing',      sub: 'Update bio, primary pillar, portfolio',    path: '/register'   },
+                  { icon: Edit3,    label: 'Repair Listing',    sub: 'Update profile identity and portfolio proof', path: '/register?repair=listing' },
                   { icon: ExternalLink, label: 'View Public Profile', sub: 'See how clients see you',            profile: true       },
                 ].map(({ icon: Icon, label, sub, tab, path, profile: isProfile }) => (
                   <button key={label} type="button"
@@ -840,10 +889,66 @@ function ProfileCompletion({ creator, dark, navigate }) {
       {pct < 100 && (
         <button type="button" onClick={() => navigate('/register')}
           className="mt-4 w-full py-2 rounded-xl border-2 border-dashed text-xs font-semibold transition-all border-gold-500/40 text-gold-400 hover:border-gold-500 hover:bg-gold-500/10">
-          Complete Your Profile
+          Repair Listing
         </button>
       )}
     </div>
+  );
+}
+
+function PublicProfileReadiness({ creator, dark, onRepairListing, onVideo, onPackages, onVerification }) {
+  const checks = getPublicProfileReadinessChecks(creator);
+  const readyCount = checks.filter(check => check.done).length;
+  const ready = readyCount === checks.length;
+  const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
+  const cardCls = `rounded-lg border p-5 ${dark ? 'bg-charcoal-950/80 border-gold-500/20' : 'bg-white border-gray-200'}`;
+  const actionFor = (action) => {
+    if (action === 'Video Intro') return onVideo;
+    if (action === 'Packages') return onPackages;
+    if (action === 'Verification') return onVerification;
+    return onRepairListing;
+  };
+
+  return (
+    <section className={cardCls}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-gold-400 mb-2" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
+            Public Profile Readiness
+          </p>
+          <h2 className={`font-display text-xl font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>
+            {ready ? 'Your public profile is ready to go live.' : 'Complete these gates before clients see your profile.'}
+          </h2>
+          <p className={`mt-2 max-w-2xl text-xs leading-5 ${textSub}`}>
+            This mirrors the actual public-profile gate: real profile photo, intro video, primary pillar, specialties, 3 matching portfolio samples, packages, and verification.
+          </p>
+        </div>
+        <span className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${
+          ready ? 'bg-gold-500/15 text-gold-400 ring-1 ring-gold-500/25' : dark ? 'bg-white/[0.06] text-charcoal-300 ring-1 ring-white/[0.08]' : 'bg-gray-100 text-gray-600'
+        }`}>
+          {readyCount}/{checks.length} ready
+        </span>
+      </div>
+      <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        {checks.map(({ label, done, action, detail }) => (
+          <div key={label} className={`rounded-xl border p-3 ${dark ? 'border-white/[0.07] bg-white/[0.025]' : 'border-gray-200 bg-gray-50'}`}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className={`text-xs font-bold ${done ? dark ? 'text-white' : 'text-gray-900' : 'text-charcoal-300'}`}>{label}</p>
+                {detail && <p className={`mt-1 text-[11px] ${textSub}`}>{detail}</p>}
+              </div>
+              {done ? <Check size={13} className="mt-0.5 shrink-0 text-gold-400" /> : <AlertCircle size={13} className="mt-0.5 shrink-0 text-red-400" />}
+            </div>
+            {!done && (
+              <button type="button" onClick={actionFor(action)}
+                className="mt-3 inline-flex min-h-[30px] items-center rounded-lg bg-gold-500 px-3 text-[11px] font-bold text-charcoal-900 transition hover:bg-gold-600">
+                {action}
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

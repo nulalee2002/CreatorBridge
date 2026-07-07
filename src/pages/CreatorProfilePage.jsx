@@ -63,11 +63,16 @@ function creatorListingMeetsPublicRules(listing) {
       ? listing.portfolio
       : [];
   const matchingPortfolioCount = items.filter(item => publicPortfolioItemComplete(item, listing?.primary_pillar)).length;
+  const packages = Array.isArray(listing?.packages) ? listing.packages : [];
+  const hasPackages = packages.some(pkg => Number(pkg?.price || 0) > 0 && String(pkg?.name || '').trim());
+  const hasVerifiedIdentity = ['verified', 'pro_verified'].includes(listing?.verification_status);
 
   return Boolean(
     hasPublicProfilePhoto(listing?.avatar) &&
     isBunnyVideoRef(listing?.video_intro_url || listing?.videoIntroUrl || '') &&
-    matchingPortfolioCount >= 3
+    matchingPortfolioCount >= 3 &&
+    hasPackages &&
+    hasVerifiedIdentity
   );
 }
 

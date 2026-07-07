@@ -300,6 +300,7 @@ export function ClientProfilePage({ dark }) {
   const clientWebsite = normalizeExternalUrl(form.website);
   const clientHeroImage = '/images/creatorbridge/backgrounds/08-sitewide/bg-cinematic-set.jpg';
   const clientSupportImage = '/images/creatorbridge/backgrounds/06-page-headers/projectboard-crew-at-console.jpg';
+  const isCreatorHiring = authProfile?.role === 'creator';
 
   if (loading) {
     return (
@@ -330,13 +331,15 @@ export function ClientProfilePage({ dark }) {
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_440px] xl:items-stretch">
           <div>
             <p className="mb-3 text-gold-400" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
-              Client Command Center
+              {isCreatorHiring ? 'Build Your Team · Hiring Desk' : 'Hiring Desk'}
             </p>
             <h1 className={`font-display text-4xl font-bold leading-tight md:text-5xl ${dark ? 'text-white' : 'text-gray-900'}`}>
-              Run production without building a full in-house team.
+              {isCreatorHiring ? 'Build your team without leaving CreatorBridge.' : 'Run production without building a full in-house team.'}
             </h1>
             <p className={`mt-4 max-w-2xl text-sm leading-7 md:text-base ${textSub}`}>
-              Keep creator discovery, quote requests, active projects, booking identity, and trust signals in one production hub before you hire.
+              {isCreatorHiring
+                ? 'Use this hiring desk when you need collaborators, crew, or specialist support for a project while your creator profile stays separate.'
+                : 'Keep creator discovery, quote requests, active projects, booking identity, and trust signals in one production hub before you hire.'}
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
               {[

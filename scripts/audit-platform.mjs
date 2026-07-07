@@ -51,6 +51,21 @@ check('Creator approval gates', 'src/components/CreatorDirectory.jsx', [
   { label: 'keeps portfolio media tied to selected craft', test: includes('portfolioItemMatchesSelectedCraft') && includes('requiredPortfolioMediaType') },
   { label: 'does not force every portfolio to include both photos and videos', test: notIncludes('/3 videos') && notIncludes('/6 photos') },
   { label: 'hides unapproved creator listings from public browse', test: includes('review_status') },
+  { label: 'uses 30-day media limit instead of 90-day profile lock', test: includes('media uploads are limited for 30 days') && includes('request media change') && notIncludes('90 days') },
+]);
+
+check('Creator dashboard media lock copy', 'src/pages/CreatorDashboard.jsx', [
+  { label: 'explains media-only 30-day limit', test: includes('Profile text can be edited after submission') && includes('media uploads are limited for 30 days') && notIncludes('90 days') },
+  { label: 'shows public profile readiness source of truth', test: includes('Public Profile Readiness') && includes('getPublicProfileReadinessChecks') && includes('3 matching portfolio samples') },
+  { label: 'routes listing repair through dashboard instead of reapplication', test: includes('Repair Listing') && includes("setActiveTab('video')") && includes("setActiveTab('packages')") },
+]);
+
+check('Support assistant media lock policy', 'src/components/SupportChatbot.jsx', [
+  { label: 'explains media-only 30-day limit', test: includes('Profile text can be edited after submission') && includes('media uploads are limited for 30 days') && notIncludes('90 days') },
+]);
+
+check('Creator agreement media lock policy', 'src/pages/CreatorAgreement.jsx', [
+  { label: 'explains media-only 30-day limit', test: includes('30-Day Media Change Limit') && includes('Profile text can be edited after submission') && notIncludes('90 days') && notIncludes('90-Day Profile Lock') },
 ]);
 
 check('Guest contact protection', 'src/pages/CreatorProfilePage.jsx', [
@@ -75,6 +90,11 @@ check('Creator profile live listing resolution', 'src/pages/CreatorProfilePage.j
   { label: 'resolves private storage media for display', test: includes('getStorageDisplayUrl') },
   { label: 'does not substitute demo data for unknown profile ids', test: includes('Profile unavailable') },
   { label: 'handles approved listings with no packages without crashing', test: includes('packages[0] || null') },
+  { label: 'quarantines incomplete approved creator rows', test: includes('creatorListingMeetsPublicRules') && includes('hasPackages') && includes('hasVerifiedIdentity') },
+]);
+
+check('Creator hiring role language', 'src/pages/ClientProfilePage.jsx', [
+  { label: 'uses hiring desk language for creator-as-hirer path', test: includes('Hiring Desk') && includes('Build Your Team') && notIncludes('Client Command Center') },
 ]);
 
 check('Directory accessibility contracts', 'src/components/CreatorDirectory.jsx', [
