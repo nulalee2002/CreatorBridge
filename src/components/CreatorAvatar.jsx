@@ -18,6 +18,11 @@ function initialsFrom(name) {
   return (words[0][0] + words[words.length - 1][0]).toUpperCase();
 }
 
+function initialsFromStoredValue(value) {
+  const trimmed = typeof value === 'string' ? value.trim() : '';
+  return /^[A-Za-z0-9]{1,3}$/.test(trimmed) ? trimmed.toUpperCase() : null;
+}
+
 export function CreatorAvatar({ src, alt = 'Creator', fallback, className = '' }) {
   const [failed, setFailed] = useState(false);
 
@@ -36,9 +41,9 @@ export function CreatorAvatar({ src, alt = 'Creator', fallback, className = '' }
     );
   }
 
-  // No usable image source: show initials derived from the name (or an explicit
-  // fallback the caller provided) — never a generic clapperboard placeholder.
-  const content = fallback ?? initialsFrom(alt);
+  // No usable image source: prefer stored initials like "CB", then caller
+  // fallbacks, then initials derived from the displayed creator name.
+  const content = initialsFromStoredValue(src) ?? (fallback === '🎬' ? null : fallback) ?? initialsFrom(alt);
   return (
     <span
       className={`inline-flex h-full w-full items-center justify-center font-bold text-gold-400 ${className}`}

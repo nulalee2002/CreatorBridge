@@ -419,13 +419,13 @@ check('Service worker update safety', 'public/sw.js', [
   { label: 'uses a date-versioned cache name', test: matches(/creatorbridge-v\d{4}-\d{2}-\d{2}/) },
   { label: 'supports immediate activation message', test: includes('SKIP_WAITING') },
   { label: 'refreshes navigations from network first', test: includes("fetch(request, { cache: 'reload' })") },
-  { label: 'uses fresh cache after mobile icon refresh', test: includes('network-icons-v9') },
+  { label: 'uses fresh cache after mobile icon refresh', test: includes('network-icons-v10') },
   { label: 'bypasses manifest and icon caching', test: includes("url.pathname === '/manifest.json'") && includes("url.pathname.startsWith('/icons/')") },
 ]);
 
 check('PWA manifest integrity', 'public/manifest.json', [
-  { label: 'references cache-busted 192 PNG app icon', test: includes('/icons/icon-192-v9.png') },
-  { label: 'references cache-busted 512 PNG app icon', test: includes('/icons/icon-512-v9.png') },
+  { label: 'references cache-busted 192 PNG app icon', test: includes('/icons/icon-192-v10.png') },
+  { label: 'references cache-busted 512 PNG app icon', test: includes('/icons/icon-512-v10.png') },
   { label: 'keeps maskable icon for saved website installs', test: includes('"purpose": "maskable"') },
 ]);
 
@@ -436,6 +436,9 @@ checks.push(
   { name: 'PWA icon file exists: 192 v9 PNG', pass: fileExists('public/icons/icon-192-v9.png')(), path: 'public/icons/icon-192-v9.png' },
   { name: 'PWA icon file exists: 512 v9 PNG', pass: fileExists('public/icons/icon-512-v9.png')(), path: 'public/icons/icon-512-v9.png' },
   { name: 'PWA icon file exists: Apple touch v9 PNG', pass: fileExists('public/icons/apple-touch-icon-v9.png')(), path: 'public/icons/apple-touch-icon-v9.png' },
+  { name: 'PWA icon file exists: 192 v10 PNG', pass: fileExists('public/icons/icon-192-v10.png')(), path: 'public/icons/icon-192-v10.png' },
+  { name: 'PWA icon file exists: 512 v10 PNG', pass: fileExists('public/icons/icon-512-v10.png')(), path: 'public/icons/icon-512-v10.png' },
+  { name: 'PWA icon file exists: Apple touch v10 PNG', pass: fileExists('public/icons/apple-touch-icon-v10.png')(), path: 'public/icons/apple-touch-icon-v10.png' },
 );
 
 const failed = checks.filter(check => !check.pass);

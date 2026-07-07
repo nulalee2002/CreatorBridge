@@ -1905,8 +1905,13 @@ export function ProjectBoard({ dark }) {
               </div>
             </div>
             
-            <div className={`relative hidden min-h-[230px] overflow-hidden rounded-2xl border lg:block ${dark ? 'border-gold-500/18 bg-charcoal-950/70' : 'border-gray-200 bg-gray-50'}`}>
-              <img src={projectBoardImage} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/01-hero/hero-landing-camera-dolly-alt.jpg'; } }} />
+            <button type="button"
+              onClick={() => {
+                if (user) setShowPost(true);
+                else window.dispatchEvent(new CustomEvent('open-auth', { detail: { tab: 'signup', role: 'client' } }));
+              }}
+              className={`group relative hidden min-h-[230px] overflow-hidden rounded-2xl border text-left transition hover:border-gold-500/45 focus:outline-none focus:ring-2 focus:ring-gold-500/40 lg:block ${dark ? 'border-gold-500/18 bg-charcoal-950/70' : 'border-gray-200 bg-gray-50'}`}>
+              <img src={projectBoardImage} alt="" className="absolute inset-0 h-full w-full object-cover transition group-hover:scale-[1.02]" loading="lazy" onError={(e)=>{ if(!e.currentTarget.dataset.fb){ e.currentTarget.dataset.fb='1'; e.currentTarget.src='/images/creatorbridge/backgrounds/01-hero/hero-landing-camera-dolly-alt.jpg'; } }} />
               <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950/78 via-charcoal-950/25 to-charcoal-950/8" />
               <div className="absolute bottom-0 left-0 right-0 p-5">
                 <p className="text-gold-300 mb-2" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
@@ -1915,8 +1920,11 @@ export function ProjectBoard({ dark }) {
                 <p className="max-w-sm text-sm font-bold leading-6 text-white">
                   One pillar, clear budget, verified creators.
                 </p>
+                <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-gold-300">
+                  {user ? 'Post a brief' : 'Start a client account'}
+                </span>
               </div>
-            </div>
+            </button>
           </div>
         </div>
 
