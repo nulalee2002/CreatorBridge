@@ -17,6 +17,60 @@ const TweakRadio = () => null;
 
 const CLIENT_ACCOUNT_PROMPT = 'Create a free client account to contact creators';
 
+function hasPublicProfilePhoto(value) {
+  const raw = String(value || '').trim();
+  return Boolean(
+    raw &&
+    raw !== '🎬' &&
+    raw.length > 3 &&
+    (
+      raw.startsWith('storage://') ||
+      raw.startsWith('/') ||
+      raw.startsWith('http://') ||
+      raw.startsWith('https://') ||
+      raw.startsWith('data:') ||
+      raw.startsWith('blob:')
+    )
+  );
+}
+
+function requiredPublicPortfolioMediaType(primaryPillar, subNicheId = '') {
+  if (primaryPillar === 'photography' || String(subNicheId).startsWith('ph_')) return 'image';
+  if (subNicheId === 'pp_photo_retouch') return 'image';
+  return 'video';
+}
+
+function publicPortfolioItemComplete(item, primaryPillar) {
+  const mediaType = item?.media_type || item?.mediaType || (item?.bunny_video_id ? 'video' : 'image');
+  const subNicheId = item?.service_id || item?.subNicheId || item?.serviceId || '';
+  const requiredMediaType = requiredPublicPortfolioMediaType(primaryPillar, subNicheId);
+  const hasMedia = mediaType === 'video'
+    ? !!(item?.bunny_video_id || item?.videoRef)
+    : !!(item?.image_url || item?.imageUrl);
+
+  return Boolean(
+    mediaType === requiredMediaType &&
+    hasMedia &&
+    String(item?.title || '').trim() &&
+    String(item?.description || '').trim()
+  );
+}
+
+function creatorListingMeetsPublicRules(listing) {
+  const items = Array.isArray(listing?.portfolio_items)
+    ? listing.portfolio_items
+    : Array.isArray(listing?.portfolio)
+      ? listing.portfolio
+      : [];
+  const matchingPortfolioCount = items.filter(item => publicPortfolioItemComplete(item, listing?.primary_pillar)).length;
+
+  return Boolean(
+    hasPublicProfilePhoto(listing?.avatar) &&
+    isBunnyVideoRef(listing?.video_intro_url || listing?.videoIntroUrl || '') &&
+    matchingPortfolioCount >= 3
+  );
+}
+
 // ---------- DATA ----------
 // These are the rich defaults for the Aria Visual Studio sample profile.
 // They are switched to `let` so CreatorProfilePage can swap them based on
@@ -1068,7 +1122,7 @@ function getCreatorData(id) {
     };
   }
   const localListing = getLocalListing(id);
-  if (localListing) {
+  if (localListing && (!supabaseConfigured || creatorListingMeetsPublicRules(localListing))) {
     const adapted = adaptSeedCreator(localListing);
     return {
       creator: adapted,
@@ -1128,6 +1182,7 @@ async function fetchCreatorData(id) {
     .eq('review_status', 'approved')
     .maybeSingle();
   if (error || !listing) return null;
+  if (!creatorListingMeetsPublicRules(listing)) return null;
 
   // The avatar signed URL is independent of the portfolio batch, so resolve both
   // in parallel instead of serializing the avatar round-trip in front.

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   LayoutDashboard, Eye, MessageSquare, Heart, Star, TrendingUp,
   Package, Edit3, ExternalLink, Check, Clock, ChevronRight,
-  Plus, Trash2, AlertCircle, Bell, BarChart2, Calendar, DollarSign, BadgeCheck, Video, Link, Save, Upload, Users,
+  Plus, Trash2, AlertCircle, Bell, BarChart2, Calendar, DollarSign, BadgeCheck, Video, Link, Save, Upload, Users, Image as ImageIcon,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
@@ -25,6 +25,7 @@ import { uploadVideoToBunny, isBunnyVideoRef } from '../utils/bunnyStream.js';
 import { CreatorAvatar } from '../components/CreatorAvatar.jsx';
 import { CreatorCollaborationIntro } from '../components/collaboration/CreatorCollaborationIntro.jsx';
 import { recordDirectionalEvent } from '../lib/platformIntelligence.js';
+import { getStorageDisplayUrl } from '../utils/storage.js';
 
 // ── Data helpers ────────────────────────────────────────────────
 function loadMyListing(userId) {
@@ -107,6 +108,23 @@ function normalizeCreatorListing(listing) {
     packages,
     video_intro_url: listing.video_intro_url || listing.videoIntroUrl || '',
   };
+}
+
+function hasProfilePhotoValue(value) {
+  const raw = String(value || '').trim();
+  return Boolean(
+    raw &&
+    raw !== '🎬' &&
+    raw.length > 3 &&
+    (
+      raw.startsWith('storage://') ||
+      raw.startsWith('/') ||
+      raw.startsWith('http://') ||
+      raw.startsWith('https://') ||
+      raw.startsWith('data:') ||
+      raw.startsWith('blob:')
+    )
+  );
 }
 
 function getPrimaryPillarName(value) {
@@ -268,6 +286,7 @@ export function CreatorDashboard({ dark }) {
         .maybeSingle();
       if (data) {
         const normalizedCreator = normalizeCreatorListing(data);
+        const avatarDisplayUrl = await getStorageDisplayUrl(normalizedCreator.avatar || '');
         // Availability and quote requests both depend only on the listing id and
         // are independent, so fetch them in parallel instead of serially.
         const [availabilityMap, { data: qData }] = await Promise.all([
@@ -278,7 +297,7 @@ export function CreatorDashboard({ dark }) {
             .eq('listing_id', data.id)
             .order('created_at', { ascending: false }),
         ]);
-        setCreator({ ...normalizedCreator, availabilityMap });
+        setCreator({ ...normalizedCreator, avatarDisplayUrl, availabilityMap });
         setQuotes((qData || []).map(normalizeQuoteRequest));
       } else {
         const found = loadMyListing(user.id);
@@ -399,7 +418,14 @@ export function CreatorDashboard({ dark }) {
           <div className="relative flex items-center justify-between gap-5 flex-wrap">
           <div className="flex items-center gap-4">
             <div className={`w-14 h-14 rounded-2xl overflow-hidden border flex items-center justify-center text-3xl ${dark ? 'bg-white/[0.035] border-gold-500/20' : 'bg-white border-gray-200'}`}>
-              <CreatorAvatar src={creator.avatar} alt={creator.businessName || creator.name || 'Creator'} />
+              {hasProfilePhotoValue(creator.avatar) ? (
+                <CreatorAvatar src={creator.avatarDisplayUrl || creator.avatar} alt={creator.businessName || creator.name || 'Creator'} />
+              ) : (
+                <div className="flex h-full w-full flex-col items-center justify-center gap-0.5 text-gold-400">
+                  <ImageIcon size={18} />
+                  <span className="text-[8px] font-bold uppercase tracking-wider">Photo</span>
+                </div>
+              )}
             </div>
             <div>
               <p className="text-gold-400 mb-1" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>
@@ -771,7 +797,7 @@ export function CreatorDashboard({ dark }) {
 // ── Profile Completion widget ───────────────────────────────────
 function ProfileCompletion({ creator, dark, navigate }) {
   const checks = [
-    { label: 'Profile photo / avatar',      done: !!creator.avatar },
+    { label: 'Profile photo / avatar',      done: hasProfilePhotoValue(creator.avatar) },
     { label: 'Bio written',                  done: !!(creator.bio?.length > 20) },
     { label: 'Primary pillar selected',       done: !!(creator.primary_pillar || creator.services?.length) },
     { label: 'Intro video uploaded',         done: String(creator.video_intro_url || creator.videoIntroUrl || '').startsWith('bunny:') },

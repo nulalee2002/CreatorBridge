@@ -46,6 +46,38 @@ function portfolioItemComplete(item) {
   );
 }
 
+function hasProfilePhoto(value) {
+  const raw = String(value || '').trim();
+  return Boolean(
+    raw &&
+    raw !== '🎬' &&
+    raw.length > 3 &&
+    (
+      raw.startsWith('storage://') ||
+      raw.startsWith('/') ||
+      raw.startsWith('http://') ||
+      raw.startsWith('https://') ||
+      raw.startsWith('data:') ||
+      raw.startsWith('blob:')
+    )
+  );
+}
+
+function requiredPortfolioMediaType(primaryPillar, subNicheId = '') {
+  if (primaryPillar === 'photography' || String(subNicheId).startsWith('ph_')) return 'image';
+  if (subNicheId === 'pp_photo_retouch') return 'image';
+  return 'video';
+}
+
+function portfolioMediaLabel(mediaType) {
+  return mediaType === 'image' ? 'photo/image sample' : 'video sample';
+}
+
+function portfolioItemMatchesSelectedCraft(item, primaryPillar) {
+  const mediaType = item?.mediaType || item?.media_type || 'image';
+  return mediaType === requiredPortfolioMediaType(primaryPillar, item?.subNicheId || item?.serviceId || '');
+}
+
 function isApprovedCreator(creator) {
   return !!(
     creator?.verified ||
@@ -359,8 +391,16 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
   });
   const [step, setStep] = useState(1);
   const [portfolioUploadState, setPortfolioUploadState] = useState({});
+  const [profilePhotoUploadState, setProfilePhotoUploadState] = useState('');
+  const [profilePhotoPreviewUrl, setProfilePhotoPreviewUrl] = useState('');
   const [introUploadState, setIntroUploadState] = useState('');
   const [formError, setFormError] = useState('');
+
+  useEffect(() => {
+    return () => {
+      if (profilePhotoPreviewUrl?.startsWith('blob:')) URL.revokeObjectURL(profilePhotoPreviewUrl);
+    };
+  }, [profilePhotoPreviewUrl]);
 
   const TOTAL_STEPS = 5;
   const BLOCKED_EXPERIENCE = ['Less than 1 year', '1 year'];
@@ -395,7 +435,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
           title: '',
           description: '',
           subNicheId: f.sub_niches[0] || '',
-          mediaType: f.portfolio.filter(item => (item.mediaType || item.media_type || 'image') !== 'video').length >= 6 ? 'video' : 'image',
+          mediaType: requiredPortfolioMediaType(f.primary_pillar, f.sub_niches[0] || ''),
         },
       ],
     }));
@@ -404,6 +444,9 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
     setForm(f => {
       const portfolio = [...f.portfolio];
       portfolio[idx] = { ...portfolio[idx], [field]: val };
+      if (field === 'subNicheId') {
+        portfolio[idx].mediaType = requiredPortfolioMediaType(f.primary_pillar, val);
+      }
       return { ...f, portfolio };
     });
   };
@@ -428,6 +471,32 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
       setIntroUploadState('Intro video uploaded.');
     } catch (error) {
       setIntroUploadState(error?.message || 'Intro video could not be uploaded.');
+    }
+  };
+  const uploadProfilePhoto = async (file) => {
+    if (!file) return;
+    if (!supabaseConfigured || !user?.id) {
+      setProfilePhotoUploadState('Sign in before uploading your profile photo.');
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setProfilePhotoPreviewUrl(prev => {
+      if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return previewUrl;
+    });
+    setProfilePhotoUploadState('Uploading profile photo...');
+    try {
+      const imageRef = await uploadUserAsset({
+        bucket: 'creator-portfolio',
+        userId: user.id,
+        folder: 'profile-photo',
+        file,
+      });
+      set('avatar', imageRef);
+      setProfilePhotoUploadState('Profile photo uploaded.');
+    } catch (error) {
+      setProfilePhotoUploadState(error?.message || 'Profile photo could not be uploaded.');
     }
   };
   const uploadPortfolioVideo = async (idx, file) => {
@@ -497,10 +566,13 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
   // Derived validation state
   const bioLen = form.bio.length;
   const expBlocked = BLOCKED_EXPERIENCE.includes(form.yearsExperience);
-  const completePortfolioCount = form.portfolio.filter(portfolioItemComplete).length;
-  const portfolioVideoCount = form.portfolio.filter(item => (item.mediaType || item.media_type) === 'video').length;
-  const portfolioPhotoCount = form.portfolio.filter(item => (item.mediaType || item.media_type || 'image') !== 'video').length;
+  const profilePhotoMet = hasProfilePhoto(form.avatar);
+  const completePortfolioCount = form.portfolio
+    .filter(item => portfolioItemComplete(item) && portfolioItemMatchesSelectedCraft(item, form.primary_pillar))
+    .length;
   const portfolioMet = completePortfolioCount >= 3;
+  const defaultPortfolioMediaType = requiredPortfolioMediaType(form.primary_pillar, form.sub_niches[0] || '');
+  const portfolioRequirementLabel = portfolioMediaLabel(defaultPortfolioMediaType);
   const videoIntroMet = form.videoIntroUrl.trim().length > 0;
   const pillarSelected = !!form.primary_pillar
     && form.sub_niches.length >= 1
@@ -512,7 +584,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
   const usLocationMet = form.location.country === 'US' && form.usBasedConfirm;
 
   const nextDisabled =
-    (step === 1 && (!form.name || bioLen < 100 || form.location.country !== 'US')) ||
+    (step === 1 && (!form.name || bioLen < 100 || form.location.country !== 'US' || !profilePhotoMet)) ||
     (step === 2 && (!form.yearsExperience || expBlocked || !usLocationMet || !form.ageConfirm)) ||
     (step === 3 && !pillarSelected) ||
     (step === 4 && (!portfolioMet || !videoIntroMet));
@@ -522,12 +594,12 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	    form.yearsExperience && !expBlocked &&
 	    usLocationMet && form.ageConfirm &&
 	    pillarSelected &&
-	    videoIntroMet && bioLen >= 100 && portfolioMet &&
+	    profilePhotoMet && videoIntroMet && bioLen >= 100 && portfolioMet &&
 	    form.insuranceAck && form.lockConfirm && form.reviewNoticeConfirm &&
 	    form.tosAccepted && form.creatorAgreementAccepted && form.aiOriginalWorkConfirm);
 
 	  const publishChecks = [
-	    { label: 'Creator identity', done: !!form.name && bioLen >= 100 },
+	    { label: 'Creator identity', done: !!form.name && bioLen >= 100 && profilePhotoMet },
 	    { label: 'Platform standards', done: !!form.yearsExperience && !expBlocked && usLocationMet && form.ageConfirm },
 	    { label: 'Craft + specialties', done: pillarSelected },
 	    { label: 'Proof of work', done: videoIntroMet && portfolioMet },
@@ -536,7 +608,16 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	  ];
 
   const handleSubmit = () => {
-    if (!canPublish) return;
+    if (!canPublish) {
+      if (!profilePhotoMet) {
+        setFormError('Upload a real profile photo before submitting. Initials or placeholder icons are not enough for review.');
+      } else if (!videoIntroMet) {
+        setFormError('Upload your required CreatorBridge intro video before submitting.');
+      } else if (!portfolioMet) {
+        setFormError('Add at least 3 complete portfolio samples that match your selected pillar and specialties.');
+      }
+      return;
+    }
     const profileCheck = checkCreatorText({
       name: form.name,
       businessName: form.businessName,
@@ -625,7 +706,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
           <div className="grid gap-2 sm:grid-cols-2">
             {[
               'US-based with 2+ years paid experience',
-              '3 portfolio samples from real client work',
+              '3 portfolio samples that match your selected craft',
               'Service packages with real pricing',
               '60 to 90 second professional intro video',
               'Stripe identity verification with government ID',
@@ -698,6 +779,43 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
             {bioLen > 0 && bioLen < 100 && (
               <p className="text-xs text-red-400 mt-0.5">Your bio must be at least 100 characters.</p>
             )}
+          </div>
+          <div className={`rounded-2xl border p-4 sm:p-5 ${dark ? 'border-white/[0.07] bg-charcoal-950/55' : 'border-gray-200 bg-gray-50'}`}>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-center gap-4">
+                <div className={`flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border text-xs font-black ${dark ? 'border-gold-500/25 bg-charcoal-900/70 text-gold-400' : 'border-gray-200 bg-white text-gold-700'}`}>
+                  {profilePhotoPreviewUrl || (hasProfilePhoto(form.avatar) && !form.avatar.startsWith('storage://')) ? (
+                    <CreatorAvatar src={profilePhotoPreviewUrl || form.avatar} alt={form.businessName || form.name || 'Creator'} />
+                  ) : (
+                    <ImageIcon size={22} />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className={labelCls}>Profile Photo *</p>
+                  <p className={`text-xs leading-5 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
+                    Upload the headshot or brand avatar clients will see on your public profile. Initials and placeholder icons do not count.
+                  </p>
+                  {profilePhotoUploadState && (
+                    <p className={`mt-2 text-xs ${profilePhotoUploadState.includes('uploaded') ? 'text-gold-400' : profilePhotoUploadState.includes('Uploading') ? 'text-charcoal-300' : 'text-red-400'}`}>
+                      {profilePhotoUploadState}
+                    </p>
+                  )}
+                  {!profilePhotoMet && (
+                    <p className="mt-2 text-xs text-red-400">A real profile photo is required before review.</p>
+                  )}
+                </div>
+              </div>
+              <label className="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-2 rounded-xl bg-gold-500 px-4 text-xs font-bold text-charcoal-900 transition hover:bg-gold-600">
+                <Upload size={13} />
+                {profilePhotoMet ? 'Replace Photo' : 'Upload Photo'}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={e => uploadProfilePhoto(e.target.files?.[0])}
+                  className="sr-only"
+                />
+              </label>
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -960,11 +1078,11 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	            <div>
 	              <p className={labelCls}>Portfolio Samples *</p>
 	              <p className={`text-xs ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
-	                Add at least 3 real client projects. Photos stay in CreatorBridge storage; videos upload to Bunny.
+	                Add at least 3 real client projects that match your selected pillar and specialties. Your current craft expects {portfolioRequirementLabel}s.
 	              </p>
 	            </div>
 	            <div className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${portfolioMet ? 'bg-gold-500/15 text-gold-400 ring-1 ring-gold-500/25' : dark ? 'bg-white/[0.06] text-charcoal-400 ring-1 ring-white/[0.08]' : 'bg-gray-100 text-gray-500'}`}>
-	              {completePortfolioCount}/3 complete · {portfolioVideoCount}/3 videos · {portfolioPhotoCount}/6 photos
+	              {completePortfolioCount}/3 matching samples complete
 	            </div>
 	          </div>
 	          {form.portfolio.map((item, i) => (
@@ -983,16 +1101,15 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	              </div>
 	              <div className={`mb-3 inline-flex rounded-xl border p-1 ${dark ? 'border-white/[0.08] bg-charcoal-900/60' : 'border-gray-200 bg-white'}`}>
 	                {[
-	                  { id: 'image', label: 'Photo', icon: ImageIcon },
+	                  { id: 'image', label: 'Photo/Image', icon: ImageIcon },
 	                  { id: 'video', label: 'Video', icon: Video },
-	                ].map(({ id, label, icon: Icon }) => {
+	                ].filter(({ id }) => id === requiredPortfolioMediaType(form.primary_pillar, item.subNicheId || item.serviceId || '')).map(({ id, label, icon: Icon }) => {
 	                  const active = (item.mediaType || item.media_type || 'image') === id;
 	                  return (
 	                    <button
 	                      key={id}
 	                      type="button"
 	                      onClick={() => updatePortfolio(i, 'mediaType', id)}
-	                      disabled={(id === 'video' && !active && portfolioVideoCount >= 3) || (id === 'image' && !active && portfolioPhotoCount >= 6)}
 	                      className={`inline-flex min-h-[34px] items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-all disabled:opacity-40 ${
 	                        active ? 'bg-gold-500 text-charcoal-900' : dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'
 	                      }`}
@@ -1025,7 +1142,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	                    Upload portfolio video
 	                  </label>
 	                  <p className={`mt-1 text-xs ${dark ? 'text-charcoal-500' : 'text-gray-500'}`}>
-	                    Up to 3 portfolio videos. MP4, MOV, or WEBM. Bunny Stream creates the playback and thumbnail.
+	                    Upload a video sample for this selected specialty. MP4, MOV, or WEBM. Bunny Stream creates playback and thumbnail.
 	                  </p>
 	                  <input
 	                    type="file"
@@ -1046,7 +1163,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	                    Upload portfolio photo
 	                  </label>
 	                  <p className={`mt-1 text-xs ${dark ? 'text-charcoal-500' : 'text-gray-500'}`}>
-	                    Up to 6 photos. Use a real project still or approved client-safe image. JPG, PNG, or WEBP under 8 MB.
+	                    Upload a photo or image sample for this selected specialty. JPG, PNG, or WEBP under 8 MB.
 	                  </p>
 	                  <input
 	                    type="file"
@@ -1065,7 +1182,6 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	            </div>
 	          ))}
           <button type="button" onClick={addPortfolio}
-            disabled={portfolioVideoCount >= 3 && portfolioPhotoCount >= 6}
             className={`w-full py-2.5 rounded-xl border-2 border-dashed text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
               dark ? 'border-charcoal-600 text-charcoal-400 hover:border-gold-500/50 hover:text-gold-400' : 'border-gray-300 text-gray-500 hover:border-gold-500/50 hover:text-gold-500'
             }`}>
@@ -1597,7 +1713,7 @@ export function CreatorDirectory({ dark = true, mode = 'search', onSwitchToRegis
             user_id: user.id,
             name: enriched.name,
             business_name: enriched.businessName || null,
-            avatar: enriched.avatar || '🎬',
+            avatar: enriched.avatar,
             bio: enriched.bio,
             experience: enriched.experience,
             years_experience: enriched.years_experience,

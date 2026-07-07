@@ -44,14 +44,19 @@ check('Auth referral capture', 'src/contexts/AuthContext.jsx', [
 
 check('Creator approval gates', 'src/components/CreatorDirectory.jsx', [
   { label: 'keeps canPublish as a multi-condition gate', test: matches(/const\s+canPublish\s*=\s*[\s\S]*videoIntroMet[\s\S]*portfolioMet[\s\S]*aiOriginalWorkConfirm/) },
+  { label: 'requires a real profile photo before publish', test: includes('profilePhotoMet && videoIntroMet') },
+  { label: 'does not allow initials or placeholder icons as profile photos', test: includes("raw !== '🎬'") && includes('Initials and placeholder icons do not count') },
   { label: 'requires original work confirmation', test: includes('original work created by me') },
   { label: 'requires video intro during creator registration', test: includes('videoIntroUrl') },
+  { label: 'keeps portfolio media tied to selected craft', test: includes('portfolioItemMatchesSelectedCraft') && includes('requiredPortfolioMediaType') },
+  { label: 'does not force every portfolio to include both photos and videos', test: notIncludes('/3 videos') && notIncludes('/6 photos') },
   { label: 'hides unapproved creator listings from public browse', test: includes('review_status') },
 ]);
 
 check('Guest contact protection', 'src/pages/CreatorProfilePage.jsx', [
   { label: 'keeps direct contact protection path', test: includes('contactUnlocked') },
   { label: 'prompts guests to create a client account', test: includes('Create a free client account to contact creators') },
+  { label: 'requires completed creator proof before public profile render', test: includes('creatorListingMeetsPublicRules') && includes('hasPublicProfilePhoto') && includes('matchingPortfolioCount >= 3') },
 ]);
 
 check('Interactive accessibility contracts', 'src/components/auth/AuthModal.jsx', [
