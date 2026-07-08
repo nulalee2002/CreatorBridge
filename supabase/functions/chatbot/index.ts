@@ -38,7 +38,7 @@ PLATFORM OVERVIEW:
 CreatorBridge is a US-only platform organized around three creator pillars: Video Production, Photography, and Post Production. Drone, podcast, events, brand content, and social work are specialties inside those pillars, not separate primary categories.
 
 CREATOR STANDARDS:
-Every creator on CreatorBridge is manually reviewed and approved before going live. Requirements include 2 or more years of paid professional experience, minimum 3 portfolio samples, complete service packages with real pricing, a 60 to 90 second video intro, Stripe identity verification, and a US bank account. Profile information is locked for 90 days after submission.
+Every creator on CreatorBridge is manually reviewed and approved before going live. Requirements include 2 or more years of paid professional experience, minimum 3 portfolio samples matched to the creator's selected pillar, complete service packages with real pricing, a 60 to 90 second video intro, Stripe identity verification, and a US bank account. Profile text can be edited after submission, but profile photo, intro video, and portfolio media uploads are limited for 30 days to protect review quality and platform storage. Creators can request media change approval for urgent corrections.
 
 FEES:
 Creators pay 10 percent platform fee. Fee drops to 8 percent after 10 completed projects and 6 percent after 25 projects. Clients pay a one-time 5 percent booking fee charged with the final payment when the project completes — nothing is added to the retainer, and no platform fees are charged on cancelled projects. No subscriptions, no monthly fees, no pay to apply.

@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import { SEED_CREATORS } from '../data/seedCreators.js';
 import { getBunnyEmbedUrl, getBunnyThumbnailUrl, isBunnyVideoRef } from '../utils/bunnyStream.js';
 import { getStorageDisplayUrl } from '../utils/storage.js';
+import { creatorListingMeetsPublicRules } from '../utils/creatorReadiness.js';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { Play } from 'lucide-react';
 import { HireCollaboratorButton } from '../components/creator/HireCollaboratorButton.jsx';
@@ -16,65 +17,6 @@ const TweakSection = () => null;
 const TweakRadio = () => null;
 
 const CLIENT_ACCOUNT_PROMPT = 'Create a free client account to contact creators';
-
-function hasPublicProfilePhoto(value) {
-  const raw = String(value || '').trim();
-  return Boolean(
-    raw &&
-    raw !== '🎬' &&
-    raw.length > 3 &&
-    (
-      raw.startsWith('storage://') ||
-      raw.startsWith('/') ||
-      raw.startsWith('http://') ||
-      raw.startsWith('https://') ||
-      raw.startsWith('data:') ||
-      raw.startsWith('blob:')
-    )
-  );
-}
-
-function requiredPublicPortfolioMediaType(primaryPillar, subNicheId = '') {
-  if (primaryPillar === 'photography' || String(subNicheId).startsWith('ph_')) return 'image';
-  if (subNicheId === 'pp_photo_retouch') return 'image';
-  return 'video';
-}
-
-function publicPortfolioItemComplete(item, primaryPillar) {
-  const mediaType = item?.media_type || item?.mediaType || (item?.bunny_video_id ? 'video' : 'image');
-  const subNicheId = item?.service_id || item?.subNicheId || item?.serviceId || '';
-  const requiredMediaType = requiredPublicPortfolioMediaType(primaryPillar, subNicheId);
-  const hasMedia = mediaType === 'video'
-    ? !!(item?.bunny_video_id || item?.videoRef)
-    : !!(item?.image_url || item?.imageUrl);
-
-  return Boolean(
-    mediaType === requiredMediaType &&
-    hasMedia &&
-    String(item?.title || '').trim() &&
-    String(item?.description || '').trim()
-  );
-}
-
-function creatorListingMeetsPublicRules(listing) {
-  const items = Array.isArray(listing?.portfolio_items)
-    ? listing.portfolio_items
-    : Array.isArray(listing?.portfolio)
-      ? listing.portfolio
-      : [];
-  const matchingPortfolioCount = items.filter(item => publicPortfolioItemComplete(item, listing?.primary_pillar)).length;
-  const packages = Array.isArray(listing?.packages) ? listing.packages : [];
-  const hasPackages = packages.some(pkg => Number(pkg?.price || 0) > 0 && String(pkg?.name || '').trim());
-  const hasVerifiedIdentity = ['verified', 'pro_verified'].includes(listing?.verification_status);
-
-  return Boolean(
-    hasPublicProfilePhoto(listing?.avatar) &&
-    isBunnyVideoRef(listing?.video_intro_url || listing?.videoIntroUrl || '') &&
-    matchingPortfolioCount >= 3 &&
-    hasPackages &&
-    hasVerifiedIdentity
-  );
-}
 
 // ---------- DATA ----------
 // These are the rich defaults for the Aria Visual Studio sample profile.

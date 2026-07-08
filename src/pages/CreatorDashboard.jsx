@@ -26,6 +26,7 @@ import { CreatorAvatar } from '../components/CreatorAvatar.jsx';
 import { CreatorCollaborationIntro } from '../components/collaboration/CreatorCollaborationIntro.jsx';
 import { recordDirectionalEvent } from '../lib/platformIntelligence.js';
 import { getStorageDisplayUrl } from '../utils/storage.js';
+import { getPublicProfileReadinessChecks, hasPublicProfilePhoto as hasProfilePhotoValue } from '../utils/creatorReadiness.js';
 
 // ── Data helpers ────────────────────────────────────────────────
 function loadMyListing(userId) {
@@ -108,63 +109,6 @@ function normalizeCreatorListing(listing) {
     packages,
     video_intro_url: listing.video_intro_url || listing.videoIntroUrl || '',
   };
-}
-
-function hasProfilePhotoValue(value) {
-  const raw = String(value || '').trim();
-  return Boolean(
-    raw &&
-    raw !== '🎬' &&
-    raw.length > 3 &&
-    (
-      raw.startsWith('storage://') ||
-      raw.startsWith('/') ||
-      raw.startsWith('http://') ||
-      raw.startsWith('https://') ||
-      raw.startsWith('data:') ||
-      raw.startsWith('blob:')
-    )
-  );
-}
-
-function requiredDashboardPortfolioMediaType(primaryPillar, subNicheId = '') {
-  if (primaryPillar === 'photography' || String(subNicheId).startsWith('ph_')) return 'image';
-  if (subNicheId === 'pp_photo_retouch') return 'image';
-  return 'video';
-}
-
-function portfolioItemReadyForPublicProfile(item, primaryPillar) {
-  const mediaType = item?.mediaType || item?.media_type || (item?.bunny_video_id ? 'video' : 'image');
-  const subNicheId = item?.subNicheId || item?.serviceId || item?.service_id || '';
-  const hasMedia = mediaType === 'video'
-    ? !!(item?.bunny_video_id || item?.videoRef)
-    : !!(item?.imageUrl || item?.image_url);
-
-  return Boolean(
-    mediaType === requiredDashboardPortfolioMediaType(primaryPillar, subNicheId) &&
-    hasMedia &&
-    String(item?.title || '').trim() &&
-    String(item?.description || '').trim()
-  );
-}
-
-function getPublicProfileReadinessChecks(creator) {
-  const matchingPortfolioCount = (creator?.portfolio || [])
-    .filter(item => portfolioItemReadyForPublicProfile(item, creator?.primary_pillar))
-    .length;
-  const hasPackages = (creator?.packages || [])
-    .some(pkg => Number(pkg?.price || 0) > 0 && String(pkg?.name || '').trim());
-  const hasVerifiedIdentity = ['verified', 'pro_verified'].includes(creator?.verification_status);
-
-  return [
-    { label: 'Real profile photo', done: hasProfilePhotoValue(creator?.avatar), action: 'Repair Listing' },
-    { label: 'Intro video', done: String(creator?.video_intro_url || creator?.videoIntroUrl || '').startsWith('bunny:'), action: 'Video Intro' },
-    { label: 'Primary pillar', done: !!(creator?.primary_pillar || creator?.services?.length), action: 'Repair Listing' },
-    { label: 'Specialties selected', done: (creator?.sub_niches || creator?.tags || []).length > 0, action: 'Repair Listing' },
-    { label: '3 matching portfolio samples', done: matchingPortfolioCount >= 3, action: 'Repair Listing', detail: `${matchingPortfolioCount}/3 ready` },
-    { label: 'Packages', done: hasPackages, action: 'Packages' },
-    { label: 'Verification', done: hasVerifiedIdentity, action: 'Verification' },
-  ];
 }
 
 function getPrimaryPillarName(value) {

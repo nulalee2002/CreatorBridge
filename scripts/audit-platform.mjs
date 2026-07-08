@@ -50,8 +50,14 @@ check('Creator approval gates', 'src/components/CreatorDirectory.jsx', [
   { label: 'requires video intro during creator registration', test: includes('videoIntroUrl') },
   { label: 'keeps portfolio media tied to selected craft', test: includes('portfolioItemMatchesSelectedCraft') && includes('requiredPortfolioMediaType') },
   { label: 'does not force every portfolio to include both photos and videos', test: notIncludes('/3 videos') && notIncludes('/6 photos') },
-  { label: 'hides unapproved creator listings from public browse', test: includes('review_status') },
+  { label: 'uses shared public readiness before public browse', test: includes('creatorListingMeetsPublicRules') && includes('isPublicDiscoverableCreator') },
+  { label: 'loads live approved creators with readiness relationships', test: includes("select('*, creator_services(*), portfolio_items(*), packages(*)')") && includes(".eq('review_status', 'approved')") },
   { label: 'uses 30-day media limit instead of 90-day profile lock', test: includes('media uploads are limited for 30 days') && includes('request media change') && notIncludes('90 days') },
+]);
+
+check('Shared creator public readiness rule', 'src/utils/creatorReadiness.js', [
+  { label: 'requires profile photo, intro, pillar, specialties, portfolio, packages, and verification', test: includes('profilePhotoMet') && includes('introVideoMet') && includes('primaryPillarMet') && includes('specialtiesMet') && includes('portfolioMet') && includes('packagesMet') && includes('verificationMet') },
+  { label: 'keeps portfolio media tied to selected craft', test: includes('requiredPortfolioMediaType') && includes('pp_photo_retouch') && includes('matchingPortfolioCount >= 3') },
 ]);
 
 check('Creator dashboard media lock copy', 'src/pages/CreatorDashboard.jsx', [
@@ -64,6 +70,14 @@ check('Support assistant media lock policy', 'src/components/SupportChatbot.jsx'
   { label: 'explains media-only 30-day limit', test: includes('Profile text can be edited after submission') && includes('media uploads are limited for 30 days') && notIncludes('90 days') },
 ]);
 
+check('Live support assistant media lock policy', 'supabase/functions/chatbot/index.ts', [
+  { label: 'explains media-only 30-day limit', test: includes('Profile text can be edited after submission') && includes('media uploads are limited for 30 days') && notIncludes('Profile information is locked for 90 days') && notIncludes('locked for 90 days') },
+]);
+
+check('Creator welcome email media lock policy', 'supabase/functions/send-notification-email/index.ts', [
+  { label: 'explains media-only 30-day limit', test: includes('30-Day Media Change Limit') && includes('media uploads are limited for 30 days') && notIncludes('90-Day profile Lock') && notIncludes('locked for 90 days') },
+]);
+
 check('Creator agreement media lock policy', 'src/pages/CreatorAgreement.jsx', [
   { label: 'explains media-only 30-day limit', test: includes('30-Day Media Change Limit') && includes('Profile text can be edited after submission') && notIncludes('90 days') && notIncludes('90-Day Profile Lock') },
 ]);
@@ -71,7 +85,7 @@ check('Creator agreement media lock policy', 'src/pages/CreatorAgreement.jsx', [
 check('Guest contact protection', 'src/pages/CreatorProfilePage.jsx', [
   { label: 'keeps direct contact protection path', test: includes('contactUnlocked') },
   { label: 'prompts guests to create a client account', test: includes('Create a free client account to contact creators') },
-  { label: 'requires completed creator proof before public profile render', test: includes('creatorListingMeetsPublicRules') && includes('hasPublicProfilePhoto') && includes('matchingPortfolioCount >= 3') },
+  { label: 'requires completed creator proof before public profile render', test: includes('creatorListingMeetsPublicRules') && includes('../utils/creatorReadiness.js') },
 ]);
 
 check('Interactive accessibility contracts', 'src/components/auth/AuthModal.jsx', [
@@ -90,7 +104,7 @@ check('Creator profile live listing resolution', 'src/pages/CreatorProfilePage.j
   { label: 'resolves private storage media for display', test: includes('getStorageDisplayUrl') },
   { label: 'does not substitute demo data for unknown profile ids', test: includes('Profile unavailable') },
   { label: 'handles approved listings with no packages without crashing', test: includes('packages[0] || null') },
-  { label: 'quarantines incomplete approved creator rows', test: includes('creatorListingMeetsPublicRules') && includes('hasPackages') && includes('hasVerifiedIdentity') },
+  { label: 'quarantines incomplete approved creator rows through shared rule', test: includes('creatorListingMeetsPublicRules') && includes('../utils/creatorReadiness.js') },
 ]);
 
 check('Creator hiring role language', 'src/pages/ClientProfilePage.jsx', [
@@ -108,7 +122,7 @@ check('Network accessibility contracts', 'src/pages/NetworkingPage.jsx', [
 
 check('Smart Match reliability', 'src/utils/matchingAlgorithm.js', [
   { label: 'normalizes services before matching', test: includes('normalizeServiceId') },
-  { label: 'excludes pending or unapproved creators', test: includes('isApprovedCreator') },
+  { label: 'excludes creators that fail public readiness', test: includes('creatorListingMeetsPublicRules') && includes('allowDemoSeed: true') },
   { label: 'caps match percentages', test: includes('Math.min(99') },
   { label: 'can score Supabase-fetched creator availability maps', test: includes('availabilityMap') },
 ]);

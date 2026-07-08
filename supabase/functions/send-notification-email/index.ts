@@ -47,7 +47,7 @@ function getEmailTemplate(template: string, rawData: Record<string, any>): { sub
         <p><strong>What happens next:</strong></p>
         <ul>
           <li><strong>Manual Review:</strong> Our team is manually reviewing your application, portfolio samples, and intro video. This typically takes 3 to 5 business days.</li>
-          <li><strong>90-Day profile Lock:</strong> To protect platform integrity, once your profile is approved, critical identity details (including business name, full name, and location) are locked for 90 days. Minor modifications like bio, packages, and calendar remain editable at any time.</li>
+          <li><strong>30-Day Media Change Limit:</strong> Profile text can be edited after submission, but profile photo, intro video, and portfolio media uploads are limited for 30 days after submission or approval. This protects review quality and platform storage. If something urgent needs to be corrected, contact support to request media change approval.</li>
           <li><strong>Stripe Connect:</strong> Once approved, you will need to complete your Stripe Connect Express setup to connect a bank account or debit card. Listings go live only after payout details are linked.</li>
         </ul>
         <p>If you have any questions during this time, please reach out to <a href="mailto:drl33@creatorbridge.studio" style="color: #d4a941; text-decoration: underline;">drl33@creatorbridge.studio</a>.</p>

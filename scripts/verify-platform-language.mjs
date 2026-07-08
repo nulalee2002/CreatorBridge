@@ -1,7 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { globSync } from 'node:fs';
 
-const files = globSync('src/**/*.{js,jsx}', { exclude: ['src/data/rates.js'] });
+const files = [
+  ...globSync('src/**/*.{js,jsx}', { exclude: ['src/data/rates.js'] }),
+  ...globSync('supabase/functions/**/*.{js,ts}'),
+];
 const violations = [];
 
 for (const file of files) {

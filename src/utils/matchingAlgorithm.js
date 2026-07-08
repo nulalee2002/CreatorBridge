@@ -1,4 +1,5 @@
 import { normalizeServiceId } from '../data/rates.js';
+import { creatorListingMeetsPublicRules } from './creatorReadiness.js';
 
 /**
  * Smart matching algorithm.
@@ -32,12 +33,7 @@ const VERIFICATION_RANK = { unverified: 0, verified: 1, pro_verified: 2 };
 const DEFAULT_BUDGET_MAX = 999999;
 
 function isApprovedCreator(creator) {
-  return Boolean(
-    creator?.verified ||
-    creator?.verification_status === 'verified' ||
-    creator?.verification_status === 'pro_verified' ||
-    creator?.id?.startsWith?.('seed-')
-  );
+  return creatorListingMeetsPublicRules(creator, { allowDemoSeed: true });
 }
 
 function getCreatorServiceId(item) {

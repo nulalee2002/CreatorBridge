@@ -21,6 +21,7 @@ import { sendNotificationEmail } from '../lib/notifications.js';
 import { HandoffPage } from './HandoffPage.jsx';
 import { handoffPages } from '../data/handoffPages.js';
 import { CreatorAvatar } from './CreatorAvatar.jsx';
+import { creatorListingMeetsPublicRules } from '../utils/creatorReadiness.js';
 
 // Initialize seed data (version-gated — replaces stale seeds automatically)
 initSeedData();
@@ -78,13 +79,8 @@ function portfolioItemMatchesSelectedCraft(item, primaryPillar) {
   return mediaType === requiredPortfolioMediaType(primaryPillar, item?.subNicheId || item?.serviceId || '');
 }
 
-function isApprovedCreator(creator) {
-  return !!(
-    creator?.verified ||
-    creator?.verification_status === 'verified' ||
-    creator?.verification_status === 'pro_verified' ||
-    creator?.id?.startsWith?.('seed-')
-  );
+function isPublicDiscoverableCreator(creator) {
+  return creatorListingMeetsPublicRules(creator, { allowDemoSeed: SHOW_DEMO_CREATORS });
 }
 
 // ── LocalStorage helpers ──────────────────────────────────────
@@ -95,16 +91,53 @@ function saveListings(list) {
   localStorage.setItem('creator-directory', JSON.stringify(list));
 }
 
+function loadDemoListings() {
+  if (!SHOW_DEMO_CREATORS) return [];
+  return loadListings().filter(item => String(item?.id || '').startsWith('seed-'));
+}
+
+function normalizeLiveCreatorListing(row) {
+  const portfolio = [...(row?.portfolio_items || [])]
+    .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+    .map(item => ({
+      ...item,
+      serviceId: item.service_id,
+      subNicheId: item.service_id,
+      imageUrl: item.image_url || '',
+      mediaType: item.media_type || (item.bunny_video_id ? 'video' : 'image'),
+      videoRef: item.bunny_video_id ? `bunny:${item.bunny_video_id}` : '',
+    }));
+  const services = (row?.creator_services || []).map(service => ({
+    ...service,
+    serviceId: service.service_id,
+  }));
+
+  return {
+    ...row,
+    businessName: row.business_name || '',
+    videoIntroUrl: row.video_intro_url || '',
+    yearsExperience: row.years_experience,
+    reviewCount: row.review_count,
+    location: {
+      city: row.city || '',
+      state: row.state || '',
+      country: row.country || 'US',
+      zip: row.zip || '',
+      regionKey: row.region_key || 'us-tier2',
+    },
+    services,
+    portfolio,
+    portfolio_items: portfolio,
+    packages: row.packages || [],
+    tags: row.tags || [],
+  };
+}
+
 function getRotatingPreviewCreators(allCreators) {
   const today = new Date().toISOString().split('T')[0];
   const seed = today.split('-').reduce((acc, val) => acc + parseInt(val), 0);
 
-  const verified = allCreators.filter(c =>
-    c.verified ||
-    c.verification_status === 'verified' ||
-    c.verification_status === 'pro_verified' ||
-    c.id?.startsWith('seed-')
-  );
+  const verified = allCreators.filter(isPublicDiscoverableCreator);
 
   const byNiche = {};
   verified.forEach(c => {
@@ -1515,7 +1548,30 @@ export function CreatorDirectory({
   const [availFilter, setAvailFilter] = useState('all');
 
   const isGuest = !user;
-  const approvedListingCount = listings.filter(isApprovedCreator).length;
+  const approvedListingCount = listings.filter(isPublicDiscoverableCreator).length;
+
+  useEffect(() => {
+    if (!supabaseConfigured || !supabase) return;
+
+    let active = true;
+    supabase
+      .from('creator_listings')
+      .select('*, creator_services(*), portfolio_items(*), packages(*)')
+      .eq('review_status', 'approved')
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error) {
+          console.error('Error loading creator directory listings:', error);
+          return;
+        }
+
+        const liveListings = (data || []).map(normalizeLiveCreatorListing);
+        setListings([...liveListings, ...loadDemoListings()]);
+      });
+
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     setSearchQuery(initialSearchQuery);
@@ -1567,18 +1623,13 @@ export function CreatorDirectory({
 
   // Filter and sort creators
   const filtered = useMemo(() => {
-    let list = listings.filter(creator => isApprovedCreator(creator) || creator.user_id === user?.id);
+    let list = listings.filter(creator => isPublicDiscoverableCreator(creator));
     if (collaborationOnly) {
       list = list.filter(creator => creator.open_to_creator_collaborations !== false);
     }
-    const PILLAR_TO_LEGACY = { video_production: 'video', photography: 'photography', post_production: 'postProduction' };
     const creatorMatchesPillar = (creator, pillarId) => {
       if (pillarId === 'all') return true;
-      if (creator.primary_pillar === pillarId) return true;
-      // Legacy fallback for any creator whose row predates backfill
-      const legacyServiceId = PILLAR_TO_LEGACY[pillarId];
-      if (!legacyServiceId) return false;
-      return (creator.services || []).some(s => (s.serviceId || s.service_id) === legacyServiceId);
+      return creator.primary_pillar === pillarId;
     };
     const creatorMatchesSubNiche = (creator, subNicheId) => {
       if (subNicheId === 'all') return true;
@@ -1842,7 +1893,7 @@ export function CreatorDirectory({
         {/* Stats */}
         <div className={`mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center`}>
           {[
-            { n: listings.filter(isApprovedCreator).length, label: 'Approved creators' },
+            { n: listings.filter(isPublicDiscoverableCreator).length, label: 'Approved creators' },
             { n: Object.keys(PILLARS).length, label: 'Primary pillars' },
             { n: MAX_SUB_NICHES, label: 'Specialties max' },
           ].map(({ n, label }) => (
@@ -1994,11 +2045,8 @@ export function CreatorDirectory({
                 </button>
                 {Object.values(PILLARS).map(pillar => {
                   const count = listings.filter(creator => {
-                    if (!isApprovedCreator(creator) && creator.user_id !== user?.id) return false;
-                    if (creator.primary_pillar === pillar.id) return true;
-                    const PILLAR_TO_LEGACY = { video_production: 'video', photography: 'photography', post_production: 'postProduction' };
-                    const legacy = PILLAR_TO_LEGACY[pillar.id];
-                    return legacy && (creator.services || []).some(s => (s.serviceId || s.service_id) === legacy);
+                    if (!isPublicDiscoverableCreator(creator)) return false;
+                    return creator.primary_pillar === pillar.id;
                   }).length;
                   return (
                     <button
@@ -2029,7 +2077,7 @@ export function CreatorDirectory({
                       <span>All specialties</span>
                     </button>
                     {(SUB_NICHES_BY_PILLAR[pillarFilter] || []).map(sn => {
-                      const count = listings.filter(c => (c.sub_niches || []).includes(sn.id)).length;
+                      const count = listings.filter(c => isPublicDiscoverableCreator(c) && (c.sub_niches || []).includes(sn.id)).length;
                       return (
                         <button
                           key={sn.id}
@@ -2057,7 +2105,7 @@ export function CreatorDirectory({
                   { id: 'launch', label: 'Verified' }
                 ].map(tier => {
                   const count = listings.filter(c => {
-                    const approved = isApprovedCreator(c) || c.user_id === user?.id;
+                    const approved = isPublicDiscoverableCreator(c);
                     if (!approved) return false;
                     return tier.id === 'all' || c.tier === tier.id;
                   }).length;

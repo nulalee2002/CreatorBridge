@@ -38,6 +38,7 @@
     "verify:network-portfolio-sharing": "node scripts/verify-network-portfolio-sharing.mjs",
     "verify:network-portfolio-sharing-live": "node --env-file=.env scripts/verify-network-portfolio-sharing-live.mjs",
     "verify:platform-language": "node scripts/verify-platform-language.mjs",
+    "verify:public-readiness": "node scripts/verify-public-readiness.mjs",
     "verify:workflow-smoke": "npm run verify:client-phone-gate && npm run verify:messaging && npm run verify:project-lifecycle && npm run verify:network",
     "verify:launch-sweep": "node --env-file=.env scripts/verify-launch-sweep.mjs",
     "verify:external-env": "node --env-file=.env scripts/verify-external-env.mjs",

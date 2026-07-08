@@ -6,6 +6,7 @@ const checks = [
   ['email provider', ['npm', ['run', 'verify:email-provider']]],
   ['chatbot guide', ['npm', ['run', 'verify:chatbot-guide']]],
   ['profile media', ['npm', ['run', 'verify:profile-media']]],
+  ['public readiness', ['npm', ['run', 'verify:public-readiness']]],
   ['network portfolio sharing', ['npm', ['run', 'verify:network-portfolio-sharing']]],
   ['platform language', ['npm', ['run', 'verify:platform-language']]],
   ['creator collaboration launch', ['npm', ['run', 'verify:collaboration-launch']]],
