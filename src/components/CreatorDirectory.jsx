@@ -1481,7 +1481,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
                 },
                 {
                   title: 'Section 3 — Payments & Stripe Connect',
-                  body: 'You must onboard with Stripe Connect. Payments use an escrow-like structure: a 50% retainer paid upfront before work starts, and the remaining 50% final payout released upon delivery approval or a 5-day auto-approval with no client action.',
+                  body: 'You must onboard with Stripe Connect. Payments use a protected 50/50 structure: a 50% retainer paid upfront before work starts, and the remaining 50% final payout released upon delivery approval or a 5-day auto-approval with no client action.',
                 },
                 {
                   title: 'Section 4 — Non-Circumvention',

@@ -229,9 +229,9 @@ function QuoteSimple({ quote, state, dark }) {
           )}
         </div>
 
-        {/* 50/50 Escrow Box */}
+        {/* 50/50 payment protection box */}
         <div className={`p-4 rounded-xl border ${dark ? 'bg-[#9C4A33]/[0.02] border-[#9C4A33]/15' : 'bg-gold-50/20 border-gold-200/50'}`}>
-          <div className="text-[10px] tracking-[0.2em] uppercase text-[#9C4A33] font-bold mb-2">50/50 escrow split</div>
+          <div className="text-[10px] tracking-[0.2em] uppercase text-[#9C4A33] font-bold mb-2">50/50 protected payment</div>
           <div className="flex justify-between text-xs py-1">
             <span className={`${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>Held on booking (50%)</span>
             <span className="serif text-[#9C4A33] font-bold">{fmt(quote.grandTotal / 2)}</span>
@@ -401,9 +401,9 @@ function QuoteItemized({ quote, state, dark, creatorMode }) {
           </div>
         )}
 
-        {/* 50/50 Escrow Box */}
+        {/* 50/50 payment protection box */}
         <div className={`p-4 rounded-xl border ${dark ? 'bg-[#9C4A33]/[0.02] border-[#9C4A33]/15' : 'bg-gold-50/20 border-gold-200/50'}`}>
-          <div className="text-[10px] tracking-[0.2em] uppercase text-[#9C4A33] font-bold mb-2">50/50 escrow split</div>
+          <div className="text-[10px] tracking-[0.2em] uppercase text-[#9C4A33] font-bold mb-2">50/50 protected payment</div>
           <div className="flex justify-between text-xs py-1">
             <span className={`${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>Held on booking (50%)</span>
             <span className="serif text-[#9C4A33] font-bold">{fmt(quote.grandTotal / 2)}</span>

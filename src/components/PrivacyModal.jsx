@@ -91,7 +91,7 @@ export function PrivacyModal({ dark, onClose }) {
               <p>We use your information to:</p>
               <ul className="list-disc list-inside space-y-1 ml-2 mt-2">
                 <li>Operate the CreatorBridge platform and match clients with creators</li>
-                <li>Process payments and manage project escrow through Stripe</li>
+                <li>Process payments and manage project payment protection through Stripe</li>
                 <li>Verify creator identities to maintain platform safety and trust</li>
                 <li>Send notifications about project updates, messages, and platform activity</li>
                 <li>Improve matching algorithms and platform features based on usage patterns</li>
@@ -117,7 +117,7 @@ export function PrivacyModal({ dark, onClose }) {
               </p>
               <ul className="list-disc list-inside space-y-1 ml-2 mt-2">
                 <li>
-                  <strong className={dark ? 'text-white' : 'text-gray-900'}>Stripe:</strong> Payment processing, escrow management, and creator identity verification (KYC).
+                  <strong className={dark ? 'text-white' : 'text-gray-900'}>Stripe:</strong> Payment processing, payment protection workflows, and creator identity verification (KYC).
                   Stripe's privacy policy applies to data they handle.
                 </li>
                 <li>

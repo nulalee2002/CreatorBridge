@@ -22,9 +22,9 @@ const packageBuilder = readFileSync(join(root, 'src/components/PackageBuilder.js
 const projectBoard = readFileSync(join(root, 'src/pages/ProjectBoard.jsx'), 'utf8');
 const projectStorage = readFileSync(join(root, 'src/utils/projectStorage.js'), 'utf8');
 
-const clientNote = "Projects on CreatorBridge start at $250. Every booking is backed by secure escrow payment and dispute protection, and the minimum keeps each project worth a verified creator's time and those protections viable for both sides.";
+const clientNote = "Projects on CreatorBridge start at $250. Every booking is backed by secure payment protection and dispute support, and the minimum keeps each project worth a verified creator's time and those protections viable for both sides.";
 const clientError = "Projects start at $250 on CreatorBridge. Please set your budget to $250 or more so your project is worth a professional creator's time and fully covered by our protected payment process.";
-const creatorNote = "CreatorBridge projects start at $250. Set your packages and proposals at $250 or more, it keeps your work worth your time and keeps the escrow and payment protection viable on every booking.";
+const creatorNote = "CreatorBridge projects start at $250. Set your packages and proposals at $250 or more, it keeps your work worth your time and keeps payment protection viable on every booking.";
 const creatorError = "Packages and proposals start at $250 on CreatorBridge. Please set this at $250 or more.";
 
 assert(

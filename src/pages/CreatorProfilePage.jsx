@@ -361,7 +361,7 @@ function About() {
           </p>
           <div className="space-y-2.5 text-xs">
             <Step n="01" t="Brief & call" d="Scope, references, locations, deliverables."/>
-            <Step n="02" t="50% retainer" d="Held in CreatorBridge escrow until shoot day."/>
+            <Step n="02" t="50% retainer" d="Held through CreatorBridge payment protection until shoot day."/>
             <Step n="03" t="Production" d="On-location or studio, with shot list."/>
             <Step n="04" t="Review & deliver" d="Watermarked previews, then final delivery + remaining 50%."/>
           </div>
@@ -492,7 +492,7 @@ function Packages({ selected, setSelected, style, onBook }) {
       <div className="mb-6">
         <Eyebrow>Packages</Eyebrow>
         <h2 className="text-2xl md:text-3xl serif font-medium leading-tight">Choose a package to start a booking.</h2>
-        <p className="text-sm text-[var(--text-secondary)] max-w-md mt-2">Every booking includes CreatorBridge's 50/50 escrow split. Custom scopes are negotiable after first call.</p>
+        <p className="text-sm text-[var(--text-secondary)] max-w-md mt-2">Every booking includes CreatorBridge's 50/50 protected payment structure. Custom scopes are negotiable after first call.</p>
       </div>
       <div className="grid md:grid-cols-3 gap-4">
         {packages.map(p => {
@@ -719,7 +719,7 @@ function BookingSheet({ open, onClose, selectedPkg }) {
               </Field>
 
               <div className="liquid-glass rounded-xl p-5 space-y-2.5">
-                <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--gold)] mb-1">Escrow split · 50 / 50</div>
+                <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--gold)] mb-1">Protected payment · 50 / 50</div>
                 <Row k={`${pkg.name} package`} v={fmt(subtotal)} />
                 <Row k="Client booking fee · 5%" v={fmt(fee)} tone="dim"/>
                 <div className="border-t border-[var(--border)] pt-2.5">
@@ -730,7 +730,7 @@ function BookingSheet({ open, onClose, selectedPkg }) {
                   <Row k="Released on delivery" v={fmt(remainder)} tone="gold"/>
                 </div>
                 <p className="text-[10px] text-[var(--text-dim)] pt-1 leading-relaxed">
-                  Funds sit in CreatorBridge escrow. Retainer releases to creator only when shoot is confirmed. Final balance releases on your approval of deliverables.
+                  Funds are handled through CreatorBridge payment protection. Retainer releases to the creator only when the shoot is confirmed. Final balance releases on your approval of deliverables.
                 </p>
               </div>
 
@@ -785,7 +785,7 @@ function StickyBook({ selectedPkg, onBook, show }) {
       </div>
       <div className="h-8 w-px bg-[var(--border)]"></div>
       <div className="text-[10px] text-[var(--text-dim)] hidden sm:block">
-        <div>50% held in escrow</div>
+        <div>50% protected payment</div>
         <div className="text-[var(--gold)]">{fmt(Math.round(pkg.price * 1.05 / 2))} due now</div>
       </div>
       <button onClick={onBook} className="btn-gold min-h-[34px] text-xs">Reserve</button>

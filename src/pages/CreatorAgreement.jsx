@@ -148,7 +148,7 @@ export function CreatorAgreement({ dark }) {
                 is fully verified and enabled for payouts.
               </p>
               <p>
-                All project payments follow a secure escrow-like structure:
+                All project payments follow a secure protected-payment structure:
               </p>
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li><strong className={dark ? 'text-white' : 'text-gray-900'}>50% Retainer:</strong> Paid by the client upon booking and before work begins. Retainers are held securely by our processor. You are notified to begin work once retainer funds clear.</li>

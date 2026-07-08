@@ -21,6 +21,16 @@ const allSource = [
   reviewActions,
   read('scripts/verify-margin-protection.mjs'),
 ].join('\n');
+const customerFacingSource = [
+  read('src/pages/CreatorProfilePage.jsx'),
+  read('src/pages/CreatorAgreement.jsx'),
+  read('src/pages/LandingPage.jsx'),
+  read('src/components/QuoteOutput.jsx'),
+  read('src/components/PrivacyModal.jsx'),
+  read('src/components/CreatorDirectory.jsx'),
+  read('src/config/margins.js'),
+  read('src/data/handoffPages.js'),
+].join('\n');
 
 const checks = [];
 const ok = (name, pass) => checks.push([name, Boolean(pass)]);
@@ -41,9 +51,9 @@ ok('terms include creator collaboration non-circumvention', terms.includes('crea
 ok('agreement includes collaboration non-circumvention', agreement.includes('Moving creator-to-creator collaborations'));
 ok('project board shows review actions', projectBoard.includes('CollaborationReviewActions'));
 
-const escrowMentions = [...allSource.matchAll(/\bescrow\b/gi)].length;
-ok('escrow terminology inventoried for counsel', escrowMentions >= 1);
-ok('escrow terminology not mass-replaced by this task', allSource.includes('escrow-like') || allSource.includes('secure escrow'));
+const escrowMentions = [...customerFacingSource.matchAll(/\bescrow\b/gi)].length;
+ok('customer-facing payment copy avoids escrow terminology', escrowMentions === 0);
+ok('protected payment language is present', customerFacingSource.includes('protected payment') || customerFacingSource.includes('payment protection'));
 
 const failed = checks.filter(([, pass]) => !pass);
 if (failed.length) {
@@ -52,4 +62,4 @@ if (failed.length) {
   process.exit(1);
 }
 
-console.log(JSON.stringify({ ok: true, checks: checks.length, escrowMentions }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: checks.length, customerFacingEscrowMentions: escrowMentions }, null, 2));
