@@ -1,0 +1,4 @@
+interface:
+  display_name: "Fable Mode"
+  short_description: "Scope, evidence, attack, verify, report"
+  default_prompt: "Use fable mode: scope the task, gather evidence, attack assumptions, verify with real checks, then report verified versus assumed."

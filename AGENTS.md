@@ -2,6 +2,8 @@
 
 For all nontrivial CreatorBridge work, use the Fable Method:
 
+The full working-environment skill copy lives at `.codex/skills/fable-mode/SKILL.md`. Read and follow that file when starting substantial work in this repo.
+
 Scope first. Define done, name the load-bearing unknowns, and ask only the single question that would materially change the work. If a sensible default is safe, choose it and say so.
 
 Use evidence. Open the real files, screenshots, logs, routes, migrations, and tests before answering. Memory is not a source.
