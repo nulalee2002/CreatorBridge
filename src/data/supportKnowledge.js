@@ -26,7 +26,7 @@ export function getPlatformGuideResponse(question = '') {
   }
 
   if (q.includes('fee') || q.includes('cost') || q.includes('price') || q.includes('how much')) {
-    return 'Clients pay a flat 5% booking fee, charged once with the final payment when the project completes — nothing is added to the retainer, and cancelled projects are never charged the fee. Creators start at a 10% platform cut, then drop to 8% after 10 completed projects and 6% after 25 completed projects. No subscriptions, no off-platform lead fees, and no surprise platform charges.';
+    return 'Clients pay a flat 5% booking fee, charged once with the final payment when the project completes. Creators start at a 10% platform cut, then drop to 8% after 10 completed projects and 6% after 25 completed projects. For creator-to-creator collaborations, the person hiring pays no buyer platform fee and only covers the small bank-processing cost. The person getting hired pays the normal CreatorBridge creator fee. Example: on a $500 collaboration, the hiring creator pays $504, the hired creator receives $450 on the 10% tier, CreatorBridge keeps $50, and the extra $4 covers bank processing.';
   }
 
   // Cancellation must be checked BEFORE the payment/retainer intent: questions

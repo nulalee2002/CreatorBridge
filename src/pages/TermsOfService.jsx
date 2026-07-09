@@ -167,6 +167,7 @@ export function TermsOfService({ dark }) {
                   <div className="flex justify-between"><span>Creator platform fee (Launch tier)</span><span className="font-bold">10% of earnings</span></div>
                   <div className="flex justify-between"><span>Creator platform fee (Proven tier, 10+ projects)</span><span className="font-bold">8% of earnings</span></div>
                   <div className="flex justify-between"><span>Creator platform fee (Elite tier, 25+ projects)</span><span className="font-bold">6% of earnings</span></div>
+                  <div className="flex justify-between"><span>Creator collaboration buyer platform fee</span><span className="font-bold">0%</span></div>
                 </div>
               </div>
               <p>
@@ -185,6 +186,9 @@ export function TermsOfService({ dark }) {
                 All payments are processed through Stripe and are subject to Stripe's standard processing fees,
                 which are included in the amounts displayed at checkout. CreatorBridge does not charge additional
                 payment processing fees beyond those shown.
+              </p>
+              <p>
+                For creator-to-creator collaboration bookings, the hiring creator pays no buyer platform fee. The hiring creator only covers the disclosed bank/payment processing cost, and the hired creator pays their normal CreatorBridge creator platform fee from the payout. Think of it like this: if one creator hires another creator for $500, the hiring creator pays $504, the hired creator receives $450 on the 10% tier, CreatorBridge keeps $50 as the platform fee, and the extra $4 covers bank/payment processing. The collaboration starts only after payment settlement is confirmed.
               </p>
             </Section>
 

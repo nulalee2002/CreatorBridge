@@ -43,6 +43,8 @@ Every creator on CreatorBridge is manually reviewed and approved before going li
 FEES:
 Creators pay 10 percent platform fee. Fee drops to 8 percent after 10 completed projects and 6 percent after 25 projects. Clients pay a one-time 5 percent booking fee charged with the final payment when the project completes — nothing is added to the retainer, and no platform fees are charged on cancelled projects. No subscriptions, no monthly fees, no pay to apply.
 
+Creator-to-creator collaborations are simpler: the hiring creator pays no buyer platform fee and only covers the small bank/payment processing cost. The hired creator pays the normal CreatorBridge creator platform fee from their payout. Think of it like this: if one creator hires another creator for $500, the hiring creator pays $504, the hired creator receives $450 on the 10 percent tier, CreatorBridge keeps $50, and the extra $4 covers bank/payment processing.
+
 PAYMENTS:
 Clients pay 50 percent retainer upfront with no fees added. The remaining 50 percent plus the one-time 5 percent booking fee is due when the client approves delivery, or automatically after a 5-day review window if the client does not respond. All payments processed through Stripe.
 

@@ -8,7 +8,7 @@ const checks = [
   {
     name: 'fees',
     reply: getPlatformGuideResponse('How much are platform fees?'),
-    mustInclude: ['5%', '10%', '8%', '6%'],
+    mustInclude: ['5%', '10%', '8%', '6%', '$500', '$504', '$450', '$50', '$4'],
   },
   {
     name: 'payment',

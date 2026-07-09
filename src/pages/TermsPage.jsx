@@ -197,7 +197,7 @@ export function TermsPage({ dark }) {
                 payment processing fees beyond those shown.
               </p>
               <p>
-                For creator-to-creator collaboration bookings, the hiring creator pays the disclosed payment-processing cost, the hired creator pays their earned creator platform fee, and the collaboration starts only after payment settlement is confirmed.
+                For creator-to-creator collaboration bookings, the hiring creator pays no buyer platform fee. The hiring creator only covers the disclosed bank/payment processing cost, and the hired creator pays their normal CreatorBridge creator platform fee from the payout. Think of it like this: if one creator hires another creator for $500, the hiring creator pays $504, the hired creator receives $450 on the 10% tier, CreatorBridge keeps $50 as the platform fee, and the extra $4 covers bank/payment processing. The collaboration starts only after payment settlement is confirmed.
               </p>
             </Section>
 

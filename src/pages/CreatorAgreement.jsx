@@ -137,7 +137,7 @@ export function CreatorAgreement({ dark }) {
                 Fees are automatically computed and deducted at the time payouts are transferred to your Connect account.
               </p>
               <p>
-                When you hire another verified creator as a collaborator, you pay no buyer platform fee, but you are responsible for the disclosed payment-processing cost. When you are hired by another creator, your normal earned creator platform fee applies and internal collaboration reviews do not count toward public ratings, loyalty progress, or public tier movement.
+                When you hire another verified creator as a collaborator, you pay no buyer platform fee. You only cover the disclosed bank/payment processing cost. When another creator hires you, your normal CreatorBridge creator platform fee comes out of your payout. Think of it like this: if one creator hires another creator for $500, the hiring creator pays $504, the hired creator receives $450 on the 10% tier, CreatorBridge keeps $50 as the platform fee, and the extra $4 covers bank/payment processing. Internal collaboration reviews do not count toward public ratings, loyalty progress, or public tier movement.
               </p>
             </Section>
 

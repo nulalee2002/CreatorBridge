@@ -9,6 +9,15 @@ const sql = readdirSync(join(root,'supabase/migrations')).filter(f=>f.endsWith('
 const fnPath = join(root,'supabase/functions/create-collaboration-payment/index.ts');
 const fn = existsSync(fnPath) ? readFileSync(fnPath,'utf8') : '';
 const webhook = readFileSync(join(root,'supabase/functions/stripe-webhook/index.ts'),'utf8');
+const policyCopy = [
+  'src/pages/TermsPage.jsx',
+  'src/pages/TermsOfService.jsx',
+  'src/components/TermsModal.jsx',
+  'src/pages/CreatorAgreement.jsx',
+  'src/data/supportKnowledge.js',
+  'src/components/SupportChatbot.jsx',
+  'supabase/functions/chatbot/index.ts',
+].map(file => readFileSync(join(root,file),'utf8')).join('\n');
 const tests = [];
 const ok=(n,p)=>tests.push([n,!!p]);
 ok('10 percent tier',calculateCollaborationFees(100000,0).creatorFeePct===10);
@@ -24,6 +33,8 @@ ok('settlement authoritative',webhook.includes('creator_collaborations')&&webhoo
 ok('returns handled',webhook.includes('payment_intent.payment_failed')&&webhook.includes('collaboration_payments'));
 ok('idempotency',sql.includes('stripe_payment_intent_id text unique'));
 ok('no tier advancement',sql.includes('internal collaboration payments do not advance public loyalty'));
+ok('plain collaboration fee example in policy/chatbot copy',['$500','$504','$450','$50','$4','hiring creator','hired creator'].every(text=>policyCopy.includes(text)));
+ok('policy surfaces disclose zero buyer platform fee',(policyCopy.match(/buyer platform fee/g)||[]).length>=4);
 const failed=tests.filter(([,p])=>!p); if(failed.length){console.error('Collaboration payments incomplete:');failed.forEach(([n])=>console.error(`- ${n}`));process.exit(1)}
 const cfg={url:process.env.VITE_SUPABASE_URL,anon:process.env.VITE_SUPABASE_ANON_KEY,service:process.env.SUPABASE_SERVICE_ROLE_KEY,email:process.env.CREATORBRIDGE_QA_CREATOR_EMAIL,password:process.env.CREATORBRIDGE_QA_CREATOR_PASSWORD,stripe:process.env.STRIPE_SECRET_KEY};
 let live=null;
