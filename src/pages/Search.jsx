@@ -205,7 +205,7 @@ export function Search({ dark }) {
                 type="search"
                 value={query}
                 onChange={handleChange}
-                placeholder="Video Production, Product & Still Life, Phoenix..."
+                placeholder="Video Production, Product & Still Life, your city..."
                 aria-label="Search creators"
                 className={inputCls}
               />

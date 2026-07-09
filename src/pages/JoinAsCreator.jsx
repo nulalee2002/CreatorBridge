@@ -178,8 +178,8 @@ export function JoinAsCreator({ dark }) {
           <div className="w-8 h-8 rounded-full bg-gold-500/10 text-gold-400 flex items-center justify-center mx-auto mb-3">
             <MapPin size={16} />
           </div>
-          <h4 className={`font-bold text-xs mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>Phoenix Based</h4>
-          <p className={`text-[10px] ${textSub}`}>Operating and serving teams from Phoenix, AZ.</p>
+          <h4 className={`font-bold text-xs mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>United States Based</h4>
+          <p className={`text-[10px] ${textSub}`}>Operating and serving teams across the United States.</p>
         </div>
         <div className="p-4">
           <div className="w-8 h-8 rounded-full bg-gold-500/10 text-gold-400 flex items-center justify-center mx-auto mb-3">
