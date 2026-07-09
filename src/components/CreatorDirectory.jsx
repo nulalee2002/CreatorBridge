@@ -2161,7 +2161,7 @@ export function CreatorDirectory({
                 <div className="max-w-md">
                   <p className="text-xs font-bold text-gold-400 mb-0.5">Daily Curated Preview</p>
                   <p className="text-[11px] text-charcoal-400 leading-normal">
-                    Guests see a limited selection of 3 verified creators each day. Create a free account to browse the full national directory, view active rates, packages, and book instantly.
+                    Guests see a limited selection of 3 verified creators each day. Create a free account to browse the full national directory, view active rates, packages, and book in minutes.
                   </p>
                 </div>
                 <button

@@ -141,7 +141,7 @@ export function JoinAsCreator({ dark }) {
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle size={14} className="text-gold-400 shrink-0" />
-                <span>50% final payment paid instantly on project approval</span>
+                <span>50% final payment released on project approval</span>
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle size={14} className="text-gold-400 shrink-0" />

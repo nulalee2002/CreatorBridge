@@ -641,8 +641,8 @@ export function NetworkingPage({ dark, user, profile }) {
         .order('created_at', { ascending: false })
         .limit(20);
       if (error) {
-        setPostError('Network posts could not be loaded. Showing local fallback content.');
-        setPosts(loadLocalPosts(selectedState));
+        setPostError('Network posts could not be loaded. Please try again shortly.');
+        setPosts([]);
       } else {
         const remotePostIds = (data || []).map(p => p.id).filter(isUuid);
         const repliesByPost = new Map();
@@ -663,10 +663,10 @@ export function NetworkingPage({ dark, user, profile }) {
           }
         }
         const remotePosts = (data || []).map(post => withSafeReplies({ ...post, replies: repliesByPost.get(post.id) || [] }));
-        setPosts(remotePosts.length ? remotePosts : loadLocalPosts(selectedState));
+        setPosts(remotePosts);
       }
     } else {
-      setPosts(loadLocalPosts(selectedState));
+      setPosts([]);
     }
     setLoadingPosts(false);
   }
@@ -683,10 +683,10 @@ export function NetworkingPage({ dark, user, profile }) {
         .order('created_at', { ascending: true })
         .limit(50);
       if (error) {
-        setChatError('Live chat could not be loaded. Showing local fallback content.');
-        msgs = loadLocalChat(selectedState);
+        setChatError('Live chat could not be loaded. Please try again shortly.');
+        msgs = [];
       } else {
-        msgs = data || loadLocalChat(selectedState);
+        msgs = data || [];
       }
 
       channelRef.current?.unsubscribe();
@@ -702,7 +702,7 @@ export function NetworkingPage({ dark, user, profile }) {
         })
         .subscribe();
     } else {
-      msgs = loadLocalChat(selectedState);
+      msgs = [];
     }
     setMessages(msgs);
   }
