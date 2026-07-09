@@ -186,4 +186,42 @@ from git history. `npm run build` passes. **Not pushed — awaiting Lee's review
 
 **Verification:** `node` swap scripts self-asserted every replacement count and
 confirmed zero fabricated tokens survive; `npm run build` → BUILD OK. Live-browser
-screenshot of the rebalanced homepage still pending (recommended before deploy).
+render of the homepage confirmed clean (zero fabricated tokens in the rendered
+DOM, marquee = production lanes, JSON-LD parses US-national, no console errors).
+
+---
+
+## H2 — Fabricated /network statistics (caught by the LIVE RENDER, not the audit)
+
+**How it was found:** the grep-based audit and the token-scan both MISSED this —
+they only match string literals. Actually loading `/network` in the browser
+(the Verify gate) immediately exposed fabricated *rendered numbers*. Lesson
+logged: a passing build + token-scan is not verification for UI; render it.
+
+**What was fake (from the `MOCK_STATES` array, lines 42-66):** per-state
+`creators`/`posts`/`active` counts driving —
+- header tiles "142 CREATORS / 18 POSTS TODAY / 23 ACTIVE NOW",
+- every state card's "116 verified / 89 verified / …",
+- the active-state banner "{N} verified creators",
+- the sidebar "Verified creators {N} / Posts this week {N}",
+- the chat header "{N} online" + "Active networks pulse green" live-pulse dots.
+
+There is **1 real creator**, so every one of these was fabricated and was LIVE.
+
+**Fix (render-level, layout preserved):**
+- Header 3 tiles → honest feature callouts: "Verified / Creators only", "By state
+  / Stay local", "On-platform / Private & safe" (same liquid-glass 3-col grid).
+- State cards → dropped the fake "{N} verified" line (cards now abbr + name,
+  matching the "+ More" tile); removed the `hot` live-pulse class.
+- "Active networks pulse green" legend → "Pick your state to view its lane".
+- Active-state banner → "Join the local conversation and build trusted
+  relationships — verified creators only" (no count).
+- Sidebar rows → "Access: Verified only" / "Scope: {state name}" (no counts).
+- Chat header → "Verified only" (removed "{N} online" + live-pulse dot).
+- `MOCK_STATES` kept as the state list; its numeric fields are now unused/dormant.
+
+**Verification (the real one this time):** rendered `/network` live — rendered DOM
+has zero fabricated tokens (no "142", no "POSTS TODAY", no "{N} verified", no
+"online", no "pulse green"); `.state-tile .count` elements gone; header tiles show
+the honest labels; no console errors; layout confirmed balanced by screenshot.
+`npm run build` → BUILD OK.

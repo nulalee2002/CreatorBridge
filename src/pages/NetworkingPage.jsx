@@ -964,16 +964,16 @@ export function NetworkingPage({ dark, user, profile }) {
             {/* Header statistics block */}
             <div className="lg:col-span-5 grid grid-cols-3 gap-3">
               <div className="liquid-glass rounded-xl p-3 text-center">
-                <div className="text-2xl font-serif gold-text leading-none">{activeStateObj?.creators || '—'}</div>
-                <div className="text-[9px] uppercase tracking-wider text-[var(--text-dim)] mt-1">Creators</div>
+                <div className="text-lg font-serif gold-text leading-tight">Verified</div>
+                <div className="text-[9px] uppercase tracking-wider text-[var(--text-dim)] mt-1">Creators only</div>
               </div>
               <div className="liquid-glass rounded-xl p-3 text-center">
-                <div className="text-2xl font-serif gold-text leading-none">{activeStateObj?.posts || '—'}</div>
-                <div className="text-[9px] uppercase tracking-wider text-[var(--text-dim)] mt-1">Posts today</div>
+                <div className="text-lg font-serif gold-text leading-tight">By state</div>
+                <div className="text-[9px] uppercase tracking-wider text-[var(--text-dim)] mt-1">Stay local</div>
               </div>
               <div className="liquid-glass rounded-xl p-3 text-center">
-                <div className="text-2xl font-serif gold-text leading-none">{activeStateObj?.active || '—'}</div>
-                <div className="text-[9px] uppercase tracking-wider text-[var(--text-dim)] mt-1">Active now</div>
+                <div className="text-lg font-serif gold-text leading-tight">On-platform</div>
+                <div className="text-[9px] uppercase tracking-wider text-[var(--text-dim)] mt-1">Private &amp; safe</div>
               </div>
             </div>
           </div>
@@ -985,7 +985,7 @@ export function NetworkingPage({ dark, user, profile }) {
           <div className="flex items-center justify-between mb-3">
             <div className="text-[10px] tracking-[0.2em] uppercase text-[var(--text-dim)] font-medium">Choose your state</div>
             <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-dim)]">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Active networks pulse green
+              Pick your state to view its lane
             </div>
           </div>
           
@@ -994,11 +994,10 @@ export function NetworkingPage({ dark, user, profile }) {
               <button
                 key={st.abbr}
                 onClick={() => setSelectedState(st.abbr)}
-                className={`state-tile ${st.hot ? 'hot' : ''} ${selectedState === st.abbr ? 'active' : ''}`}
+                className={`state-tile ${selectedState === st.abbr ? 'active' : ''}`}
               >
                 <div className="abbr">{st.abbr}</div>
                 <div className="name truncate">{st.name}</div>
-                <div className="count truncate">{st.creators} verified</div>
               </button>
             ))}
 
@@ -1033,7 +1032,7 @@ export function NetworkingPage({ dark, user, profile }) {
               <span className="tag-green">Verified creators only</span>
             </div>
             <p className="text-xs text-[var(--text-secondary)]">
-              {activeStateObj?.creators} verified creators · join the local conversation and build trusted relationships.
+              Join the local conversation and build trusted relationships — verified creators only.
             </p>
           </div>
           <div className="flex gap-2">
@@ -1233,8 +1232,7 @@ export function NetworkingPage({ dark, user, profile }) {
                   <div className="text-sm font-medium text-white">{activeStateObj.name}</div>
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-secondary)]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span>{activeStateObj?.active || '1'} online</span>
+                  <span>Verified only</span>
                 </div>
               </div>
 
@@ -1365,16 +1363,12 @@ export function NetworkingPage({ dark, user, profile }) {
               
               <div className="space-y-2 border-b border-white/[0.05] pb-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-[var(--text-secondary)]">Verified creators</span>
-                  <span className="text-xs font-bold text-white">
-                    {activeInStateStats.creators}
-                  </span>
+                  <span className="text-xs text-[var(--text-secondary)]">Access</span>
+                  <span className="text-xs font-bold text-white">Verified only</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-[var(--text-secondary)]">Posts this week</span>
-                  <span className="text-xs font-bold text-white">
-                    {activeInStateStats.postsWeek}
-                  </span>
+                  <span className="text-xs text-[var(--text-secondary)]">Scope</span>
+                  <span className="text-xs font-bold text-white">{activeStateObj.name}</span>
                 </div>
               </div>
               
