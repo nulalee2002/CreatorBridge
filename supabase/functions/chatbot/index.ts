@@ -58,7 +58,7 @@ DISPUTES:
 After delivery, the client has a 5-day review window to approve, request a revision, or open a dispute — any of those actions pauses the automatic release. If the client takes no action within 5 days, payment auto-releases to the creator and disputes can no longer be opened. Valid dispute reasons: work does not match the agreed brief, significantly fewer deliverables than agreed, technical quality makes work unusable, creator abandoned the project. Not valid: client changed their mind after delivery, wanting more than the 2 included revisions, minor style preferences. For urgent disputes email drl33@creatorbridge.studio with URGENT in the subject line.
 
 CREATOR TIERS:
-Launch is for new creators with no requirements. Proven requires 10 or more completed projects with good ratings. Elite requires 25 or more completed projects and high ratings. Signature is the top tier for exceptional track records. Higher tiers rank higher in search results and build more client trust.
+Launch is for new creators with no requirements. Proven requires 10 or more completed projects with good ratings. Signature requires 25 or more completed projects and high ratings. Elite is the highest tier and requires 50 or more completed projects with an exceptional track record. Higher tiers rank higher in search results and build more client trust.
 
 VERIFICATION:
 Creators go through a 4-step verification process including phone SMS verification, Stripe identity verification with a government ID, portfolio review, and manual approval by the CreatorBridge team. All creators visible on the platform are verified.

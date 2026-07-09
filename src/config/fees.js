@@ -8,9 +8,10 @@ export const PLATFORM_FEES = {
 
 /** Loyalty tiers based on completed projects */
 export const LOYALTY_TIERS = [
-  { name: 'Launch', minProjects: 0,  maxProjects: 9,  feePct: 10, badge: null },
-  { name: 'Proven', minProjects: 10, maxProjects: 24, feePct: 8,  badge: 'silver' },
-  { name: 'Elite',  minProjects: 25, maxProjects: Infinity, feePct: 6, badge: 'gold' },
+  { name: 'Launch',    minProjects: 0,  maxProjects: 9,        feePct: 10, badge: null },
+  { name: 'Proven',    minProjects: 10, maxProjects: 24,       feePct: 8,  badge: 'silver' },
+  { name: 'Signature', minProjects: 25, maxProjects: 49,       feePct: 6,  badge: 'gold' },
+  { name: 'Elite',     minProjects: 50, maxProjects: Infinity, feePct: 5,  badge: 'gold' },
 ];
 
 /**

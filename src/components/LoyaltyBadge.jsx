@@ -2,7 +2,7 @@ import { getLoyaltyTier } from '../config/fees.js';
 
 /**
  * Public-facing badge shown on creator profile cards and profile pages.
- * Only renders for the loyalty tiers above Launch (Proven and Elite).
+ * Only renders for the loyalty tiers above Launch.
  */
 export function LoyaltyBadge({ completedProjects = 0 }) {
   const { badge, name } = getLoyaltyTier(completedProjects);
@@ -40,7 +40,12 @@ export function LoyaltyProgress({ completedProjects = 0, dark }) {
     : dark ? 'text-charcoal-300' : 'text-gray-500';
 
   // Progress bar pct within current tier range. Top tier (no nextTier) is full.
-  const tierDef = { Launch: { min: 0, max: 10 }, Proven: { min: 10, max: 25 }, Elite: { min: 25, max: 25 } }[name] || { min: 0, max: 10 };
+  const tierDef = {
+    Launch: { min: 0, max: 10 },
+    Proven: { min: 10, max: 25 },
+    Signature: { min: 25, max: 50 },
+    Elite: { min: 50, max: 50 },
+  }[name] || { min: 0, max: 10 };
   const pct = !nextTier ? 100 : Math.round(((completedProjects - tierDef.min) / (tierDef.max - tierDef.min)) * 100);
 
   return (

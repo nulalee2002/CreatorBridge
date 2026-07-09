@@ -3,7 +3,7 @@ import { CREATOR_TIERS, tierBadgeClass, calculateTier } from '../config/tiers.js
 /**
  * Compact tier badge - shown on cards, profile headers, match results.
  * Props:
- *   tierId  - 'launch' | 'proven' | 'elite' | 'signature'
+ *   tierId  - 'launch' | 'proven' | 'signature' | 'elite'
  *   size    - 'sm' | 'md' (default 'sm')
  */
 export function TierBadge({ tierId = 'launch', size = 'sm' }) {
@@ -33,7 +33,7 @@ export function TierBadge({ tierId = 'launch', size = 'sm' }) {
 export function TierProgress({ creator, dark }) {
   const tierId = creator?.tier || calculateTier(creator || {});
   const tier   = CREATOR_TIERS[tierId];
-  const tierOrder = ['launch', 'proven', 'elite', 'signature'];
+  const tierOrder = ['launch', 'proven', 'signature', 'elite'];
   const tierIndex = tierOrder.indexOf(tierId);
   const nextTierId = tierOrder[tierIndex + 1];
   const nextTier   = nextTierId ? CREATOR_TIERS[nextTierId] : null;
@@ -125,7 +125,7 @@ export function TierUpBanner({ newTierId, dark, onDismiss }) {
           Congratulations! You have reached {tier.name} status on CreatorBridge.
         </p>
         <p className={`text-xs mt-0.5 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
-          {tier.label} - {tier.name === 'Proven' ? 'Your creator fee tier has improved.' : tier.name === 'Elite' ? 'Your profile is now boosted in search results.' : 'You have reached the highest creator tier.'}
+          {tier.label} - {tier.name === 'Proven' ? 'Your creator fee tier has improved.' : tier.name === 'Signature' ? 'Your profile is now boosted in search results.' : 'You have reached the highest creator tier.'}
         </p>
       </div>
       {onDismiss && (

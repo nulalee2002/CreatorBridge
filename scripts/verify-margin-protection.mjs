@@ -64,6 +64,7 @@ assert(
 assert(feesConfig.includes('minProjects: 0') && feesConfig.includes('feePct: 10'), 'Starter loyalty tier must remain at 10%');
 assert(feesConfig.includes('minProjects: 10') && feesConfig.includes('feePct: 8'), '10-booking loyalty tier must remain at 8%');
 assert(feesConfig.includes('minProjects: 25') && feesConfig.includes('feePct: 6'), '25-booking loyalty tier must remain at 6%');
+assert(feesConfig.includes('minProjects: 50') && feesConfig.includes('feePct: 5'), '50-booking Elite loyalty tier must remain at 5%');
 
 assert(marginsConfig.includes(clientNote), 'Client minimum-budget note must live in shared margin copy');
 assert(marginsConfig.includes(clientError), 'Client minimum-budget rejection must live in shared margin copy');
@@ -81,19 +82,19 @@ assert(supportChatbot.includes('CLIENT_MINIMUM_PROJECT_ERROR'), 'Chatbot booking
 assert(projectStorage.includes('MINIMUM_PROJECT_BUDGET_DOLLARS'), 'Local project fallback must use the platform floor');
 
 const projectAmountCents = 25000;
-const goldCreatorFeeCents = Math.round(projectAmountCents * 0.06);
+const eliteCreatorFeeCents = Math.round(projectAmountCents * 0.05);
 const retainerChargeCents = Math.round(projectAmountCents * 0.5);
 const finalChargeCents = projectAmountCents - retainerChargeCents;
 const stripeFeesCents =
   Math.round(retainerChargeCents * 0.029 + 30) +
   Math.round(finalChargeCents * 0.029 + 30);
-assert(goldCreatorFeeCents - stripeFeesCents > 0, 'A $250 Gold booking with client fee waived must still clear Stripe processing costs');
+assert(eliteCreatorFeeCents - stripeFeesCents > 0, 'A $250 Elite booking with client fee waived must still clear Stripe processing costs');
 
 console.log(JSON.stringify({
   ok: true,
   platformMinimumProjectBudgetCents: 25000,
   minimumPlatformFeeCents: 500,
-  goldWaivedClientFeeNetAfterStripeCents: goldCreatorFeeCents - stripeFeesCents,
+  eliteWaivedClientFeeNetAfterStripeCents: eliteCreatorFeeCents - stripeFeesCents,
   serverFloors: ['create_project_brief', 'submit_quote_request', 'apply_to_project', 'packages', 'creator_listings', 'checkout'],
   loyaltyTiersUntouched: true,
   referralWaiverUntouched: true,

@@ -23,6 +23,7 @@ const ok=(n,p)=>tests.push([n,!!p]);
 ok('10 percent tier',calculateCollaborationFees(100000,0).creatorFeePct===10);
 ok('8 percent tier',calculateCollaborationFees(100000,10).creatorFeePct===8);
 ok('6 percent tier',calculateCollaborationFees(100000,25).creatorFeePct===6);
+ok('5 percent tier',calculateCollaborationFees(100000,50).creatorFeePct===5);
 ok('$5 fee floor',calculateCollaborationFees(25000,25).platformFeeCents>=500);
 ok('zero buyer platform fee',calculateCollaborationFees(25000,0).buyerFeeCents===0);
 ok('prime pays ACH cost',calculateCollaborationFees(25000,0).primeChargeCents>25000);

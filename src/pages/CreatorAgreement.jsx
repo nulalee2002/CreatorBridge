@@ -119,17 +119,17 @@ export function CreatorAgreement({ dark }) {
                   </div>
                   <div className="flex justify-between border-b border-gray-800 pb-2">
                     <div>
-                      <p className="font-bold text-white">Elite Tier</p>
+                      <p className="font-bold text-white">Signature Tier</p>
                       <p className={`text-[10px] ${textSub}`}>After 25 completed projects</p>
                     </div>
                     <span className="font-mono font-bold text-gold-400">6% Platform Fee</span>
                   </div>
                   <div className="flex justify-between">
                     <div>
-                      <p className="font-bold text-white">Signature Tier</p>
-                      <p className={`text-[10px] ${textSub}`}>Top-tier recognition after 50 completed projects / custom invite</p>
+                      <p className="font-bold text-white">Elite Tier</p>
+                      <p className={`text-[10px] ${textSub}`}>Top-tier recognition after 50 completed projects</p>
                     </div>
-                    <span className="font-mono font-bold text-gold-400">6% Platform Fee</span>
+                    <span className="font-mono font-bold text-gold-400">5% Platform Fee</span>
                   </div>
                 </div>
               </div>

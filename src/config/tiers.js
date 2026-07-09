@@ -22,8 +22,8 @@ export const CREATOR_TIERS = {
       completionRate: 80,
     },
   },
-  elite: {
-    name: 'Elite',
+  signature: {
+    name: 'Signature',
     label: 'Top Performer',
     color: 'gold',
     icon: '⭐',
@@ -33,8 +33,8 @@ export const CREATOR_TIERS = {
       completionRate: 90,
     },
   },
-  signature: {
-    name: 'Signature',
+  elite: {
+    name: 'Elite',
     label: 'Industry Leader',
     color: 'gold',
     icon: '👑',
@@ -47,7 +47,7 @@ export const CREATOR_TIERS = {
 };
 
 // Ordered list for iteration (lowest to highest)
-export const TIER_ORDER = ['launch', 'proven', 'elite', 'signature'];
+export const TIER_ORDER = ['launch', 'proven', 'signature', 'elite'];
 
 // ── Pricing Floors by Tier and Service ───────────────────────────
 // Note: 'postProduction' is the service ID used in the app (from rates.js)
@@ -55,38 +55,38 @@ export const PRICING_FLOORS = {
   video: {
     launch:    { minProject: 200,  minHourly: 35  },
     proven:    { minProject: 500,  minHourly: 75  },
-    elite:     { minProject: 1500, minHourly: 150 },
-    signature: { minProject: 3000, minHourly: 250 },
+    signature: { minProject: 1500, minHourly: 150 },
+    elite:     { minProject: 3000, minHourly: 250 },
   },
   photography: {
     launch:    { minProject: 100,  minHourly: 25  },
     proven:    { minProject: 250,  minHourly: 50  },
-    elite:     { minProject: 800,  minHourly: 125 },
-    signature: { minProject: 2000, minHourly: 200 },
+    signature: { minProject: 800,  minHourly: 125 },
+    elite:     { minProject: 2000, minHourly: 200 },
   },
   podcast: {
     launch:    { minProject: 75,   minHourly: 25  },
     proven:    { minProject: 200,  minHourly: 50  },
-    elite:     { minProject: 500,  minHourly: 100 },
-    signature: { minProject: 1500, minHourly: 175 },
+    signature: { minProject: 500,  minHourly: 100 },
+    elite:     { minProject: 1500, minHourly: 175 },
   },
   drone: {
     launch:    { minProject: 150,  minHourly: 50  },
     proven:    { minProject: 400,  minHourly: 100 },
-    elite:     { minProject: 1000, minHourly: 200 },
-    signature: { minProject: 2500, minHourly: 300 },
+    signature: { minProject: 1000, minHourly: 200 },
+    elite:     { minProject: 2500, minHourly: 300 },
   },
   social: {
     launch:    { minProject: 75,   minHourly: 20  },
     proven:    { minProject: 200,  minHourly: 40  },
-    elite:     { minProject: 500,  minHourly: 80  },
-    signature: { minProject: 1500, minHourly: 150 },
+    signature: { minProject: 500,  minHourly: 80  },
+    elite:     { minProject: 1500, minHourly: 150 },
   },
   postProduction: {
     launch:    { minProject: 50,   minHourly: 20  },
     proven:    { minProject: 150,  minHourly: 40  },
-    elite:     { minProject: 500,  minHourly: 80  },
-    signature: { minProject: 1500, minHourly: 150 },
+    signature: { minProject: 500,  minHourly: 80  },
+    elite:     { minProject: 1500, minHourly: 150 },
   },
 };
 
@@ -140,8 +140,8 @@ export function tierBadgeClass(tierId) {
     // Premium tiers read oxblood (deep luxury red); Proven reads forest (the
     // "Trusted Creator" green). Light text variants keep them legible on the
     // dark chrome. Kept subtle on purpose so the palette reads, not shouts.
-    case 'signature': return 'bg-oxblood-500/25 text-oxblood-100 ring-1 ring-oxblood-500/45 shadow-[0_0_8px_rgba(90,16,18,0.25)]';
-    case 'elite':     return 'bg-oxblood-500/15 text-oxblood-100 ring-1 ring-oxblood-500/35';
+    case 'elite':     return 'bg-oxblood-500/25 text-oxblood-100 ring-1 ring-oxblood-500/45 shadow-[0_0_8px_rgba(90,16,18,0.25)]';
+    case 'signature': return 'bg-oxblood-500/15 text-oxblood-100 ring-1 ring-oxblood-500/35';
     case 'proven':    return 'bg-forest-500/15 text-forest-100 ring-1 ring-forest-300/35';
     default:          return 'bg-gray-500/15 text-gray-400 ring-1 ring-gray-500/20';
   }

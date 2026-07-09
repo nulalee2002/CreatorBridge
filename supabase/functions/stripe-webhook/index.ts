@@ -10,9 +10,9 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
 const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? '';
 
 function calculateCreatorTier(completedProjects: number, rating = 0, completionRate = 100) {
-  if (completedProjects >= 50 && rating >= 4.7 && completionRate >= 95) return 'signature';
-  if (completedProjects >= 20 && rating >= 4.5 && completionRate >= 90) return 'elite';
-  if (completedProjects >= 5 && rating >= 4.0 && completionRate >= 80) return 'proven';
+  if (completedProjects >= 50 && rating >= 4.7 && completionRate >= 95) return 'elite';
+  if (completedProjects >= 25 && rating >= 4.5 && completionRate >= 90) return 'signature';
+  if (completedProjects >= 10 && rating >= 4.0 && completionRate >= 80) return 'proven';
   return 'launch';
 }
 

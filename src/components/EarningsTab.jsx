@@ -86,8 +86,8 @@ function StatCard({ icon: Icon, label, value, sub, color = 'text-gold-400', dark
 
 export function EarningsTab({ creator, dark }) {
   const [txns, setTxns] = useState([]);
-  // The creator's actual platform fee follows their loyalty tier (10/8/6 at
-  // 0/10/25 completed projects), not the flat starting rate.
+  // The creator's actual platform fee follows their loyalty tier (10/8/6/5 at
+  // 0/10/25/50 completed projects), not the flat starting rate.
   const completedProjects = creator?.completed_projects ?? creator?.completedProjects ?? 0;
   const currentTier = getLoyaltyTier(completedProjects);
   const creatorFeePct = currentTier.feePct;

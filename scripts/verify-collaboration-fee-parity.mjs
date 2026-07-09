@@ -22,7 +22,7 @@ for (const key of CONSTANTS) {
 // Sample the fee function across tier thresholds, the platform-fee floor, and the
 // ACH processing cap so any formula change on one side is caught.
 const amounts = [25000, 30000, 62500, 100000, 250000, 1000000];
-const projectCounts = [0, 9, 10, 24, 25, 100];
+const projectCounts = [0, 9, 10, 24, 25, 49, 50, 100];
 
 for (const amount of amounts) {
   for (const count of projectCounts) {

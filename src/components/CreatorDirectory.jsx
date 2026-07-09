@@ -1467,7 +1467,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
                 },
                 {
                   title: 'Section 2 — Platform Fee Structure & Tiers',
-                  body: 'Our platform fee percentage decreases as you complete more projects: Launch Tier (10%), Proven Tier (8%), Elite Tier (6%), and Signature Tier (5%).',
+                  body: 'Our platform fee percentage decreases as you complete more projects: Launch Tier (10%), Proven Tier (8%), Signature Tier (6%), and Elite Tier (5%).',
                 },
                 {
                   title: 'Section 3 — Payments & Stripe Connect',
@@ -2081,8 +2081,8 @@ export function CreatorDirectory({
               <div className="space-y-1">
                 {[
                   { id: 'all', label: 'Any tier' },
-                  { id: 'signature', label: 'Signature' },
                   { id: 'elite', label: 'Elite' },
+                  { id: 'signature', label: 'Signature' },
                   { id: 'proven', label: 'Proven' },
                   { id: 'launch', label: 'Launch' }
                 ].map(tier => {

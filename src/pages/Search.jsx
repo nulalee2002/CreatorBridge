@@ -7,8 +7,8 @@ import { getPillar, getSubNiche } from '../data/taxonomy.js';
 import { CreatorAvatar } from '../components/CreatorAvatar.jsx';
 
 const TIER_COLOURS = {
-  Elite:     'bg-oxblood-500/25 text-oxblood-100    border-oxblood-500/35',
-  Signature: 'bg-oxblood-500/35 text-oxblood-50     border-oxblood-500/45',
+  Signature: 'bg-oxblood-500/25 text-oxblood-100    border-oxblood-500/35',
+  Elite:     'bg-oxblood-500/35 text-oxblood-50     border-oxblood-500/45',
 };
 
 function TierChip({ tier }) {

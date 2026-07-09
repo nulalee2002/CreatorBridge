@@ -26,7 +26,7 @@ export function getPlatformGuideResponse(question = '') {
   }
 
   if (q.includes('fee') || q.includes('cost') || q.includes('price') || q.includes('how much')) {
-    return 'Clients pay a flat 5% booking fee, charged once with the final payment when the project completes. Creators start at a 10% platform cut, then drop to 8% after 10 completed projects and 6% after 25 completed projects. For creator-to-creator collaborations, the person hiring pays no buyer platform fee and only covers the small bank-processing cost. The person getting hired pays the normal CreatorBridge creator fee. Example: on a $500 collaboration, the hiring creator pays $504, the hired creator receives $450 on the 10% tier, CreatorBridge keeps $50, and the extra $4 covers bank processing.';
+    return 'Clients pay a flat 5% booking fee, charged once with the final payment when the project completes. Creators start at a 10% platform cut, then drop to 8% after 10 completed projects, 6% at the Signature tier after 25 completed projects, and 5% at the Elite tier after 50 completed projects. For creator-to-creator collaborations, the person hiring pays no buyer platform fee and only covers the small bank-processing cost. The person getting hired pays the normal CreatorBridge creator fee. Example: on a $500 collaboration, the hiring creator pays $504, the hired creator receives $450 on the 10% tier, CreatorBridge keeps $50, and the extra $4 covers bank processing.';
   }
 
   // Cancellation must be checked BEFORE the payment/retainer intent: questions
@@ -85,7 +85,7 @@ export function getPlatformGuideResponse(question = '') {
   }
 
   if (q.includes('tier') || q.includes('launch') || q.includes('proven') || q.includes('elite') || q.includes('signature')) {
-    return 'Creator tiers are earned through platform history. Launch is for newer verified creators, Proven starts after completed project history, Elite and Signature signal stronger performance and trust. Tiers should help clients understand experience without letting anyone buy status.';
+    return 'Creator tiers are earned through platform history. Launch is for newer verified creators, Proven starts after completed project history, Signature is for stronger platform performance, and Elite is the highest tier for exceptional track records. Tiers help clients understand experience without letting anyone buy status.';
   }
 
   if (q.includes('24') || q.includes('respond') || q.includes('response time') || q.includes('reply')) {

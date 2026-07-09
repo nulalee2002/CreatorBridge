@@ -212,7 +212,7 @@ export function AdminAnalytics({ dark }) {
   }).length;
 
   // Tier distribution (all listings, regardless of review status)
-  const TIERS      = ['Launch', 'Proven', 'Elite', 'Signature'];
+  const TIERS      = ['Launch', 'Proven', 'Signature', 'Elite'];
   const TIER_COLORS = ['bg-charcoal-600', 'bg-gold-500/40', 'bg-gold-500/65', 'bg-gold-400'];
   const tierCounts = TIERS.map((tier, i) => ({
     label:    tier,

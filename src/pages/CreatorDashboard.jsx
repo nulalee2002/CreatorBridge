@@ -130,12 +130,12 @@ const CREATOR_TIERS = [
     feePercent: 8, requirement: 10, description: '10+ completed projects. Fee drops to 8%.',
   },
   {
-    id: 'elite', label: 'Elite', icon: '💎',
+    id: 'signature', label: 'Signature', icon: '💎',
     color: 'text-gold-400', borderColor: 'border-gold-500/50', bgColor: 'bg-gold-500/10',
     feePercent: 6, requirement: 25, description: '25+ completed projects. Fee drops to 6%.',
   },
   {
-    id: 'signature', label: 'Signature', icon: '👑',
+    id: 'elite', label: 'Elite', icon: '👑',
     color: 'text-gold-300', borderColor: 'border-gold-500/45', bgColor: 'bg-gold-500/10',
     feePercent: 5, requirement: 50, description: '50+ completed projects. Top tier, 5% fee.',
   },
