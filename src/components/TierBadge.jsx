@@ -10,8 +10,9 @@ export function TierBadge({ tierId = 'launch', size = 'sm' }) {
   const tier = CREATOR_TIERS[tierId];
   if (!tier) return null;
 
-  // Don't show a badge for launch tier - it's the default, no noise
-  if (tierId === 'launch') return null;
+  // Do not show baseline status badges publicly. Every listed creator is
+  // already verified; only higher platform tiers need a public badge.
+  if (tierId === 'launch' || tierId === 'proven') return null;
 
   const cls = tierBadgeClass(tierId);
   const textSize = size === 'md' ? 'text-xs' : 'text-[10px]';
@@ -124,7 +125,7 @@ export function TierUpBanner({ newTierId, dark, onDismiss }) {
           Congratulations! You have reached {tier.name} status on CreatorBridge.
         </p>
         <p className={`text-xs mt-0.5 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
-          {tier.label} - {tier.name === 'Proven' ? 'Clients can now see your Trusted Creator badge.' : tier.name === 'Elite' ? 'Your profile is now boosted in search results.' : 'You have reached the highest creator tier.'}
+          {tier.label} - {tier.name === 'Proven' ? 'Your creator fee tier has improved.' : tier.name === 'Elite' ? 'Your profile is now boosted in search results.' : 'You have reached the highest creator tier.'}
         </p>
       </div>
       {onDismiss && (

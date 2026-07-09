@@ -43,7 +43,7 @@ let creator = {
   gear: ["Hasselblad H6D-100c", "Phase One IQ4", "Profoto B10s × 4", "DJI Ronin 4D"],
   languages: ["English", "Spanish"],
   crew: "2-person core team + on-call stylists & assistants",
-  tiers: ["Verified", "Elite"],
+  tiers: ["Elite"],
   avatar: "/images/creatorbridge/handoff/photo-1494790108377-be9c29b29330.jpg",
   reel: "/images/creatorbridge/handoff/photo-1485846234645-a62644f84728.jpg"
 };
@@ -113,6 +113,7 @@ const Pill = ({ children, tone = "gold" }) => (
 
 const fmt = (n) => "$" + n.toLocaleString();
 const FALLBACK_REEL_POSTER = "/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg";
+const PUBLIC_TIER_LABELS = new Set(['Elite', 'Signature']);
 
 function getIntroPoster() {
   return isBunnyVideoRef(creator.reel)
@@ -215,7 +216,7 @@ function HeroInfo({ onJumpBook, onMessage, onPlayReel, saved, setSaved, collabor
               <span className="label">Primary pillar</span>
               <span className="value">{creator.pillar.label}</span>
             </span>
-            {creator.tiers.map(t => <Pill key={t}>{t}</Pill>)}
+            {creator.tiers.filter(t => PUBLIC_TIER_LABELS.has(t)).map(t => <Pill key={t}>{t}</Pill>)}
             <Pill tone="green">Available now</Pill>
             {creator.openToCollaborations && <Pill tone="green">Open to Creator Collaborations</Pill>}
           </div>
@@ -968,7 +969,7 @@ function adaptSeedCreator(seed) {
     gear: ARIA_CREATOR.gear,
     languages: ARIA_CREATOR.languages,
     crew: ARIA_CREATOR.crew,
-    tiers: [seed.tier ? seed.tier.charAt(0).toUpperCase() + seed.tier.slice(1) : 'Verified'],
+    tiers: [seed.tier ? seed.tier.charAt(0).toUpperCase() + seed.tier.slice(1) : 'Launch'],
     avatar: seed.avatar || ARIA_CREATOR.avatar,
     reel: seed.video_intro_url || seed.videoIntroUrl || seed.cover || ARIA_CREATOR.reel,
     reelPoster: seed.cover || ARIA_CREATOR.reel,

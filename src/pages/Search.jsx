@@ -7,16 +7,18 @@ import { getPillar, getSubNiche } from '../data/taxonomy.js';
 import { CreatorAvatar } from '../components/CreatorAvatar.jsx';
 
 const TIER_COLOURS = {
-  Launch:    'bg-charcoal-800/60 text-charcoal-300  border-white/[0.08]',
-  Proven:    'bg-gold-500/10    text-gold-400       border-gold-500/20',
   Elite:     'bg-oxblood-500/25 text-oxblood-100    border-oxblood-500/35',
   Signature: 'bg-oxblood-500/35 text-oxblood-50     border-oxblood-500/45',
 };
 
 function TierChip({ tier }) {
+  const normalized = String(tier || '').toLowerCase();
+  const label = normalized === 'signature' ? 'Signature' : normalized === 'elite' ? 'Elite' : '';
+  if (!label) return null;
+
   return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${TIER_COLOURS[tier] ?? TIER_COLOURS.Launch}`}>
-      {tier ?? 'Launch'}
+    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${TIER_COLOURS[label]}`}>
+      {label}
     </span>
   );
 }
@@ -219,7 +221,7 @@ export function Search({ dark }) {
           {/* Results */}
           {!searched && (
             <p className={`text-center text-sm ${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
-              Start typing to search across verified creators.
+              Start typing to search across platform creators.
             </p>
           )}
 

@@ -17,7 +17,7 @@ export const CREATOR_TIERS = {
     color: 'gold',
     icon: '✓',
     requirements: {
-      completedProjects: 5,
+      completedProjects: 10,
       minRating: 4.0,
       completionRate: 80,
     },
@@ -28,7 +28,7 @@ export const CREATOR_TIERS = {
     color: 'gold',
     icon: '⭐',
     requirements: {
-      completedProjects: 20,
+      completedProjects: 25,
       minRating: 4.5,
       completionRate: 90,
     },

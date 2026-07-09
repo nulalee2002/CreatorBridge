@@ -8,8 +8,6 @@ import { REGIONS } from '../data/regions.js';
 import { SEED_CREATORS, initSeedData, SHOW_DEMO_CREATORS } from '../data/seedCreators.js';
 import { POLICY_VERSIONS } from '../config/legal.js';
 import { zipToRegion, zipToCity } from '../data/zipCodes.js';
-import { VerificationBadge } from './VerificationFlow.jsx';
-import { LoyaltyBadge } from './LoyaltyBadge.jsx';
 import { TierBadge } from './TierBadge.jsx';
 import { FastMatch } from './FastMatch.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
@@ -18,8 +16,6 @@ import { uploadUserAsset } from '../utils/storage.js';
 import { uploadVideoToBunny, makeBunnyVideoRef, getBunnyVideoId } from '../utils/bunnyStream.js';
 import { checkCreatorText, logFilterEvent, CREATOR_TEXT_BLOCK_MESSAGE } from '../utils/messageFilter.js';
 import { sendNotificationEmail } from '../lib/notifications.js';
-import { HandoffPage } from './HandoffPage.jsx';
-import { handoffPages } from '../data/handoffPages.js';
 import { CreatorAvatar } from './CreatorAvatar.jsx';
 import { creatorListingMeetsPublicRules } from '../utils/creatorReadiness.js';
 
@@ -261,7 +257,7 @@ function CreatorCard({ creator, dark, onDelete, onViewProfile }) {
               Available
             </span>
           )}
-          {creator.tier && creator.tier !== 'launch' && (
+          {creator.tier && ['elite', 'signature'].includes(String(creator.tier).toLowerCase()) && (
             <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold tracking-wider uppercase shadow-sm ${
               ['elite', 'signature'].includes(String(creator.tier).toLowerCase())
                 ? 'bg-oxblood-500/90 text-white'
@@ -309,14 +305,8 @@ function CreatorCard({ creator, dark, onDelete, onViewProfile }) {
           </button>
         </div>
 
-        {/* Sub-header badges (Verification, Location, Experience) */}
+        {/* Sub-header metadata */}
         <div className="flex flex-wrap items-center gap-2 mb-3 mt-1">
-          {creator.verification_status && creator.verification_status !== 'unverified' ? (
-            <VerificationBadge status={creator.verification_status} />
-          ) : creator.verified ? (
-            <BadgeCheck size={13} className="text-forest-100 shrink-0" title="Verified creator" />
-          ) : null}
-          
           {locationStr && (
             <span className={`text-[11px] flex items-center gap-1 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
               <MapPin size={10} /> {locationStr}
@@ -1751,16 +1741,7 @@ export function CreatorDirectory({
         break;
     }
 
-    // Apply verification ranking boost on top of all sorts:
-    // Pro Verified > Verified > Unverified, then by rating, then by completed_projects
-    const verificationRank = (c) => {
-      if (c.verification_status === 'pro_verified') return 2;
-      if (c.verification_status === 'verified') return 1;
-      return 0;
-    };
     list.sort((a, b) => {
-      const vDiff = verificationRank(b) - verificationRank(a);
-      if (vDiff !== 0) return vDiff;
       const rDiff = (b.rating || 0) - (a.rating || 0);
       if (rDiff !== 0) return rDiff;
       return (b.completed_projects || 0) - (a.completed_projects || 0);
@@ -2100,9 +2081,10 @@ export function CreatorDirectory({
               <div className="space-y-1">
                 {[
                   { id: 'all', label: 'Any tier' },
-                  { id: 'signature', label: 'Elite' },
-                  { id: 'pro', label: 'Proven' },
-                  { id: 'launch', label: 'Verified' }
+                  { id: 'signature', label: 'Signature' },
+                  { id: 'elite', label: 'Elite' },
+                  { id: 'proven', label: 'Proven' },
+                  { id: 'launch', label: 'Launch' }
                 ].map(tier => {
                   const count = listings.filter(c => {
                     const approved = isPublicDiscoverableCreator(c);

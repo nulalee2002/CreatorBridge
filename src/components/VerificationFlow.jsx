@@ -1,28 +1,6 @@
 import { useState } from 'react';
-import { Check, BadgeCheck, Upload, Video } from 'lucide-react';
+import { Check, Upload, Video } from 'lucide-react';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
-
-/**
- * Returns the verification status badge for a creator.
- * Used in directory cards and profile headers.
- */
-export function VerificationBadge({ status }) {
-  if (!status || status === 'unverified') return null;
-
-  if (status === 'pro_verified') {
-    return (
-      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-forest-500/20 text-forest-100 text-[10px] font-bold ring-1 ring-forest-300/35">
-        <BadgeCheck size={10} /> Pro Verified
-      </span>
-    );
-  }
-
-  return (
-    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-forest-500/15 text-forest-100 text-[10px] font-bold ring-1 ring-forest-300/25">
-      <BadgeCheck size={10} /> Verified
-    </span>
-  );
-}
 
 function StepRow({ number, title, description, status, children, dark }) {
   const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
@@ -124,7 +102,7 @@ export function VerificationFlow({ creator, dark, onUpdate }) {
     setSaving(false);
   }
 
-  const statusLabel = { unverified: 'Unverified', verified: 'Verified', pro_verified: 'Pro Verified' }[currentStatus];
+  const statusLabel = currentStatus === 'unverified' ? 'Incomplete' : 'Complete';
 
   return (
     <div className={`rounded-2xl border p-5 shadow-[0_24px_80px_rgba(0,0,0,0.18)] ${dark ? 'bg-charcoal-900/72 border-white/[0.07]' : 'bg-white border-gray-200'}`}>
@@ -133,14 +111,8 @@ export function VerificationFlow({ creator, dark, onUpdate }) {
           <p className={`text-[10px] font-bold uppercase tracking-wider ${textSub}`}>Verification</p>
           <p className={`text-base font-bold mt-0.5 ${dark ? 'text-white' : 'text-gray-900'}`}>
             {statusLabel}
-            {currentStatus !== 'unverified' && <VerificationBadge status={currentStatus} />}
           </p>
         </div>
-        {currentStatus !== 'unverified' && (
-          <div className="flex items-center gap-2">
-            <VerificationBadge status={currentStatus} />
-          </div>
-        )}
       </div>
 
       <div className="space-y-3">

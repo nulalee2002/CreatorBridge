@@ -5,8 +5,6 @@ import { matchCreators, loadAllCreatorsForMatching, parseBudgetRange } from '../
 import { SERVICES, normalizeServiceId } from '../data/rates.js';
 import { REGIONS } from '../data/regions.js';
 import { TierBadge } from '../components/TierBadge.jsx';
-import { VerificationBadge } from '../components/VerificationFlow.jsx';
-import { LoyaltyBadge } from '../components/LoyaltyBadge.jsx';
 
 function loadProject(projectId) {
   try {
@@ -77,14 +75,8 @@ function MatchCard({ match, dark, onViewProfile, onRequestQuote }) {
 
         {/* Badges row */}
         <div className="flex flex-wrap items-center gap-1.5 mt-3">
-          {creator.verification_status && creator.verification_status !== 'unverified' && (
-            <VerificationBadge status={creator.verification_status} />
-          )}
           {creator.tier && creator.tier !== 'launch' && (
             <TierBadge tierId={creator.tier} />
-          )}
-          {creator.completed_projects > 0 && (
-            <LoyaltyBadge completedProjects={creator.completed_projects} />
           )}
         </div>
 

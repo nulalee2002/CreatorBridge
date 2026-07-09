@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { matchCreators, loadAllCreatorsForMatching } from '../utils/matchingAlgorithm.js';
 import { SERVICES } from '../data/rates.js';
 import { TierBadge } from './TierBadge.jsx';
-import { VerificationBadge } from './VerificationFlow.jsx';
 import { CreatorAvatar } from './CreatorAvatar.jsx';
 
 const FAST_MATCH_FEE = 25; // $ after first free use
@@ -207,9 +206,6 @@ function FastMatchResult({ result, dark, onViewProfile }) {
 
       {/* Badges */}
       <div className="flex flex-wrap gap-1 mb-3">
-        {creator.verification_status && creator.verification_status !== 'unverified' && (
-          <VerificationBadge status={creator.verification_status} />
-        )}
         {creator.tier && creator.tier !== 'launch' && <TierBadge tierId={creator.tier} />}
       </div>
 
