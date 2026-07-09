@@ -106,7 +106,7 @@ PLATFORM OVERVIEW:
 CreatorBridge is a US-only platform organized around three creator pillars: Video Production, Photography, and Post Production. Drone, podcast, events, brand content, and social work are specialties inside those pillars, not separate primary categories.
 
 CREATOR STANDARDS:
-Every creator on CreatorBridge is manually reviewed and approved before going live. Requirements include 2 or more years of paid professional experience, minimum 3 portfolio samples, complete service packages with real pricing, a 60 to 90 second video intro, Stripe identity verification, and a US bank account. Profile text can be edited after submission, but profile photo, intro video, and portfolio media uploads are limited for 30 days to protect review quality and platform storage. Creators can request media change approval for urgent corrections.
+Every creator on CreatorBridge is manually reviewed and approved before going live. Requirements include 2 or more years of paid professional experience, minimum 3 portfolio samples, complete service packages with real pricing, a 60 to 90 second video intro, Stripe Connect identity verification (KYC), and a US bank account. Profile text can be edited after submission, but profile photo, intro video, and portfolio media uploads are limited for 30 days to protect review quality and platform storage. Creators can request media change approval for urgent corrections.
 
 FEES:
 Creators pay 10 percent platform fee. Fee drops to 8 percent after 10 completed projects and 6 percent after 25 projects. Clients pay a one-time 5 percent booking fee charged with the final payment when the project completes — nothing is added to the retainer, and no platform fees are charged on cancelled projects. No subscriptions, no monthly fees, no pay to apply.
@@ -129,7 +129,7 @@ CREATOR TIERS:
 Launch is for new creators with no requirements. Proven requires 10 or more completed projects with good ratings. Signature requires 25 or more completed projects and high ratings. Elite is the highest tier and requires 50 or more completed projects with an exceptional track record. Higher tiers rank higher in search results and build more client trust.
 
 VERIFICATION:
-Creators go through a 4-step verification process including phone SMS verification, Stripe identity verification with a government ID, portfolio review, and manual approval by the CreatorBridge team. All creators visible on the platform are verified.
+Creators go through a 4-step verification process including phone SMS verification, Stripe Connect identity verification (KYC), portfolio review, and manual approval by the CreatorBridge team. All creators visible on the platform are verified.
 
 CLIENT INVITES:
 Creators can share their CreatorBridge profile link with new clients. Invite new clients to book through CreatorBridge. New clients may receive a first-booking credit, and creators may receive a platform credit after a completed project. CreatorBridge does not pay rewards for signups, referrals of other creators, or recruiting activity. Credits are tied only to completed client projects.

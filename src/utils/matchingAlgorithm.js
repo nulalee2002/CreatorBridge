@@ -1,5 +1,6 @@
 import { normalizeServiceId } from '../data/rates.js';
 import { creatorListingMeetsPublicRules } from './creatorReadiness.js';
+import { SHOW_DEMO_CREATORS } from '../data/seedCreators.js';
 
 /**
  * Smart matching algorithm.
@@ -33,7 +34,7 @@ const VERIFICATION_RANK = { unverified: 0, verified: 1, pro_verified: 2 };
 const DEFAULT_BUDGET_MAX = 999999;
 
 function isApprovedCreator(creator) {
-  return creatorListingMeetsPublicRules(creator, { allowDemoSeed: true });
+  return creatorListingMeetsPublicRules(creator, { allowDemoSeed: SHOW_DEMO_CREATORS });
 }
 
 function getCreatorServiceId(item) {

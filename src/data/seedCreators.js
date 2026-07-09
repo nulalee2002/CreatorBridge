@@ -2,7 +2,9 @@
 //
 // Toggle this to false to hide demo creators from the directory.
 // CreatorDirectory checks this before loading seed data.
-export const SHOW_DEMO_CREATORS = true;
+// LAUNCH: false — no demo/seed creators on public surfaces. Flip to true only
+// for local development when you need sample creators to browse.
+export const SHOW_DEMO_CREATORS = false;
 
 // Bump this number whenever SEED_CREATORS changes.
 // initSeedData() compares against localStorage 'creator-seed-version'

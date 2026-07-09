@@ -732,7 +732,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
               '3 portfolio samples that match your selected craft',
               'Service packages with real pricing',
               '60 to 90 second professional intro video',
-              'Stripe identity verification with government ID',
+              'Stripe Connect identity verification (KYC)',
               'Profile text remains editable; media uploads are limited for 30 days',
             ].map(item => (
               <div key={item} className={`flex items-start gap-2 rounded-xl border px-3 py-3 ${
