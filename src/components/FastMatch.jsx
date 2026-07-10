@@ -224,7 +224,7 @@ function FastMatchResult({ result, dark, onViewProfile }) {
         <p className={`text-xs ${textSub}`}>
           Est. range:{' '}
           <span className={`font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>
-            ${rateRange.min.toLocaleString()} – ${rateRange.max.toLocaleString()}
+            ${rateRange.min.toLocaleString()}, ${rateRange.max.toLocaleString()}
           </span>
         </p>
       )}

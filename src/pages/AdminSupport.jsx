@@ -268,7 +268,7 @@ export function AdminSupport({ dark }) {
 
           return (
             <div key={ticket.id}>
-              {/* Ticket row — clickable to expand */}
+              {/* Ticket row, clickable to expand */}
               <button
                 type="button"
                 onClick={() => setExpandedId(isExpanded ? null : ticket.id)}
@@ -375,7 +375,7 @@ export function AdminSupport({ dark }) {
                   {/* Admin notes */}
                   <div className="mb-4">
                     <label className={`mb-1.5 block text-xs font-bold ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
-                      Admin notes <span className={`font-normal ${textSub}`}>(internal — not visible to user)</span>
+                      Admin notes <span className={`font-normal ${textSub}`}>(internal, not visible to user)</span>
                     </label>
                     <textarea
                       value={edit.admin_notes}

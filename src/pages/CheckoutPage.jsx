@@ -162,7 +162,7 @@ function ReviewStep({ project, creator, fees, dark, paymentType, creatorFeePct, 
         <p className={`text-xs leading-relaxed ${textSub}`}>
           {isFinal
             ? 'By proceeding, you agree to pay the remaining 50% project balance plus the one-time 5% booking fee after delivery approval.'
-            : 'By proceeding, you agree to pay a 50% retainer to secure your booking. The remaining 50% — plus a one-time 5% booking fee — is due on delivery and approval. You can cancel at no cost before the retainer is paid; if you cancel after that but before delivery, the retainer is split evenly (the creator keeps 25% of the project total and you are refunded 25%).'}
+            : 'By proceeding, you agree to pay a 50% retainer to secure your booking. The remaining 50%, plus a one-time 5% booking fee, is due on delivery and approval. You can cancel at no cost before the retainer is paid; if you cancel after that but before delivery, the retainer is split evenly (the creator keeps 25% of the project total and you are refunded 25%).'}
         </p>
       </div>
 

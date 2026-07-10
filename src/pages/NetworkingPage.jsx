@@ -141,13 +141,13 @@ const MOCK_CHAT = {
     { id: 'm-seed-1', name: "Naomi G.", time: "10:32", avatar: "/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg", text: "Good morning ☕️ shooting a brand piece in Venice today, weather's perfect" },
     { id: 'm-seed-2', name: "Aria V.", time: "10:35", avatar: "/images/creatorbridge/handoff/photo-1494790108377-be9c29b29330.jpg", text: "Jealous. Miami's humid AF. Crew suiting up for an indoor shoot all day" },
     { id: 'm-seed-3', name: "David P.", time: "10:38", avatar: "/images/creatorbridge/handoff/photo-1438761681033-6461ffad8d80.jpg", text: "Anyone tried the new Sony Burano on a real job? Considering renting for next week" },
-    { id: 'm-seed-4', name: "Mateo R.", time: "10:41", avatar: "/images/creatorbridge/handoff/photo-1500648767791-00dcc994a43e.jpg", text: "Cleared for Part 107 recertification today — back in the air next week" },
+    { id: 'm-seed-4', name: "Mateo R.", time: "10:41", avatar: "/images/creatorbridge/handoff/photo-1500648767791-00dcc994a43e.jpg", text: "Cleared for Part 107 recertification today, back in the air next week" },
     { id: 'm-seed-5', name: "Jordan M.", time: "10:44", avatar: "/images/creatorbridge/handoff/photo-1507003211169-0a1dd7228f2d.jpg", text: "Booked 4 podcast clients off the project board in May. CB scoring better than any cold outbound I've ever done" },
-    { id: 'm-seed-6', name: "Sofia P.", time: "10:48", avatar: "/images/creatorbridge/handoff/photo-1487412720507-e7ab37603c6f.jpg", text: "Lighting test shots from yesterday — full client approval before we even broke for lunch" }
+    { id: 'm-seed-6', name: "Sofia P.", time: "10:48", avatar: "/images/creatorbridge/handoff/photo-1487412720507-e7ab37603c6f.jpg", text: "Lighting test shots from yesterday, full client approval before we even broke for lunch" }
   ],
   referrals: [
-    { id: 'm-seed-7', name: "Aria V.", time: "9:14", avatar: "/images/creatorbridge/handoff/photo-1494790108377-be9c29b29330.jpg", text: "Boutique hotel rebrand looking for video — anyone California-based with hospitality reel?" },
-    { id: 'm-seed-8', name: "Naomi G.", time: "9:18", avatar: "/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg", text: "I'll bite — DMing now" },
+    { id: 'm-seed-7', name: "Aria V.", time: "9:14", avatar: "/images/creatorbridge/handoff/photo-1494790108377-be9c29b29330.jpg", text: "Boutique hotel rebrand looking for video, anyone California-based with hospitality reel?" },
+    { id: 'm-seed-8', name: "Naomi G.", time: "9:18", avatar: "/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg", text: "I'll bite, DMing now" },
     { id: 'm-seed-9', name: "David P.", time: "9:22", avatar: "/images/creatorbridge/handoff/photo-1438761681033-6461ffad8d80.jpg", text: "Aria solid pick, his Standard Hotels work was 10/10" }
   ],
   portfolio: [
@@ -155,7 +155,7 @@ const MOCK_CHAT = {
     { id: 'm-seed-11', name: "Mateo R.", time: "9:11", avatar: "/images/creatorbridge/handoff/photo-1500648767791-00dcc994a43e.jpg", text: "The pacing feels strong. I would hold the wide shot two beats longer before the first close-up." }
   ],
   leads: [
-    { id: 'm-seed-13', name: "Aria V.", time: "11:02", avatar: "/images/creatorbridge/handoff/photo-1494790108377-be9c29b29330.jpg", text: "Routing 2 commercial photo briefs to FL/CA — see today's main feed" },
+    { id: 'm-seed-13', name: "Aria V.", time: "11:02", avatar: "/images/creatorbridge/handoff/photo-1494790108377-be9c29b29330.jpg", text: "Routing 2 commercial photo briefs to FL/CA, see today's main feed" },
     { id: 'm-seed-14', name: "Dre W.", time: "11:08", avatar: "/images/creatorbridge/handoff/photo-1607746882042-944635dfe10e.jpg", text: "Atlanta tech conf needs 2nd shooter, June 14-15. Posted to project board, applying via CB" }
   ]
 };
@@ -957,7 +957,7 @@ export function NetworkingPage({ dark, user, profile }) {
                 A trusted local circuit. <span className="gold-text">Verified only.</span>
               </h1>
               <p className="text-sm text-[var(--text-secondary)] max-w-xl mt-4 leading-relaxed">
-                Portfolio feedback, referrals, collaboration requests, and Project Board leads — organized by state so professional conversation stays local and on CreatorBridge.
+                Portfolio feedback, referrals, collaboration requests, and Project Board leads, organized by state so professional conversation stays local and on CreatorBridge.
               </p>
             </div>
             
@@ -1032,7 +1032,7 @@ export function NetworkingPage({ dark, user, profile }) {
               <span className="tag-green">Verified creators only</span>
             </div>
             <p className="text-xs text-[var(--text-secondary)]">
-              Join the local conversation and build trusted relationships — verified creators only.
+              Join the local conversation and build trusted relationships, verified creators only.
             </p>
           </div>
           <div className="flex gap-2">
@@ -1221,7 +1221,7 @@ export function NetworkingPage({ dark, user, profile }) {
           <div className="lg:col-span-4 space-y-6">
             
             {/* Live Chat Panel */}
-            {/* Sticky on desktop only — sticky inside the stacked mobile flow
+            {/* Sticky on desktop only, sticky inside the stacked mobile flow
                 made this panel slide over the sections below while scrolling. */}
             <div className="liquid-glass rounded-2xl overflow-hidden flex flex-col cb-chat-sticky">
               

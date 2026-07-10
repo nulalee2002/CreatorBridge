@@ -180,7 +180,7 @@ export function TermsOfService({ dark }) {
               </p>
               <p>
                 <strong className={dark ? 'text-white' : 'text-gray-900'}>Payment structure:</strong> Projects are split into two payments.
-                50% is due as a retainer when the project is accepted and before work begins — no fees are added to the retainer.
+                50% is due as a retainer when the project is accepted and before work begins, no fees are added to the retainer.
                 The remaining 50%, plus the one-time 5% client booking fee, is due upon project completion and client approval.
               </p>
               <p>
@@ -199,7 +199,7 @@ export function TermsOfService({ dark }) {
               </p>
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li><strong className={dark ? 'text-white' : 'text-gray-900'}>Before the retainer is paid:</strong> Either party may cancel at no cost. No money has changed hands and no fees are charged.</li>
-                <li><strong className={dark ? 'text-white' : 'text-gray-900'}>After the retainer is paid — any time before delivery, including mid-project:</strong> The 50% retainer is split evenly. The creator keeps 25% of the project total (half the retainer) and the client is refunded 25% of the project total (the other half). No platform fees are charged on cancelled projects — the 5% client booking fee applies only to successfully completed projects.</li>
+                <li><strong className={dark ? 'text-white' : 'text-gray-900'}>After the retainer is paid, any time before delivery, including mid-project:</strong> The 50% retainer is split evenly. The creator keeps 25% of the project total (half the retainer) and the client is refunded 25% of the project total (the other half). No platform fees are charged on cancelled projects, the 5% client booking fee applies only to successfully completed projects.</li>
                 <li><strong className={dark ? 'text-white' : 'text-gray-900'}>After delivery:</strong> No cancellations or refunds. The remaining 50% plus the one-time 5% booking fee is due before final files are released. Post-delivery concerns are handled through the dispute process.</li>
               </ul>
               <p>

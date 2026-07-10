@@ -553,7 +553,7 @@ export function CreatorDashboard({ dark }) {
                   <p className={`text-[10px] font-bold uppercase tracking-wider mb-3 ${dark ? 'text-charcoal-300' : 'text-gray-400'}`}>Submitted Profile Summary</p>
                   <div className="space-y-0">
                     {[
-                      { label: 'Business Name', value: creator.businessName || creator.business_name || creator.name || '—' },
+                      { label: 'Business Name', value: creator.businessName || creator.business_name || creator.name || ', ' },
                       {
                         label: 'Primary Pillar',
                         value: (() => {
@@ -566,7 +566,7 @@ export function CreatorDashboard({ dark }) {
                         label: 'Bio',
                         value: creator.bio
                           ? creator.bio.length > 120 ? creator.bio.slice(0, 120) + '…' : creator.bio
-                          : '—',
+                          : ', ',
                       },
                       ...(creator.video_intro_url || creator.videoIntroUrl
                         ? [{ label: 'Video Intro', value: creator.video_intro_url || creator.videoIntroUrl }]

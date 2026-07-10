@@ -132,7 +132,7 @@ export function JoinAsCreator({ dark }) {
               <span className="text-gold-400">Loyalty Fee Program</span>
             </h2>
             <p className={`text-xs leading-relaxed mb-4 ${textSub}`}>
-              CreatorBridge keeps fees low so you retain more revenue. Launch tier creators keep 90% of every project budget, increasing to 95% at the Elite tier as you build your platform history.
+              CreatorBridge keeps fees low so you retain more revenue. Launch tier creators keep 90% of every project budget, increasing to 94% at the Elite tier as you build your platform history.
             </p>
             <ul className="space-y-2 text-xs">
               <li className="flex items-center gap-2">
@@ -161,8 +161,8 @@ export function JoinAsCreator({ dark }) {
                 <span>$900.00</span>
               </div>
               <div className="flex justify-between border-b border-gray-800/40 pb-2 text-charcoal-300">
-                <span>Elite Payout (95%)</span>
-                <span>$950.00</span>
+                <span>Elite Payout (94%)</span>
+                <span>$940.00</span>
               </div>
               <p className={`text-[10px] leading-relaxed pt-2 ${textSub}`}>
                 Payouts are routed directly to your connected bank account through Stripe Connect. Platform fees automatically decrease as you complete projects.

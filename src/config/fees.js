@@ -11,7 +11,7 @@ export const LOYALTY_TIERS = [
   { name: 'Launch',    minProjects: 0,  maxProjects: 9,        feePct: 10, badge: null },
   { name: 'Proven',    minProjects: 10, maxProjects: 24,       feePct: 8,  badge: 'silver' },
   { name: 'Signature', minProjects: 25, maxProjects: 49,       feePct: 6,  badge: 'gold' },
-  { name: 'Elite',     minProjects: 50, maxProjects: Infinity, feePct: 5,  badge: 'gold' },
+  { name: 'Elite',     minProjects: 50, maxProjects: Infinity, feePct: 6,  badge: 'gold' },
 ];
 
 /**
@@ -42,7 +42,7 @@ export function calcFees(projectAmountDollars, creatorFeePctOverride, clientFeeP
   const creatorPct = creatorFeePctOverride != null ? creatorFeePctOverride : PLATFORM_FEES.creatorFeePct;
   const clientPct  = clientFeePctOverride != null ? clientFeePctOverride : PLATFORM_FEES.clientFeePct;
 
-  // Client booking fee is charged once, on completion (the final payment) — the
+  // Client booking fee is charged once, on completion (the final payment), the
   // full clientPct of the whole project total, with nothing added to the retainer.
   const clientFeeRetainer  = 0;
   const clientFeeFinal     = total     * (clientPct / 100);
@@ -66,7 +66,7 @@ export function calcFees(projectAmountDollars, creatorFeePctOverride, clientFeeP
     totalCreatorReceives:  total - creatorFeeRetainer - creatorFeeFinal,
     platformRevenue:       clientFeeRetainer + clientFeeFinal + creatorFeeRetainer + creatorFeeFinal,
 
-    // Cent amounts (for Stripe — always integers)
+    // Cent amounts (for Stripe, always integers)
     retainerAmountCents:       Math.round(retainer   * 100),
     finalAmountCents:          Math.round(final       * 100),
     retainerClientOwesCents:   Math.round((retainer + clientFeeRetainer)  * 100),
@@ -96,16 +96,16 @@ export function dollarsToDisplay(dollars) {
  * cancellation only ever concerns the retainer. keepPct is expressed as a
  * percentage of the full project TOTAL.
  *
- * Rule 1 — Before the retainer is paid: either party may cancel at no cost.
+ * Rule 1, Before the retainer is paid: either party may cancel at no cost.
  *   Nothing has been charged. (open / accepted)
  *
- * Rule 2 — After the retainer is paid, any time before delivery (including
- *   mid-project): the 50% retainer is split evenly — the creator keeps 25% of the
+ * Rule 2, After the retainer is paid, any time before delivery (including
+ *   mid-project): the 50% retainer is split evenly, the creator keeps 25% of the
  *   total (half the retainer) and the client is refunded 25% of the total (the
  *   other half). No platform fees apply, because fees are only charged on
  *   successful completion. (retainer_paid / in_progress / revision)
  *
- * Rule 3 — After delivery: no cancellation and no refund; the project proceeds to
+ * Rule 3, After delivery: no cancellation and no refund; the project proceeds to
  *   final payment. (delivered / approved / final_paid)
  */
 export const CANCELLATION_RULES = [
@@ -171,7 +171,7 @@ export function getCancellationFee(projectTotal, projectStatus) {
   const rule   = getCancellationRule(projectStatus);
   const total  = Number(projectTotal) || 0;
   const creatorKeepsDollars = (total * rule.keepPct) / 100;
-  // The client can only be refunded from what they have actually paid — the
+  // The client can only be refunded from what they have actually paid, the
   // retainer (50% of total). Before the retainer is paid, nothing has changed
   // hands, so the refund is 0.
   const retainerPaidDollars = rule.id === 'before_retainer'

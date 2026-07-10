@@ -1466,7 +1466,7 @@ export default function App() {
                   <BrandLogo className="logo-img" />
                 </button>
                 <p style={{ fontSize: 12, color: 'var(--text-secondary)', maxWidth: '24rem', lineHeight: 1.6 }}>
-                  The verified US platform connecting brands with professional media specialists across three production pillars — without building an internal media department.
+                  The verified US platform connecting brands with professional media specialists across three production pillars, without building an internal media department.
                 </p>
                 <div className="footer-pillar-row">
                   <span className="footer-pill">Video Production</span>

@@ -4,7 +4,7 @@ import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { stripeConfigured } from '../lib/stripe.js';
 
 /**
- * StripeOnboarding — shown on the Creator Dashboard.
+ * StripeOnboarding, shown on the Creator Dashboard.
  * When stripe_onboarded is false: shows "Connect with Stripe" CTA.
  * When stripe_onboarded is true:  shows "Payments Active" badge.
  */
@@ -51,7 +51,7 @@ async function functionErrorMessage(fnErr, fallback) {
         onStatusChange?.({ stripe_onboarded: true, payouts_enabled: data.payoutsEnabled });
       }
     } catch (e) {
-      // silently fail — status stays as-is
+      // silently fail, status stays as-is
     } finally {
       setChecking(false);
     }

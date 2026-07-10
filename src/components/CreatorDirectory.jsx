@@ -19,7 +19,7 @@ import { sendNotificationEmail } from '../lib/notifications.js';
 import { CreatorAvatar } from './CreatorAvatar.jsx';
 import { creatorListingMeetsPublicRules } from '../utils/creatorReadiness.js';
 
-// Initialize seed data (version-gated — replaces stale seeds automatically)
+// Initialize seed data (version-gated, replaces stale seeds automatically)
 initSeedData();
 
 function parseYearsExperience(value) {
@@ -1398,32 +1398,32 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
               {[
                 {
-                  title: 'Section 1 — Platform Use',
+                  title: 'Section 1, Platform Use',
                   body: 'CreatorBridge is a US-only professional platform connecting verified media creators with clients. By creating an account you agree to use the platform lawfully and professionally.',
                 },
                 {
-                  title: 'Section 2 — Creator Standards',
+                  title: 'Section 2, Creator Standards',
                   body: 'Creators must have a minimum of 2 years paid professional experience, maintain accurate profile information, deliver work as agreed, and communicate professionally with clients at all times.',
                 },
                 {
-                  title: 'Section 3 — Payments',
+                  title: 'Section 3, Payments',
                   body: 'All payments are processed through Stripe. Clients pay a 50% retainer upfront. The remaining 50% releases upon delivery approval or automatically after a 5-day review window with no client action. CreatorBridge charges creators a platform fee starting at 10%, dropping as you complete more projects.',
                 },
                 {
-                  title: 'Section 4 — Cancellations',
+                  title: 'Section 4, Cancellations',
                   body: 'If a client cancels before work begins, the creator keeps 25% as a cancellation fee. If a client cancels after work starts, the creator keeps the full 50% retainer. No refunds after delivery.',
                 },
                 {
-                  title: 'Section 5 — Conduct',
+                  title: 'Section 5, Conduct',
                   body: 'Users must not share contact information to work off-platform, post fake reviews, harass other users, or attempt to bypass platform fees. Violations result in account suspension.',
                 },
                 {
-                  title: 'Section 6 — Media Change Limit',
+                  title: 'Section 6, Media Change Limit',
                   body: 'Profile text can be edited after submission, but profile photo, intro video, and portfolio media uploads are limited for 30 days to protect review quality and platform storage. Creators may request media change approval when a time-sensitive correction is needed.',
                 },
                 {
-                  title: 'Section 7 — Disputes',
-                  body: 'After delivery, clients have a 5-day review window to approve, request a revision, or open a dispute — any action pauses the automatic release. With no action for 5 days, payment releases automatically.',
+                  title: 'Section 7, Disputes',
+                  body: 'After delivery, clients have a 5-day review window to approve, request a revision, or open a dispute, any action pauses the automatic release. With no action for 5 days, payment releases automatically.',
                 },
               ].map(({ title, body }) => (
                 <div key={title}>
@@ -1462,31 +1462,31 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
               {[
                 {
-                  title: 'Section 1 — Introduction & Scope',
+                  title: 'Section 1, Introduction & Scope',
                   body: 'This agreement details your rights and duties regarding payments, fees, client bookings, media change limits, and general operational standards on the CreatorBridge platform.',
                 },
                 {
-                  title: 'Section 2 — Platform Fee Structure & Tiers',
+                  title: 'Section 2, Platform Fee Structure & Tiers',
                   body: 'Our platform fee percentage decreases as you complete more projects: Launch Tier (10%), Proven Tier (8%), Signature Tier (6%), and Elite Tier (5%).',
                 },
                 {
-                  title: 'Section 3 — Payments & Stripe Connect',
+                  title: 'Section 3, Payments & Stripe Connect',
                   body: 'You must onboard with Stripe Connect. Payments use a protected 50/50 structure: a 50% retainer paid upfront before work starts, and the remaining 50% final payout released upon delivery approval or a 5-day auto-approval with no client action.',
                 },
                 {
-                  title: 'Section 4 — Non-Circumvention',
+                  title: 'Section 4, Non-Circumvention',
                   body: 'All communications, bookings, and payments with clients introduced on CreatorBridge must stay on the platform. Exclusivity is required for 24 months. Off-platform activity is grounds for account removal.',
                 },
                 {
-                  title: 'Section 5 — 30-Day Media Change Limit',
+                  title: 'Section 5, 30-Day Media Change Limit',
                   body: 'Profile text can be edited after submission, but profile photo, intro video, and portfolio media uploads are limited for 30 days after submission or approval. This prevents rapid media swaps that bypass review and protects CreatorBridge storage costs. Creators can request media change approval for urgent corrections.',
                 },
                 {
-                  title: 'Section 6 — Violations (Three-Strike Rule)',
+                  title: 'Section 6, Violations (Three-Strike Rule)',
                   body: 'Infractions result in a warning (Strike 1), visibility/bidding restrictions (Strike 2), and profile suspension (Strike 3).',
                 },
                 {
-                  title: 'Section 7 — Term and Termination',
+                  title: 'Section 7, Term and Termination',
                   body: 'Either party may close the account, but you must complete any active bookings, and the 24-month non-circumvention rule remains active for prior introductions.',
                 },
               ].map(({ title, body }) => (
@@ -1752,7 +1752,7 @@ export function CreatorDirectory({
 
   const displayListings = isGuest ? getRotatingPreviewCreators(filtered) : filtered;
 
-  // 5D. New creator spotlight — recently verified with no bookings, rotated weekly
+  // 5D. New creator spotlight, recently verified with no bookings, rotated weekly
   const spotlightCreators = useMemo(() => getNewCreatorSpotlight(listings, 3), [listings]);
 
   const handleSaveListing = async (listing) => {
@@ -1911,7 +1911,7 @@ export function CreatorDirectory({
               Verified creators, <span className="gold-text">sorted by what matters</span>.
             </h1>
             <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--text-secondary)]">
-              Filter by primary pillar — Video Production, Photography, or Post Production — then narrow by specialty. Every creator commits to one pillar and 1–3 specialties.
+              Filter by primary pillar, Video Production, Photography, or Post Production, then narrow by specialty. Every creator commits to one pillar and 1-3 specialties.
             </p>
           </div>
           

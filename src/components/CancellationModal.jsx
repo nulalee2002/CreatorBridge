@@ -3,13 +3,13 @@ import { X, AlertTriangle } from 'lucide-react';
 import { getCancellationFee, getCancellationRule, CANCELLATION_RULES } from '../config/fees.js';
 
 /**
- * CancellationModal — shown when a client wants to cancel a project.
+ * CancellationModal, shown when a client wants to cancel a project.
  * Props: project, dark, onClose, onConfirm(project, reason)
  *
  * Cancellation policy (3 rules):
- *  Rule 1 — Before work begins:  creator keeps 25%
- *  Rule 2 — After work begins:   creator keeps 50%
- *  Rule 3 — After delivery:      no refund (creator keeps 100%)
+ *  Rule 1, Before work begins:  creator keeps 25%
+ *  Rule 2, After work begins:   creator keeps 50%
+ *  Rule 3, After delivery:      no refund (creator keeps 100%)
  */
 export function CancellationModal({ project, dark, onClose, onConfirm }) {
   const [confirmed, setConfirmed] = useState(false);

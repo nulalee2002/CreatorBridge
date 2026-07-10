@@ -3,11 +3,11 @@ import { calcFees, PLATFORM_FEES } from '../config/fees.js';
 /**
  * FeeBreakdown
  * Props:
- *   projectAmount   — number (dollars)
- *   viewMode        — 'client' | 'creator'
- *   dark            — boolean
- *   creatorFeePct   — number (optional, overrides default 10% for loyalty tiers)
- *   clientFeePct    — number (optional, overrides default 5% for referral rewards)
+ *   projectAmount  , number (dollars)
+ *   viewMode       , 'client' | 'creator'
+ *   dark           , boolean
+ *   creatorFeePct  , number (optional, overrides default 10% for loyalty tiers)
+ *   clientFeePct   , number (optional, overrides default 5% for referral rewards)
  */
 export function FeeBreakdown({ projectAmount, viewMode = 'client', dark, creatorFeePct, clientFeePct }) {
   const f = calcFees(projectAmount || 0, creatorFeePct, clientFeePct);
@@ -65,7 +65,7 @@ export function FeeBreakdown({ projectAmount, viewMode = 'client', dark, creator
       {viewMode === 'client' ? (
         <>
           <SectionLabel>Retainer fee (50% due now)</SectionLabel>
-          <Row label="Retainer fee (50%) — no fees added" amount={f.retainerAmount} />
+          <Row label="Retainer fee (50%), no fees added" amount={f.retainerAmount} />
           <Row label="Retainer due now" amount={f.retainerClientOwes} bold highlight accent="text-gold-400" />
 
           <SectionLabel>On Delivery (50%)</SectionLabel>
@@ -76,7 +76,7 @@ export function FeeBreakdown({ projectAmount, viewMode = 'client', dark, creator
           <div className={divider} />
           <Row label="Total You Pay" amount={f.totalClientPays} bold accent="text-white" />
           <p className={`text-[10px] mt-2 ${textSub}`}>
-            The {displayedClientFeePct}% booking fee is charged once, with your final payment, and only on completed projects — cancelled projects are never charged the booking fee.
+            The {displayedClientFeePct}% booking fee is charged once, with your final payment, and only on completed projects, cancelled projects are never charged the booking fee.
           </p>
         </>
       ) : (

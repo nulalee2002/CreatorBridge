@@ -38,7 +38,7 @@ export function RateComparisonChart({ serviceId, regionKey, lineItems, dark = tr
       {/* Legend */}
       <div className="flex gap-4 mb-4 flex-wrap">
         {[
-          { color: 'bg-white/[0.12]', label: 'Low–High Range' },
+          { color: 'bg-white/[0.12]', label: 'Low-High Range' },
           { color: 'bg-gold-500/30 border border-gold-500', label: 'Mid (market avg)' },
           { color: 'bg-gold-400', label: 'Your Rate' },
         ].map(l => (

@@ -1,7 +1,7 @@
 // Zip prefix (first 3 digits) → region key
 // Covers ~500 major metro prefix ranges across all US tiers
 const ZIP_PREFIX_MAP = {
-  // ── US TIER 1 — Major Metro ────────────────────────────────
+  // ── US TIER 1, Major Metro ────────────────────────────────
   // New York City + metro
   '100':'us-tier1','101':'us-tier1','102':'us-tier1','103':'us-tier1','104':'us-tier1',
   '105':'us-tier1','106':'us-tier1','107':'us-tier1','108':'us-tier1','109':'us-tier1',
@@ -36,7 +36,7 @@ const ZIP_PREFIX_MAP = {
   // Seattle
   '980':'us-tier1','981':'us-tier1','982':'us-tier1','983':'us-tier1','984':'us-tier1',
 
-  // ── US TIER 2 — Mid-Market ────────────────────────────────
+  // ── US TIER 2, Mid-Market ────────────────────────────────
   // Phoenix / Scottsdale
   '850':'us-tier2','851':'us-tier2','852':'us-tier2','853':'us-tier2','854':'us-tier2','855':'us-tier2',
   // Dallas / Fort Worth
@@ -100,7 +100,7 @@ const ZIP_PREFIX_MAP = {
   // Albuquerque
   '870':'us-tier2','871':'us-tier2',
 
-  // ── US TIER 3 — Smaller Markets ──────────────────────────
+  // ── US TIER 3, Smaller Markets ──────────────────────────
   // Tucson
   '856':'us-tier3','857':'us-tier3',
   // Boise

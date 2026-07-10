@@ -62,7 +62,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
     setError('');
     setLoading(true);
 
-    // Email format check — runs before any Supabase call on both signup and login
+    // Email format check, runs before any Supabase call on both signup and login
     const emailCheck = isValidEmail(form.email);
     if (!emailCheck.ok) { setError(emailCheck.msg); setLoading(false); return; }
 
@@ -207,7 +207,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
         return;
       }
 
-      // Welcome email only for brand-new client accounts — not on the monthly
+      // Welcome email only for brand-new client accounts, not on the monthly
       // or policy-update re-confirmations.
       if (gateMode === 'first') {
         const acceptedRole = authProfile?.role
@@ -307,7 +307,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
               <p className={`text-xs leading-relaxed max-w-sm mx-auto ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
                 {gateMode === 'first'
                   ? `Before you can proceed to the platform, please read and agree to the ${gateDocs.length} policies that apply to your account.`
-                  : 'Our policies were recently updated, or it has been a month since you last confirmed them. Feel free to review them again — then confirm to continue.'}
+                  : 'Our policies were recently updated, or it has been a month since you last confirmed them. Feel free to review them again, then confirm to continue.'}
               </p>
 
               <div className="flex flex-col gap-2.5 py-4 my-2 border-y border-white/[0.07]">
@@ -350,7 +350,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
             <>
               {/* Logo */}
               <div className="text-center mb-6">
-                {/* Square brand mark — the wide lockup image gets cropped by the
+                {/* Square brand mark, the wide lockup image gets cropped by the
                     shared .cb-brand-platform-mark styles, so use the real 256px
                     square asset here. */}
                 <img src="/images/brand/creatorbridge-mark.png" alt="CreatorBridge"
@@ -397,7 +397,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
                 </div>
               )}
 
-              {/* Creator signup — redirect to full 5-step registration form */}
+              {/* Creator signup, redirect to full 5-step registration form */}
               {tab === 'signup' && role === 'creator' ? (
                 <div className="space-y-4 py-2">
                   <div className={`rounded-2xl border p-5 text-center ${dark ? 'border-gold-500/30 bg-gold-500/10' : 'border-gold-200 bg-gold-50'}`}>
@@ -493,7 +493,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
                       ) : (
                         <>
                           <form onSubmit={handleSubmit} className="space-y-3">
-                            {/* Honeypot field — hidden from real users, bots will fill this */}
+                            {/* Honeypot field, hidden from real users, bots will fill this */}
                             <input
                               type="text"
                               name="website_url"
@@ -536,7 +536,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
                               </button>
                             </div>
 
-                            {/* Forgot password link — login tab only */}
+                            {/* Forgot password link, login tab only */}
                             {tab === 'login' && (
                               <div className="text-right -mt-1">
                                 <button type="button" onClick={() => { setForgotMode(true); setError(''); setForgotEmail(form.email); }}

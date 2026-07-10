@@ -1,7 +1,7 @@
 // Region definitions with rate key mapping and native currency
 export const REGIONS = {
   'us-tier1': {
-    name: 'US Tier 1 — Major Metro',
+    name: 'US Tier 1, Major Metro',
     cities: 'Los Angeles, New York, Chicago, SF, Miami',
     flag: '🇺🇸',
     country: 'United States',
@@ -11,7 +11,7 @@ export const REGIONS = {
     group: 'United States',
   },
   'us-tier2': {
-    name: 'US Tier 2 — Mid-Market',
+    name: 'US Tier 2, Mid-Market',
     cities: 'Phoenix, Dallas, Atlanta, Denver, Nashville, Austin, Portland',
     flag: '🇺🇸',
     country: 'United States',
@@ -21,7 +21,7 @@ export const REGIONS = {
     group: 'United States',
   },
   'us-tier3': {
-    name: 'US Tier 3 — Smaller Markets',
+    name: 'US Tier 3, Smaller Markets',
     cities: 'Tucson, Boise, Des Moines, Raleigh, Omaha',
     flag: '🇺🇸',
     country: 'United States',
@@ -61,7 +61,7 @@ export const REGIONS = {
     group: 'Canada',
   },
   'uk-tier1': {
-    name: 'UK — London',
+    name: 'UK, London',
     cities: 'London',
     flag: '🇬🇧',
     country: 'United Kingdom',
@@ -71,7 +71,7 @@ export const REGIONS = {
     group: 'United Kingdom',
   },
   'uk-tier2': {
-    name: 'UK — Tier 2',
+    name: 'UK, Tier 2',
     cities: 'Manchester, Birmingham',
     flag: '🇬🇧',
     country: 'United Kingdom',

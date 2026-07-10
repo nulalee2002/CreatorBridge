@@ -196,7 +196,7 @@ export function buildQuote(state) {
     lines.push({
       id: 'licensing',
       category: 'licensing',
-      label: `Licensing — ${licensingOption.label}`,
+      label: `Licensing: ${licensingOption.label}`,
       rate: null,
       quantity: null,
       unit: null,

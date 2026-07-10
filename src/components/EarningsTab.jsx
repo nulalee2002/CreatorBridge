@@ -48,7 +48,7 @@ function normalizeTransaction(t) {
 /**
  * Badge colour for a transaction row.
  *  released → subtle green (money is in creator's account)
- *  paid     → muted gold  (held — awaiting auto-approve window)
+ *  paid     → muted gold  (held, awaiting auto-approve window)
  *  paid/in-progress → gold (retainer secured, work ongoing)
  *  pending  → dim charcoal
  */
@@ -167,7 +167,7 @@ export function EarningsTab({ creator, dark }) {
         />
       </div>
 
-      {/* Loyalty fee ladder — your platform fee drops as you complete projects */}
+      {/* Loyalty fee ladder, your platform fee drops as you complete projects */}
       <div className={`${cardCls} p-4`}>
         <div className="flex items-start gap-3">
           <CheckCircle size={16} className="text-gold-400 shrink-0 mt-0.5" />
@@ -181,7 +181,7 @@ export function EarningsTab({ creator, dark }) {
             const isCurrent = tier.name === currentTier.name;
             const range = tier.maxProjects === Infinity
               ? `${tier.minProjects}+ projects`
-              : `${tier.minProjects}–${tier.maxProjects} projects`;
+              : `${tier.minProjects}-${tier.maxProjects} projects`;
             return (
               <div key={tier.name}
                 className={`rounded-xl border p-3 ${isCurrent

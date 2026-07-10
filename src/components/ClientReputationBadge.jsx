@@ -79,7 +79,7 @@ export function ClientReputationBadge({ metrics, dark, size = 'sm' }) {
 }
 
 /**
- * Detailed reputation block — shown in project detail or message header.
+ * Detailed reputation block, shown in project detail or message header.
  */
 export function ClientReputationCard({ clientName, metrics, dark }) {
   const rep = getReputationScore(metrics || {});

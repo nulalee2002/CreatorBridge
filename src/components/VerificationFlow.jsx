@@ -55,10 +55,10 @@ export function VerificationFlow({ creator, dark, onUpdate }) {
          : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
   }`;
 
-  // Step 1: Identity — auto-verified if Stripe is connected
+  // Step 1: Identity, auto-verified if Stripe is connected
   const identityDone = creator?.stripe_onboarded === true;
 
-  // Step 2: Portfolio — need 3+ CreatorBridge-hosted media items
+  // Step 2: Portfolio, need 3+ CreatorBridge-hosted media items
   const portfolioItems = creator?.portfolio || creator?.portfolio_items || [];
   const hostedPortfolio = portfolioItems.filter(p => (
     p.bunny_video_id ||

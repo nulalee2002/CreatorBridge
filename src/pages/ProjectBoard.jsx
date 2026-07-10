@@ -125,8 +125,8 @@ function timeAgo(iso) {
 const BUDGET_RANGES = [
   { id: 'any',        label: 'Any budget' },
   { id: 'under500',   label: 'Under $500',     min: 0,    max: 500   },
-  { id: '500-1500',   label: '$500–$1,500',    min: 500,  max: 1500  },
-  { id: '1500-5000',  label: '$1,500–$5,000',  min: 1500, max: 5000  },
+  { id: '500-1500',   label: '$500-$1,500',    min: 500,  max: 1500  },
+  { id: '1500-5000',  label: '$1,500-$5,000',  min: 1500, max: 5000  },
   { id: 'over5000',   label: '$5,000+',         min: 5000, max: Infinity },
 ];
 
@@ -1032,7 +1032,7 @@ function ProjectCard({ project, dark, onApply, myApplications, isClient, canAppl
   const applied  = myApplications.some(a => a.projectId === project.id);
 
   const budgetStr = project.budgetMin && project.budgetMax
-    ? `$${Number(project.budgetMin).toLocaleString()} – $${Number(project.budgetMax).toLocaleString()}`
+    ? `$${Number(project.budgetMin).toLocaleString()}, $${Number(project.budgetMax).toLocaleString()}`
     : project.budgetMax ? `Up to $${Number(project.budgetMax).toLocaleString()}`
     : project.budgetMin ? `From $${Number(project.budgetMin).toLocaleString()}`
     : 'Budget TBD';
@@ -1273,7 +1273,7 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
   }, [project]);
 
   const budgetStr = project.budgetMin && project.budgetMax
-    ? `$${Number(project.budgetMin).toLocaleString()} – $${Number(project.budgetMax).toLocaleString()}`
+    ? `$${Number(project.budgetMin).toLocaleString()}, $${Number(project.budgetMax).toLocaleString()}`
     : project.budgetMax ? `Up to $${Number(project.budgetMax).toLocaleString()}`
     : project.budgetMin ? `From $${Number(project.budgetMin).toLocaleString()}`
     : 'Budget TBD';
@@ -1720,7 +1720,7 @@ export function ProjectBoard({ dark }) {
           createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
         },
         {
-          id: 'demo-3', title: 'Monthly Social Video Package — Real Estate',
+          id: 'demo-3', title: 'Monthly Social Video Package, Real Estate',
           description: 'Boutique real estate agency needs a monthly social-first video package: 4 Reels, 8 Stories, captions and strategy. Looking for a long-term partner in LA.',
           primary_pillar: 'video_production', serviceId: 'video_production', specialty: 'Short-Form & Social (Reels/TikTok/UGC)',
           budgetMin: 1200, budgetMax: 2500, deadline: '2026-07-15',
@@ -1730,7 +1730,7 @@ export function ProjectBoard({ dark }) {
           createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
         },
         {
-          id: 'demo-4', title: 'Weekly Podcast Audio Editing — Long-Term',
+          id: 'demo-4', title: 'Weekly Podcast Audio Editing, Long-Term',
           description: 'Established weekly business podcast (200+ episodes) seeking a reliable audio editor. ~45 min raw audio per week. Long-term preferred.',
           primary_pillar: 'post_production', serviceId: 'post_production', specialty: 'Podcast Audio Editing',
           budgetMin: 150, budgetMax: 300, deadline: '',
@@ -1780,7 +1780,7 @@ export function ProjectBoard({ dark }) {
           createdAt: new Date(Date.now() - 86400000 * 14).toISOString(),
         },
         {
-          id: 'demo-9', title: 'Editorial Headshots — Founder Series',
+          id: 'demo-9', title: 'Editorial Headshots, Founder Series',
           description: 'Magazine feature on 8 founders, editorial portraits, studio + on-location. Need a photographer with strong editorial sensibility.',
           primary_pillar: 'photography', serviceId: 'photography', specialty: 'Editorial & Press',
           budgetMin: 1500, budgetMax: 2500, deadline: '2026-06-28',

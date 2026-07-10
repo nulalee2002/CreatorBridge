@@ -14,10 +14,10 @@ const DISPUTE_REASONS = [
 /**
  * DisputeModal
  * Props:
- *   project       — the project object
- *   dark          — boolean
- *   onClose       — () => void
- *   onSubmitted   — () => void  (called after successful dispute creation)
+ *   project      , the project object
+ *   dark         , boolean
+ *   onClose      , () => void
+ *   onSubmitted  , () => void  (called after successful dispute creation)
  */
 export function DisputeModal({ project, dark, onClose, onSubmitted }) {
   const { user } = useAuth();

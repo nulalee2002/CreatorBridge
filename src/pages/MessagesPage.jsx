@@ -97,7 +97,7 @@ function markMessagesRead(threadId, userId) {
 
 async function markRemoteMessagesRead(thread, userId) {
   if (!supabaseConfigured || !supabase || !isUuid(userId)) return;
-  // Merged threads can span multiple server conversations — mark them all read.
+  // Merged threads can span multiple server conversations, mark them all read.
   const fallback = thread?.remoteConversationId || (isUuid(thread?.threadId) ? thread.threadId : null);
   const conversationIds = (thread?.conversationIds?.length ? thread.conversationIds : [fallback]).filter(Boolean);
   for (const conversationId of conversationIds) {

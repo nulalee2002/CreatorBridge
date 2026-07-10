@@ -106,7 +106,7 @@ export function CreatorAgreement({ dark }) {
                   <div className="flex justify-between border-b border-gray-800 pb-2">
                     <div>
                       <p className="font-bold text-white">Launch Tier</p>
-                      <p className={`text-[10px] ${textSub}`}>Initial registration tier (0–9 projects completed)</p>
+                      <p className={`text-[10px] ${textSub}`}>Initial registration tier (0-9 projects completed)</p>
                     </div>
                     <span className="font-mono font-bold text-gold-400">10% Platform Fee</span>
                   </div>
@@ -205,15 +205,15 @@ export function CreatorAgreement({ dark }) {
               </p>
               <div className="space-y-3 mt-2">
                 <div className="p-3.5 rounded-xl border border-gold-500/20 bg-gold-500/5">
-                  <p className="font-bold text-xs text-gold-400">Strike 1 — Warning</p>
+                  <p className="font-bold text-xs text-gold-400">Strike 1, Warning</p>
                   <p className={`text-xs mt-1 ${textSub}`}>An administrative warning is logged. Your dashboard notifies you of the warning. This serves as an education step.</p>
                 </div>
                 <div className="p-3.5 rounded-xl border border-white/[0.08] bg-white/[0.02]">
-                  <p className="font-bold text-xs text-white">Strike 2 — Restriction</p>
+                  <p className="font-bold text-xs text-white">Strike 2, Restriction</p>
                   <p className={`text-xs mt-1 ${textSub}`}>Your search visibility is reduced. Your profile is marked "Under Review". You are restricted from bidding on high-budget briefs for 30 days.</p>
                 </div>
                 <div className="p-3.5 rounded-xl border border-red-500/25 bg-red-500/5">
-                  <p className="font-bold text-xs text-red-400">Strike 3 — Suspension</p>
+                  <p className="font-bold text-xs text-red-400">Strike 3, Suspension</p>
                   <p className={`text-xs mt-1 ${textSub}`}>Immediate profile suspension. You are removed from the public directory. Payouts may be held pending contract review. You cannot communicate with new clients.</p>
                 </div>
               </div>

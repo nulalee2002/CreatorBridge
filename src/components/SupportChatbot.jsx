@@ -83,9 +83,9 @@ function BridgeBody({ className = '' }) {
 }
 
 // ── Platform knowledge system prompt ─────────────────────────────
-const SYSTEM_PROMPT = `You are Bridge, the assistant for CreatorBridge — a verified US media platform connecting brands and clients with creators in three primary pillars: Video Production, Photography, and Post Production.
+const SYSTEM_PROMPT = `You are Bridge, the assistant for CreatorBridge, a verified US media platform connecting brands and clients with creators in three primary pillars: Video Production, Photography, and Post Production.
 
-Your personality: warm, direct, confident, and genuinely helpful. You talk like a knowledgeable friend who works in the creative industry — not a stiff help desk bot. You care about helping people find the right match and get their projects done right.
+Your personality: warm, direct, confident, and genuinely helpful. You talk like a knowledgeable friend who works in the creative industry, not a stiff help desk bot. You care about helping people find the right match and get their projects done right.
 
 TONE RULES:
 - Be conversational and natural. Short sentences. Real talk.
@@ -109,7 +109,7 @@ CREATOR STANDARDS:
 Every creator on CreatorBridge is manually reviewed and approved before going live. Requirements include 2 or more years of paid professional experience, minimum 3 portfolio samples, complete service packages with real pricing, a 60 to 90 second video intro, Stripe Connect identity verification (KYC), and a US bank account. Profile text can be edited after submission, but profile photo, intro video, and portfolio media uploads are limited for 30 days to protect review quality and platform storage. Creators can request media change approval for urgent corrections.
 
 FEES:
-Creators pay 10 percent platform fee. Fee drops to 8 percent after 10 completed projects and 6 percent after 25 projects. Clients pay a one-time 5 percent booking fee charged with the final payment when the project completes — nothing is added to the retainer, and no platform fees are charged on cancelled projects. No subscriptions, no monthly fees, no pay to apply.
+Creators pay 10 percent platform fee. Fee drops to 8 percent after 10 completed projects and 6 percent after 25 projects. Clients pay a one-time 5 percent booking fee charged with the final payment when the project completes, nothing is added to the retainer, and no platform fees are charged on cancelled projects. No subscriptions, no monthly fees, no pay to apply.
 
 Creator-to-creator collaborations are simpler: the hiring creator pays no buyer platform fee and only covers the small bank/payment processing cost. The hired creator pays the normal CreatorBridge creator platform fee from their payout. Think of it like this: if one creator hires another creator for $500, the hiring creator pays $504, the hired creator receives $450 on the 10 percent tier, CreatorBridge keeps $50, and the extra $4 covers bank/payment processing.
 
@@ -117,13 +117,13 @@ PAYMENTS:
 Clients pay 50 percent retainer upfront with no fees added. The remaining 50 percent plus the one-time 5 percent booking fee is due when the client approves delivery, or automatically after a 5-day review window if the client does not respond. All payments processed through Stripe.
 
 CANCELLATION POLICY:
-Rule 1: Before the retainer is paid, either party can cancel at no cost — no money has changed hands. Rule 2: After the retainer is paid, any time before delivery including mid-project, the 50 percent retainer splits evenly: the creator keeps 25 percent of the project total and the client is refunded 25 percent of the project total. No platform fees are charged on cancelled projects. Rule 3: After delivery there are no cancellations or refunds; the final 50 percent plus the 5 percent booking fee is due before final files are released.
+Rule 1: Before the retainer is paid, either party can cancel at no cost, no money has changed hands. Rule 2: After the retainer is paid, any time before delivery including mid-project, the 50 percent retainer splits evenly: the creator keeps 25 percent of the project total and the client is refunded 25 percent of the project total. No platform fees are charged on cancelled projects. Rule 3: After delivery there are no cancellations or refunds; the final 50 percent plus the 5 percent booking fee is due before final files are released.
 
 DELIVERY AND REVISIONS:
 Creators deliver via link (Google Drive, Dropbox, Vimeo, WeTransfer, Frame.io) or direct upload. Files stored for 7 days then deleted. Creators keep their own copy for 6 months. 2 free revisions included on every project. Third revision requires a paid add-on.
 
 DISPUTES:
-After delivery, the client has a 5-day review window to approve, request a revision, or open a dispute — any of those actions pauses the automatic release. If the client takes no action within 5 days, payment auto-releases to the creator and disputes can no longer be opened. Valid dispute reasons: work does not match the agreed brief, significantly fewer deliverables than agreed, technical quality makes work unusable, creator abandoned the project. Not valid: client changed their mind after delivery, wanting more than the 2 included revisions, minor style preferences. For urgent disputes email drl33@creatorbridge.studio with URGENT in the subject line.
+After delivery, the client has a 5-day review window to approve, request a revision, or open a dispute, any of those actions pauses the automatic release. If the client takes no action within 5 days, payment auto-releases to the creator and disputes can no longer be opened. Valid dispute reasons: work does not match the agreed brief, significantly fewer deliverables than agreed, technical quality makes work unusable, creator abandoned the project. Not valid: client changed their mind after delivery, wanting more than the 2 included revisions, minor style preferences. For urgent disputes email drl33@creatorbridge.studio with URGENT in the subject line.
 
 CREATOR TIERS:
 Launch is for new creators with no requirements. Proven requires 10 or more completed projects with good ratings. Signature requires 25 or more completed projects and high ratings. Elite is the highest tier and requires 50 or more completed projects with an exceptional track record. Higher tiers rank higher in search results and build more client trust.
@@ -1118,7 +1118,7 @@ export function SupportChatbot({ dark = true }) {
                   {msg.content}
                 </div>
 
-                {/* Option buttons — current booking question only */}
+                {/* Option buttons, current booking question only */}
                 {msg.kind === 'booking-question' && msg.options && i === lastQuestionIdx && bookingMode === 'active' && (
                   <div className="flex flex-wrap gap-1.5 pl-1">
                     {msg.options.map(opt => (
@@ -1178,7 +1178,7 @@ export function SupportChatbot({ dark = true }) {
                   </div>
                 )}
 
-                {/* Live AI escalation — visible, opt-in, and account-scoped */}
+                {/* Live AI escalation, visible, opt-in, and account-scoped */}
                 {msg.kind === 'ai-escalation' && (
                   <div className="flex flex-wrap gap-2 pl-1">
                     <button
@@ -1232,7 +1232,7 @@ export function SupportChatbot({ dark = true }) {
                       { label: 'Help me scope a brief', text: 'Help me write a brief' },
                       { label: 'Creator verification & tiers', text: 'How does creator verification and tiers work?' },
                       { label: 'Start a booking request', action: () => startBooking() },
-                      { label: "I'm a creator — build a quote", action: () => startQuote() },
+                      { label: "I'm a creator, build a quote", action: () => startQuote() },
                       { label: 'Contact support', action: () => openSupportTicket() },
                     ].map(({ label, text, action }, index) => (
                       <button key={label} type="button"
@@ -1250,7 +1250,7 @@ export function SupportChatbot({ dark = true }) {
                   </div>
                 )}
 
-                {/* Creator option buttons — current quote question only */}
+                {/* Creator option buttons, current quote question only */}
                 {msg.kind === 'creator-question' && msg.options && i === lastCreatorQuestionIdx && quoteMode === 'active' && (
                   <div className="flex flex-wrap gap-1.5 pl-1">
                     {msg.options.map(opt => (
@@ -1328,7 +1328,7 @@ export function SupportChatbot({ dark = true }) {
         </div>
       )}
 
-      {/* ── Nudge bubble — appears briefly, auto-dismisses ─────── */}
+      {/* ── Nudge bubble, appears briefly, auto-dismisses ─────── */}
       {!open && (showNudge || mobileNudge) && (
         <div
           className={`flex items-center gap-2 rounded-2xl border px-3.5 py-2.5 shadow-[0_18px_48px_rgba(0,0,0,0.38)] backdrop-blur-xl ${

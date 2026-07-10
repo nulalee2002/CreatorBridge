@@ -96,7 +96,7 @@ export function SupportTicketForm({ dark, onClose }) {
     const userAgent = (navigator.userAgent || '').slice(0, 500);
     const viewport = `${window.innerWidth}x${window.innerHeight}`;
 
-    // Optional screenshot — compressed, uploaded to a private bucket. Best-effort:
+    // Optional screenshot, compressed, uploaded to a private bucket. Best-effort:
     // a failed upload never blocks the report.
     let screenshotPath = null;
     if (screenshotFile) {
@@ -111,7 +111,7 @@ export function SupportTicketForm({ dark, onClose }) {
           if (!upErr) screenshotPath = path;
         }
       } catch {
-        // ignore — submit the report without the screenshot
+        // ignore, submit the report without the screenshot
       }
     }
 
@@ -150,11 +150,11 @@ export function SupportTicketForm({ dark, onClose }) {
           .createSignedUrl(screenshotPath, 604800);
         screenshotUrl = signed?.signedUrl || null;
       } catch {
-        // ignore — admin can still open the screenshot from the dashboard
+        // ignore, admin can still open the screenshot from the dashboard
       }
     }
 
-    // Admin alert to the support inbox — best-effort, does not block.
+    // Admin alert to the support inbox, best-effort, does not block.
     sendNotificationEmail(ADMIN_SUPPORT_EMAIL, 'support_ticket_admin_alert', {
       ticket_reference: ref,
       category:         form.category,
@@ -169,7 +169,7 @@ export function SupportTicketForm({ dark, onClose }) {
       screenshot_url:   screenshotUrl,
     });
 
-    // User confirmation — unchanged.
+    // User confirmation, unchanged.
     sendNotificationEmail(user.email, 'support_ticket_opened', {
       user_name:        profile?.full_name || user.email,
       ticket_reference: ref,
@@ -273,7 +273,7 @@ export function SupportTicketForm({ dark, onClose }) {
                 Description
               </label>
               <textarea
-                placeholder="Describe the issue in as much detail as possible — include any error messages or steps to reproduce"
+                placeholder="Describe the issue in as much detail as possible, include any error messages or steps to reproduce"
                 value={form.description}
                 onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                 rows={5}

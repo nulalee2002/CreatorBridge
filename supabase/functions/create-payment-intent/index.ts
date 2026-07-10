@@ -14,7 +14,7 @@ const corsHeaders = {
 
 function creatorFeePctFor(completedProjects: number, nextProjectFeePct?: number | null) {
   const completed = Number(completedProjects || 0);
-  const loyaltyPct = completed >= 50 ? 5 : completed >= 25 ? 6 : completed >= 10 ? 8 : 10;
+  const loyaltyPct = completed >= 25 ? 6 : completed >= 10 ? 8 : 10;
   return nextProjectFeePct != null ? Math.min(Number(nextProjectFeePct), loyaltyPct) : loyaltyPct;
 }
 

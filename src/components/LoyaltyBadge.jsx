@@ -24,7 +24,7 @@ export function LoyaltyBadge({ completedProjects = 0 }) {
 }
 
 /**
- * Dashboard progress widget — shows the creator's current tier
+ * Dashboard progress widget, shows the creator's current tier
  * and how many projects until they reach the next tier.
  */
 export function LoyaltyProgress({ completedProjects = 0, dark }) {

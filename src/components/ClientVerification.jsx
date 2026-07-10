@@ -88,10 +88,10 @@ function saveClientProfile(profile) {
  * blocks certain actions until requirements are met.
  *
  * Props:
- *   user         — auth user object
- *   dark         — boolean
- *   onComplete   — callback when basic verification is complete
- *   requireLevel — 'basic' (email+name+tos) | 'contact' (adds phone)
+ *   user        , auth user object
+ *   dark        , boolean
+ *   onComplete  , callback when basic verification is complete
+ *   requireLevel, 'basic' (email+name+tos) | 'contact' (adds phone)
  */
 export function ClientVerification({ user, dark, onComplete, requireLevel = 'basic' }) {
   const [profile, setProfile] = useState(null);
@@ -279,7 +279,7 @@ export function ClientVerification({ user, dark, onComplete, requireLevel = 'bas
   const isComplete = requireLevel === 'contact' ? contactComplete : basicComplete;
 
   if (isComplete && !saved) {
-    // Already verified — render nothing (or a small badge)
+    // Already verified, render nothing (or a small badge)
     return null;
   }
 

@@ -2,7 +2,7 @@
 //
 // Toggle this to false to hide demo creators from the directory.
 // CreatorDirectory checks this before loading seed data.
-// LAUNCH: false — no demo/seed creators on public surfaces. Flip to true only
+// LAUNCH: false, no demo/seed creators on public surfaces. Flip to true only
 // for local development when you need sample creators to browse.
 export const SHOW_DEMO_CREATORS = false;
 
@@ -87,7 +87,7 @@ export const SEED_CREATORS = [
     ],
     portfolio: [
       {
-        title: 'Nike Brand Film — "Rise Every Day"',
+        title: 'Nike Brand Film, "Rise Every Day"',
         description: '3-day shoot across 5 LA locations. Brand story campaign used across broadcast and digital. Directed, DP\'d, and edited in-house.',
         serviceId: 'video',
         link: 'https://vimeo.com',
@@ -128,7 +128,7 @@ export const SEED_CREATORS = [
         deliverables: [
           '2-day full shoot',
           'Full pre-production planning call',
-          '1 hero edit (2–4 min) + 3 cut-downs',
+          '1 hero edit (2-4 min) + 3 cut-downs',
           'Color grade and audio mix',
           'Drone footage (if location permits)',
           'Licensed music from premium library',
@@ -141,11 +141,11 @@ export const SEED_CREATORS = [
         name: 'Premium',
         serviceId: 'video',
         price: 12000,
-        description: 'Full campaign production — concept to delivery.',
+        description: 'Full campaign production, concept to delivery.',
         deliverables: [
           '3-day production (locations, crew, lighting)',
           'Creative concept development and script',
-          '1 flagship film (3–5 min)',
+          '1 flagship film (3-5 min)',
           '6 social cuts optimized per platform',
           'Full color grade (DaVinci Resolve)',
           'Professional audio mix and master',
@@ -228,19 +228,19 @@ export const SEED_CREATORS = [
     ],
     portfolio: [
       {
-        title: 'South Beach Luxury Condos — Brickell',
+        title: 'South Beach Luxury Condos, Brickell',
         description: 'Marketing photography package for a 40-unit luxury waterfront development. 200+ final images delivered for print, OOH, and digital advertising.',
         serviceId: 'photography',
         link: 'https://instagram.com',
       },
       {
-        title: 'Zara Spring Campaign — South Florida',
+        title: 'Zara Spring Campaign, South Florida',
         description: 'Spring/summer lookbook shoot at Art Basel locations. 220 final images, licensing included for 12-month North America digital use.',
         serviceId: 'photography',
         link: 'https://instagram.com',
       },
       {
-        title: 'C-Suite Portrait Series — Fortune 500',
+        title: 'C-Suite Portrait Series, Fortune 500',
         description: 'Executive portrait series for a financial services firm. 12 subjects across 2 days, used across annual report, LinkedIn, and press materials.',
         serviceId: 'photography',
       },
@@ -307,7 +307,7 @@ export const SEED_CREATORS = [
     cover: '/images/creatorbridge/backgrounds/08-sitewide/bg-podcast-home-studio.jpg',
     primary_pillar: 'post_production',
     sub_niches: ['pp_podcast_audio', 'pp_sound_design', 'pp_short_form_edit'],
-    bio: 'Full-service podcast production studio in NYC. We\'ve launched over 200 shows from scratch and taken dozens of existing podcasts from hobbyist recordings to top-charting. Our team handles recording, editing, mastering, show notes, and distribution setup — you just show up and talk.',
+    bio: 'Full-service podcast production studio in NYC. We\'ve launched over 200 shows from scratch and taken dozens of existing podcasts from hobbyist recordings to top-charting. Our team handles recording, editing, mastering, show notes, and distribution setup, you just show up and talk.',
     experience: 'senior',
     yearsExperience: 8,
     availability: 'available',
@@ -367,19 +367,19 @@ export const SEED_CREATORS = [
     ],
     portfolio: [
       {
-        title: 'The Growth Playbook — Top 50 Business Podcast',
+        title: 'The Growth Playbook, Top 50 Business Podcast',
         description: 'Full production partnership since launch. 180+ episodes, currently ranked #34 in Business on Apple Podcasts. We handle everything post-record.',
         serviceId: 'video',
         link: 'https://podcasts.apple.com',
       },
       {
-        title: 'Culture Shift — Video Podcast',
+        title: 'Culture Shift, Video Podcast',
         description: 'Weekly video podcast with 500K+ monthly downloads across YouTube and audio platforms. Studio recording in Midtown with full video edit and chapter markers.',
         serviceId: 'video',
         link: 'https://youtube.com',
       },
       {
-        title: 'The Founder Files — Launch Package',
+        title: 'The Founder Files, Launch Package',
         description: 'Took a founder from zero to launched in 6 weeks. Trailer, first 5 episodes, Spotify/Apple distribution setup, and PR pitch kit.',
         serviceId: 'video',
       },
@@ -409,7 +409,7 @@ export const SEED_CREATORS = [
           'Remote recording session (Riverside.fm)',
           'Full audio edit and mastering',
           'Intro/outro + ad break insertion',
-          'Show notes (300–500 words)',
+          'Show notes (300-500 words)',
           'Transcript (AI-assisted, proofed)',
           '3 audiogram social clips',
           'Chapter markers (Spotify)',
@@ -438,7 +438,7 @@ export const SEED_CREATORS = [
     ],
   },
 
-  // ── 4. David Park — Video Production, LA ───────────────────────
+  // ── 4. David Park, Video Production, LA ───────────────────────
   {
     id: 'seed-4', user_id: null,
     name: 'David Park', businessName: 'LensCraft Studios',
@@ -457,7 +457,7 @@ export const SEED_CREATORS = [
     services: [{ serviceId: 'video', rates: { fullDay: 2500 } }],
   },
 
-  // ── 5. Mateo Reyes — Drone & Aerial Video, Austin ──────────────
+  // ── 5. Mateo Reyes, Drone & Aerial Video, Austin ──────────────
   {
     id: 'seed-5', user_id: null,
     name: 'Mateo Reyes', businessName: 'Skyframe Aerial',
@@ -476,7 +476,7 @@ export const SEED_CREATORS = [
     services: [{ serviceId: 'video', rates: { fullDay: 650 } }],
   },
 
-  // ── 6. Maya Chen — Short-form Social, Chicago ──────────────────
+  // ── 6. Maya Chen, Short-form Social, Chicago ──────────────────
   {
     id: 'seed-6', user_id: null,
     name: 'Maya Chen', businessName: 'Bondi Studio',
@@ -495,7 +495,7 @@ export const SEED_CREATORS = [
     services: [{ serviceId: 'video', rates: { fullDay: 1200 } }],
   },
 
-  // ── 7. Aaron Wei — Color Grading, Seattle ──────────────────────
+  // ── 7. Aaron Wei, Color Grading, Seattle ──────────────────────
   {
     id: 'seed-7', user_id: null,
     name: 'Aaron Wei', businessName: 'Northgrade Color',
@@ -514,7 +514,7 @@ export const SEED_CREATORS = [
     services: [{ serviceId: 'post-production', rates: { editHourly: 95, fullDay: 400 } }],
   },
 
-  // ── 8. Naomi Greene — Brand films, Brooklyn ────────────────────
+  // ── 8. Naomi Greene, Brand films, Brooklyn ────────────────────
   {
     id: 'seed-8', user_id: null,
     name: 'Naomi Greene', businessName: 'Greene Street Films',
@@ -533,7 +533,7 @@ export const SEED_CREATORS = [
     services: [{ serviceId: 'video', rates: { fullDay: 3500 } }],
   },
 
-  // ── 9. Iris Patel — Hospitality photography, Phoenix ───────────
+  // ── 9. Iris Patel, Hospitality photography, Phoenix ───────────
   {
     id: 'seed-9', user_id: null,
     name: 'Iris Patel', businessName: 'Studio Mojave',
@@ -552,7 +552,7 @@ export const SEED_CREATORS = [
     services: [{ serviceId: 'photography', rates: { fullDay: 750 } }],
   },
 
-  // ── 10. Dre Williams — Event coverage, Atlanta ─────────────────
+  // ── 10. Dre Williams, Event coverage, Atlanta ─────────────────
   {
     id: 'seed-10', user_id: null,
     name: 'Dre Williams', businessName: 'Cumulus Events Co',
@@ -571,7 +571,7 @@ export const SEED_CREATORS = [
     services: [{ serviceId: 'video', rates: { fullDay: 900 } }],
   },
 
-  // ── 11. Sofia Pellizzari — Editorial fashion, Boston ───────────
+  // ── 11. Sofia Pellizzari, Editorial fashion, Boston ───────────
   {
     id: 'seed-11', user_id: null,
     name: 'Sofia Pellizzari', businessName: 'Pellizzari Editorial',
@@ -590,7 +590,7 @@ export const SEED_CREATORS = [
     services: [{ serviceId: 'photography', rates: { fullDay: 1100 } }],
   },
 
-  // ── 12. Marcus Bell — Motion + edit, Portland ──────────────────
+  // ── 12. Marcus Bell, Motion + edit, Portland ──────────────────
   {
     id: 'seed-12', user_id: null,
     name: 'Marcus Bell', businessName: 'Crosscut Edit Room',
@@ -609,7 +609,7 @@ export const SEED_CREATORS = [
     services: [{ serviceId: 'post-production', rates: { editHourly: 115, fullDay: 550 } }],
   },
 
-  // ── 13. Reese Sterling — Product photography, Denver ───────────
+  // ── 13. Reese Sterling, Product photography, Denver ───────────
   {
     id: 'seed-13', user_id: null,
     name: 'Reese Sterling', businessName: 'Sterling Product Studio',
@@ -657,23 +657,23 @@ const SEED_REVIEWS = [
   },
   {
     id: 'srev-2b', listing_id: 'seed-2', reviewer_name: 'Carlos E.', rating: 5,
-    comment: 'Booked Aria for executive headshots and she made the whole process easy and comfortable. The final images are professional and distinctive — exactly what we needed for press and LinkedIn.',
+    comment: 'Booked Aria for executive headshots and she made the whole process easy and comfortable. The final images are professional and distinctive, exactly what we needed for press and LinkedIn.',
     createdAt: new Date(Date.now() - 86400000 * 30).toISOString(),
   },
   {
     id: 'srev-2c', listing_id: 'seed-2', reviewer_name: 'Michelle T.', rating: 5,
-    comment: 'We\'ve worked with a lot of photographers for our brand campaigns. Aria stands apart — she understands light, story, and brand in a way that produces images that actually perform. Our email CTR went up 40% after switching to her photography.',
+    comment: 'We\'ve worked with a lot of photographers for our brand campaigns. Aria stands apart, she understands light, story, and brand in a way that produces images that actually perform. Our email CTR went up 40% after switching to her photography.',
     createdAt: new Date(Date.now() - 86400000 * 60).toISOString(),
   },
   // seed-3 (Jordan Mitchell)
   {
     id: 'srev-3a', listing_id: 'seed-3', reviewer_name: 'Alex K.', rating: 5,
-    comment: 'SoundWave took our podcast from a side project to a serious production. The editing quality is top-tier — every episode sounds like it was recorded in a professional studio even when we\'re remote. Jordan\'s show notes are better than anything I\'d write myself.',
+    comment: 'SoundWave took our podcast from a side project to a serious production. The editing quality is top-tier, every episode sounds like it was recorded in a professional studio even when we\'re remote. Jordan\'s show notes are better than anything I\'d write myself.',
     createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
   },
   {
     id: 'srev-3b', listing_id: 'seed-3', reviewer_name: 'Rachel B.', rating: 5,
-    comment: 'We launched with Jordan from day one. Within 6 weeks we were on Apple Podcasts New and Noteworthy. The launch package was worth every penny — they handled everything we didn\'t even know we needed.',
+    comment: 'We launched with Jordan from day one. Within 6 weeks we were on Apple Podcasts New and Noteworthy. The launch package was worth every penny, they handled everything we didn\'t even know we needed.',
     createdAt: new Date(Date.now() - 86400000 * 21).toISOString(),
   },
   {

@@ -2,7 +2,7 @@
  * Single source of truth for platform policy versions and role scoping.
  *
  * POLICY_VERSIONS: bump a document's version (we use its last-updated date) when
- * its content changes — every user is then re-prompted to accept on next login.
+ * its content changes, every user is then re-prompted to accept on next login.
  * The acceptance gate also re-confirms monthly (REACCEPT_DAYS) regardless.
  */
 export const POLICY_VERSIONS = {

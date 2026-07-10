@@ -6,7 +6,7 @@ const DEFAULT_DESC = 'CreatorBridge connects US brands with verified Video Produ
 const DEFAULT_IMG  = `${SITE_URL}/images/og-default.jpg`;
 
 /**
- * SEO — drop this at the top of any page's JSX.
+ * SEO, drop this at the top of any page's JSX.
  *
  * Props:
  *   title       Short page title (site name appended automatically)

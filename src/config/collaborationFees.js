@@ -4,7 +4,7 @@ export const ACH_PROCESSING_RATE = 0.008;
 export const ACH_PROCESSING_CAP_CENTS = 500;
 
 export function collaborationCreatorFeePct(completedExternalProjects = 0) {
-  return completedExternalProjects >= 50 ? 5 : completedExternalProjects >= 25 ? 6 : completedExternalProjects >= 10 ? 8 : 10;
+  return completedExternalProjects >= 25 ? 6 : completedExternalProjects >= 10 ? 8 : 10;
 }
 
 export function calculateCollaborationFees(amountCents, completedExternalProjects = 0) {

@@ -100,7 +100,7 @@ function MatchCard({ match, dark, onViewProfile, onRequestQuote }) {
             <p className={`text-xs ${textSub}`}>
               Rate range:{' '}
               <span className="font-bold text-gold-400">
-                ${rateRange.min.toLocaleString()} – ${rateRange.max.toLocaleString()}
+                ${rateRange.min.toLocaleString()}, ${rateRange.max.toLocaleString()}
               </span>
             </p>
           </div>

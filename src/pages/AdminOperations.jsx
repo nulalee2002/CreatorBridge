@@ -10,7 +10,7 @@ import { getPillar } from '../data/taxonomy.js';
 // ── Shared helpers ─────────────────────────────────────────────────────────────
 
 function daysSince(dateStr) {
-  if (!dateStr) return '—';
+  if (!dateStr) return ', ';
   return `${Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000)}d`;
 }
 
@@ -136,10 +136,10 @@ function CreatorReviewTab({ dark }) {
             >
               <div className="hidden sm:grid sm:grid-cols-[1fr_140px_80px_100px_80px_28px] items-center gap-3 px-4 py-3.5">
                 <div>
-                  <p className={`text-xs font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{c.creator_name || '—'}</p>
+                  <p className={`text-xs font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{c.creator_name || ', '}</p>
                   {c.business_name && <p className={`text-[10px] ${textSub}`}>{c.business_name}</p>}
                 </div>
-                <span className={`text-xs ${textSub}`}>{[c.city, c.state].filter(Boolean).join(', ') || '—'}</span>
+                <span className={`text-xs ${textSub}`}>{[c.city, c.state].filter(Boolean).join(', ') || ', '}</span>
                 <span className={`text-xs ${textSub}`}>{c.portfolio_count ?? 0} items</span>
                 <ReviewBadge status={c.review_status} />
                 <span className={`font-mono text-xs ${textSub}`}>{daysSince(c.submitted_at || c.created_at)}</span>
@@ -148,8 +148,8 @@ function CreatorReviewTab({ dark }) {
               {/* Mobile */}
               <div className="flex items-start justify-between gap-3 px-4 py-3.5 sm:hidden">
                 <div>
-                  <p className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{c.creator_name || '—'}</p>
-                  <p className={`text-xs ${textSub}`}>{[c.city, c.state].filter(Boolean).join(', ') || '—'} · {c.portfolio_count ?? 0} portfolio items</p>
+                  <p className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{c.creator_name || ', '}</p>
+                  <p className={`text-xs ${textSub}`}>{[c.city, c.state].filter(Boolean).join(', ') || ', '} · {c.portfolio_count ?? 0} portfolio items</p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <ReviewBadge status={c.review_status} />
@@ -161,7 +161,7 @@ function CreatorReviewTab({ dark }) {
             {isOpen && (
               <div className={`border-b px-4 py-5 ${divider} ${dark ? 'bg-charcoal-950/40' : 'bg-gray-50/70'}`}>
                 <div className="mb-4 grid grid-cols-2 gap-4 text-xs sm:grid-cols-4">
-                  <div><p className={`mb-0.5 font-bold ${textSub}`}>Experience</p><p className={dark ? 'text-white' : 'text-gray-900'}>{c.years_experience ?? '—'} yrs</p></div>
+                  <div><p className={`mb-0.5 font-bold ${textSub}`}>Experience</p><p className={dark ? 'text-white' : 'text-gray-900'}>{c.years_experience ?? ', '} yrs</p></div>
                   <div><p className={`mb-0.5 font-bold ${textSub}`}>Packages</p><p className={dark ? 'text-white' : 'text-gray-900'}>{c.package_count ?? 0}</p></div>
                   <div><p className={`mb-0.5 font-bold ${textSub}`}>Services</p><p className={dark ? 'text-white' : 'text-gray-900'}>{c.service_count ?? 0}</p></div>
                   <div>
@@ -173,7 +173,7 @@ function CreatorReviewTab({ dark }) {
                 </div>
                 <div className="mb-3">
                   <label className={`mb-1.5 block text-xs font-bold ${textSub}`}>
-                    Approval reason <span className="font-normal">(required to approve — logged to profile)</span>
+                    Approval reason <span className="font-normal">(required to approve, logged to profile)</span>
                   </label>
                   <textarea
                     rows={2}
@@ -420,7 +420,7 @@ function ViolationsTab({ dark }) {
         const edit    = editMap[v.id] ?? { status: v.status, admin_notes: v.admin_notes ?? '' };
         const canSuspend = edit.status === 'confirmed' && v.strike_number === 3;
         const dateStr = new Date(v.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        const creatorName = creatorNameMap[v.creator_id] ?? v.creator_id?.slice(0, 8) ?? '—';
+        const creatorName = creatorNameMap[v.creator_id] ?? v.creator_id?.slice(0, 8) ?? ', ';
 
         return (
           <div key={v.id}>

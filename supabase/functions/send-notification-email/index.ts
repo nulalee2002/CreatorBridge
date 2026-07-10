@@ -105,7 +105,7 @@ function getEmailTemplate(template: string, rawData: Record<string, any>): { sub
       break;
 
     case 'retainer_paid':
-      subject = `Retainer received — start your project`;
+      subject = `Retainer received, start your project`;
       bodyContent = `
         <h2 style="color: #d4a941; margin-top: 0; font-size: 20px;">Retainer Cleared!</h2>
         <p>Hi ${data.creator_name || 'Creator'},</p>
@@ -123,7 +123,7 @@ function getEmailTemplate(template: string, rawData: Record<string, any>): { sub
         <p>Creator <strong>${data.creator_name || 'Creator'}</strong> has submitted the content delivery link and files for your project <strong>"${data.project_title || 'Project'}"</strong>.</p>
         <p><strong>Review Requirement:</strong></p>
         <p>Please log in to your CreatorBridge dashboard, review the deliverables, and either approve the delivery to release the final payout, or request a revision if changes are needed.</p>
-        <p><em>Note: As per platform guidelines, you have a 5-day review window to approve, request a revision, or open a dispute — any of those pauses the automatic release. If no action is taken within 5 days, the final payment releases to the creator automatically.</em></p>
+        <p><em>Note: As per platform guidelines, you have a 5-day review window to approve, request a revision, or open a dispute, any of those pauses the automatic release. If no action is taken within 5 days, the final payment releases to the creator automatically.</em></p>
       `;
       break;
 
@@ -150,7 +150,7 @@ function getEmailTemplate(template: string, rawData: Record<string, any>): { sub
       break;
 
     case 'support_ticket_admin_alert':
-      subject = `New ${rawData.category_label || rawData.category || 'support'} report — ${rawData.subject || 'CreatorBridge'}`;
+      subject = `New ${rawData.category_label || rawData.category || 'support'} report, ${rawData.subject || 'CreatorBridge'}`;
       bodyContent = `
         <h2 style="color: #d4a941; margin-top: 0; font-size: 20px;">New issue report</h2>
         <p>A user submitted a report on CreatorBridge.</p>

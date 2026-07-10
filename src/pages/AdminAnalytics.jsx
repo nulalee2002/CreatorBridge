@@ -259,9 +259,9 @@ export function AdminAnalytics({ dark }) {
   const totalTxns  = transactions.length;
   const txHealth = [
     { label: 'Released to Creator',   value: transactions.filter(t => t.final_status === 'released').length,                              colorCls: 'bg-emerald-500/60' },
-    { label: 'Held — Awaiting Release', value: transactions.filter(t => t.final_status === 'paid').length,                                colorCls: 'bg-gold-500/60' },
-    { label: 'Active — Delivery Pending', value: transactions.filter(t => t.retainer_status === 'paid' && t.final_status === 'pending').length, colorCls: 'bg-gold-400/40' },
-    { label: 'Pending — No Retainer', value: transactions.filter(t => t.retainer_status === 'pending').length,                            colorCls: 'bg-charcoal-600' },
+    { label: 'Held, Awaiting Release', value: transactions.filter(t => t.final_status === 'paid').length,                                colorCls: 'bg-gold-500/60' },
+    { label: 'Active, Delivery Pending', value: transactions.filter(t => t.retainer_status === 'paid' && t.final_status === 'pending').length, colorCls: 'bg-gold-400/40' },
+    { label: 'Pending, No Retainer', value: transactions.filter(t => t.retainer_status === 'pending').length,                            colorCls: 'bg-charcoal-600' },
   ];
 
   const activeJobs = txHealth[2].value;
@@ -280,7 +280,7 @@ export function AdminAnalytics({ dark }) {
     return (
       <main className="min-h-screen flex items-center justify-center">
         <p className={`text-sm ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
-          Access denied — platform admin only.
+          Access denied, platform admin only.
         </p>
       </main>
     );
@@ -299,7 +299,7 @@ export function AdminAnalytics({ dark }) {
             Platform Analytics
           </h1>
           <p className={`mt-1 text-sm ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
-            Real-time health metrics — creators, revenue, and transactions.
+            Real-time health metrics, creators, revenue, and transactions.
           </p>
         </div>
 
@@ -346,7 +346,7 @@ export function AdminAnalytics({ dark }) {
             {/* Charts row 1 */}
             <div className="grid lg:grid-cols-2 gap-6">
               <Section
-                title="Platform Revenue — Last 8 Weeks"
+                title="Platform Revenue, Last 8 Weeks"
                 sub="Creator fees + client booking fees, by week of transaction creation."
                 dark={dark}
               >
@@ -470,7 +470,7 @@ export function AdminAnalytics({ dark }) {
                   label: 'MoM Change',
                   value: revChange !== null
                     ? `${revChange >= 0 ? '+' : ''}${revChange}%`
-                    : '—',
+                    : ', ',
                   cls: revChange === null
                     ? (dark ? 'text-charcoal-500' : 'text-gray-300')
                     : revChange >= 0 ? 'text-emerald-400' : 'text-red-400',

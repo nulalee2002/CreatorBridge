@@ -10,12 +10,12 @@ const SERVICE_COLORS = {
 };
 
 const PEAK_LABELS = {
-  video:          'Peak: May–Oct (weddings/events), Nov–Dec (corp)',
-  photography:    'Peak: May–Oct (weddings/portraits)',
-  podcast:        'Peak: Sep–Dec (Q4 launches)',
-  drone:          'Peak: Apr–Sep (good weather)',
-  social:         'Peak: Nov–Dec (holiday campaigns)',
-  postProduction: 'Peak: Oct–Dec (Q4 budgets)',
+  video:          'Peak: May-Oct (weddings/events), Nov-Dec (corp)',
+  photography:    'Peak: May-Oct (weddings/portraits)',
+  podcast:        'Peak: Sep-Dec (Q4 launches)',
+  drone:          'Peak: Apr-Sep (good weather)',
+  social:         'Peak: Nov-Dec (holiday campaigns)',
+  postProduction: 'Peak: Oct-Dec (Q4 budgets)',
 };
 
 export function SeasonalDemand({ serviceId, dark = true }) {

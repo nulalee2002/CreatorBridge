@@ -18,7 +18,7 @@ const CATEGORY_META = {
 const RATE_JUSTIFICATIONS = {
   service: (range, experienceLevel, regionName) =>
     `Based on ${experienceLevel || 'mid-level'} market rates for ${regionName}. ` +
-    (range ? `Market range for this region: ${range.low?.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })} – ${range.high?.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}.` : ''),
+    (range ? `Market range for this region: ${range.low?.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}, ${range.high?.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}.` : ''),
   equipment: () => 'Standard equipment rental fee charged separately to cover gear depreciation, maintenance, and insurance.',
   travel:    () => 'Covers fuel, time, and wear for travel to the shoot location.',
   crew:      () => 'Industry-standard assistant/second shooter rate. Additional crew enables faster turnaround and higher production quality.',
@@ -44,7 +44,7 @@ function RangePill({ value, range, dark }) {
     <div className="mt-2 space-y-1">
       <div className="flex items-center justify-between text-[10px]">
         <span className={`${dark ? 'text-charcoal-500' : 'text-gray-400'}`}>
-          Market: ${low?.toLocaleString()} – ${high?.toLocaleString()}
+          Market: ${low?.toLocaleString()}, ${high?.toLocaleString()}
           <span className={`ml-2 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>(mid: ${mid?.toLocaleString()})</span>
         </span>
         <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${color}`}>{status}</span>
@@ -370,7 +370,7 @@ function QuoteItemized({ quote, state, dark, creatorMode }) {
           </div>
         </div>
 
-        {/* Profit margin – creator only */}
+        {/* Profit margin, creator only */}
         {creatorMode && quote.profitMargin !== null && (
           <div className={`rounded-xl border px-4 py-3.5 ${dark ? 'bg-[#9C4A33]/[0.02] border-[#9C4A33]/15' : 'bg-gold-50/20 border-gold-250/50'}`}>
             <p className="eyebrow mb-2">Profit Analysis</p>

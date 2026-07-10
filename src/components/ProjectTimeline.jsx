@@ -14,7 +14,7 @@ const TIMELINE_STEPS = [
 
 const STATUS_ORDER = TIMELINE_STEPS.map(s => s.key);
 
-// Revision and disputed are offshoots, not linear — handled separately
+// Revision and disputed are offshoots, not linear, handled separately
 function getStepIndex(status) {
   const idx = STATUS_ORDER.indexOf(status);
   if (idx !== -1) return idx;
@@ -27,8 +27,8 @@ function getStepIndex(status) {
 /**
  * ProjectTimeline
  * Props:
- *   status — current project status string
- *   dark   — boolean
+ *   status, current project status string
+ *   dark  , boolean
  */
 export function ProjectTimeline({ status, dark }) {
   const currentIdx = getStepIndex(status);

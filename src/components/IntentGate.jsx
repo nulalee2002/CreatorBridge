@@ -49,14 +49,14 @@ const VENUE_TYPES = ['Indoor', 'Outdoor', 'Studio', 'Remote/Virtual'];
 const today = new Date().toISOString().split('T')[0];
 
 /**
- * IntentGate — shown when a client wants to find creators via Smart Match.
+ * IntentGate, shown when a client wants to find creators via Smart Match.
  * Collects the full 11-field project brief before running matching.
  *
  * Props:
- *   dark         — boolean
- *   onClose      — fn (called when user dismisses)
- *   prefillService — optional service type string to pre-select
- *   mode         — 'modal' (default) | 'inline'
+ *   dark        , boolean
+ *   onClose     , fn (called when user dismisses)
+ *   prefillService, optional service type string to pre-select
+ *   mode        , 'modal' (default) | 'inline'
  */
 export function IntentGate({ dark, onClose, prefillService, mode = 'modal' }) {
   const navigate = useNavigate();

@@ -131,7 +131,7 @@ export function DisputePolicy({ dark }) {
                 <li>Provide a detailed description of why the work does not meet the brief, and attach any relevant communications or evidence.</li>
               </ul>
               <p>
-                Formal disputes must be submitted within the <strong className={dark ? 'text-white' : 'text-gray-900'}>5-day review window</strong> after the last delivery upload — the same window
+                Formal disputes must be submitted within the <strong className={dark ? 'text-white' : 'text-gray-900'}>5-day review window</strong> after the last delivery upload, the same window
                 that governs automatic release, so opening a dispute always happens before funds can auto-release. Opening a dispute
                 freezes all pending milestone payments for that transaction until it is resolved.
               </p>
@@ -166,7 +166,7 @@ export function DisputePolicy({ dark }) {
               </p>
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li>If cancelled before the retainer is paid: No charges apply. No money has changed hands.</li>
-                <li>If cancelled after the retainer is paid — at any time before delivery, including mid-project: The 50% retainer is split evenly. The creator keeps 25% of the project total (half the retainer) and the client is refunded 25% of the project total (the other half). No platform fees are charged on cancelled projects — the 5% client booking fee applies only to successfully completed projects.</li>
+                <li>If cancelled after the retainer is paid, at any time before delivery, including mid-project: The 50% retainer is split evenly. The creator keeps 25% of the project total (half the retainer) and the client is refunded 25% of the project total (the other half). No platform fees are charged on cancelled projects, the 5% client booking fee applies only to successfully completed projects.</li>
                 <li>After delivery: No cancellations or refunds. The remaining 50% plus the one-time 5% booking fee is due before final files are released. Post-delivery concerns go through the dispute process above.</li>
               </ul>
               <p>

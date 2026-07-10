@@ -37,7 +37,7 @@ let creator = {
   tagline: "Editorial commercial photography with a bold, narrative eye.",
   bio: "I shoot for brands that want their work to feel deliberate. Studio and on-location, with a small reliable crew. Based in Miami, working nationally across the US.",
   featuredIn: ["Vogue Business", "Harper's Bazaar", "Hypebeast", "Soho House Magazine"],
-  // ONE primary pillar — never multiple. 1–3 specialties inside it.
+  // ONE primary pillar, never multiple. 1-3 specialties inside it.
   pillar: { key: "photo", label: "Photography" },
   specialties: ["Brand & Commercial Photography", "Editorial & Press", "Headshots & Portraits"],
   gear: ["Hasselblad H6D-100c", "Phase One IQ4", "Profoto B10s × 4", "DJI Ronin 4D"],
@@ -93,7 +93,7 @@ let reviews = [
   { id: 3, client: "Equinox Coral Gables", role: "Marketing Manager", rating: 5, project: "Portrait series · Essential", date: "Jan 2026",
     body: "Made our members feel comfortable. Edits came back ahead of schedule with consistent grading across all 12 sitters." },
   { id: 4, client: "The Standard Hotels", role: "Property GM", rating: 4, project: "Property feature · Editorial", date: "Dec 2025",
-    body: "Premium output. Loved the final cut. The only note was on revision pacing — small thing, communicated and resolved." }
+    body: "Premium output. Loved the final cut. The only note was on revision pacing, small thing, communicated and resolved." }
 ];
 
 // ---------- HELPERS ----------
@@ -160,7 +160,7 @@ function Hero({ onPlayReel, onJumpBook, onMessage, layout, saved, setSaved, coll
             </button>
             <div className="absolute bottom-0 left-0 right-0 p-8">
               <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--gold)] mb-3">Featured Reel · 02:14</div>
-              <div className="text-lg serif">2024–25 selected work</div>
+              <div className="text-lg serif">2024-25 selected work</div>
             </div>
           </div>
         </div>
@@ -183,7 +183,7 @@ function Hero({ onPlayReel, onJumpBook, onMessage, layout, saved, setSaved, coll
             </button>
             <div className="absolute bottom-0 left-0 right-0 p-6">
               <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--gold)] mb-2">Featured Reel · 02:14</div>
-              <div className="text-base serif font-medium">2024–25 selected work</div>
+              <div className="text-base serif font-medium">2024-25 selected work</div>
             </div>
           </div>
         </div>
@@ -300,10 +300,10 @@ function StatStrip() {
 }
 
 // ===== SERVICE OFFERS =====
-// Shows the single primary pillar + 1–3 specialties as a clean section.
+// Shows the single primary pillar + 1-3 specialties as a clean section.
 // Replaces any old "service lane" tabbed UI.
 const SPECIALTY_BLURB = {
-  "Brand & Commercial Photography": "Campaign stills + commercial work for brand-led shoots — studio or on-location, deliverables sized for digital, OOH, and print.",
+  "Brand & Commercial Photography": "Campaign stills + commercial work for brand-led shoots, studio or on-location, deliverables sized for digital, OOH, and print.",
   "Editorial & Press": "Editorial-eye photography for magazines, press features, and brand storytelling. Strong creative POV with on-brief restraint.",
   "Headshots & Portraits": "Founder, team, and member portraits. Consistent grading across sitters, quick turnarounds, premium retouching."
 };
@@ -314,7 +314,7 @@ function ServiceOffers() {
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-6">
         <div>
           <Eyebrow>Service offers</Eyebrow>
-          <h2 className="text-2xl md:text-3xl serif font-medium leading-tight">{creator.pillar.label} — {creator.specialties.length} specialties.</h2>
+          <h2 className="text-2xl md:text-3xl serif font-medium leading-tight">{creator.pillar.label}, {creator.specialties.length} specialties.</h2>
         </div>
         <div className="text-xs text-[var(--text-dim)] max-w-sm">One primary pillar per creator on CreatorBridge. {creator.studio} works exclusively within {creator.pillar.label}.</div>
       </div>
@@ -344,7 +344,7 @@ function About() {
         <h2 className="text-2xl md:text-3xl serif font-medium mb-4 leading-tight">A small studio built to deliver editorial work at commercial pace.</h2>
         <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-4">{creator.bio}</p>
         <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-          Past clients include Aritzia, Soho House, The Standard Hotels, Equinox, and Hypebeast. I work nationally — based in Miami, comfortable on shoots in NYC, LA, and Mexico City.
+          Past clients include Aritzia, Soho House, The Standard Hotels, Equinox, and Hypebeast. I work nationally, based in Miami, comfortable on shoots in NYC, LA, and Mexico City.
         </p>
         <div className="grid sm:grid-cols-2 gap-x-6 gap-y-4 mt-6">
           <Meta label="Specialties" items={creator.specialties}/>
@@ -396,7 +396,7 @@ function Step({ n, t, d }) {
 }
 
 function Portfolio({ onOpen }) {
-  // Filter categories pulled from the creator's specialties — no old generic service lanes.
+  // Filter categories pulled from the creator's specialties, no old generic service lanes.
   const cats = ["All", ...creator.specialties];
   const [active, setActive] = useState("All");
   const items = active === "All" ? portfolio : portfolio.filter(p => p.cat === active);
@@ -408,7 +408,7 @@ function Portfolio({ onOpen }) {
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
         <div>
           <Eyebrow>Portfolio</Eyebrow>
-          <h2 className="text-2xl md:text-3xl serif font-medium leading-tight">Selected work — last 18 months.</h2>
+          <h2 className="text-2xl md:text-3xl serif font-medium leading-tight">Selected work, last 18 months.</h2>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {cats.map(c => (
@@ -659,7 +659,7 @@ function BookingSheet({ open, onClose, selectedPkg }) {
   const subtotal = pkg.price;
   const fee = Math.round(subtotal * 0.05);
   const total = subtotal + fee;
-  // Retainer is 50% of the base package only — the one-time 5% booking fee is
+  // Retainer is 50% of the base package only, the one-time 5% booking fee is
   // charged with the final payment on completion, never split into the retainer.
   const retainer = Math.round(subtotal / 2);
   const remainder = total - retainer;
@@ -870,7 +870,7 @@ function HandoffCreatorProfile() {
       navigate(`/messages?with=${creator.userId}`);
       return;
     }
-    // Demo/seed profiles have no linked account — explain instead of
+    // Demo/seed profiles have no linked account, explain instead of
     // silently opening the booking drawer.
     window.alert('This is a sample profile, so direct messaging is unavailable. Browse verified creators in Find Creators to start a real conversation.');
   });

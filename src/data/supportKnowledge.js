@@ -26,14 +26,14 @@ export function getPlatformGuideResponse(question = '') {
   }
 
   if (q.includes('fee') || q.includes('cost') || q.includes('price') || q.includes('how much')) {
-    return 'Clients pay a flat 5% booking fee, charged once with the final payment when the project completes. Creators start at a 10% platform cut, then drop to 8% after 10 completed projects, 6% at the Signature tier after 25 completed projects, and 5% at the Elite tier after 50 completed projects. For creator-to-creator collaborations, the person hiring pays no buyer platform fee and only covers the small bank-processing cost. The person getting hired pays the normal CreatorBridge creator fee. Example: on a $500 collaboration, the hiring creator pays $504, the hired creator receives $450 on the 10% tier, CreatorBridge keeps $50, and the extra $4 covers bank processing.';
+    return 'Clients pay a flat 5% booking fee, charged once with the final payment when the project completes. Creators start at a 10% platform cut, then drop to 8% after 10 completed projects, and 6% after 25 completed projects, which is the lowest platform fee. For creator-to-creator collaborations, the person hiring pays no buyer platform fee and only covers the small bank-processing cost. The person getting hired pays the normal CreatorBridge creator fee. Example: on a $500 collaboration, the hiring creator pays $504, the hired creator receives $450 on the 10% tier, CreatorBridge keeps $50, and the extra $4 covers bank processing.';
   }
 
   // Cancellation must be checked BEFORE the payment/retainer intent: questions
   // like "what if I cancel after paying the retainer" contain both keywords and
   // should get the cancellation answer, not the payment-structure answer.
   if (q.includes('cancel') || q.includes('refund')) {
-    return 'Cancellation depends on timing. Before the retainer is paid, either party can cancel at no cost — no money has changed hands. After the retainer is paid, any time before delivery including mid-project, the 50% retainer splits evenly: the creator keeps 25% of the project total and the client is refunded 25% of the project total. No platform fees are charged on cancelled projects. After delivery there are no cancellations or refunds — revisions and the dispute process take over from there.';
+    return 'Cancellation depends on timing. Before the retainer is paid, either party can cancel at no cost, no money has changed hands. After the retainer is paid, any time before delivery including mid-project, the 50% retainer splits evenly: the creator keeps 25% of the project total and the client is refunded 25% of the project total. No platform fees are charged on cancelled projects. After delivery there are no cancellations or refunds, revisions and the dispute process take over from there.';
   }
 
   if (q.includes('sign up') || q.includes('get started') || q.includes('join') || q.includes('register')) {

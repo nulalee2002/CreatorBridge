@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase.js';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * EmailCapture — waitlist sign-up widget.
+ * EmailCapture, waitlist sign-up widget.
  *
  * Props:
  *   source   Row value for waitlist.source (default 'homepage')
@@ -36,7 +36,7 @@ export function EmailCapture({ source = 'homepage', compact = false, dark = true
     setLoading(false);
 
     if (insertErr) {
-      // Unique-violation = already on the list — treat as success
+      // Unique-violation = already on the list, treat as success
       if (insertErr.code === '23505') {
         setDone(true);
       } else {
@@ -53,7 +53,7 @@ export function EmailCapture({ source = 'homepage', compact = false, dark = true
     return (
       <div className={`flex items-center gap-2 ${compact ? 'text-xs' : 'text-sm'}`}>
         <CheckCircle size={compact ? 14 : 18} className="text-[#9C4A33] shrink-0" />
-        <span className="text-[#9C4A33] font-semibold">You're on the list — we'll be in touch.</span>
+        <span className="text-[#9C4A33] font-semibold">You're on the list, we'll be in touch.</span>
       </div>
     );
   }

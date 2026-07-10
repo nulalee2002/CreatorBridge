@@ -94,8 +94,8 @@ export async function generateQuotePDF(quote, state, profile) {
   // ── Line Items Table ───────────────────────────────────────
   const tableBody = quote.lines.map(line => [
     line.label,
-    line.rate != null ? fmt(line.rate) : '—',
-    line.quantity != null ? `${line.quantity}${line.unit ? ' ' + line.unit : ''}` : '—',
+    line.rate != null ? fmt(line.rate) : '-',
+    line.quantity != null ? `${line.quantity}${line.unit ? ' ' + line.unit : ''}` : '-',
     fmt(line.subtotal),
   ]);
 

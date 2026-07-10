@@ -89,11 +89,11 @@ export function applyReferralOnSignup(newUserId, referralCode) {
 }
 
 /**
- * ReferralSection — shown in both Creator and Client dashboards.
+ * ReferralSection, shown in both Creator and Client dashboards.
  *
  * Props:
- *   dark — boolean
- *   userType — 'creator' | 'client'
+ *   dark, boolean
+ *   userType, 'creator' | 'client'
  */
 export function ReferralSection({ dark, userType = 'creator' }) {
   const { user } = useAuth();

@@ -180,7 +180,7 @@ export function TermsModal({ dark, onClose }) {
             </div>
             <p>
               <strong className={dark ? 'text-white' : 'text-gray-900'}>Payment structure:</strong> Projects are split into two payments.
-              50% is due as a retainer when the project is accepted and before work begins — no fees are added to the retainer.
+              50% is due as a retainer when the project is accepted and before work begins, no fees are added to the retainer.
               The remaining 50%, plus the one-time 5% client booking fee, is due upon project completion and client approval.
             </p>
             <p>

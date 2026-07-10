@@ -39,17 +39,17 @@ export const RATES = {
       'uk-tier1': r(80, 250),  'uk-tier2': r(50, 150),  'eu-west': r(70, 220),
     },
     halfDay: {
-      label: 'Half-Day Rate (4–5 hrs)',
+      label: 'Half-Day Rate (4-5 hrs)',
       unit: 'session',
-      tooltip: 'Flat rate for a half-day shoot, typically 4–5 hours on location.',
+      tooltip: 'Flat rate for a half-day shoot, typically 4-5 hours on location.',
       'us-tier1': r(600, 1500),  'us-tier2': r(400, 1000), 'us-tier3': r(300, 700),
       'ca-tier1': r(500, 1200),  'ca-tier2': r(350, 800),  'ca-tier3': r(260, 620),
       'uk-tier1': r(350, 900),   'uk-tier2': r(250, 600),  'eu-west': r(300, 800),
     },
     fullDay: {
-      label: 'Full-Day Rate (8–10 hrs)',
+      label: 'Full-Day Rate (8-10 hrs)',
       unit: 'day',
-      tooltip: 'Flat rate for a full-day shoot, typically 8–10 hours on location.',
+      tooltip: 'Flat rate for a full-day shoot, typically 8-10 hours on location.',
       'us-tier1': r(1200, 3360), 'us-tier2': r(800, 2000),  'us-tier3': r(500, 1200),
       'ca-tier1': r(1000, 2500), 'ca-tier2': r(700, 1500),  'ca-tier3': r(520, 1160),
       'uk-tier1': r(550, 1500),  'uk-tier2': r(400, 900),   'eu-west': r(500, 1400),
@@ -282,33 +282,33 @@ export const RATES = {
       'uk-tier1': r(125, 700),  'uk-tier2': r(60, 350),  'eu-west': r(80, 500),
     },
     contentDay: {
-      label: 'Content Day (8–15 pieces)',
+      label: 'Content Day (8-15 pieces)',
       unit: 'day',
-      tooltip: 'A dedicated content creation day producing 8–15 short-form pieces for social media.',
+      tooltip: 'A dedicated content creation day producing 8-15 short-form pieces for social media.',
       'us-tier1': r(1500, 5000), 'us-tier2': r(800, 3000), 'us-tier3': r(500, 1800),
       'ca-tier1': r(1200, 4000), 'ca-tier2': r(700, 2500), 'ca-tier3': r(525, 1938),
       'uk-tier1': r(1000, 3500), 'uk-tier2': r(600, 2000), 'eu-west': r(700, 3000),
     },
     monthlyBasic: {
-      label: 'Monthly Package — Basic',
+      label: 'Monthly Package, Basic',
       unit: 'month',
-      tooltip: 'Entry-level social media retainer. Typically 4–8 pieces of content per month.',
+      tooltip: 'Entry-level social media retainer. Typically 4-8 pieces of content per month.',
       'us-tier1': r(750, 1500),  'us-tier2': r(500, 1000), 'us-tier3': r(350, 750),
       'ca-tier1': r(600, 1200),  'ca-tier2': r(400, 800),  'ca-tier3': r(300, 620),
       'uk-tier1': r(500, 1000),  'uk-tier2': r(350, 700),  'eu-west': r(400, 900),
     },
     monthlyStandard: {
-      label: 'Monthly Package — Standard',
+      label: 'Monthly Package, Standard',
       unit: 'month',
-      tooltip: 'Mid-tier retainer. Typically 12–20 pieces per month plus strategy.',
+      tooltip: 'Mid-tier retainer. Typically 12-20 pieces per month plus strategy.',
       'us-tier1': r(1500, 3000), 'us-tier2': r(1000, 2500), 'us-tier3': r(750, 1500),
       'ca-tier1': r(1200, 2500), 'ca-tier2': r(800, 2000),  'ca-tier3': r(600, 1550),
       'uk-tier1': r(1000, 2200), 'uk-tier2': r(700, 1500),  'eu-west': r(800, 2000),
     },
     monthlyPremium: {
-      label: 'Monthly Package — Premium',
+      label: 'Monthly Package, Premium',
       unit: 'month',
-      tooltip: 'Full-service social media retainer. 25–40 pieces, strategy, reporting, and ad creative.',
+      tooltip: 'Full-service social media retainer. 25-40 pieces, strategy, reporting, and ad creative.',
       'us-tier1': r(3000, 7000), 'us-tier2': r(2000, 5000), 'us-tier3': r(1500, 3500),
       'ca-tier1': r(2500, 5500), 'ca-tier2': r(1800, 4000), 'ca-tier3': r(1350, 3100),
       'uk-tier1': r(2200, 5000), 'uk-tier2': r(1500, 3500), 'eu-west': r(1800, 4500),
@@ -384,7 +384,7 @@ export const RATES = {
     mediumProject: {
       label: 'Medium Project (corporate)',
       unit: 'project',
-      tooltip: 'Flat rate for a medium-length post-production project, typically 3–10 minutes.',
+      tooltip: 'Flat rate for a medium-length post-production project, typically 3-10 minutes.',
       'us-tier1': r(500, 2500), 'us-tier2': r(350, 1500), 'us-tier3': r(200, 800),
       'ca-tier1': r(400, 2000), 'ca-tier2': r(275, 1200), 'ca-tier3': r(206, 930),
       'uk-tier1': r(350, 1800), 'uk-tier2': r(250, 1000), 'eu-west': r(300, 1500),
@@ -445,7 +445,7 @@ export const RATES = {
     highlightEdit: {
       label: 'Event Highlight Reel (edit)',
       unit: 'project',
-      tooltip: 'Post-production edit of a 2–5 minute highlight video from event footage.',
+      tooltip: 'Post-production edit of a 2-5 minute highlight video from event footage.',
       'us-tier1': r(300, 1200), 'us-tier2': r(200, 800),  'us-tier3': r(150, 500),
       'ca-tier1': r(250, 1000), 'ca-tier2': r(175, 650),  'ca-tier3': r(131, 488),
       'uk-tier1': r(200, 800),  'uk-tier2': r(150, 500),  'eu-west': r(175, 700),
@@ -719,7 +719,7 @@ export const PACKAGE_TIERS = {
         { rateKey: 'hourlyEvent', quantity: 2, label: 'Shoot Time' },
         { rateKey: 'editHourly', quantity: 2, label: 'Photo Editing' },
       ],
-      includes: ['2 hr shoot', '10–15 final images', '1 revision round'],
+      includes: ['2 hr shoot', '10-15 final images', '1 revision round'],
     },
     standard: {
       name: 'Standard',
@@ -728,7 +728,7 @@ export const PACKAGE_TIERS = {
         { rateKey: 'hourlyEvent', quantity: 4, label: 'Shoot Time' },
         { rateKey: 'editHourly', quantity: 5, label: 'Photo Editing' },
       ],
-      includes: ['4 hr shoot', '30–50 final images', 'Location scouting', '2 revision rounds'],
+      includes: ['4 hr shoot', '30-50 final images', 'Location scouting', '2 revision rounds'],
     },
     premium: {
       name: 'Premium',
@@ -810,7 +810,7 @@ export const PACKAGE_TIERS = {
       items: [
         { rateKey: 'monthlyStandard', quantity: 1, label: 'Monthly Standard' },
       ],
-      includes: ['12–20 pieces/month', 'Content calendar', 'Captions + hashtags', 'Monthly report'],
+      includes: ['12-20 pieces/month', 'Content calendar', 'Captions + hashtags', 'Monthly report'],
     },
     premium: {
       name: 'Premium',
@@ -818,7 +818,7 @@ export const PACKAGE_TIERS = {
       items: [
         { rateKey: 'monthlyPremium', quantity: 1, label: 'Monthly Premium' },
       ],
-      includes: ['25–40 pieces/month', 'Strategy + planning', 'Ad creative', 'Analytics + reporting', 'Priority support'],
+      includes: ['25-40 pieces/month', 'Strategy + planning', 'Ad creative', 'Analytics + reporting', 'Priority support'],
     },
   },
   postProduction: {
@@ -863,8 +863,8 @@ export const LICENSING_OPTIONS = [
 
 // ─── TURNAROUND OPTIONS ────────────────────────────────────────
 export const TURNAROUND_OPTIONS = [
-  { id: 'standard',  label: 'Standard',   days: '7–14 days',   multiplier: 0,    description: 'Normal production schedule' },
-  { id: 'rush',      label: 'Rush',       days: '3–6 days',    multiplier: 0.25, description: '+25% of subtotal' },
+  { id: 'standard',  label: 'Standard',   days: '7-14 days',   multiplier: 0,    description: 'Normal production schedule' },
+  { id: 'rush',      label: 'Rush',       days: '3-6 days',    multiplier: 0.25, description: '+25% of subtotal' },
   { id: 'same-day',  label: 'Same Day',   days: '24 hours',    multiplier: 0.50, description: '+50% of subtotal' },
   { id: 'custom',    label: 'Custom',     days: 'Negotiate',   multiplier: null, description: 'Set your own rush percentage' },
 ];

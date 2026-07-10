@@ -167,7 +167,7 @@ export function AdminFinance({ dark }) {
     return (
       <main className="min-h-screen flex items-center justify-center">
         <p className={`text-sm ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
-          Access denied — platform admin only.
+          Access denied, platform admin only.
         </p>
       </main>
     );
@@ -198,7 +198,7 @@ export function AdminFinance({ dark }) {
             sub="Creator + client fees"
           />
           <SummaryCard
-            icon={Clock} label="Held — Awaiting Release" dark={dark}
+            icon={Clock} label="Held, Awaiting Release" dark={dark}
             value={centsToDisplay(totalHeld)}
             sub="Inside 3-day approval window"
           />
