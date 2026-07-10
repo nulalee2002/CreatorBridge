@@ -44,7 +44,8 @@
     "verify:external-env": "node --env-file=.env scripts/verify-external-env.mjs",
     "qa:create-accounts": "node scripts/create-qa-accounts.mjs",
     "qa": "npm run build && npm run audit:platform && npm run audit:env",
-    "generate:sitemap": "node scripts/generate-sitemap.js"
+    "generate:sitemap": "node scripts/generate-sitemap.js",
+    "verify:booking-e2e": "node --env-file=.env scripts/verify-booking-e2e.mjs"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^6.1.0",

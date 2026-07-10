@@ -492,7 +492,9 @@ function PostProjectModal({ dark, onClose, onPost, user }) {
     ];
     contactFieldChecks.forEach(([field, value]) => {
       if (!value || next[field]) return;
-      if (checkMessage(value).blocked) {
+      // Brief fields may name platforms as deliverable destinations ("an
+      // Instagram-style reel"); only contact-intent platform mentions block.
+      if (checkMessage(value, { allowPlatformNames: true }).blocked) {
         next[field] = 'Keep direct contact details inside CreatorBridge. Add style/reference URLs only in the reference links field.';
       }
     });
@@ -1892,12 +1894,14 @@ export function ProjectBoard({ dark }) {
               </div>
               
               <div className="flex items-center gap-3 flex-wrap">
-                {user && (
-                  <button type="button" onClick={() => setShowPost(true)}
-                    className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold transition-all shadow-md">
-                    <Plus size={14} /> Post a brief
-                  </button>
-                )}
+                <button type="button"
+                  onClick={() => {
+                    if (user) setShowPost(true);
+                    else window.dispatchEvent(new CustomEvent('open-auth', { detail: { tab: 'signup', role: 'client' } }));
+                  }}
+                  className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold transition-all shadow-md">
+                  <Plus size={14} /> Post a brief
+                </button>
                 <button type="button" onClick={() => navigate('/find')}
                   className="flex items-center gap-2 px-5 py-3 rounded-xl border border-white/[0.1] hover:border-white/[0.2] text-white text-sm font-bold transition-all bg-white/[0.02]">
                   Browse creators

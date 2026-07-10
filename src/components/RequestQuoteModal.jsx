@@ -251,7 +251,9 @@ export function RequestQuoteModal({ creator, dark, onClose, initialDate = '' }) 
     ];
     contactFieldChecks.forEach(([field, value]) => {
       if (!value || e[field]) return;
-      if (checkMessage(value).blocked) {
+      // Brief fields may name platforms as deliverable destinations ("an
+      // Instagram-style reel"); only contact-intent platform mentions block.
+      if (checkMessage(value, { allowPlatformNames: true }).blocked) {
         e[field] = 'Keep direct contact details inside CreatorBridge. Add style/reference URLs only in the reference links field.';
       }
     });

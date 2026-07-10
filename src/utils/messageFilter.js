@@ -51,15 +51,27 @@ const PATTERNS = [
 const CREATOR_TEXT_FIELDS = ['name', 'businessName', 'business_name', 'bio', 'title', 'description'];
 export const CREATOR_TEXT_BLOCK_MESSAGE = 'Keep it on CreatorBridge. Remove links, handles, phone numbers, email addresses, payment apps, or outside platform names before continuing.';
 
+// Brief/quote descriptions legitimately reference platforms as deliverable
+// destinations ("an Instagram-style reel", "a YouTube pre-roll cut"). For those
+// fields, only block a platform name when it carries contact intent ("DM me on
+// Instagram", "my TikTok"). Handles, URLs, emails, and phones stay blocked by
+// their own patterns either way.
+const PLATFORM_CONTACT_INTENT = /\b(?:dm|message|msg|text|find|follow|add|reach|contact)\b[^.!?\n]{0,30}\b(?:instagram|youtube|youtu\.be|vimeo|linkedin|loom|tiktok|facebook|twitter|x\.com|snapchat|threads)\b|\b(?:my|our)\s+(?:instagram|youtube|vimeo|linkedin|loom|tiktok|facebook|twitter|snapchat|threads)\b/i;
+
 /**
  * Check message text for contact info violations.
  * @param {string} text
+ * @param {{ allowPlatformNames?: boolean }} [opts] - allowPlatformNames relaxes
+ *   the bare platform-name block to contact-intent only (brief/quote fields).
  * @returns {{ blocked: boolean, patternType?: string }}
  */
-export function checkMessage(text) {
+export function checkMessage(text, opts = {}) {
   if (!text) return { blocked: false };
   for (const { type, regex } of PATTERNS) {
-    if (regex.test(text)) {
+    const effectiveRegex = type === 'platform_name' && opts.allowPlatformNames
+      ? PLATFORM_CONTACT_INTENT
+      : regex;
+    if (effectiveRegex.test(text)) {
       return { blocked: true, patternType: type };
     }
   }

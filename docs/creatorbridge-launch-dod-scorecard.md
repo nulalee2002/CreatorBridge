@@ -61,8 +61,16 @@ artifact (screenshot, query result, passing command output, or reviewed code).
   verify in browser.
 - ⚠️ **Build Your Team (discovery, name/role search, adaptive filters, payout copy)**
   — Codex-claimed browser test; re-verify.
-- ⬜ **Full client path** — guest browse → signup → phone verify → brief/quote →
-  match → accept → retainer → delivery → approve → final payment → dispute entry.
+- ✅ **Client money path (accepted → retainer → delivery → final → release)** —
+  verified end-to-end 2026-07-09 by `npm run verify:booking-e2e` against the
+  deployed functions + live test-mode Stripe: amounts, fee math (8% tier, 5%
+  client fee once), webhook settlement, and transfers to the creator's connected
+  account all asserted. **Found + fixed a launch blocker:** the deployed
+  stripe-webhook had verify_jwt=true, 401-ing every Stripe delivery so no
+  payment could ever settle; pinned false in supabase/config.toml + redeployed.
+- ⬜ **Full client path in the browser UI** — guest browse → signup → phone
+  verify → brief/quote → match → accept → checkout UI → dispute entry (the
+  rendered click-through around the now-verified money path).
 - ⬜ **Full creator path** — registration → required media → portfolio by pillar →
   packages → Connect → readiness → proposal → delivery → earnings → public preview.
 - ⬜ **Full admin path** — review approve/reject → incomplete quarantine → support
