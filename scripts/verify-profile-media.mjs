@@ -40,7 +40,7 @@ globalThis.localStorage = {
 };
 
 const seedModuleUrl = pathToFileURL(join(root, 'src/data/seedCreators.js')).href;
-const { SEED_CREATORS, initSeedData } = await import(`${seedModuleUrl}?profile-media-verification=1`);
+const { SEED_CREATORS, initSeedData, SHOW_DEMO_CREATORS } = await import(`${seedModuleUrl}?profile-media-verification=1`);
 initSeedData();
 const refreshedSeeds = JSON.parse(storage.get('creator-directory'));
 const expectedSeedMedia = new Map(SEED_CREATORS.map(item => [
@@ -50,12 +50,26 @@ const expectedSeedMedia = new Map(SEED_CREATORS.map(item => [
 const avatarOwnersByHash = new Map();
 const coverOwnersByHash = new Map();
 
-for (const [id, expected] of expectedSeedMedia) {
-  const actual = refreshedSeeds.find(item => item.id === id);
-  assert(actual, `Seed refresh must restore ${id}`);
-  assert(actual.avatar === expected.avatar, `Seed refresh must update ${id} avatar`);
-  assert(actual.cover === expected.cover, `Seed refresh must update ${id} cover`);
+// Launch mode (SHOW_DEMO_CREATORS=false): initSeedData must strip every seed-
+// entry from storage so no demo creator reaches a public surface. Dev mode
+// (true): it must restore/refresh the seeds. Assert whichever applies.
+if (!SHOW_DEMO_CREATORS) {
+  assert(
+    refreshedSeeds.every(item => !String(item.id || '').startsWith('seed-')),
+    'With demo creators disabled, initSeedData must remove all seed- entries'
+  );
+}
 
+for (const [id, expected] of expectedSeedMedia) {
+  if (SHOW_DEMO_CREATORS) {
+    const actual = refreshedSeeds.find(item => item.id === id);
+    assert(actual, `Seed refresh must restore ${id}`);
+    assert(actual.avatar === expected.avatar, `Seed refresh must update ${id} avatar`);
+    assert(actual.cover === expected.cover, `Seed refresh must update ${id} cover`);
+  }
+
+  // Asset integrity runs in both modes: dormant seed data must keep pointing
+  // at real, non-duplicated media so re-enabling it stays safe.
   for (const [kind, ownersByHash] of [['avatar', avatarOwnersByHash], ['cover', coverOwnersByHash]]) {
     const assetPath = join(root, 'public', expected[kind].replace(/^\//, ''));
     assert(existsSync(assetPath), `${id} ${kind} asset must exist`);
