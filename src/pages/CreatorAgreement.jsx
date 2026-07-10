@@ -129,7 +129,7 @@ export function CreatorAgreement({ dark }) {
                       <p className="font-bold text-white">Elite Tier</p>
                       <p className={`text-[10px] ${textSub}`}>Top-tier recognition after 50 completed projects</p>
                     </div>
-                    <span className="font-mono font-bold text-gold-400">5% Platform Fee</span>
+                    <span className="font-mono font-bold text-gold-400">6% Platform Fee</span>
                   </div>
                 </div>
               </div>

@@ -1467,7 +1467,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
                 },
                 {
                   title: 'Section 2, Platform Fee Structure & Tiers',
-                  body: 'Our platform fee percentage decreases as you complete more projects: Launch Tier (10%), Proven Tier (8%), Signature Tier (6%), and Elite Tier (5%).',
+                  body: 'Our platform fee percentage decreases as you complete more projects: Launch Tier (10%), Proven Tier (8%), Signature Tier (6%), and Elite Tier (6%). The creator fee never drops below 6%.',
                 },
                 {
                   title: 'Section 3, Payments & Stripe Connect',

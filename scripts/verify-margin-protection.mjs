@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { getLoyaltyTier } from '../src/config/fees.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -21,6 +22,14 @@ const supportChatbot = readFileSync(join(root, 'src/components/SupportChatbot.js
 const packageBuilder = readFileSync(join(root, 'src/components/PackageBuilder.jsx'), 'utf8');
 const projectBoard = readFileSync(join(root, 'src/pages/ProjectBoard.jsx'), 'utf8');
 const projectStorage = readFileSync(join(root, 'src/utils/projectStorage.js'), 'utf8');
+const creatorDashboard = readFileSync(join(root, 'src/pages/CreatorDashboard.jsx'), 'utf8');
+const creatorDirectory = readFileSync(join(root, 'src/components/CreatorDirectory.jsx'), 'utf8');
+const creatorAgreement = readFileSync(join(root, 'src/pages/CreatorAgreement.jsx'), 'utf8');
+const legalFeeSources = [
+  'src/pages/TermsPage.jsx',
+  'src/pages/TermsOfService.jsx',
+  'src/components/TermsModal.jsx',
+].map(file => readFileSync(join(root, file), 'utf8'));
 
 const clientNote = "Projects on CreatorBridge start at $250. Every booking is backed by secure payment protection and dispute support, and the minimum keeps each project worth a verified creator's time and those protections viable for both sides.";
 const clientError = "Projects start at $250 on CreatorBridge. Please set your budget to $250 or more so your project is worth a professional creator's time and fully covered by our protected payment process.";
@@ -64,7 +73,18 @@ assert(
 assert(feesConfig.includes('minProjects: 0') && feesConfig.includes('feePct: 10'), 'Starter loyalty tier must remain at 10%');
 assert(feesConfig.includes('minProjects: 10') && feesConfig.includes('feePct: 8'), '10-booking loyalty tier must remain at 8%');
 assert(feesConfig.includes('minProjects: 25') && feesConfig.includes('feePct: 6'), '25-booking loyalty tier must remain at 6%');
-assert(feesConfig.includes('minProjects: 50') && feesConfig.includes('feePct: 5'), '50-booking Elite loyalty tier must remain at 5%');
+assert(getLoyaltyTier(49).feePct === 6, '49-booking Signature tier must remain at the 6% floor');
+assert(getLoyaltyTier(50).feePct === 6, '50-booking Elite tier must remain at the 6% floor');
+assert(getLoyaltyTier(500).feePct === 6, 'Creator loyalty fees must never drop below 6%');
+assert(creatorDashboard.includes("feePercent: 6, requirement: 50"), 'Dashboard Elite tier must display the 6% fee floor');
+assert(creatorDirectory.includes('Elite Tier (6%). The creator fee never drops below 6%.'), 'Directory agreement must disclose the 6% fee floor');
+assert(/Elite Tier[\s\S]{0,300}6% Platform Fee/.test(creatorAgreement), 'Creator Agreement must disclose Elite at the 6% fee floor');
+for (const source of legalFeeSources) {
+  assert(
+    source.includes('Creator platform fee (Elite tier, 50+ projects)</span><span className="font-bold">6% of earnings'),
+    'Every legal fee table must disclose Elite at 6%'
+  );
+}
 
 assert(marginsConfig.includes(clientNote), 'Client minimum-budget note must live in shared margin copy');
 assert(marginsConfig.includes(clientError), 'Client minimum-budget rejection must live in shared margin copy');
@@ -82,7 +102,7 @@ assert(supportChatbot.includes('CLIENT_MINIMUM_PROJECT_ERROR'), 'Chatbot booking
 assert(projectStorage.includes('MINIMUM_PROJECT_BUDGET_DOLLARS'), 'Local project fallback must use the platform floor');
 
 const projectAmountCents = 25000;
-const eliteCreatorFeeCents = Math.round(projectAmountCents * 0.05);
+const eliteCreatorFeeCents = Math.round(projectAmountCents * 0.06);
 const retainerChargeCents = Math.round(projectAmountCents * 0.5);
 const finalChargeCents = projectAmountCents - retainerChargeCents;
 const stripeFeesCents =

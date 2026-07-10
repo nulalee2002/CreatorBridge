@@ -102,7 +102,8 @@ check('Creator profile live listing resolution', 'src/pages/CreatorProfilePage.j
   { label: 'loads requested creator listing from Supabase', test: includes(".from('creator_listings')") },
   { label: 'queries the exact route listing id', test: includes(".eq('id', id)") },
   { label: 'resolves private storage media for display', test: includes('getStorageDisplayUrl') },
-  { label: 'does not substitute demo data for unknown profile ids', test: includes('Profile unavailable') },
+  { label: 'does not substitute demo data for unknown profile ids', test: includes('Profile unavailable') && includes('SHOW_DEMO_CREATORS') },
+  { label: 'does not let browser cache mask configured Supabase profiles', test: includes('if (supabaseConfigured) return null;') },
   { label: 'handles approved listings with no packages without crashing', test: includes('packages[0] || null') },
   { label: 'quarantines incomplete approved creator rows through shared rule', test: includes('creatorListingMeetsPublicRules') && includes('../utils/creatorReadiness.js') },
 ]);
@@ -122,7 +123,7 @@ check('Network accessibility contracts', 'src/pages/NetworkingPage.jsx', [
 
 check('Smart Match reliability', 'src/utils/matchingAlgorithm.js', [
   { label: 'normalizes services before matching', test: includes('normalizeServiceId') },
-  { label: 'excludes creators that fail public readiness', test: includes('creatorListingMeetsPublicRules') && includes('allowDemoSeed: true') },
+  { label: 'excludes creators that fail public readiness', test: includes('creatorListingMeetsPublicRules') && includes('allowDemoSeed: SHOW_DEMO_CREATORS') },
   { label: 'caps match percentages', test: includes('Math.min(99') },
   { label: 'can score Supabase-fetched creator availability maps', test: includes('availabilityMap') },
 ]);

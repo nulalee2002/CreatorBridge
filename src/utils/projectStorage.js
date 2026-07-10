@@ -2,11 +2,19 @@ import { clampNumber, sanitizeLongText, sanitizePlainText, sanitizeTagList, sani
 import { MINIMUM_PROJECT_BUDGET_DOLLARS } from '../config/margins.js';
 
 export const PROJECTS_KEY = 'cm-projects';
+export const SHOW_DEMO_PROJECTS = false;
+
+function isDemoProject(project) {
+  return String(project?.id || '').startsWith('demo-');
+}
 
 export function loadLocalProjects(clientId = null) {
   try {
     const all = JSON.parse(localStorage.getItem(PROJECTS_KEY) || '[]');
-    return clientId ? all.filter(p => p.clientId === clientId) : all;
+    const visible = SHOW_DEMO_PROJECTS
+      ? all
+      : all.filter(project => !isDemoProject(project));
+    return clientId ? visible.filter(p => p.clientId === clientId) : visible;
   } catch {
     return [];
   }

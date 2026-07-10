@@ -167,7 +167,7 @@ export function TermsOfService({ dark }) {
                   <div className="flex justify-between"><span>Creator platform fee (Launch tier)</span><span className="font-bold">10% of earnings</span></div>
                   <div className="flex justify-between"><span>Creator platform fee (Proven tier, 10+ projects)</span><span className="font-bold">8% of earnings</span></div>
                   <div className="flex justify-between"><span>Creator platform fee (Signature tier, 25+ projects)</span><span className="font-bold">6% of earnings</span></div>
-                  <div className="flex justify-between"><span>Creator platform fee (Elite tier, 50+ projects)</span><span className="font-bold">5% of earnings</span></div>
+                  <div className="flex justify-between"><span>Creator platform fee (Elite tier, 50+ projects)</span><span className="font-bold">6% of earnings</span></div>
                   <div className="flex justify-between"><span>Creator collaboration buyer platform fee</span><span className="font-bold">0%</span></div>
                 </div>
               </div>

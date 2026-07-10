@@ -1481,7 +1481,6 @@ export default function App() {
                 <button type="button" onClick={() => navigate('/calculator')}>Rate Calculator</button>
               </FooterCol>
               <FooterCol title="For Creators">
-                <button type="button" onClick={() => navigate('/creator/demo')}>Sample profile</button>
                 <button type="button" onClick={() => navigate('/join-as-creator')}>Apply to join</button>
                 <button type="button" onClick={() => navigate('/creator-agreement')}>Creator Agreement</button>
                 <button type="button" onClick={() => navigate('/dispute-policy')}>Dispute Policy</button>

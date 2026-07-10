@@ -29,8 +29,8 @@ import { SHOW_DEMO_CREATORS } from '../data/seedCreators.js';
  * 5F. Weekly featured slot — respects last_featured_at to rotate who gets top billing
  */
 
-const TIER_RANK = { launch: 0, proven: 1, elite: 2, signature: 3 };
-const VERIFICATION_RANK = { unverified: 0, verified: 1, pro_verified: 2 };
+const TIER_RANK = { launch: 0, proven: 1, signature: 2, elite: 3 };
+const VERIFICATION_RANK = { unverified: 0, verified: 2, pro_verified: 2 };
 const DEFAULT_BUDGET_MAX = 999999;
 
 function isApprovedCreator(creator) {
@@ -219,7 +219,7 @@ function scoreRating(creator) {
 
 /** Verification score (0-10) */
 function scoreVerification(creator) {
-  const rank = VERIFICATION_RANK[creator.verification_status] ?? (creator.verified ? 1 : 0);
+  const rank = VERIFICATION_RANK[creator.verification_status] ?? (creator.verified ? 2 : 0);
   return (rank / 2) * 10;
 }
 

@@ -137,7 +137,7 @@ const CREATOR_TIERS = [
   {
     id: 'elite', label: 'Elite', icon: '👑',
     color: 'text-gold-300', borderColor: 'border-gold-500/45', bgColor: 'bg-gold-500/10',
-    feePercent: 5, requirement: 50, description: '50+ completed projects. Top tier, 5% fee.',
+    feePercent: 6, requirement: 50, description: '50+ completed projects. Top-tier recognition, 6% fee floor.',
   },
 ];
 

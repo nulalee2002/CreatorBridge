@@ -15,6 +15,8 @@ const {
   getPublicProfileReadiness,
   requiredPortfolioMediaType,
 } = await import(`${readinessModuleUrl}?verify-public-readiness=1`);
+const matchingModuleUrl = pathToFileURL(join(root, 'src/utils/matchingAlgorithm.js')).href;
+const { scoreCreator } = await import(`${matchingModuleUrl}?verify-public-readiness=1`);
 
 function completeVideoCreator(overrides = {}) {
   return {
@@ -68,6 +70,18 @@ assert(requiredPortfolioMediaType('post_production', 'pp_photo_retouch') === 'im
 const readiness = getPublicProfileReadiness(complete);
 assert(readiness.profilePhotoMet && readiness.introVideoMet && readiness.portfolioMet && readiness.packagesMet && readiness.verificationMet, 'Readiness details must expose each gate');
 
+const matchableCreator = completeVideoCreator({
+  rating: 4.9,
+  completion_rate: 100,
+  availability: 'available',
+});
+const signatureScore = scoreCreator({ ...matchableCreator, tier: 'signature' }, {});
+const eliteScore = scoreCreator({ ...matchableCreator, tier: 'elite' }, {});
+assert(eliteScore > signatureScore, 'Smart Match must rank Elite above Signature when all other signals are equal');
+const verifiedScore = scoreCreator({ ...matchableCreator, tier: 'proven', verification_status: 'verified' }, {});
+const legacyProVerifiedScore = scoreCreator({ ...matchableCreator, tier: 'proven', verification_status: 'pro_verified' }, {});
+assert(verifiedScore === legacyProVerifiedScore, 'Smart Match must not create a hidden Pro Verified advantage');
+
 const directory = source('src/components/CreatorDirectory.jsx');
 assert(directory.includes("import { creatorListingMeetsPublicRules } from '../utils/creatorReadiness.js';"), 'Directory must import the shared readiness rule');
 assert(directory.includes("select('*, creator_services(*), portfolio_items(*), packages(*)')"), 'Directory must load live creators with portfolio and package relationships');
@@ -77,6 +91,12 @@ assert(!directory.includes('PILLAR_TO_LEGACY'), 'Public directory pillar filters
 
 const profile = source('src/pages/CreatorProfilePage.jsx');
 assert(profile.includes("import { creatorListingMeetsPublicRules } from '../utils/creatorReadiness.js';"), 'Public profile page must import the shared readiness rule');
+assert(profile.includes("import { SEED_CREATORS, SHOW_DEMO_CREATORS } from '../data/seedCreators.js';"), 'Public profile page must respect the launch demo-creator flag');
+assert(profile.includes("if (SHOW_DEMO_CREATORS && (id === 'demo' || id === 'seed-2'))"), 'Sample profile must be development-only');
+assert(profile.includes('if (supabaseConfigured) return null;'), 'Configured public profiles must load from Supabase instead of local cache');
+
+const app = source('src/App.jsx');
+assert(!app.includes("navigate('/creator/demo')"), 'Public navigation must not link to the fabricated sample profile');
 
 const dashboard = source('src/pages/CreatorDashboard.jsx');
 assert(dashboard.includes('getPublicProfileReadinessChecks'), 'Dashboard readiness strip must use the shared readiness checks');

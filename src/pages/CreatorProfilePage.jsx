@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SEO } from '../components/SEO.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
-import { SEED_CREATORS } from '../data/seedCreators.js';
+import { SEED_CREATORS, SHOW_DEMO_CREATORS } from '../data/seedCreators.js';
 import { getBunnyEmbedUrl, getBunnyThumbnailUrl, isBunnyVideoRef } from '../utils/bunnyStream.js';
 import { getStorageDisplayUrl } from '../utils/storage.js';
 import { creatorListingMeetsPublicRules } from '../utils/creatorReadiness.js';
@@ -1059,8 +1059,11 @@ function getLocalListing(id) {
 }
 
 function getCreatorData(id) {
-  // Aria sample profile keeps its full rich payload.
-  if (!id || id === 'demo' || id === 'seed-2') {
+  if (!id) return null;
+
+  // The Aria payload is development-only. Launch mode must never expose its
+  // fabricated portfolio, reviews, packages, or client names on a public URL.
+  if (SHOW_DEMO_CREATORS && (id === 'demo' || id === 'seed-2')) {
     return {
       creator: ARIA_CREATOR,
       portfolio: ARIA_PORTFOLIO,
@@ -1069,8 +1072,13 @@ function getCreatorData(id) {
       verification: ARIA_VERIFICATION,
     };
   }
+
+  // When Supabase is configured, real public profiles must come from the live
+  // row and shared readiness gate. A stale browser cache must not mask live data.
+  if (supabaseConfigured) return null;
+
   const localListing = getLocalListing(id);
-  if (localListing && (!supabaseConfigured || creatorListingMeetsPublicRules(localListing))) {
+  if (localListing && creatorListingMeetsPublicRules(localListing)) {
     const adapted = adaptSeedCreator(localListing);
     return {
       creator: adapted,
@@ -1080,7 +1088,7 @@ function getCreatorData(id) {
       verification: ARIA_VERIFICATION,
     };
   }
-  const seed = SEED_CREATORS.find(s => s.id === id);
+  const seed = SHOW_DEMO_CREATORS ? SEED_CREATORS.find(s => s.id === id) : null;
   if (!seed) {
     return null;
   }

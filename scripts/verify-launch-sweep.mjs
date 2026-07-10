@@ -9,6 +9,8 @@ const checks = [
   ['public readiness', ['npm', ['run', 'verify:public-readiness']]],
   ['network portfolio sharing', ['npm', ['run', 'verify:network-portfolio-sharing']]],
   ['platform language', ['npm', ['run', 'verify:platform-language']]],
+  ['message filter', ['npm', ['run', 'verify:message-filter']]],
+  ['project board public data', ['npm', ['run', 'verify:project-board-public-data']]],
   ['creator collaboration launch', ['npm', ['run', 'verify:collaboration-launch']]],
   ['support reporting', ['npm', ['run', 'verify:support-reporting']]],
   ['client phone gate', ['npm', ['run', 'verify:client-phone-gate']]],

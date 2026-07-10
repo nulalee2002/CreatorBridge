@@ -26,6 +26,7 @@ import {
   mergeProjects,
   sanitizeProjectDraft,
   saveLocalProjects,
+  SHOW_DEMO_PROJECTS,
   upsertLocalProject,
 } from '../utils/projectStorage.js';
 import { HandoffPage } from '../components/HandoffPage.jsx';
@@ -1608,7 +1609,7 @@ export function ProjectBoard({ dark }) {
     let cancelled = false;
     // Auto-approval: projects delivered more than the review window ago become
     // approved and ready for final payment (client took no action).
-    const raw = loadProjects();
+    const raw = supabaseConfigured && !user ? [] : loadProjects();
     const now = Date.now();
     const reviewWindowMs = PLATFORM_FEES.autoApproveDays * 24 * 3600000;
     const autoApproved = raw.map(p => {
@@ -1646,15 +1647,18 @@ export function ProjectBoard({ dark }) {
     }
 
     async function loadRemoteProjects() {
-      if (!supabaseConfigured || !user) return;
-      const { data } = await supabase
+      if (!supabaseConfigured) return;
+      let query = supabase
         .from('projects')
         .select('*')
         .order('created_at', { ascending: false });
+      if (!user) query = query.eq('status', 'open');
+      const { data } = await query;
       if (cancelled || !data) return;
       setProjects(current => {
-        const merged = mergeProjects(current, data.map(fromSupabaseProject));
-        saveProjects(merged);
+        const remoteProjects = data.map(fromSupabaseProject);
+        const merged = user ? mergeProjects(current, remoteProjects) : remoteProjects;
+        if (user) saveProjects(merged);
         return merged;
       });
     }
@@ -1698,6 +1702,7 @@ export function ProjectBoard({ dark }) {
   // briefs so the live board feels populated from the first visit. Each uses
   // the canonical 3-pillar taxonomy (primary_pillar) plus a specialty.
   useEffect(() => {
+    if (!SHOW_DEMO_PROJECTS) return;
     const existing = loadProjects();
     if (existing.length === 0) {
       const demos = [
