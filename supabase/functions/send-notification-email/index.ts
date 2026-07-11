@@ -123,7 +123,7 @@ function getEmailTemplate(template: string, rawData: Record<string, any>): { sub
         <p>Creator <strong>${data.creator_name || 'Creator'}</strong> has submitted the content delivery link and files for your project <strong>"${data.project_title || 'Project'}"</strong>.</p>
         <p><strong>Review Requirement:</strong></p>
         <p>Please log in to your CreatorBridge dashboard, review the deliverables, and either approve the delivery to release the final payout, or request a revision if changes are needed.</p>
-        <p><em>Note: As per platform guidelines, you have a 5-day review window to approve, request a revision, or open a dispute, any of those pauses the automatic release. If no action is taken within 5 days, the final payment releases to the creator automatically.</em></p>
+        <p><em>Note: As per platform guidelines, you have a 72-hour review window to approve, request a revision, or open a dispute, any of those pauses the automatic release. If no action is taken within 72 hours, the final payment releases to the creator automatically.</em></p>
       `;
       break;
 
@@ -132,7 +132,7 @@ function getEmailTemplate(template: string, rawData: Record<string, any>): { sub
       bodyContent = `
         <h2 style="color: #d4a941; margin-top: 0; font-size: 20px;">Payout Released!</h2>
         <p>Hi ${data.creator_name || 'Creator'},</p>
-        <p>The client has approved your content delivery (or the 5-day review window has elapsed) for the project <strong>"${data.project_title || 'Project'}"</strong>.</p>
+        <p>The client has approved your content delivery (or the 72-hour review window has elapsed) for the project <strong>"${data.project_title || 'Project'}"</strong>.</p>
         <p>The final payout of <strong>$${Number(data.payout_amount || 0).toFixed(2)}</strong> has been successfully initiated and is on its way to your connected Stripe account.</p>
         <p>Thank you for your excellent work on CreatorBridge!</p>
       `;

@@ -12,6 +12,7 @@ import { normalizeServiceId } from '../data/rates.js';
 import { PILLARS, LEGACY_SERVICE_TO_PILLAR } from '../data/taxonomy.js';
 import { fromSupabaseProject, mergeProjects } from '../utils/projectStorage.js';
 import { getStorageDisplayUrl, isStorageReference, normalizeExternalUrl, uploadUserAsset } from '../utils/storage.js';
+import { RebookButton } from '../components/RebookButton.jsx';
 
 function loadLocalClientProfile(userId) {
   try {
@@ -50,6 +51,10 @@ function loadLocalFavoriteIds() {
   } catch {
     return [];
   }
+}
+
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
 }
 
 function normalizeTransaction(txn) {
@@ -115,6 +120,7 @@ export function ClientProfilePage({ dark }) {
   const [transactions, setTransactions] = useState([]);
   const [reputation, setReputation] = useState(null);
   const [savedCreatorCount, setSavedCreatorCount] = useState(0);
+  const [savedCreators, setSavedCreators] = useState([]);
   const [form, setForm] = useState({ displayName: '', companyName: '', phone: '', avatarUrl: '', website: '', bio: '' });
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState('');
   const [assetUploading, setAssetUploading] = useState(false);
@@ -198,11 +204,22 @@ export function ClientProfilePage({ dark }) {
         ...loadLocalFavoriteIds(),
       ].filter(Boolean));
       setSavedCreatorCount(favoriteIds.size);
+      const remoteFavoriteIds = [...favoriteIds].filter(isUuid);
+      if (remoteFavoriteIds.length) {
+        const { data: creatorRows } = await supabase
+          .from('creator_listings')
+          .select('id,name,business_name,avatar,city,state')
+          .in('id', remoteFavoriteIds);
+        setSavedCreators(creatorRows || []);
+      } else {
+        setSavedCreators([]);
+      }
     } else {
       profile = loadLocalClientProfile(user.id);
       setProjects(loadLocalProjects(user.id));
       setTransactions(loadLocalTransactions(user.id).map(normalizeTransaction));
       setSavedCreatorCount(loadLocalFavoriteIds().length);
+      setSavedCreators([]);
     }
 
     setClientProfile(profile);
@@ -295,6 +312,7 @@ export function ClientProfilePage({ dark }) {
     .slice()
     .sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0))
     .slice(0, 4);
+  const completedProjects = projects.filter(project => ['completed', 'final_paid'].includes(project.status));
   const clientName = form.companyName || form.displayName || 'Client Account';
   const clientAvatar = avatarPreviewUrl || normalizeExternalUrl(form.avatarUrl);
   const clientWebsite = normalizeExternalUrl(form.website);
@@ -430,18 +448,21 @@ export function ClientProfilePage({ dark }) {
             {recentProjects.length ? (
               <div className="space-y-3">
                 {recentProjects.map(project => (
-                  <button key={project.id} type="button" onClick={() => navigate('/projects')}
-                    className={`w-full rounded-2xl border p-4 text-left transition-all ${dark ? 'bg-charcoal-950/55 border-white/[0.07] hover:border-gold-500/30' : 'bg-gray-50 border-gray-200 hover:border-gold-300'}`}>
+                  <article key={project.id}
+                    className={`w-full rounded-lg border p-4 text-left transition-all ${dark ? 'bg-charcoal-950/55 border-white/[0.07] hover:border-gold-500/30' : 'bg-gray-50 border-gray-200 hover:border-gold-300'}`}>
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
+                      <button type="button" onClick={() => navigate('/projects')} className="min-w-0 flex-1 text-left">
                         <p className={`font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{project.title || 'Untitled project'}</p>
                         <p className={`mt-1 text-xs ${textSub}`}>{serviceName(project)} · {projectDate(project)}</p>
+                      </button>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="rounded-full bg-gold-500/12 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-gold-400 ring-1 ring-gold-500/20">
+                          {String(project.status || 'open').replace(/_/g, ' ')}
+                        </span>
+                        {['completed', 'final_paid'].includes(project.status) && <RebookButton project={project} className="min-h-8 px-3 py-1.5" />}
                       </div>
-                      <span className="rounded-full bg-gold-500/12 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-gold-400 ring-1 ring-gold-500/20">
-                        {String(project.status || 'open').replace(/_/g, ' ')}
-                      </span>
                     </div>
-                  </button>
+                  </article>
                 ))}
               </div>
             ) : (
@@ -459,6 +480,48 @@ export function ClientProfilePage({ dark }) {
                     Browse creators
                   </button>
                 </div>
+              </div>
+            )}
+          </div>
+
+          <div className={`${panelCls} p-5`}>
+            <div className="mb-5 flex items-end justify-between gap-4">
+              <div>
+                <p className="mb-2 text-gold-400" style={{ fontSize: '10px', letterSpacing: '2.4px', textTransform: 'uppercase' }}>Repeat bookings</p>
+                <h2 className={`font-display text-2xl font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>Saved creators</h2>
+              </div>
+              <span className={`text-xs ${textSub}`}>{savedCreatorCount} saved</span>
+            </div>
+            {savedCreators.length ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {savedCreators.map(creator => {
+                  const priorProject = completedProjects.find(project => String(project.acceptedCreatorId || project.accepted_creator_id) === String(creator.id));
+                  const name = creator.business_name || creator.name || 'Creator';
+                  return (
+                    <article key={creator.id} className={`rounded-lg border p-4 ${dark ? 'border-white/[0.07] bg-charcoal-950/55' : 'border-gray-200 bg-gray-50'}`}>
+                      <div className="flex items-center gap-3">
+                        <div className="h-11 w-11 shrink-0 overflow-hidden rounded-md border border-gold-500/20 bg-charcoal-950">
+                          {creator.avatar && !String(creator.avatar).includes('🎬') ? <img src={creator.avatar} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center font-display text-lg text-gold-400">{name.slice(0, 1)}</div>}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className={`truncate text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{name}</p>
+                          <p className={`truncate text-[11px] ${textSub}`}>{[creator.city, creator.state].filter(Boolean).join(', ') || 'CreatorBridge creator'}</p>
+                        </div>
+                      </div>
+                      <div className="mt-4 flex gap-2">
+                        <button type="button" onClick={() => navigate(`/creator/${creator.id}`)} className="btn-ghost min-h-10 flex-1 px-3 text-xs">View profile</button>
+                        {priorProject && <RebookButton project={priorProject} creatorName={name} className="flex-1" />}
+                      </div>
+                      {!priorProject && <p className={`mt-3 text-[10px] leading-4 ${textSub}`}>Rebook becomes available after your first completed project together.</p>}
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className={`rounded-lg border p-6 text-center ${dark ? 'border-white/[0.07] bg-charcoal-950/45' : 'border-gray-200 bg-gray-50'}`}>
+                <Star size={24} className="mx-auto text-gold-400" />
+                <p className={`mt-3 text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>No saved creators yet</p>
+                <button type="button" onClick={() => navigate('/find')} className="mt-3 text-xs font-bold text-gold-400 hover:text-gold-300">Browse creators</button>
               </div>
             )}
           </div>

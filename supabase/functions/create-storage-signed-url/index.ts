@@ -3,6 +3,7 @@ import { checkRateLimit } from '../_shared/rateLimit.ts';
 
 const STORAGE_PREFIX = 'storage://';
 const PUBLIC_PREVIEW_BUCKETS = new Set(['creator-portfolio']);
+const PRIVATE_PARTY_BUCKETS = new Set(['contracts', 'signatures']);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -38,7 +39,7 @@ Deno.serve(async (req) => {
     const { ref, expiresIn } = await req.json();
     const parsed = parseStorageReference(String(ref || ''));
 
-    if (!parsed || !PUBLIC_PREVIEW_BUCKETS.has(parsed.bucket)) {
+    if (!parsed || (!PUBLIC_PREVIEW_BUCKETS.has(parsed.bucket) && !PRIVATE_PARTY_BUCKETS.has(parsed.bucket))) {
       return new Response(
         JSON.stringify({ error: 'Unsupported storage reference' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
@@ -56,6 +57,78 @@ Deno.serve(async (req) => {
       ? await supabaseAdmin.auth.getUser(token)
       : { data: { user: null } };
     const activeUserId = authData?.user?.id || null;
+
+    if (PRIVATE_PARTY_BUCKETS.has(parsed.bucket)) {
+      if (!activeUserId) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication is required for private agreement files' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+
+      const { data: adminRow } = await supabaseAdmin
+        .from('platform_admins')
+        .select('user_id')
+        .eq('user_id', activeUserId)
+        .maybeSingle();
+      let authorized = !!adminRow;
+
+      if (!authorized && parsed.bucket === 'contracts') {
+        const { data: contract } = await supabaseAdmin
+          .from('contracts')
+          .select('client_id,creator_user_id,pdf_ref')
+          .eq('pdf_ref', ref)
+          .maybeSingle();
+        authorized = !!contract && [contract.client_id, contract.creator_user_id].includes(activeUserId);
+      }
+
+      if (!authorized && parsed.bucket === 'signatures') {
+        const { data: savedSignature } = await supabaseAdmin
+          .from('saved_signatures')
+          .select('user_id')
+          .eq('signature_image_ref', ref)
+          .maybeSingle();
+        if (savedSignature?.user_id === activeUserId) authorized = true;
+
+        if (!authorized) {
+          const { data: contractSignature } = await supabaseAdmin
+            .from('contract_signatures')
+            .select('contract_id')
+            .eq('signature_image_ref', ref)
+            .maybeSingle();
+          if (contractSignature?.contract_id) {
+            const { data: contract } = await supabaseAdmin
+              .from('contracts')
+              .select('client_id,creator_user_id')
+              .eq('id', contractSignature.contract_id)
+              .maybeSingle();
+            authorized = !!contract && [contract.client_id, contract.creator_user_id].includes(activeUserId);
+          }
+        }
+      }
+
+      if (!authorized) {
+        return new Response(
+          JSON.stringify({ error: 'Private agreement file access denied' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+
+      const { data, error } = await supabaseAdmin
+        .storage
+        .from(parsed.bucket)
+        .createSignedUrl(parsed.path, clampExpiresIn(expiresIn));
+      if (error || !data?.signedUrl) {
+        return new Response(
+          JSON.stringify({ error: 'Signed URL could not be created' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+      return new Response(
+        JSON.stringify({ signedUrl: data.signedUrl }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
 
     const { data: portfolioItem, error: portfolioError } = await supabaseAdmin
       .from('portfolio_items')

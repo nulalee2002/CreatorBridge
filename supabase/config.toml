@@ -376,6 +376,14 @@ deno_version = 2
 enabled = true
 verify_jwt = false
 
+[functions.generate-contract]
+enabled = true
+verify_jwt = true
+
+[functions.sign-contract]
+enabled = true
+verify_jwt = true
+
 # Stripe calls this endpoint directly with no Supabase JWT; auth is the Stripe
 # signature check (STRIPE_WEBHOOK_SECRET) inside the function. verify_jwt MUST
 # stay false or the platform 401s every webhook and no payment ever settles.

@@ -10,6 +10,7 @@ import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { Play } from 'lucide-react';
 import { HireCollaboratorButton } from '../components/creator/HireCollaboratorButton.jsx';
 import { CollaborationComposer } from '../components/collaboration/CollaborationComposer.jsx';
+import { RebookButton } from '../components/RebookButton.jsx';
 
 const useTweaks = (defaults) => [defaults, () => {}];
 const TweaksPanel = () => null;
@@ -816,6 +817,7 @@ function HandoffCreatorProfile() {
   const [showSticky, setShowSticky] = useState(false);
   const [canHire, setCanHire] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [pastProject, setPastProject] = useState(null);
   const projectContextId = searchParams.get('project');
 
   useEffect(() => {
@@ -823,6 +825,25 @@ function HandoffCreatorProfile() {
     supabase.from('account_capabilities').select('capability').eq('user_id', user.id).eq('capability', 'creator').maybeSingle()
       .then(({ data }) => setCanHire(Boolean(data) && creator.userId !== user.id && creator.openToCollaborations));
   }, [user?.id, creator.userId, creator.openToCollaborations]);
+
+  useEffect(() => {
+    if (!user?.id || !creator.listingId || !supabaseConfigured) {
+      setPastProject(null);
+      return;
+    }
+    let active = true;
+    supabase
+      .from('projects')
+      .select('*')
+      .eq('client_id', user.id)
+      .eq('accepted_creator_id', String(creator.listingId))
+      .in('status', ['completed', 'final_paid'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => { if (active) setPastProject(data || null); });
+    return () => { active = false; };
+  }, [user?.id, creator.listingId]);
 
   useEffect(() => {
     const portfolioItemId = searchParams.get('portfolio');
@@ -882,7 +903,11 @@ function HandoffCreatorProfile() {
           <Breadcrumb/>
           <Hero onPlayReel={() => setReelOpen(true)} onJumpBook={jumpToBook} onMessage={startMessage}
                 layout={t.heroLayout} saved={saved} setSaved={setSaved}
-                collaborationAction={canHire ? <HireCollaboratorButton projectId={projectContextId} onClick={() => setComposerOpen(true)} /> : null}/>
+                collaborationAction={pastProject
+                  ? <RebookButton project={pastProject} creatorName={creator.studio} />
+                  : canHire
+                    ? <HireCollaboratorButton projectId={projectContextId} onClick={() => setComposerOpen(true)} />
+                    : null}/>
           <StatStrip/>
           <About/>
           <ServiceOffers/>

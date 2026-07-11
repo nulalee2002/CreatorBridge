@@ -35,6 +35,8 @@ import { ProjectWorkspaces } from '../components/collaboration/ProjectWorkspaces
 import { DeliveryAnchorForm } from '../components/collaboration/DeliveryAnchorForm.jsx';
 import { CollaborationReviewActions } from '../components/collaboration/CollaborationReviewActions.jsx';
 import { CollaborationSurvey } from '../components/analytics/CollaborationSurvey.jsx';
+import { ContractAction } from '../components/ContractAction.jsx';
+import { RebookButton } from '../components/RebookButton.jsx';
 import {
   CLIENT_MINIMUM_PROJECT_ERROR,
   CLIENT_MINIMUM_PROJECT_NOTE,
@@ -67,6 +69,7 @@ function fromSupabaseApplication(row, listing = null) {
     creatorAvatar: listing?.avatar || '🎬',
     proposal: row.message || '',
     rate: row.proposed_rate,
+    packageId: row.package_id,
     status: row.status || 'pending',
     payoutReady: listing?.stripe_account_id ? true : listing?.stripe_account_id === null ? false : undefined,
     createdAt: row.created_at,
@@ -750,17 +753,51 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
   );
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [packages, setPackages] = useState([]);
+  const [packageId, setPackageId] = useState('');
+  const [packagesLoading, setPackagesLoading] = useState(true);
   const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
   const inputCls = `w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${
     dark ? 'bg-charcoal-950/70 border-white/[0.09] text-white placeholder-charcoal-500 focus:border-gold-500'
          : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
   }`;
 
+  useEffect(() => {
+    let active = true;
+    async function loadPackages() {
+      setPackagesLoading(true);
+      let next = Array.isArray(creatorListing?.packages) ? creatorListing.packages : [];
+      if (supabaseConfigured && creatorListing?.id && isUuid(creatorListing.id)) {
+        const { data } = await supabase
+          .from('packages')
+          .select('id,name,description,price,deliverables,turnaround_days,revisions,service_id')
+          .eq('listing_id', creatorListing.id)
+          .order('display_order');
+        if (data) next = data;
+      }
+      const projectService = normalizeServiceId(project.serviceId || project.service_id);
+      next = next.filter(item => normalizeServiceId(item.service_id || item.serviceId) === projectService);
+      if (!active) return;
+      setPackages(next);
+      if (next.length === 1) {
+        setPackageId(next[0].id);
+        setRate(String(next[0].price || ''));
+      }
+      setPackagesLoading(false);
+    }
+    loadPackages();
+    return () => { active = false; };
+  }, [creatorListing, project.serviceId, project.service_id]);
+
   async function handleApply() {
     const cleanProposal = sanitizeLongText(proposal, 3000);
     const cleanCreatorName = sanitizePlainText(creatorName, 100);
     const cleanRate = clampNumber(rate, { min: 0, max: 1000000, fallback: null });
     if (!cleanProposal) return;
+    if (!packageId) {
+      setError('Select the package that defines the deliverables, turnaround, and revisions for this proposal.');
+      return;
+    }
     if (cleanRate === null || cleanRate < MINIMUM_PROJECT_BUDGET_DOLLARS) {
       setError(CREATOR_MINIMUM_PROJECT_ERROR);
       return;
@@ -782,6 +819,7 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
       creatorAvatar: creatorListing?.avatar || '🎬',
       proposal:    cleanProposal,
       rate:        cleanRate,
+      packageId,
       status:      'pending',
       createdAt:   new Date().toISOString(),
     };
@@ -793,6 +831,7 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
           p_listing_id: creatorListing.id,
           p_message: cleanProposal,
           p_proposed_rate: cleanRate,
+          p_package_id: packageId,
         });
         if (applyError) throw applyError;
         if (data?.id) app.id = data.id;
@@ -848,6 +887,27 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
                     placeholder="Your name or studio name" className={inputCls} />
                 </div>
                 <div>
+                  <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Contract Package *</p>
+                  <select
+                    value={packageId}
+                    disabled={packagesLoading || packages.length === 0}
+                    onChange={event => {
+                      const nextId = event.target.value;
+                      const selected = packages.find(item => item.id === nextId);
+                      setPackageId(nextId);
+                      if (selected?.price) setRate(String(selected.price));
+                      setError('');
+                    }}
+                    className={inputCls}
+                  >
+                    <option value="">{packagesLoading ? 'Loading packages...' : packages.length ? 'Select a package' : 'No matching package available'}</option>
+                    {packages.map(item => (
+                      <option key={item.id} value={item.id}>{item.name} · ${Number(item.price || 0).toLocaleString()}</option>
+                    ))}
+                  </select>
+                  <p className={`mt-1 text-[10px] leading-4 ${textSub}`}>This package becomes the contract source for deliverables, turnaround, and revisions.</p>
+                </div>
+                <div>
                   <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Your Proposed Rate ($)</p>
                   <div className="relative">
                     <DollarSign size={13} className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${textSub}`} />
@@ -874,7 +934,7 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
                   className={`flex-1 py-2.5 rounded-xl border text-sm font-semibold ${dark ? 'border-white/[0.09] text-charcoal-300 hover:text-white' : 'border-gray-200 text-gray-600 hover:text-gray-900'}`}>
                   Cancel
                 </button>
-                <button type="button" onClick={handleApply} disabled={!proposal.trim()}
+                <button type="button" onClick={handleApply} disabled={!proposal.trim() || !packageId || packagesLoading}
                   className="flex-1 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 text-charcoal-900 text-sm font-bold transition-all flex items-center justify-center gap-2">
                   <Send size={13} /> Submit Proposal
                 </button>
@@ -890,6 +950,9 @@ function ApplyModal({ project, dark, onClose, onApply, creatorListing }) {
 // ── Action buttons (context-aware by role + status) ──────────────
 function ProjectActionButtons({ project, isClient, canApply, applied, dark, onApply, onStatusChange, navigate, onOpenDelivery, onOpenRevision }) {
   const { status } = project;
+  const { user } = useAuth();
+  const [rebookBusy, setRebookBusy] = useState(false);
+  const [rebookError, setRebookError] = useState('');
 
   async function changeStatus(newStatus, patch = {}) {
     if (supabaseConfigured && isUuid(project.id)) {
@@ -926,11 +989,14 @@ function ProjectActionButtons({ project, isClient, canApply, applied, dark, onAp
     }
     if (status === 'accepted') {
       return (
-        <button type="button"
-          onClick={e => { e.stopPropagation(); navigate(`/checkout/${project.id}`); }}
-          className="w-full py-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-xs font-bold transition-all flex items-center justify-center gap-1.5">
-          <CreditCard size={11} /> Pay Retainer
-        </button>
+        <div className="space-y-2">
+          <ContractAction projectId={project.id} userId={user?.id} />
+          <button type="button"
+            onClick={e => { e.stopPropagation(); navigate(`/checkout/${project.id}`); }}
+            className="w-full py-2 rounded-md border border-white/[0.08] bg-white/[0.035] text-charcoal-300 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5">
+            <CreditCard size={11} /> Continue to Retainer
+          </button>
+        </div>
       );
     }
     if (status === 'delivered') {
@@ -973,6 +1039,14 @@ function ProjectActionButtons({ project, isClient, canApply, applied, dark, onAp
       );
     }
     if (status === 'approved' || status === 'completed') {
+      if (status === 'completed') {
+        return (
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <RebookButton project={project} creatorName={project.creatorName || 'this creator'} className="flex-1" />
+            <ContractAction projectId={project.id} userId={user?.id} className="flex-1" />
+          </div>
+        );
+      }
       return (
         <button type="button"
           onClick={e => { e.stopPropagation(); navigate(`/checkout/${project.id}?payment=final`); }}
@@ -986,6 +1060,46 @@ function ProjectActionButtons({ project, isClient, canApply, applied, dark, onAp
 
   // Creator buttons
   if (!canApply) return null;
+
+  if (status === 'rebook_pending') {
+    return (
+      <div className="space-y-2">
+        <button
+          type="button"
+          disabled={rebookBusy}
+          onClick={async event => {
+            event.stopPropagation();
+            setRebookBusy(true);
+            setRebookError('');
+            try {
+              const { data, error } = await supabase.rpc('confirm_rebook_project', { p_project_id: project.id });
+              if (error) throw error;
+              const { error: prepareError } = await supabase.functions.invoke('generate-contract', {
+                body: { projectId: project.id, contractId: data?.contract?.id },
+              });
+              if (prepareError) throw prepareError;
+              onStatusChange?.(project.id, 'accepted', {
+                acceptedApplicationId: data?.application?.id,
+                selectedPackageId: data?.application?.package_id,
+              });
+            } catch (error) {
+              setRebookError(error?.message || 'Rebooking could not be confirmed.');
+            } finally {
+              setRebookBusy(false);
+            }
+          }}
+          className="w-full rounded-md bg-gold-500 px-4 py-2.5 text-xs font-bold text-charcoal-900 hover:bg-gold-600 disabled:opacity-45"
+        >
+          {rebookBusy ? 'Preparing agreement...' : 'Confirm Rebooking'}
+        </button>
+        {rebookError && <p className="text-[10px] leading-4 text-red-300">{rebookError}</p>}
+      </div>
+    );
+  }
+
+  if (status === 'accepted') {
+    return <ContractAction projectId={project.id} userId={user?.id} />;
+  }
 
   if (status === 'open') {
     return (
@@ -1306,11 +1420,17 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
           creatorEmail = creatorData.email;
         }
 
-        const { error: acceptError } = await supabase.rpc('accept_project_application', {
+        const { data: acceptedData, error: acceptError } = await supabase.rpc('accept_project_application', {
           p_project_id: localProject.id,
           p_application_id: app.id,
         });
         if (acceptError) throw acceptError;
+        const { error: contractError } = await supabase.functions.invoke('generate-contract', {
+          body: { projectId: localProject.id, contractId: acceptedData?.contract?.id },
+        });
+        if (contractError) {
+          setAcceptError('The proposal was accepted, but the agreement PDF still needs preparation. Open the agreement action to retry.');
+        }
       } catch (err) {
         console.error('Unable to accept application:', err);
         setAcceptError(err.message || 'Unable to accept this proposal. Please try again.');

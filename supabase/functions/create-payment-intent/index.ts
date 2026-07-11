@@ -211,6 +211,28 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Contract-backed retainers require contracts.status = 'countersigned'.
+    // Projects without a contract remain eligible as legacy bookings.
+    if (normalizedPaymentType === 'retainer') {
+      const { data: contract, error: contractError } = await supabaseAdmin
+        .from('contracts')
+        .select('id,status')
+        .eq('project_id', projectId)
+        .maybeSingle();
+      if (contractError) {
+        return new Response(
+          JSON.stringify({ error: 'Agreement status could not be verified. Please try again.' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (contract && contract.status !== 'countersigned') {
+        return new Response(
+          JSON.stringify({ error: 'Both parties need to sign the agreement before the retainer can be paid.' }),
+          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     if (normalizedPaymentType === 'final') {
       if (!['paid', 'released'].includes(existingTxn?.retainer_status || '')) {
         return new Response(
