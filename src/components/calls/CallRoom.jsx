@@ -181,7 +181,7 @@ export function CallRoom({ session, onLeft }) {
       <div className="flex items-center justify-between gap-3 border-b border-white/[0.07] px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="flex h-2 w-2 rounded-full bg-red-400 animate-pulse" aria-hidden="true" />
-          <p className="text-xs font-bold text-white">Recorded CreatorBridge call</p>
+          <p className="text-xs font-bold text-white">CreatorBridge call, audio recorded</p>
         </div>
         <div className="flex items-center gap-3">
           {remaining !== null && (

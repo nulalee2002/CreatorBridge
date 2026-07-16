@@ -122,7 +122,7 @@ export function CallSummary({ call, user }) {
       <div className="rounded-xl border border-white/[0.07] bg-charcoal-900/60 p-4">
         <p className="flex items-center gap-2 text-xs font-bold text-white"><FileText size={13} className="text-gold-400" /> Call summary</p>
         <p className="mt-1 text-[11px] leading-5 text-charcoal-300">
-          The recording is processing. The draft summary appears here shortly after the call ends.
+          The audio recording is processing. The draft summary appears here shortly after the call ends.
         </p>
       </div>
     );
@@ -226,7 +226,7 @@ export function CallSummary({ call, user }) {
               disabled={downloadBusy === 'recording'}
               className="flex items-center gap-1.5 rounded-lg border border-white/[0.09] px-3 py-1.5 text-[11px] font-bold text-charcoal-200 transition hover:border-gold-500/35 hover:text-white disabled:opacity-45"
             >
-              {downloadBusy === 'recording' ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />} Recording
+              {downloadBusy === 'recording' ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />} Audio recording
             </button>
           )}
           {call.transcript_ref && (

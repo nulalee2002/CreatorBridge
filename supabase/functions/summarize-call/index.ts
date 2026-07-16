@@ -8,7 +8,7 @@ const MAX_TRANSCRIPT_CHARS = 24000;
 const DEFAULT_MODEL = 'gpt-4o-mini';
 
 const SYSTEM_PROMPT = [
-  'You summarize a recorded business video call between a verified creator and their client on CreatorBridge.',
+  'You summarize a recorded business call between a verified creator and their client on CreatorBridge.',
   'Use ONLY what is in the transcript. Never invent names, amounts, dates, or commitments.',
   'Write plain, professional English in short sentences.',
   'Structure the summary with exactly these four headings, each on its own line:',
@@ -166,7 +166,7 @@ Deno.serve(async (req) => {
         p_recipient_id: recipient,
         p_type: 'call_summary_ready',
         p_title: 'Call summary ready for review',
-        p_body: 'The draft summary of your video call is ready. Both parties can review and edit it; the creator owns its accuracy.',
+        p_body: 'The draft summary of your call is ready. Both parties can review and edit it; the creator owns its accuracy.',
         p_action_url: '/projects',
         p_metadata: { project_id: call.project_id, call_id: call.id, summary_id: summary.id },
         p_actor_id: null,

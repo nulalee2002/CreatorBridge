@@ -65,7 +65,7 @@ export function ScheduleCallModal({ project, contract, isClient, rescheduleCall,
               {rescheduleCall ? 'Reschedule the call' : 'Schedule a video call'}
             </h3>
             <p className="mt-1 text-xs leading-5 text-charcoal-300">
-              Calls run up to 60 minutes, are recorded and transcribed, and stay inside CreatorBridge.
+              Calls run up to 60 minutes, are recorded audio only and transcribed, and stay inside CreatorBridge.
               Times shown in {timezone}.
             </p>
           </div>

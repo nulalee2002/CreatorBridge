@@ -308,7 +308,7 @@ function CardForm({ fees, project, creator, dark, paymentType, creatorFeePct, cl
           Secured by Stripe. Use test card: 4242 4242 4242 4242
         </p>
         <p className={`text-[10px] mt-2 leading-4 ${textSub}`}>
-          Paying the retainer unlocks recorded video calls with your creator, held right inside CreatorBridge.
+          Paying the retainer unlocks video calls with your creator, held right inside CreatorBridge and recorded audio only for your shared project record.
         </p>
       </div>
 

@@ -150,8 +150,10 @@ Deno.serve(async (req) => {
       ? object.recording_files
       : [];
 
-    const videoFile = files.find((f) => String(f.file_type).toUpperCase() === 'MP4')
-      || files.find((f) => String(f.file_type).toUpperCase() === 'M4A');
+    // Audio only, by policy: only the M4A audio track is ever stored. Any MP4
+    // video Zoom produced is skipped here and destroyed with the Zoom-cloud
+    // copy below, so no video track is saved anywhere.
+    const audioFile = files.find((f) => String(f.file_type).toUpperCase() === 'M4A');
     const transcriptFile = files.find((f) =>
       String(f.file_type).toUpperCase() === 'TRANSCRIPT'
       || String(f.file_extension || '').toUpperCase() === 'VTT');
@@ -159,17 +161,19 @@ Deno.serve(async (req) => {
     let recordingRef = call.recording_ref;
     let transcriptRef = call.transcript_ref;
 
-    if (videoFile?.download_url && !recordingRef) {
-      const bytes = await downloadRecordingFile(String(videoFile.download_url), downloadToken);
-      const isAudioOnly = String(videoFile.file_type).toUpperCase() === 'M4A';
-      const path = `${call.id}/recording.${isAudioOnly ? 'm4a' : 'mp4'}`;
+    if (!audioFile && files.some((f) => String(f.file_type).toUpperCase() === 'MP4')) {
+      console.error(
+        'zoom-webhook: Zoom sent video but no M4A audio file. Enable audio-only files in the Zoom account recording settings. No recording stored for call',
+        call.id,
+      );
+    }
+
+    if (audioFile?.download_url && !recordingRef) {
+      const bytes = await downloadRecordingFile(String(audioFile.download_url), downloadToken);
+      const path = `${call.id}/recording.m4a`;
       const { error: uploadError } = await admin.storage
         .from('call-recordings')
-        .upload(path, bytes, {
-          contentType: isAudioOnly ? 'audio/mp4' : 'video/mp4',
-          upsert: true,
-          cacheControl: '0',
-        });
+        .upload(path, bytes, { contentType: 'audio/mp4', upsert: true, cacheControl: '0' });
       if (uploadError) throw new Error(`Recording upload failed: ${uploadError.message}`);
       recordingRef = `storage://call-recordings/${path}`;
     }

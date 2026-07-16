@@ -2,7 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Mic, ShieldCheck, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase.js';
-import { CALL_CONSENT_TEXT, CALL_RETENTION_TEXT } from '../../lib/callLegal.js';
+import {
+  CALL_CONSENT_AFFIRMATION,
+  CALL_CONSENT_HEADLINE,
+  CALL_CONSENT_MUTUAL,
+  CALL_CONSENT_PRIVACY,
+  CALL_CONSENT_TEXT,
+  CALL_CONSENT_WHY,
+  CALL_NAME_LABEL,
+} from '../../lib/callLegal.js';
 
 async function functionError(error, fallback) {
   try {
@@ -111,10 +119,12 @@ export function CallConsent({ call, user, onJoined, onClose, onCallChanged }) {
           </button>
         </div>
 
-        <div className="rounded-xl border border-gold-500/25 bg-gold-500/[0.07] p-4">
-          <p className="text-xs leading-6 text-charcoal-100">{CALL_CONSENT_TEXT}</p>
+        <div className="rounded-xl border border-gold-500/25 bg-gold-500/[0.07] p-4 space-y-2">
+          <p className="text-sm font-bold leading-6 text-white">{CALL_CONSENT_HEADLINE}</p>
+          <p className="text-xs leading-6 text-charcoal-100">{CALL_CONSENT_MUTUAL}</p>
+          <p className="text-xs leading-6 text-charcoal-100">{CALL_CONSENT_WHY}</p>
+          <p className="text-xs leading-6 text-charcoal-100">{CALL_CONSENT_PRIVACY}</p>
         </div>
-        <p className="mt-3 text-[11px] leading-5 text-charcoal-300">{CALL_RETENTION_TEXT}</p>
 
         {waitingForOther ? (
           <div className="mt-5 flex items-center gap-3 rounded-xl border border-white/[0.07] bg-charcoal-900/72 p-4">
@@ -129,7 +139,7 @@ export function CallConsent({ call, user, onJoined, onClose, onCallChanged }) {
         ) : (
           <>
             <label className="mt-4 block text-[10px] font-bold uppercase tracking-wider text-charcoal-300">
-              Your name
+              {CALL_NAME_LABEL}
             </label>
             <input
               type="text"
@@ -146,7 +156,7 @@ export function CallConsent({ call, user, onJoined, onClose, onCallChanged }) {
                 onChange={event => setChecked(event.target.checked)}
                 className="mt-0.5 accent-[#9C4A33]"
               />
-              I have read the notice above and consent to this call being recorded and transcribed.
+              {CALL_CONSENT_AFFIRMATION}
             </label>
           </>
         )}

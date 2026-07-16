@@ -1,7 +1,6 @@
--- Post-booking video calls (Zoom Video SDK).
+-- Post-booking video calls (Zoom Video SDK). Recordings are audio only.
 -- Spec: docs/2026-06-30-codex-video-calls-spec.md
 -- Tables, private buckets, party-scoped RLS, RPCs, reminder + retention scheduling.
--- DO NOT APPLY TO PRODUCTION from this branch; ships via PR review.
 
 create extension if not exists pgcrypto;
 
@@ -218,9 +217,10 @@ for select to authenticated
 using (public.is_platform_admin((select auth.uid())));
 
 -- ── Private storage buckets (signed URL access only) ─────────────
+-- call-recordings accepts audio only: recordings are audio, never video.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values
-  ('call-recordings', 'call-recordings', false, 2147483648, array['video/mp4', 'audio/mp4']),
+  ('call-recordings', 'call-recordings', false, 524288000, array['audio/mp4']),
   ('call-transcripts', 'call-transcripts', false, 10485760, array['text/vtt'])
 on conflict (id) do update
 set public = false,

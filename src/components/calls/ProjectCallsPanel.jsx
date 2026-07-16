@@ -151,7 +151,7 @@ export function ProjectCallsPanel({ project, user, isClient }) {
         <span className="text-[10px] text-charcoal-400">{usedCalls} of {INCLUDED_CALLS} included calls used</span>
       </div>
       <p className="mt-1 text-[10px] leading-4 text-charcoal-400">
-        Calls are recorded and transcribed with both parties' consent, run up to 60 minutes, and stay inside CreatorBridge.
+        Calls are recorded, audio only, and transcribed with both parties' consent, run up to 60 minutes, and stay inside CreatorBridge.
       </p>
 
       <div className="mt-3 space-y-2">
