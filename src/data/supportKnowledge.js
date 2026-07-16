@@ -1,6 +1,14 @@
 export function getPlatformGuideResponse(question = '') {
   const q = String(question).toLowerCase();
 
+  if (q.includes('contract') || q.includes('agreement') || q.includes('electronic signature') || q.includes('e-sign') || q.includes('esign') || q.includes('countersign')) {
+    return 'After a client accepts a proposal, CreatorBridge prepares a production agreement from the accepted brief, proposal amount, and selected creator package. The client and creator each review and sign the same terms before the retainer can be paid. A saved signature speeds up a repeat booking, but it never signs automatically. Each signing event records the name, timestamp, IP, device, and exact document hash. This first-party e-sign flow still requires entertainment-attorney review before production reliance.';
+  }
+
+  if (q.includes('rebook') || q.includes('book again') || q.includes('repeat booking') || q.includes('hire again') || q.includes('saved creator')) {
+    return 'A past client can use Rebook from a completed project, the creator profile, project history, or Saved Creators. CreatorBridge copies the prior creator, package, and brief into an editable request. The client adds the new date and can adjust the scope and amount before sending. The creator confirms, then both parties sign a fresh agreement. The old contract is never reused or changed.';
+  }
+
   if (q.includes('client approval') || q.includes('new client') || q.includes('client sign up') || q.includes('client signup')) {
     return 'Client accounts are intentionally self-serve. A client can sign up, browse, create briefs, and move through booking without waiting for manual admin approval. The protection happens around authenticated briefs, platform messaging, Stripe payment flow, and dispute records rather than a manual client approval queue.';
   }

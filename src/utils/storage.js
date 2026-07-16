@@ -3,6 +3,7 @@ import { supabase, supabaseConfigured } from '../lib/supabase.js';
 const STORAGE_PREFIX = 'storage://';
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const SIGNED_URL_FUNCTION_BUCKETS = new Set(['creator-portfolio', 'contracts', 'signatures']);
 
 export function isStorageReference(value = '') {
   return String(value || '').startsWith(STORAGE_PREFIX);
@@ -38,12 +39,13 @@ export async function getStorageDisplayUrl(value = '', expiresIn = 3600) {
   const parsed = parseStorageReference(normalized);
   if (!parsed) return '';
 
-  if (parsed.bucket === 'creator-portfolio') {
+  if (SIGNED_URL_FUNCTION_BUCKETS.has(parsed.bucket)) {
     const { data, error } = await supabase.functions.invoke('create-storage-signed-url', {
       body: { ref: normalized, expiresIn },
     });
 
     if (!error && data?.signedUrl) return data.signedUrl;
+    return '';
   }
 
   const { data, error } = await supabase

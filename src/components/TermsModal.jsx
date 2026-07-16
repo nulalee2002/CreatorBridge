@@ -108,7 +108,7 @@ export function TermsModal({ dark, onClose }) {
               All financial transactions are processed through CreatorBridge using Stripe, a licensed payment processor.
               CreatorBridge never holds funds indefinitely: payment is split into a 50% retainer at booking and 50% upon
               project completion and approval. Funds are released to the creator after client approval, or automatically at the
-              end of the 5-day review window if the client takes no action.
+              end of the 72-hour review window if the client takes no action.
             </p>
             <p>
               CreatorBridge earns revenue through a platform fee charged to both parties. This fee structure is described
@@ -258,7 +258,7 @@ export function TermsModal({ dark, onClose }) {
               within 2 business days and issues a final determination.
             </p>
             <p>
-              Disputes must be filed within the 5-day review window after project delivery.
+              Disputes must be filed within the 72-hour review window after project delivery.
             </p>
           </Section>
 

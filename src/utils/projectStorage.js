@@ -66,6 +66,8 @@ export function fromSupabaseProject(row) {
     applications: row.applications || 0,
     acceptedCreatorId: row.accepted_creator_id,
     acceptedApplicationId: row.accepted_application_id,
+    selectedPackageId: row.selected_package_id,
+    rebookedFromProjectId: row.rebooked_from_project_id,
     deliveredAt: row.delivered_at,
     approvedAt: row.approved_at,
     deliveryLink: row.delivery_link,

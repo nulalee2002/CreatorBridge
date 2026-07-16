@@ -94,7 +94,7 @@ export function DisputePolicy({ dark }) {
               </ul>
               <p>
                 Milestone payments are held securely by our processor and are only released upon approval, or automatically at the
-                end of the 5-day review window if the client takes no action. Approving, requesting a revision, or opening a dispute
+                end of the 72-hour review window if the client takes no action. Approving, requesting a revision, or opening a dispute
                 within that window pauses the automatic release.
               </p>
             </Section>
@@ -108,7 +108,7 @@ export function DisputePolicy({ dark }) {
                 A revision request must:
               </p>
               <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>Be filed within the 5-day review window after work delivery.</li>
+                <li>Be filed within the 72-hour review window after work delivery.</li>
                 <li>Contain specific, actionable feedback aligned with the original project brief.</li>
                 <li>Not request new services or features outside the original project scope (scope creep).</li>
               </ul>
@@ -131,7 +131,7 @@ export function DisputePolicy({ dark }) {
                 <li>Provide a detailed description of why the work does not meet the brief, and attach any relevant communications or evidence.</li>
               </ul>
               <p>
-                Formal disputes must be submitted within the <strong className={dark ? 'text-white' : 'text-gray-900'}>5-day review window</strong> after the last delivery upload, the same window
+                Formal disputes must be submitted within the <strong className={dark ? 'text-white' : 'text-gray-900'}>72-hour review window</strong> after the last delivery upload, the same window
                 that governs automatic release, so opening a dispute always happens before funds can auto-release. Opening a dispute
                 freezes all pending milestone payments for that transaction until it is resolved.
               </p>

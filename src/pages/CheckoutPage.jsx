@@ -8,6 +8,7 @@ import { getStripe, stripeConfigured } from '../lib/stripe.js';
 import { calcFees, dollarsToDisplay, PLATFORM_FEES, getLoyaltyTier } from '../config/fees.js';
 import { FeeBreakdown } from '../components/FeeBreakdown.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
+import { ContractAction } from '../components/ContractAction.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { SERVICES, normalizeServiceId } from '../data/rates.js';
 import { fromSupabaseProject, upsertLocalProject } from '../utils/projectStorage.js';
@@ -436,6 +437,7 @@ export function CheckoutPage({ dark }) {
   const [project, setProject]       = useState(null);
   const [creator, setCreator]       = useState(null);
   const [transaction, setTransaction] = useState(null);
+  const [contract, setContract]       = useState(null);
   const [paymentResult, setPayment] = useState(null);
   const [loading, setLoading]       = useState(true);
 
@@ -447,6 +449,7 @@ export function CheckoutPage({ dark }) {
     async function loadCheckoutProject() {
       setLoading(true);
       setTransaction(null);
+      setContract(null);
 
       try {
         let p = null;
@@ -499,6 +502,12 @@ export function CheckoutPage({ dark }) {
         if (!cancelled && listing) setCreator(fromCreatorListingRow(listing));
 
         if (!user?.id) return;
+        const { data: agreement } = await supabase
+          .from('contracts')
+          .select('*')
+          .eq('project_id', projectId)
+          .maybeSingle();
+        if (!cancelled) setContract(agreement || null);
         const { data: txn } = await supabase
           .from('transactions')
           .select('id, retainer_status, final_status, retainer_paid_at, final_paid_at, final_payment_intent, final_transfer_id')
@@ -526,6 +535,9 @@ export function CheckoutPage({ dark }) {
   const paymentAlreadyComplete = paymentType === 'final'
     ? ['paid', 'released'].includes(transaction?.final_status)
     : ['paid', 'released'].includes(transaction?.retainer_status);
+  const retainerBlockedByContract = paymentType === 'retainer'
+    && contract
+    && contract.status !== 'countersigned';
 
   if (loading) {
     return (
@@ -574,9 +586,18 @@ export function CheckoutPage({ dark }) {
               : paymentType === 'final' ? 'Pay the remaining project balance.' : 'Confirm your CreatorBridge booking.'}
           </h1>
 
-          <StepBar step={paymentAlreadyComplete ? 3 : step} dark={dark} />
+          {retainerBlockedByContract ? (
+            <div className="mx-auto max-w-xl rounded-md border border-gold-500/25 bg-gold-500/8 p-5 text-center">
+              <Shield size={24} className="mx-auto text-gold-400" />
+              <h2 className={`mt-3 font-display text-2xl font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>Both signatures come before payment.</h2>
+              <p className={`mx-auto mt-2 max-w-md text-sm leading-6 ${textSub}`}>Review and sign the production agreement. The retainer opens automatically when the client and creator have both signed the same terms.</p>
+              <ContractAction projectId={project.id} userId={user?.id} className="mx-auto mt-5 max-w-sm" onContractChange={setContract} />
+            </div>
+          ) : (
+            <StepBar step={paymentAlreadyComplete ? 3 : step} dark={dark} />
+          )}
 
-          {paymentAlreadyComplete && (
+          {!retainerBlockedByContract && paymentAlreadyComplete && (
             <ConfirmationStep
               project={project}
               creator={creator}
@@ -585,7 +606,7 @@ export function CheckoutPage({ dark }) {
               paymentResult={{ paymentType }}
             />
           )}
-          {!paymentAlreadyComplete && step === 1 && (
+          {!retainerBlockedByContract && !paymentAlreadyComplete && step === 1 && (
             <ReviewStep
               project={project}
               creator={creator}
@@ -597,7 +618,7 @@ export function CheckoutPage({ dark }) {
               onNext={() => setStep(2)}
             />
           )}
-          {!paymentAlreadyComplete && step === 2 && (
+          {!retainerBlockedByContract && !paymentAlreadyComplete && step === 2 && (
             <PaymentStep
               fees={fees}
               project={project}
@@ -609,7 +630,7 @@ export function CheckoutPage({ dark }) {
               onSuccess={(result) => { setPayment({ ...result, paymentType }); setStep(3); }}
             />
           )}
-          {!paymentAlreadyComplete && step === 3 && (
+          {!retainerBlockedByContract && !paymentAlreadyComplete && step === 3 && (
             <ConfirmationStep project={project} creator={creator} fees={fees} dark={dark} paymentResult={paymentResult} />
           )}
         </div>
