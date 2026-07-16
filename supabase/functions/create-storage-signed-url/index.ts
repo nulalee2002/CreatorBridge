@@ -3,7 +3,7 @@ import { checkRateLimit } from '../_shared/rateLimit.ts';
 
 const STORAGE_PREFIX = 'storage://';
 const PUBLIC_PREVIEW_BUCKETS = new Set(['creator-portfolio']);
-const PRIVATE_PARTY_BUCKETS = new Set(['contracts', 'signatures']);
+const PRIVATE_PARTY_BUCKETS = new Set(['contracts', 'signatures', 'call-recordings', 'call-transcripts']);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -105,6 +105,16 @@ Deno.serve(async (req) => {
             authorized = !!contract && [contract.client_id, contract.creator_user_id].includes(activeUserId);
           }
         }
+      }
+
+      if (!authorized && (parsed.bucket === 'call-recordings' || parsed.bucket === 'call-transcripts')) {
+        const refColumn = parsed.bucket === 'call-recordings' ? 'recording_ref' : 'transcript_ref';
+        const { data: call } = await supabaseAdmin
+          .from('project_calls')
+          .select('creator_id,client_id')
+          .eq(refColumn, ref)
+          .maybeSingle();
+        authorized = !!call && [call.creator_id, call.client_id].includes(activeUserId);
       }
 
       if (!authorized) {

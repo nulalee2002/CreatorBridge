@@ -307,6 +307,9 @@ function CardForm({ fees, project, creator, dark, paymentType, creatorFeePct, cl
           <Shield size={10} className="text-gold-400" />
           Secured by Stripe. Use test card: 4242 4242 4242 4242
         </p>
+        <p className={`text-[10px] mt-2 leading-4 ${textSub}`}>
+          Paying the retainer unlocks recorded video calls with your creator, held right inside CreatorBridge.
+        </p>
       </div>
 
       {error && (

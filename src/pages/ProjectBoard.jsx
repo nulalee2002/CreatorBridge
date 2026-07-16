@@ -36,6 +36,7 @@ import { DeliveryAnchorForm } from '../components/collaboration/DeliveryAnchorFo
 import { CollaborationReviewActions } from '../components/collaboration/CollaborationReviewActions.jsx';
 import { CollaborationSurvey } from '../components/analytics/CollaborationSurvey.jsx';
 import { ContractAction } from '../components/ContractAction.jsx';
+import { ProjectCallsPanel } from '../components/calls/ProjectCallsPanel.jsx';
 import { RebookButton } from '../components/RebookButton.jsx';
 import {
   CLIENT_MINIMUM_PROJECT_ERROR,
@@ -1504,6 +1505,9 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
       {!isClient && (
         <CollaborationWorkspacePanel project={localProject} dark={dark} user={user} />
       )}
+
+      {/* Video calls: unlocks at retainer_paid or later with a countersigned agreement */}
+      <ProjectCallsPanel project={localProject} user={user} isClient={isClient} />
 
       {/* Description */}
       <div>
