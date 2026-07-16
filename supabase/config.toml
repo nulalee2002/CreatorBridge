@@ -393,6 +393,27 @@ verify_jwt = true
 enabled = true
 verify_jwt = false
 
+[functions.create-call-token]
+enabled = true
+verify_jwt = true
+
+# Zoom calls this endpoint directly with no Supabase JWT; auth is the Zoom
+# Secret Token signature check (ZOOM_WEBHOOK_SECRET) inside the function.
+# verify_jwt MUST stay false or every recording webhook 401s.
+[functions.zoom-webhook]
+enabled = true
+verify_jwt = false
+
+[functions.summarize-call]
+enabled = true
+verify_jwt = true
+
+# Called daily by pg_cron with the shared x-cleanup-token header, like
+# cleanup-support-screenshots.
+[functions.cleanup-call-recordings]
+enabled = true
+verify_jwt = false
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
