@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { AlertCircle, Clock, Loader2, Mic, MicOff, PhoneOff, Video as VideoIcon, VideoOff } from 'lucide-react';
 
 // Embedded Zoom Video SDK call room. The SDK is imported dynamically so the
-// main bundle stays lean. Recording and transcription are enabled server side
-// in the session JWT; nothing here can turn them off. Renders full screen on
+// main bundle stays lean. The server JWT permits cloud recording, then the
+// creator host must start it before either party's microphone or camera is
+// enabled. Renders full screen on
 // mobile and as a large panel on desktop (works in desktop Chrome, iOS
 // Safari, and Android Chrome via the web SDK).
 
@@ -27,22 +28,23 @@ export function CallRoom({ session, onLeft }) {
   const [remaining, setRemaining] = useState(null);
   const leaveRef = useRef(false);
 
-  // Hard 60 minute cap: countdown from the scheduled start (or now if joined
-  // late), warn in the last five minutes, leave at zero.
+  // Hard cap: every participant receives the same server-recorded start time.
+  // The creator ends the Zoom session for everyone when the deadline lands.
   useEffect(() => {
-    const startMs = Math.max(new Date(session.scheduledAt).getTime(), Date.now() - 1000);
+    const startMs = new Date(session.startedAt || session.scheduledAt).getTime();
     const endMs = startMs + Number(session.durationMinutes || 60) * 60_000;
-    const tick = setInterval(() => {
-      const secondsLeft = Math.round((endMs - Date.now()) / 1000);
+    const updateCountdown = () => {
+      const secondsLeft = Math.ceil((endMs - Date.now()) / 1000);
       setRemaining(secondsLeft);
       if (secondsLeft <= 0) {
-        clearInterval(tick);
-        leaveCall();
+        leaveCall(true);
       }
-    }, 1000);
+    };
+    updateCountdown();
+    const tick = setInterval(updateCountdown, 1000);
     return () => clearInterval(tick);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session.scheduledAt, session.durationMinutes]);
+  }, [session.startedAt, session.scheduledAt, session.durationMinutes]);
 
   useEffect(() => {
     let cancelled = false;
@@ -78,6 +80,54 @@ export function CallRoom({ session, onLeft }) {
         await client.init('en-US', 'Global', { patchJsMedia: true });
         await client.join(session.sessionName, session.token, session.displayName);
         if (cancelled) return;
+        setPhase('securing-recording');
+
+        const recording = client.getRecordingClient();
+        if (recording.getCloudRecordingStatus() !== 'Recording') {
+          await new Promise((resolve, reject) => {
+            let settled = false;
+            const finish = (callback, value) => {
+              if (settled) return;
+              settled = true;
+              clearTimeout(timeout);
+              client.off('recording-change', onRecordingChange);
+              callback(value);
+            };
+            const onRecordingChange = ({ state }) => {
+              if (state === 'Recording') finish(resolve);
+              if (state === 'Stopped') finish(reject, new Error('Required recording stopped before the call began'));
+            };
+            const timeout = setTimeout(
+              () => finish(reject, new Error('Required recording did not start in time')),
+              30_000,
+            );
+            client.on('recording-change', onRecordingChange);
+
+            if (session.role === 'creator') {
+              if (!recording.canStartRecording()) {
+                finish(reject, new Error('Cloud recording is not enabled for this Zoom session'));
+                return;
+              }
+              recording.startCloudRecording()
+                .then(result => {
+                  if (result instanceof Error) finish(reject, result);
+                  else if (recording.getCloudRecordingStatus() === 'Recording') finish(resolve);
+                })
+                .catch(recordingError => finish(reject, recordingError));
+            }
+          });
+        }
+        if (cancelled) return;
+        let recordingFailed = false;
+        client.on('recording-change', ({ state }) => {
+          if (recordingFailed || leaveRef.current) return;
+          if (state === 'Paused' || state === 'Stopped') {
+            recordingFailed = true;
+            setError('The required audio recording stopped, so the call was closed. No unrecorded conversation can continue here.');
+            setPhase('error');
+            void cleanupClient(session.role === 'creator');
+          }
+        });
         const stream = client.getMediaStream();
 
         try { await stream.startAudio(); } catch { setMicOn(false); }
@@ -101,7 +151,7 @@ export function CallRoom({ session, onLeft }) {
           }
         });
         client.on('connection-change', (payload) => {
-          if (payload?.state === 'Closed' && !leaveRef.current) {
+          if (payload?.state === 'Closed' && !leaveRef.current && clientRef.current === client) {
             finishLeave();
           }
         });
@@ -113,7 +163,8 @@ export function CallRoom({ session, onLeft }) {
         setPhase('live');
       } catch (connectError) {
         console.error('CreatorBridge call: join failed', connectError);
-        setError('The call could not connect. Check your camera and microphone permissions and try again.');
+        await cleanupClient(false);
+        setError('The recorded call could not start. No microphone or camera was enabled. Check permissions and try again.');
         setPhase('error');
       }
     }
@@ -121,35 +172,38 @@ export function CallRoom({ session, onLeft }) {
     connect();
     return () => {
       cancelled = true;
-      cleanupClient();
+      void cleanupClient(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.token, session.sessionName]);
 
-  function cleanupClient() {
+  async function cleanupClient(endSession) {
     const client = clientRef.current;
     const ZoomVideo = zoomRef.current;
+    clientRef.current = null;
+    zoomRef.current = null;
     attachedRef.current.forEach(element => element.remove());
     attachedRef.current.clear();
     if (client) {
-      client.leave().catch(() => {});
-      clientRef.current = null;
+      try {
+        if (endSession && session.role === 'creator') await client.leave(true);
+        else await client.leave();
+      } catch { /* already disconnected */ }
     }
     if (ZoomVideo) {
-      try { ZoomVideo.destroyClient(); } catch { /* already destroyed */ }
-      zoomRef.current = null;
+      try { await ZoomVideo.destroyClient(); } catch { /* already destroyed */ }
     }
   }
 
-  function finishLeave() {
+  async function finishLeave(endSession = false) {
     if (leaveRef.current) return;
     leaveRef.current = true;
-    cleanupClient();
+    await cleanupClient(endSession);
     onLeft?.();
   }
 
-  async function leaveCall() {
-    finishLeave();
+  async function leaveCall(endSession = false) {
+    await finishLeave(endSession);
   }
 
   async function toggleMic() {
@@ -181,7 +235,9 @@ export function CallRoom({ session, onLeft }) {
       <div className="flex items-center justify-between gap-3 border-b border-white/[0.07] px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="flex h-2 w-2 rounded-full bg-red-400 animate-pulse" aria-hidden="true" />
-          <p className="text-xs font-bold text-white">CreatorBridge call, audio recorded</p>
+          <p className="text-xs font-bold text-white">
+            {phase === 'live' ? 'CreatorBridge call, audio recording on' : 'CreatorBridge call, recording required'}
+          </p>
         </div>
         <div className="flex items-center gap-3">
           {remaining !== null && (
@@ -205,11 +261,17 @@ export function CallRoom({ session, onLeft }) {
             <p className="text-xs text-charcoal-300">Connecting your call...</p>
           </div>
         )}
+        {phase === 'securing-recording' && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
+            <Loader2 size={26} className="animate-spin text-gold-400" />
+            <p className="text-xs text-charcoal-300">Starting the required audio recording...</p>
+          </div>
+        )}
         {phase === 'error' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
             <AlertCircle size={26} className="text-red-300" />
             <p className="max-w-sm text-xs leading-5 text-charcoal-200">{error}</p>
-            <button type="button" onClick={leaveCall} className="btn-ghost">Back to the project</button>
+            <button type="button" onClick={() => leaveCall(false)} className="btn-ghost">Back to the project</button>
           </div>
         )}
         <div
@@ -243,7 +305,7 @@ export function CallRoom({ session, onLeft }) {
         </button>
         <button
           type="button"
-          onClick={leaveCall}
+          onClick={() => leaveCall(false)}
           className="flex h-11 items-center gap-2 rounded-full bg-red-500/85 px-5 text-xs font-bold text-white transition hover:bg-red-500"
         >
           <PhoneOff size={15} /> Leave

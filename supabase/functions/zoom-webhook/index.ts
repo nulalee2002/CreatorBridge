@@ -79,6 +79,21 @@ Deno.serve(async (req) => {
 
   const rawBody = await req.text();
 
+  // Zoom includes these headers on normal events and URL-validation requests.
+  // Verify before returning a challenge response so this endpoint cannot be
+  // used as a chosen-message HMAC oracle for forging later webhook events.
+  const timestamp = req.headers.get('x-zm-request-timestamp') || '';
+  const signatureHeader = req.headers.get('x-zm-signature') || '';
+  if (!timestamp || !signatureHeader) return json({ error: 'missing signature' }, 401);
+  const ageMs = Math.abs(Date.now() - Number(timestamp) * 1000);
+  if (!Number.isFinite(ageMs) || ageMs > 5 * 60_000) {
+    return json({ error: 'stale webhook' }, 401);
+  }
+  const expected = `v0=${await hmacHex(webhookSecret, `v0:${timestamp}:${rawBody}`)}`;
+  if (!safeEqual(signatureHeader, expected)) {
+    return json({ error: 'signature mismatch' }, 401);
+  }
+
   let event: Record<string, any>;
   try {
     event = JSON.parse(rawBody);
@@ -96,19 +111,6 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Signature verification for every other event.
-  const timestamp = req.headers.get('x-zm-request-timestamp') || '';
-  const signatureHeader = req.headers.get('x-zm-signature') || '';
-  if (!timestamp || !signatureHeader) return json({ error: 'missing signature' }, 401);
-  const ageMs = Math.abs(Date.now() - Number(timestamp) * 1000);
-  if (!Number.isFinite(ageMs) || ageMs > 5 * 60_000) {
-    return json({ error: 'stale webhook' }, 401);
-  }
-  const expected = `v0=${await hmacHex(webhookSecret, `v0:${timestamp}:${rawBody}`)}`;
-  if (!safeEqual(signatureHeader, expected)) {
-    return json({ error: 'signature mismatch' }, 401);
-  }
-
   const admin = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -117,7 +119,7 @@ Deno.serve(async (req) => {
 
   try {
     const object = event?.payload?.object || {};
-    const sessionName = String(object.session_name || object.topic || '');
+    const sessionName = String(object.session_name || '');
 
     if (event.event === 'session.ended') {
       if (sessionName) {
@@ -130,7 +132,9 @@ Deno.serve(async (req) => {
       return json({ received: true });
     }
 
-    if (event.event !== 'session.recording_completed') {
+    const isRecordingEvent = event.event === 'session.recording_completed';
+    const isTranscriptEvent = event.event === 'session.recording_transcript_completed';
+    if (!isRecordingEvent && !isTranscriptEvent) {
       return json({ received: true, ignored: event.event });
     }
 
@@ -153,19 +157,29 @@ Deno.serve(async (req) => {
     // Audio only, by policy: only the M4A audio track is ever stored. Any MP4
     // video Zoom produced is skipped here and destroyed with the Zoom-cloud
     // copy below, so no video track is saved anywhere.
-    const audioFile = files.find((f) => String(f.file_type).toUpperCase() === 'M4A');
+    const audioFile = files.find((f) =>
+      String(f.file_type).toUpperCase() === 'M4A'
+      || String(f.file_extension || '').toUpperCase() === 'M4A'
+      || String(f.recording_type || '').toLowerCase() === 'audio_only');
     const transcriptFile = files.find((f) =>
       String(f.file_type).toUpperCase() === 'TRANSCRIPT'
-      || String(f.file_extension || '').toUpperCase() === 'VTT');
+      || String(f.file_type).toUpperCase() === 'VTT'
+      || String(f.file_extension || '').toUpperCase() === 'VTT'
+      || String(f.recording_type || '').toLowerCase() === 'audio_transcript');
 
     let recordingRef = call.recording_ref;
     let transcriptRef = call.transcript_ref;
 
-    if (!audioFile && files.some((f) => String(f.file_type).toUpperCase() === 'MP4')) {
+    if (isRecordingEvent && !audioFile) {
       console.error(
-        'zoom-webhook: Zoom sent video but no M4A audio file. Enable audio-only files in the Zoom account recording settings. No recording stored for call',
+        'zoom-webhook: recording event had no M4A audio. Enable audio-only files in Zoom recording settings. The Zoom copy was preserved for recovery.',
         call.id,
       );
+      return json({ error: 'audio recording file missing' }, 422);
+    }
+    if (isTranscriptEvent && !transcriptFile) {
+      console.error('zoom-webhook: transcript event had no VTT file. The Zoom copy was preserved for recovery.', call.id);
+      return json({ error: 'transcript file missing' }, 422);
     }
 
     if (audioFile?.download_url && !recordingRef) {
@@ -209,28 +223,30 @@ Deno.serve(async (req) => {
         recording_ref: recordingRef,
         transcript_ref: transcriptRef,
         recording_expires_at: recordingExpiresAt,
-        status: 'completed',
+        status: ['cancelled', 'no_show'].includes(call.status) ? call.status : 'completed',
         ended_at: call.ended_at || new Date().toISOString(),
       })
       .eq('id', call.id);
     if (updateError) throw new Error(`Call update failed: ${updateError.message}`);
 
-    // Delete the Zoom-cloud copy only after our copies are stored.
+    // Delete the Zoom-cloud copy only after BOTH promised private artifacts
+    // are stored. Recording and transcript complete in separate webhook events.
     const sdkKey = Deno.env.get('ZOOM_VIDEO_SDK_KEY') || '';
     const sdkSecret = Deno.env.get('ZOOM_VIDEO_SDK_SECRET') || '';
-    const sessionId = String(object.id || object.session_id || '');
-    if (sdkKey && sdkSecret && sessionId && (recordingRef || transcriptRef)) {
-      try {
-        const apiJwt = await videoSdkApiJwt(sdkKey, sdkSecret);
-        const deleteResponse = await fetch(
-          `https://api.zoom.us/v2/videosdk/sessions/${encodeURIComponent(sessionId)}/recordings?action=delete`,
-          { method: 'DELETE', headers: { Authorization: `Bearer ${apiJwt}` } },
-        );
-        if (!deleteResponse.ok && deleteResponse.status !== 404) {
-          console.error('zoom-webhook: Zoom cloud delete failed', deleteResponse.status, await deleteResponse.text());
-        }
-      } catch (deleteError) {
-        console.error('zoom-webhook: Zoom cloud delete errored', deleteError);
+    const sessionId = String(object.session_id || '');
+    if (recordingRef && transcriptRef) {
+      if (!sdkKey || !sdkSecret || !sessionId) {
+        throw new Error('Zoom cloud deletion is not configured for this completed recording');
+      }
+      const apiJwt = await videoSdkApiJwt(sdkKey, sdkSecret);
+      const deleteResponse = await fetch(
+        `https://api.zoom.us/v2/videosdk/sessions/${encodeURIComponent(sessionId)}/recordings`,
+        { method: 'DELETE', headers: { Authorization: `Bearer ${apiJwt}` } },
+      );
+      if (!deleteResponse.ok && deleteResponse.status !== 404) {
+        const deleteBody = await deleteResponse.text();
+        console.error('zoom-webhook: Zoom cloud delete failed', deleteResponse.status, deleteBody);
+        throw new Error(`Zoom cloud deletion failed with status ${deleteResponse.status}`);
       }
     }
 
@@ -250,10 +266,13 @@ Deno.serve(async (req) => {
           },
         );
         if (!summaryResponse.ok) {
-          console.error('zoom-webhook: summarize-call failed', summaryResponse.status, await summaryResponse.text());
+          const summaryBody = await summaryResponse.text();
+          console.error('zoom-webhook: summarize-call failed', summaryResponse.status, summaryBody);
+          throw new Error(`Summary generation failed with status ${summaryResponse.status}`);
         }
       } catch (summaryError) {
         console.error('zoom-webhook: summarize-call errored', summaryError);
+        throw summaryError;
       }
     }
 

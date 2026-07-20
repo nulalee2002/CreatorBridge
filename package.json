@@ -49,7 +49,8 @@
     "generate:sitemap": "node scripts/generate-sitemap.js",
     "verify:booking-e2e": "node --env-file=.env scripts/verify-booking-e2e.mjs",
     "test:contracts": "node --test tests/contractTerms.test.js",
-    "verify:contracts": "node scripts/verify-contract-esign-rebook.mjs"
+    "verify:contracts": "node scripts/verify-contract-esign-rebook.mjs",
+    "verify:video-calls": "node scripts/verify-video-calls.mjs"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^6.1.0",
