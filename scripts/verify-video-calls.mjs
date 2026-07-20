@@ -6,6 +6,7 @@ const root = process.cwd();
 const read = relativePath => fs.readFileSync(path.join(root, relativePath), 'utf8');
 
 const callRoom = read('src/components/calls/CallRoom.jsx');
+const callsPanel = read('src/components/calls/ProjectCallsPanel.jsx');
 const tokenFunction = read('supabase/functions/create-call-token/index.ts');
 const webhook = read('supabase/functions/zoom-webhook/index.ts');
 const migrations = fs.readdirSync(path.join(root, 'supabase/migrations'))
@@ -20,6 +21,7 @@ assert.match(callRoom, /state === 'Paused'/, 'The call must fail closed if requi
 assert.match(callRoom, /clientRef\.current === client/, 'Intentional cleanup must not masquerade as a remote disconnect');
 assert.match(callRoom, /session\.startedAt/, 'Every participant must use the shared server start time');
 assert.match(callRoom, /leave\([^)]*true/, 'The creator host must end the Zoom session at the hard cap');
+assert.match(callsPanel, /setNow\(Date\.now\(\)\)/, 'Join and no-show windows must update while the page stays open');
 
 assert.match(tokenFunction, /startedAt:/, 'The token response must include the shared call start time');
 

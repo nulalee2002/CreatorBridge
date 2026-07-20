@@ -43,6 +43,7 @@ export function ProjectCallsPanel({ project, user, isClient }) {
   const [requestBusy, setRequestBusy] = useState(false);
   const [requestSent, setRequestSent] = useState(false);
   const [error, setError] = useState('');
+  const [now, setNow] = useState(() => Date.now());
 
   const unlocked = UNLOCKED_STATUSES.has(project?.status) && contract?.status === 'countersigned';
 
@@ -78,12 +79,15 @@ export function ProjectCallsPanel({ project, user, isClient }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project?.id, project?.status, user?.id]);
 
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 15_000);
+    return () => clearInterval(timer);
+  }, []);
+
   if (loading || !unlocked) return null;
 
   const usedCalls = calls.filter(call => ['scheduled', 'in_progress', 'completed'].includes(call.status)).length;
   const atCap = usedCalls >= INCLUDED_CALLS;
-  const now = Date.now();
-
   function updateCall(updated) {
     if (!updated?.id) { loadCalls(); return; }
     setCalls(previous => {
