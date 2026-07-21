@@ -35,7 +35,13 @@ assert.ok(signatureCheck >= 0 && signatureCheck < validationBranch, 'Webhook sig
 assert.match(webhook, /session\.recording_transcript_completed/, 'The transcript completion event must be processed');
 assert.doesNotMatch(webhook, /event\.event === 'recording\.completed'/, 'Meeting webhooks must not enter the Video SDK pipeline');
 assert.doesNotMatch(webhook, /recordings\?action=delete/, 'Video SDK recording deletion must use the documented endpoint');
-assert.match(webhook, /recordingRef\s*&&\s*transcriptRef/, 'Zoom copies must remain until both private files exist');
+assert.match(webhook, /persistedCall\.recording_ref\s*&&\s*persistedCall\.transcript_ref/, 'Zoom copies must remain until both private files exist');
+assert.match(webhook, /persistedCall/, 'Webhook processing must refresh artifact references after concurrent callbacks');
+assert.doesNotMatch(
+  webhook,
+  /\.update\(\{[\s\S]{0,300}recording_ref:\s*recordingRef,[\s\S]{0,100}transcript_ref:\s*transcriptRef/,
+  'Concurrent audio and transcript callbacks must not overwrite each other with stale null references',
+);
 assert.match(webhook, /ZOOM_VIDEO_API_KEY/, 'Zoom REST calls must use the API key, not the SDK key');
 assert.match(webhook, /ZOOM_VIDEO_API_SECRET/, 'Zoom REST calls must use the API secret, not the SDK secret');
 assert.doesNotMatch(
