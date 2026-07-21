@@ -218,24 +218,31 @@ Deno.serve(async (req) => {
       ? new Date(new Date(txn.final_released_at).getTime() + 120 * 86400000).toISOString()
       : null;
 
-    const { error: updateError } = await admin
+    // Audio and transcript callbacks may run concurrently. Only write the
+    // artifact produced by this request so a stale null from one callback can
+    // never erase the reference stored by the other.
+    const updateValues: Record<string, unknown> = {
+      recording_expires_at: recordingExpiresAt,
+      status: ['cancelled', 'no_show'].includes(call.status) ? call.status : 'completed',
+      ended_at: call.ended_at || new Date().toISOString(),
+    };
+    if (recordingRef !== call.recording_ref) updateValues.recording_ref = recordingRef;
+    if (transcriptRef !== call.transcript_ref) updateValues.transcript_ref = transcriptRef;
+
+    const { data: persistedCall, error: updateError } = await admin
       .from('project_calls')
-      .update({
-        recording_ref: recordingRef,
-        transcript_ref: transcriptRef,
-        recording_expires_at: recordingExpiresAt,
-        status: ['cancelled', 'no_show'].includes(call.status) ? call.status : 'completed',
-        ended_at: call.ended_at || new Date().toISOString(),
-      })
-      .eq('id', call.id);
-    if (updateError) throw new Error(`Call update failed: ${updateError.message}`);
+      .update(updateValues)
+      .eq('id', call.id)
+      .select('recording_ref, transcript_ref')
+      .single();
+    if (updateError || !persistedCall) throw new Error(`Call update failed: ${updateError?.message || 'no row returned'}`);
 
     // Delete the Zoom-cloud copy only after BOTH promised private artifacts
     // are stored. Recording and transcript complete in separate webhook events.
     const apiKey = Deno.env.get('ZOOM_VIDEO_API_KEY') || Deno.env.get('ZOOM_API_KEY') || '';
     const apiSecret = Deno.env.get('ZOOM_VIDEO_API_SECRET') || Deno.env.get('ZOOM_API_SECRET') || '';
     const sessionId = String(object.session_id || '');
-    if (recordingRef && transcriptRef) {
+    if (persistedCall.recording_ref && persistedCall.transcript_ref) {
       if (!apiKey || !apiSecret || !sessionId) {
         throw new Error('Zoom cloud deletion is not configured for this completed recording');
       }
@@ -253,7 +260,7 @@ Deno.serve(async (req) => {
 
     // Trigger the AI draft summary. Failure here must not fail the webhook;
     // the transcript is stored and the summary can be retried.
-    if (transcriptRef) {
+    if (persistedCall.transcript_ref) {
       try {
         const summaryResponse = await fetch(
           `${Deno.env.get('SUPABASE_URL')}/functions/v1/summarize-call`,
@@ -276,7 +283,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    return json({ received: true, recording: !!recordingRef, transcript: !!transcriptRef });
+    return json({
+      received: true,
+      recording: !!persistedCall.recording_ref,
+      transcript: !!persistedCall.transcript_ref,
+    });
   } catch (error) {
     console.error('zoom-webhook error:', error);
     return json({ error: error instanceof Error ? error.message : 'webhook processing failed' }, 500);
