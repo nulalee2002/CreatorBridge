@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, CalendarDays, Check } from 'lucide-react';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
+import { toLocalDateKey } from '../utils/dateKeys.js';
 
 const VALID_AVAILABILITY_STATUSES = new Set(['available', 'booked', 'tentative']);
 const VALID_AVAILABILITY_SOURCES = new Set(['manual', 'google_busy', 'booking', 'system']);
@@ -130,10 +131,6 @@ export async function mergeAvailability(creatorId, updates, options = {}) {
 }
 
 // ── Date helpers ──────────────────────────────────────────────
-function toKey(date) {
-  return date.toISOString().split('T')[0]; // 'YYYY-MM-DD'
-}
-
 function daysInMonth(year, month) {
   return new Date(year, month + 1, 0).getDate();
 }
@@ -168,7 +165,7 @@ export function AvailabilityMini({ creatorId, dark, onSelectDate, selectedDate }
 
   const numDays  = daysInMonth(viewYear, viewMonth);
   const startDay = firstDayOfMonth(viewYear, viewMonth);
-  const todayKey = toKey(today);
+  const todayKey = toLocalDateKey(today);
 
   function prevMonth() {
     if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
@@ -214,7 +211,7 @@ export function AvailabilityMini({ creatorId, dark, onSelectDate, selectedDate }
         {Array.from({ length: numDays }).map((_, i) => {
           const day    = i + 1;
           const date   = new Date(viewYear, viewMonth, day);
-          const key    = toKey(date);
+          const key    = toLocalDateKey(date);
           const status = availability[key];
           const isPast = key < todayKey;
           const isSelected = selectedDate === key;
@@ -304,7 +301,7 @@ export function AvailabilityEditor({ creatorId, dark, onSaved }) {
 
   const numDays  = daysInMonth(viewYear, viewMonth);
   const startDay = firstDayOfMonth(viewYear, viewMonth);
-  const todayKey = toKey(today);
+  const todayKey = toLocalDateKey(today);
 
   function prevMonth() {
     if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
@@ -345,7 +342,7 @@ export function AvailabilityEditor({ creatorId, dark, onSaved }) {
   function clearMonth() {
     const updated = { ...availability };
     for (let d = 1; d <= numDays; d++) {
-      const key = toKey(new Date(viewYear, viewMonth, d));
+      const key = toLocalDateKey(new Date(viewYear, viewMonth, d));
       delete updated[key];
     }
     setAvailability(updated);
@@ -355,7 +352,7 @@ export function AvailabilityEditor({ creatorId, dark, onSaved }) {
   const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
 
   const openDaysThisMonth = Array.from({ length: numDays }).filter((_, i) => {
-    const key = toKey(new Date(viewYear, viewMonth, i + 1));
+    const key = toLocalDateKey(new Date(viewYear, viewMonth, i + 1));
     return availability[key] === 'available' && key >= todayKey;
   }).length;
 
@@ -426,10 +423,10 @@ export function AvailabilityEditor({ creatorId, dark, onSaved }) {
         {Array.from({ length: startDay }).map((_, i) => <div key={`e${i}`} />)}
         {Array.from({ length: numDays }).map((_, i) => {
           const day    = i + 1;
-          const key    = toKey(new Date(viewYear, viewMonth, day));
+          const key    = toLocalDateKey(new Date(viewYear, viewMonth, day));
           const status = availability[key];
           const isPast = key < todayKey;
-          const isToday = key === toKey(today);
+          const isToday = key === toLocalDateKey(today);
           const styles = status ? STATUS_STYLES[status] : null;
 
           return (
