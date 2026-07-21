@@ -17,7 +17,7 @@ function slotLabel(slot) {
   return `${displayHour}:${String(minutes).padStart(2, '0')} ${period}`;
 }
 
-export function ScheduleCallModal({ project, contract, isClient, rescheduleCall, onClose, onScheduled }) {
+export function ScheduleCallModal({ project, contract, rescheduleCall, onClose, onScheduled }) {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [busy, setBusy] = useState(false);
@@ -37,13 +37,15 @@ export function ScheduleCallModal({ project, contract, isClient, rescheduleCall,
     try {
       const { data, error: rpcError } = rescheduleCall
         ? await supabase.rpc('reschedule_project_call', {
-            p_call_id: rescheduleCall.id,
-            p_scheduled_at: scheduledAt.toISOString(),
-          })
+          p_call_id: rescheduleCall.id,
+          p_scheduled_at: scheduledAt.toISOString(),
+          p_availability_date: selectedDate,
+        })
         : await supabase.rpc('schedule_project_call', {
-            p_project_id: project.id,
-            p_scheduled_at: scheduledAt.toISOString(),
-          });
+          p_project_id: project.id,
+          p_scheduled_at: scheduledAt.toISOString(),
+          p_availability_date: selectedDate,
+        });
       if (rpcError) throw rpcError;
       onScheduled?.(data);
       onClose();
@@ -74,30 +76,17 @@ export function ScheduleCallModal({ project, contract, isClient, rescheduleCall,
           </button>
         </div>
 
-        {isClient ? (
+        <div>
+          <p className="mb-2 flex items-center gap-1.5 text-xs font-bold text-white">
+            <CalendarDays size={13} className="text-gold-400" /> Pick an available day
+          </p>
           <AvailabilityMini
             creatorId={contract?.creator_id}
             dark
             selectedDate={selectedDate}
             onSelectDate={setSelectedDate}
           />
-        ) : (
-          <div className="rounded-2xl border border-white/[0.07] bg-charcoal-900/72 p-4">
-            <p className="mb-2 flex items-center gap-1.5 text-xs font-bold text-white">
-              <CalendarDays size={13} className="text-gold-400" /> Pick a day
-            </p>
-            <input
-              type="date"
-              min={new Date().toISOString().split('T')[0]}
-              value={selectedDate}
-              onChange={event => setSelectedDate(event.target.value)}
-              className="w-full rounded-lg border border-white/[0.09] bg-charcoal-900 px-3 py-2 text-xs text-white focus:border-gold-500/50 focus:outline-none"
-            />
-            <p className="mt-2 text-[10px] leading-4 text-charcoal-300">
-              Clients book from your published availability. As the creator you can propose any future time.
-            </p>
-          </div>
-        )}
+        </div>
 
         <div className="mt-4">
           <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-charcoal-300">Time</p>

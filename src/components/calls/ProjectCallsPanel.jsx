@@ -43,6 +43,7 @@ export function ProjectCallsPanel({ project, user, isClient }) {
   const [requestBusy, setRequestBusy] = useState(false);
   const [requestSent, setRequestSent] = useState(false);
   const [error, setError] = useState('');
+  const [now, setNow] = useState(() => Date.now());
 
   const unlocked = UNLOCKED_STATUSES.has(project?.status) && contract?.status === 'countersigned';
 
@@ -78,12 +79,15 @@ export function ProjectCallsPanel({ project, user, isClient }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project?.id, project?.status, user?.id]);
 
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 15_000);
+    return () => clearInterval(timer);
+  }, []);
+
   if (loading || !unlocked) return null;
 
   const usedCalls = calls.filter(call => ['scheduled', 'in_progress', 'completed'].includes(call.status)).length;
   const atCap = usedCalls >= INCLUDED_CALLS;
-  const now = Date.now();
-
   function updateCall(updated) {
     if (!updated?.id) { loadCalls(); return; }
     setCalls(previous => {
@@ -168,7 +172,7 @@ export function ProjectCallsPanel({ project, user, isClient }) {
             && now <= scheduledMs + Number(call.duration_minutes || 60) * 60_000 + 30 * 60_000;
           const canMarkNoShow = ['scheduled', 'in_progress'].includes(call.status)
             && now > scheduledMs + 10 * 60_000;
-          const canReschedule = call.status === 'scheduled' && now < scheduledMs;
+          const canReschedule = !isClient && call.status === 'scheduled' && now < scheduledMs;
           return (
             <div key={call.id} className="rounded-lg border border-white/[0.06] bg-charcoal-950/50 p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -251,7 +255,6 @@ export function ProjectCallsPanel({ project, user, isClient }) {
         <ScheduleCallModal
           project={project}
           contract={contract}
-          isClient={isClient}
           rescheduleCall={rescheduleCall}
           onClose={() => { setShowSchedule(false); setRescheduleCall(null); }}
           onScheduled={updateCall}

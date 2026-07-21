@@ -146,8 +146,36 @@ Deno.serve(async (req) => {
       return json({ waiting: true, selfConsented: true, bothConsented: false });
     }
 
-    // Both parties consented: mark the call live and sign the session JWT with
-    // cloud recording and transcription enabled.
+    // Both parties consented: atomically open the call and establish one
+    // shared start time for every participant's 60 minute deadline.
+    const startedAtCandidate = new Date().toISOString();
+    const { data: liveCall, error: liveCallError } = await admin
+      .from('project_calls')
+      .update({ status: 'in_progress' })
+      .eq('id', call.id)
+      .in('status', ['scheduled', 'in_progress'])
+      .select('id, started_at')
+      .maybeSingle();
+    if (liveCallError) return json({ error: 'The call could not be opened' }, 500);
+    if (!liveCall) return json({ error: 'This call is no longer open to join' }, 409);
+
+    if (!liveCall.started_at) {
+      const { error: startError } = await admin
+        .from('project_calls')
+        .update({ started_at: startedAtCandidate })
+        .eq('id', call.id)
+        .is('started_at', null);
+      if (startError) return json({ error: 'The call start time could not be recorded' }, 500);
+    }
+    const { data: startedCall, error: startedCallError } = await admin
+      .from('project_calls')
+      .select('started_at')
+      .eq('id', call.id)
+      .single();
+    if (startedCallError || !startedCall?.started_at) {
+      return json({ error: 'The call start time could not be verified' }, 500);
+    }
+
     const { data: profile } = await admin
       .from('profiles')
       .select('full_name')
@@ -171,15 +199,6 @@ Deno.serve(async (req) => {
       cloud_recording_transcript_option: 1,
     });
 
-    await admin
-      .from('project_calls')
-      .update({
-        status: 'in_progress',
-        started_at: call.started_at || new Date().toISOString(),
-      })
-      .eq('id', call.id)
-      .in('status', ['scheduled', 'in_progress']);
-
     return json({
       token: jwt,
       sessionName: call.zoom_session_name,
@@ -187,6 +206,7 @@ Deno.serve(async (req) => {
       role,
       durationMinutes: Number(call.duration_minutes || 60),
       scheduledAt: call.scheduled_at,
+      startedAt: startedCall.started_at,
       bothConsented: true,
       selfConsented: true,
     });
