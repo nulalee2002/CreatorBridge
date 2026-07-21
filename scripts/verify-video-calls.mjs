@@ -9,6 +9,9 @@ const callRoom = read('src/components/calls/CallRoom.jsx');
 const callsPanel = read('src/components/calls/ProjectCallsPanel.jsx');
 const tokenFunction = read('supabase/functions/create-call-token/index.ts');
 const webhook = read('supabase/functions/zoom-webhook/index.ts');
+const recordingSync = read('supabase/functions/sync-call-recordings/index.ts');
+const summarizer = read('supabase/functions/summarize-call/index.ts');
+const supabaseConfig = read('supabase/config.toml');
 const hardeningMigration = read('supabase/migrations/20260720234626_harden_video_call_pipeline.sql');
 const migrations = fs.readdirSync(path.join(root, 'supabase/migrations'))
   .filter(file => file.endsWith('.sql'))
@@ -40,6 +43,16 @@ assert.doesNotMatch(
   /videoSdkApiJwt\(sdkKey, sdkSecret\)/,
   'Zoom REST calls must never be signed with the SDK credential pair',
 );
+assert.match(recordingSync, /type=past/, 'Recovery must resolve completed Video SDK sessions');
+assert.match(recordingSync, /file_type[^\n]*M4A|file_extension[^\n]*M4A/, 'Recovery must store M4A audio only');
+assert.match(recordingSync, /file_type[^\n]*TRANSCRIPT|file_extension[^\n]*VTT/, 'Recovery must store the VTT transcript');
+assert.match(recordingSync, /recordingRef\s*&&\s*transcriptRef/, 'Recovery must retain Zoom files until both private artifacts exist');
+assert.match(recordingSync, /ZOOM_VIDEO_API_KEY/, 'Recovery must use the distinct Zoom API credentials');
+assert.match(recordingSync, /summarize-call/, 'Recovery must retry summary generation');
+assert.match(summarizer, /extractiveFallbackSummary/, 'Summary generation must remain available during AI provider outages');
+assert.match(summarizer, /Nothing discussed\./, 'The extractive fallback must not invent missing facts');
+assert.match(supabaseConfig, /\[functions\.sync-call-recordings\][\s\S]*?verify_jwt = false/, 'The cron recovery endpoint must use its cleanup token instead of JWT auth');
+assert.match(migrations, /sync-call-recordings[^\n]*[\s\S]*?\*\/5 \* \* \* \*/, 'Missing Zoom artifacts must be retried every five minutes');
 
 assert.match(migrations, /p_availability_date date/, 'Scheduling must bind the selected availability date');
 assert.match(migrations, /pg_advisory_xact_lock/, 'The three-call cap must be concurrency safe');
