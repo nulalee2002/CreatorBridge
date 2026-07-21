@@ -83,8 +83,10 @@ Storage: private buckets call-recordings and call-transcripts. Access only via
 create-storage-signed-url (extend allowed buckets, party-scoped).
 
 ## 5. Zoom integration
-- A Video SDK app (Zoom App Marketplace) provides SDK Key and Secret; store the Secret as an
-  edge-function env secret only, never in the client bundle.
+- A Video SDK app (Zoom App Marketplace) provides two distinct credential pairs. Store all
+  four values as edge-function secrets only, never in the client bundle: SDK Key and SDK
+  Secret sign session-join JWTs; API Key and API Secret authorize Video SDK REST operations
+  such as recording lookup and deletion. They are not interchangeable.
 - Edge function create-call-token: authenticated; verifies the caller is the creator or
   client on that project_call; signs the session JWT with the Video SDK secret; sets
   cloud_recording_option and cloud_recording_transcript_option so the session records and

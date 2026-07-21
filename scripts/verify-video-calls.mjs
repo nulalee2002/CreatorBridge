@@ -33,6 +33,13 @@ assert.match(webhook, /session\.recording_transcript_completed/, 'The transcript
 assert.doesNotMatch(webhook, /event\.event === 'recording\.completed'/, 'Meeting webhooks must not enter the Video SDK pipeline');
 assert.doesNotMatch(webhook, /recordings\?action=delete/, 'Video SDK recording deletion must use the documented endpoint');
 assert.match(webhook, /recordingRef\s*&&\s*transcriptRef/, 'Zoom copies must remain until both private files exist');
+assert.match(webhook, /ZOOM_VIDEO_API_KEY/, 'Zoom REST calls must use the API key, not the SDK key');
+assert.match(webhook, /ZOOM_VIDEO_API_SECRET/, 'Zoom REST calls must use the API secret, not the SDK secret');
+assert.doesNotMatch(
+  webhook,
+  /videoSdkApiJwt\(sdkKey, sdkSecret\)/,
+  'Zoom REST calls must never be signed with the SDK credential pair',
+);
 
 assert.match(migrations, /p_availability_date date/, 'Scheduling must bind the selected availability date');
 assert.match(migrations, /pg_advisory_xact_lock/, 'The three-call cap must be concurrency safe');

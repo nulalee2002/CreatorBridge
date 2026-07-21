@@ -1,9 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // Zoom Video SDK webhook. Verified with the Zoom Secret Token (x-zm-signature),
-// like stripe-webhook. On session.recording_completed it copies the recording
-// and VTT transcript into the private CreatorBridge buckets, stamps the
-// retention deadline, deletes the Zoom-cloud copy, and triggers the summary.
+// like stripe-webhook. Recording and transcript completion events copy their
+// respective artifacts into private CreatorBridge buckets. Once both exist,
+// the function deletes the Zoom-cloud copy and triggers the summary.
 
 const encoder = new TextEncoder();
 
@@ -41,14 +41,15 @@ function base64UrlEncode(bytes: Uint8Array) {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-// JWT for the Video SDK REST API (delete cloud recordings).
-async function videoSdkApiJwt(sdkKey: string, sdkSecret: string) {
+// JWT for the Video SDK REST API. Zoom's API credentials are distinct from
+// the SDK credentials used to join sessions.
+async function videoSdkApiJwt(apiKey: string, apiSecret: string) {
   const now = Math.floor(Date.now() / 1000);
   const header = base64UrlEncode(encoder.encode(JSON.stringify({ alg: 'HS256', typ: 'JWT' })));
-  const body = base64UrlEncode(encoder.encode(JSON.stringify({ iss: sdkKey, iat: now - 30, exp: now + 600 })));
+  const body = base64UrlEncode(encoder.encode(JSON.stringify({ iss: apiKey, iat: now - 30, exp: now + 600 })));
   const key = await crypto.subtle.importKey(
     'raw',
-    encoder.encode(sdkSecret),
+    encoder.encode(apiSecret),
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign'],
@@ -231,14 +232,14 @@ Deno.serve(async (req) => {
 
     // Delete the Zoom-cloud copy only after BOTH promised private artifacts
     // are stored. Recording and transcript complete in separate webhook events.
-    const sdkKey = Deno.env.get('ZOOM_VIDEO_SDK_KEY') || '';
-    const sdkSecret = Deno.env.get('ZOOM_VIDEO_SDK_SECRET') || '';
+    const apiKey = Deno.env.get('ZOOM_VIDEO_API_KEY') || Deno.env.get('ZOOM_API_KEY') || '';
+    const apiSecret = Deno.env.get('ZOOM_VIDEO_API_SECRET') || Deno.env.get('ZOOM_API_SECRET') || '';
     const sessionId = String(object.session_id || '');
     if (recordingRef && transcriptRef) {
-      if (!sdkKey || !sdkSecret || !sessionId) {
+      if (!apiKey || !apiSecret || !sessionId) {
         throw new Error('Zoom cloud deletion is not configured for this completed recording');
       }
-      const apiJwt = await videoSdkApiJwt(sdkKey, sdkSecret);
+      const apiJwt = await videoSdkApiJwt(apiKey, apiSecret);
       const deleteResponse = await fetch(
         `https://api.zoom.us/v2/videosdk/sessions/${encodeURIComponent(sessionId)}/recordings`,
         { method: 'DELETE', headers: { Authorization: `Bearer ${apiJwt}` } },
