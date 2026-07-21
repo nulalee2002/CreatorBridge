@@ -38,6 +38,11 @@ ok('client delivery prime-only', sql.includes('only the prime manages client del
 ok('creator responsibility', ui.includes('permissions, backups, copyright, and retention'));
 ok('delivery UI', ui.includes('Submit delivery evidence'));
 ok('project board integration', projectBoard.includes('CollaborationWorkspacePanel') && projectBoard.includes('Add to This Project'));
+ok(
+  'project collaboration query uses schema timestamp',
+  projectBoard.includes('project_context,invited_at')
+    && projectBoard.includes(".order('invited_at', { ascending: false })"),
+);
 
 const failed = checks.filter(([, pass]) => !pass);
 if (failed.length) {
