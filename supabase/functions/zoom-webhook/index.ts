@@ -273,7 +273,6 @@ Deno.serve(async (req) => {
         }
       } catch (summaryError) {
         console.error('zoom-webhook: summarize-call errored', summaryError);
-        throw summaryError;
       }
     }
 

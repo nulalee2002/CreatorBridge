@@ -58,6 +58,40 @@ function stripDashes(text: string) {
   return text.replace(/—|–/g, '-');
 }
 
+// Last-resort draft when the configured model is unavailable. This only
+// selects transcript lines by explicit keywords; it does not infer facts.
+function extractiveFallbackSummary(dialogue: string) {
+  const seen = new Set<string>();
+  const lines = dialogue
+    .split(/\r?\n/)
+    .map((line) => stripDashes(line).replace(/^[-*]\s*/, '').replace(/\s+/g, ' ').trim())
+    .filter((line) => {
+      const key = line.toLowerCase();
+      if (line.length < 3 || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+  const pick = (pattern: RegExp, limit = 5) => lines.filter((line) => pattern.test(line)).slice(0, limit);
+  const scope = pick(/\b(scope|project|deliver|video|caption|content|budget|price|cost)\b/i);
+  const decisions = pick(/\b(agree|agreed|decide|decided|confirm|confirmed|budget|will)\b/i);
+  const actions = pick(/\b(next step|action|review|send|deliver|follow up|provide|prepare)\b/i);
+  const dates = pick(/\b(january|february|march|april|may|june|july|august|september|october|november|december|today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday|deadline|due|\d{1,2}[/-]\d{1,2})\b/i);
+  if (scope.length === 0) scope.push(...lines.slice(0, 5));
+
+  const section = (heading: string, items: string[]) => [
+    heading,
+    ...(items.length > 0 ? items.map((item) => `- ${item}`) : ['- Nothing discussed.']),
+  ].join('\n');
+
+  return [
+    section('Agreed scope', scope),
+    section('Decisions', decisions),
+    section('Action items', actions),
+    section('Dates', dates),
+  ].join('\n\n');
+}
+
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405);
 
@@ -69,7 +103,6 @@ Deno.serve(async (req) => {
     }
 
     const apiKey = Deno.env.get('OPENAI_API_KEY') || '';
-    if (!apiKey) return json({ error: 'AI summarization is not configured' }, 503);
 
     const { callId } = await req.json();
     if (!callId) return json({ error: 'callId is required' }, 400);
@@ -109,35 +142,44 @@ Deno.serve(async (req) => {
       return json({ error: 'Transcript is empty; no summary generated' }, 409);
     }
 
-    const model = Deno.env.get('OPENAI_MODEL') || DEFAULT_MODEL;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 45_000);
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 900,
-        temperature: 0.2,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: `Summarize this call transcript:\n\n${dialogue}` },
-        ],
-      }),
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      console.error('summarize-call OpenAI error:', response.status, await response.text());
-      return json({ error: 'AI service error' }, 502);
+    const configuredModel = Deno.env.get('OPENAI_MODEL') || DEFAULT_MODEL;
+    let model = 'extractive-fallback';
+    let draft = '';
+    if (apiKey) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 45_000);
+      try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: configuredModel,
+            max_tokens: 900,
+            temperature: 0.2,
+            messages: [
+              { role: 'system', content: SYSTEM_PROMPT },
+              { role: 'user', content: `Summarize this call transcript:\n\n${dialogue}` },
+            ],
+          }),
+          signal: controller.signal,
+        });
+        if (response.ok) {
+          const data = await response.json();
+          draft = stripDashes(String(data.choices?.[0]?.message?.content || '').trim());
+          if (draft) model = configuredModel;
+        } else {
+          console.error('summarize-call OpenAI error:', response.status, await response.text());
+        }
+      } catch (providerError) {
+        console.error('summarize-call OpenAI request failed:', providerError);
+      } finally {
+        clearTimeout(timeout);
+      }
     }
-    const data = await response.json();
-    const draft = stripDashes(String(data.choices?.[0]?.message?.content || '').trim());
-    if (!draft) return json({ error: 'empty AI response' }, 502);
+    if (!draft) draft = extractiveFallbackSummary(dialogue);
 
     const { data: summary, error: insertError } = await admin
       .from('call_summaries')
