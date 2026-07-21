@@ -1301,9 +1301,9 @@ function CollaborationWorkspacePanel({ project, dark, user }) {
     setLoading(true);
     const { data } = await supabase
       .from('creator_collaborations')
-      .select('id,status,service_category,scope,amount_cents,deadline,prime_user_id,collaborator_user_id,project_context,created_at')
+      .select('id,status,service_category,scope,amount_cents,deadline,prime_user_id,collaborator_user_id,project_context,invited_at')
       .eq('project_id', project.id)
-      .order('created_at', { ascending: false });
+      .order('invited_at', { ascending: false });
     setCollaborations(data || []);
     setLoading(false);
   }
