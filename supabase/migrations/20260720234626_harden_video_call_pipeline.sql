@@ -203,3 +203,92 @@ end;
 $$;
 revoke all on function public.reschedule_project_call(uuid, timestamptz, date) from public, anon;
 grant execute on function public.reschedule_project_call(uuid, timestamptz, date) to authenticated, service_role;
+
+-- Transition overloads keep the currently deployed frontend functional while
+-- the three-argument callers roll out. They infer one valid availability day
+-- and delegate all authorization and mutation logic to the hardened RPCs.
+create or replace function public.schedule_project_call(
+  p_project_id uuid,
+  p_scheduled_at timestamptz
+)
+returns public.project_calls
+language plpgsql
+security invoker
+set search_path = public, pg_temp
+as $$
+declare
+  v_contract public.contracts%rowtype;
+  v_availability_date date;
+  v_utc_date date := (p_scheduled_at at time zone 'UTC')::date;
+begin
+  select * into v_contract
+  from public.contracts
+  where project_id = p_project_id
+    and status = 'countersigned';
+  if not found then
+    raise exception 'Video calls require a countersigned agreement';
+  end if;
+
+  select availability.date into v_availability_date
+  from public.availability
+  where availability.listing_id = v_contract.creator_id
+    and availability.date in (v_utc_date, v_utc_date - 1)
+    and availability.status = 'available'
+  order by case when availability.date = v_utc_date then 0 else 1 end
+  limit 1;
+  if v_availability_date is null then
+    raise exception 'Pick a day the creator has marked available';
+  end if;
+
+  return public.schedule_project_call(p_project_id, p_scheduled_at, v_availability_date);
+end;
+$$;
+revoke all on function public.schedule_project_call(uuid, timestamptz) from public, anon;
+grant execute on function public.schedule_project_call(uuid, timestamptz) to authenticated, service_role;
+
+create or replace function public.reschedule_project_call(
+  p_call_id uuid,
+  p_scheduled_at timestamptz
+)
+returns public.project_calls
+language plpgsql
+security invoker
+set search_path = public, pg_temp
+as $$
+declare
+  v_call public.project_calls%rowtype;
+  v_contract public.contracts%rowtype;
+  v_availability_date date;
+  v_utc_date date := (p_scheduled_at at time zone 'UTC')::date;
+begin
+  select * into v_call
+  from public.project_calls
+  where id = p_call_id;
+  if not found then
+    raise exception 'Call not found';
+  end if;
+
+  select * into v_contract
+  from public.contracts
+  where project_id = v_call.project_id
+    and status = 'countersigned';
+  if not found then
+    raise exception 'Video calls require a countersigned agreement';
+  end if;
+
+  select availability.date into v_availability_date
+  from public.availability
+  where availability.listing_id = v_contract.creator_id
+    and availability.date in (v_utc_date, v_utc_date - 1)
+    and availability.status = 'available'
+  order by case when availability.date = v_utc_date then 0 else 1 end
+  limit 1;
+  if v_availability_date is null then
+    raise exception 'Pick a day the creator has marked available';
+  end if;
+
+  return public.reschedule_project_call(p_call_id, p_scheduled_at, v_availability_date);
+end;
+$$;
+revoke all on function public.reschedule_project_call(uuid, timestamptz) from public, anon;
+grant execute on function public.reschedule_project_call(uuid, timestamptz) to authenticated, service_role;

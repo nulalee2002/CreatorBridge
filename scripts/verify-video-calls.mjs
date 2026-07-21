@@ -9,6 +9,7 @@ const callRoom = read('src/components/calls/CallRoom.jsx');
 const callsPanel = read('src/components/calls/ProjectCallsPanel.jsx');
 const tokenFunction = read('supabase/functions/create-call-token/index.ts');
 const webhook = read('supabase/functions/zoom-webhook/index.ts');
+const hardeningMigration = read('supabase/migrations/20260720234626_harden_video_call_pipeline.sql');
 const migrations = fs.readdirSync(path.join(root, 'supabase/migrations'))
   .filter(file => file.endsWith('.sql'))
   .sort()
@@ -36,5 +37,15 @@ assert.match(webhook, /recordingRef\s*&&\s*transcriptRef/, 'Zoom copies must rem
 assert.match(migrations, /p_availability_date date/, 'Scheduling must bind the selected availability date');
 assert.match(migrations, /pg_advisory_xact_lock/, 'The three-call cap must be concurrency safe');
 assert.match(migrations, /for update/, 'Additional-call requests must be claimed atomically');
+assert.match(
+  hardeningMigration,
+  /create or replace function public\.schedule_project_call\(\s*p_project_id uuid,\s*p_scheduled_at timestamptz\s*\)[\s\S]*return public\.schedule_project_call\(p_project_id, p_scheduled_at, v_availability_date\)/,
+  'The current frontend must retain a safe two-argument scheduling transition path',
+);
+assert.match(
+  hardeningMigration,
+  /create or replace function public\.reschedule_project_call\(\s*p_call_id uuid,\s*p_scheduled_at timestamptz\s*\)[\s\S]*return public\.reschedule_project_call\(p_call_id, p_scheduled_at, v_availability_date\)/,
+  'The current frontend must retain a safe two-argument rescheduling transition path',
+);
 
 console.log('Video call safety verification passed.');
