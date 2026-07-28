@@ -25,7 +25,13 @@ function completeVideoCreator(overrides = {}) {
     video_intro_url: 'bunny:intro-video-id',
     primary_pillar: 'video_production',
     sub_niches: ['vp_brand_films'],
+    review_status: 'approved',
+    verified: true,
+    is_suspended: false,
     verification_status: 'verified',
+    stripe_account_id: 'acct_test_ready',
+    stripe_onboarded: true,
+    payouts_enabled: true,
     portfolio_items: [
       { title: 'Brand film 1', description: 'Finished campaign edit.', service_id: 'vp_brand_films', media_type: 'video', bunny_video_id: 'v1' },
       { title: 'Brand film 2', description: 'Finished campaign edit.', service_id: 'vp_brand_films', media_type: 'video', bunny_video_id: 'v2' },
@@ -44,6 +50,22 @@ assert(!creatorListingMeetsPublicRules(missingIntro), 'Creator without Bunny int
 
 const missingPillar = completeVideoCreator({ primary_pillar: '' });
 assert(!creatorListingMeetsPublicRules(missingPillar), 'Creator without primary pillar must not pass');
+
+const missingPayoutReadiness = completeVideoCreator({
+  stripe_account_id: null,
+  stripe_onboarded: false,
+  payouts_enabled: false,
+});
+assert(!creatorListingMeetsPublicRules(missingPayoutReadiness), 'Creator without completed payout onboarding must not pass');
+
+const missingAdminApproval = completeVideoCreator({
+  review_status: 'pending_review',
+  verified: false,
+});
+assert(!creatorListingMeetsPublicRules(missingAdminApproval), 'Creator without admin approval must not pass');
+
+const suspendedCreator = completeVideoCreator({ is_suspended: true });
+assert(!creatorListingMeetsPublicRules(suspendedCreator), 'Suspended creator must not pass');
 
 const mismatchedPortfolio = completeVideoCreator({
   portfolio_items: [
@@ -68,7 +90,7 @@ assert(creatorListingMeetsPublicRules(photoCreator), 'Photography creator must p
 assert(requiredPortfolioMediaType('post_production', 'pp_photo_retouch') === 'image', 'Photo retouching portfolio samples must be image-based');
 
 const readiness = getPublicProfileReadiness(complete);
-assert(readiness.profilePhotoMet && readiness.introVideoMet && readiness.portfolioMet && readiness.packagesMet && readiness.verificationMet, 'Readiness details must expose each gate');
+assert(readiness.profilePhotoMet && readiness.introVideoMet && readiness.portfolioMet && readiness.packagesMet && readiness.approvalMet && readiness.notSuspended && readiness.verificationMet && readiness.payoutReadyMet, 'Readiness details must expose each gate');
 
 const matchableCreator = completeVideoCreator({
   rating: 4.9,

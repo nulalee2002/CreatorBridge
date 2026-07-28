@@ -61,6 +61,11 @@ export function getPublicProfileReadiness(creator) {
   const packages = getCreatorPackages(creator);
   const subNiches = creator?.sub_niches || creator?.subNiches || [];
   const services = creator?.services || creator?.creator_services || [];
+  const payoutReadyMet = Boolean(
+    String(creator?.stripe_account_id || '').trim() &&
+    creator?.stripe_onboarded === true &&
+    creator?.payouts_enabled === true
+  );
 
   return {
     profilePhotoMet: hasPublicProfilePhoto(creator?.avatar),
@@ -70,6 +75,9 @@ export function getPublicProfileReadiness(creator) {
     matchingPortfolioCount,
     portfolioMet: matchingPortfolioCount >= 3,
     packagesMet: packages.some(pkg => Number(pkg?.price || 0) > 0 && String(pkg?.name || '').trim()),
+    payoutReadyMet,
+    approvalMet: creator?.review_status === 'approved' && creator?.verified === true,
+    notSuspended: creator?.is_suspended !== true,
     verificationMet: ['verified', 'pro_verified'].includes(creator?.verification_status),
     legacyServicesPresent: Array.isArray(services) && services.length > 0,
   };
@@ -84,7 +92,9 @@ export function getPublicProfileReadinessChecks(creator) {
     { label: 'Specialties selected', done: readiness.specialtiesMet, action: 'Repair Listing' },
     { label: '3 matching portfolio samples', done: readiness.portfolioMet, action: 'Repair Listing', detail: `${readiness.matchingPortfolioCount}/3 ready` },
     { label: 'Packages', done: readiness.packagesMet, action: 'Packages' },
+    { label: 'Payout account', done: readiness.payoutReadyMet, action: 'Verification' },
     { label: 'Verification', done: readiness.verificationMet, action: 'Verification' },
+    { label: 'Admin review', done: readiness.approvalMet && readiness.notSuspended, action: 'Overview' },
   ];
 }
 
@@ -98,6 +108,9 @@ export function creatorListingMeetsPublicRules(creator, { allowDemoSeed = false 
     readiness.specialtiesMet &&
     readiness.portfolioMet &&
     readiness.packagesMet &&
+    readiness.payoutReadyMet &&
+    readiness.approvalMet &&
+    readiness.notSuspended &&
     readiness.verificationMet
   );
 }

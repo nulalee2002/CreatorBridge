@@ -287,12 +287,14 @@ export function AdminDashboard({ dark }) {
           ) : (
             <div className="space-y-3">
               {queue.map(item => {
-                const missing = [
+                const visibleMissing = [
                   !item.video_intro_url && 'intro video',
                   Number(item.portfolio_count || 0) < 3 && 'portfolio proof',
                   Number(item.package_count || 0) < 1 && 'packages',
-                  Number(item.service_count || 0) < 1 && 'services',
                 ].filter(Boolean);
+                const missing = visibleMissing.length
+                  ? visibleMissing
+                  : (!item.approval_ready ? ['identity, craft, payout, or package pricing requirements'] : []);
 
                 return (
                   <article key={item.listing_id} className={`rounded-2xl border p-4 ${dark ? 'border-white/[0.07] bg-white/[0.025]' : 'border-gray-200 bg-gray-50'}`}>
@@ -307,7 +309,7 @@ export function AdminDashboard({ dark }) {
                         <button
                           type="button"
                           onClick={() => handleApproveCreator(item.listing_id)}
-                          disabled={submittingAction}
+                          disabled={submittingAction || !item.approval_ready}
                           className="rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 text-charcoal-950 px-3.5 py-2 text-xs font-black transition-all"
                         >
                           Approve
@@ -325,10 +327,10 @@ export function AdminDashboard({ dark }) {
                     <div className="mt-4 grid gap-2 sm:grid-cols-3">
                       <div className={`rounded-xl px-3 py-2 text-xs ${dark ? 'bg-charcoal-900/70 text-charcoal-300' : 'bg-white text-gray-600'}`}>Portfolio: {item.portfolio_count || 0}</div>
                       <div className={`rounded-xl px-3 py-2 text-xs ${dark ? 'bg-charcoal-900/70 text-charcoal-300' : 'bg-white text-gray-600'}`}>Packages: {item.package_count || 0}</div>
-                      <div className={`rounded-xl px-3 py-2 text-xs ${dark ? 'bg-charcoal-900/70 text-charcoal-300' : 'bg-white text-gray-600'}`}>Services: {item.service_count || 0}</div>
+                      <div className={`rounded-xl px-3 py-2 text-xs ${dark ? 'bg-charcoal-900/70 text-charcoal-300' : 'bg-white text-gray-600'}`}>Approval ready: {item.approval_ready ? 'Yes' : 'No'}</div>
                     </div>
                     <p className={`mt-3 text-xs leading-5 ${missing.length ? 'text-gold-300' : dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
-                      {missing.length ? `Needs review attention: ${missing.join(', ')}.` : 'Meets the visible review proof checks.'}
+                      {missing.length ? `Cannot approve yet: ${missing.join(', ')}.` : 'Meets the complete server-side approval standard.'}
                     </p>
                   </article>
                 );

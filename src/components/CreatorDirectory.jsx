@@ -381,12 +381,11 @@ function CreatorCard({ creator, dark, onDelete, onViewProfile }) {
 function RegisterForm({ onSave, dark, onCancel, user }) {
   const navigate = useNavigate();
 
-  // Check if user already has a profile
-  const existingProfile = useMemo(() => {
+  const [existingProfile, setExistingProfile] = useState(() => {
     if (!user?.id) return null;
     const all = loadListings();
     return all.find(c => c.user_id === user.id) || null;
-  }, [user?.id]);
+  });
 
   const [serviceLimit, setServiceLimit] = useState('');
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -399,7 +398,6 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
     sub_niches: [],
     portfolio: [],
     contact: { email: '', phone: '' },
-    rating: '', reviewCount: '',
     yearsExperience: '',
     usBasedConfirm: false,
     ageConfirm: false,
@@ -418,6 +416,31 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
   const [profilePhotoPreviewUrl, setProfilePhotoPreviewUrl] = useState('');
   const [introUploadState, setIntroUploadState] = useState('');
   const [formError, setFormError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    if (!supabaseConfigured || !user?.id) {
+      setExistingProfile(null);
+      return () => { active = false; };
+    }
+
+    supabase
+      .from('creator_listings')
+      .select('id, user_id, review_status')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error) {
+          setFormError('We could not verify your application status. Refresh and try again.');
+          return;
+        }
+        setExistingProfile(data || null);
+      });
+
+    return () => { active = false; };
+  }, [user?.id]);
 
   useEffect(() => {
     return () => {
@@ -630,7 +653,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	    { label: 'Final acknowledgments', done: form.insuranceAck && form.lockConfirm && form.reviewNoticeConfirm && form.tosAccepted && form.creatorAgreementAccepted && form.aiOriginalWorkConfirm },
 	  ];
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!canPublish) {
       if (!profilePhotoMet) {
         setFormError('Upload a real profile photo before submitting. Initials or placeholder icons are not enough for review.');
@@ -669,8 +692,6 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
       primary_pillar: form.primary_pillar,
       sub_niches: form.sub_niches,
       aiToolsDisclosure: form.aiToolsDisclosure,
-      rating: parseFloat(form.rating) || null,
-      reviewCount: parseInt(form.reviewCount) || null,
       availability: 'available',
       verified: false,
       verification_status: 'pending',
@@ -685,7 +706,14 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
       })),
       createdAt: new Date().toISOString(),
     };
-    onSave(listing);
+    setSubmitting(true);
+    try {
+      await onSave(listing);
+    } catch (error) {
+      setFormError(error?.message || 'Your application could not be saved. Nothing was submitted; please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // If user already has a profile, show message instead of form
@@ -1256,25 +1284,6 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	            </div>
 	          </div>
 
-	          <div className={`rounded-2xl border p-4 sm:p-5 ${dark ? 'border-white/[0.07] bg-charcoal-950/55' : 'border-gray-200 bg-gray-50'}`}>
-	            <p className={labelCls}>Optional reputation signals</p>
-	            <p className={`text-xs leading-5 mb-3 ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>
-	              Add existing rating and review count only if they reflect real public client history.
-	            </p>
-	            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-	              <div>
-	                <p className={labelCls}>Your Rating (optional)</p>
-	                <input type="number" min={0} max={5} step={0.1} value={form.rating} onChange={e => set('rating', e.target.value)} placeholder="4.8"
-	                  className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
-	              </div>
-	              <div>
-	                <p className={labelCls}># of Reviews (optional)</p>
-	                <input type="number" min={0} value={form.reviewCount} onChange={e => set('reviewCount', e.target.value)} placeholder="47"
-	                  className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
-	              </div>
-	            </div>
-	          </div>
-
 	          {/* Insurance and liability */}
 	          <div className={`rounded-2xl border p-4 sm:p-5 space-y-3 ${dark ? 'border-gold-500/25 bg-gold-500/10' : 'border-gold-200 bg-gold-50'}`}>
 	            <p className={`text-xs font-semibold ${dark ? 'text-gold-300' : 'text-gold-700'}`}>Acknowledgments Required</p>
@@ -1372,9 +1381,9 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
           </button>
         ) : (
           <button type="button" onClick={handleSubmit}
-            disabled={!canPublish}
+            disabled={!canPublish || submitting}
             className="flex-1 py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-xs font-bold disabled:opacity-40 transition-all">
-            Publish My Profile
+            {submitting ? 'Saving Application…' : 'Submit for Review'}
           </button>
         )}
       </div>
@@ -1521,6 +1530,7 @@ export function CreatorDirectory({
   collaborationOnly = false,
 }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [listings, setListings] = useState(loadListings);
   const availabilityLoadedFor = useRef('');
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
@@ -1756,84 +1766,59 @@ export function CreatorDirectory({
   const spotlightCreators = useMemo(() => getNewCreatorSpotlight(listings, 3), [listings]);
 
   const handleSaveListing = async (listing) => {
-    // Attach user_id to the listing if a user is logged in
-    const enriched = { ...listing, user_id: user?.id || null };
-    let savedListing = enriched;
-    if (supabaseConfigured && user) {
-      try {
-        const { data: row, error } = await supabase
-          .from('creator_listings')
-          .insert({
-            user_id: user.id,
-            name: enriched.name,
-            business_name: enriched.businessName || null,
-            avatar: enriched.avatar,
-            bio: enriched.bio,
-            experience: enriched.experience,
-            years_experience: enriched.years_experience,
-            tags: enriched.tags,
-            availability: enriched.availability,
-            verified: false,
-            verification_status: 'pending',
-            city: enriched.location?.city || null,
-            state: enriched.location?.state || null,
-            country: 'US',
-            zip: enriched.location?.zip || null,
-            region_key: enriched.location?.regionKey || 'us-tier2',
-            email: enriched.contact?.email || null,
-            phone: enriched.contact?.phone || null,
-            rating: enriched.rating,
-            review_count: enriched.reviewCount,
-            video_intro_url: enriched.video_intro_url || enriched.videoIntroUrl || null,
-            primary_pillar: enriched.primary_pillar,
-            sub_niches: enriched.sub_niches || [],
-          })
-          .select()
-          .single();
-        if (error) throw error;
-
-        savedListing = { ...enriched, id: row.id, createdAt: row.created_at };
-
-        // creator_services is deprecated under the 3-pillar model.
-        // primary_pillar + sub_niches live directly on creator_listings.
-
-        const portfolioRows = savedListing.portfolio.map((item, index) => ({
-          listing_id: row.id,
-          // portfolio_items.service_id column is reused to store sub_niche IDs
-          // until a follow-up migration renames it to sub_niche_id.
-          service_id: item.subNicheId || item.serviceId || null,
-          title: item.title,
-          description: item.description,
-          link: null,
-          image_url: item.imageUrl || item.image_url || null,
-          media_type: item.media_type || item.mediaType || 'image',
-          bunny_video_id: item.bunny_video_id || getBunnyVideoId(item.videoRef || ''),
-          display_order: index,
-        }));
-        if (portfolioRows.length) await supabase.from('portfolio_items').insert(portfolioRows);
-
-        // Record creator agreement acceptance at the current policy version.
-        await supabase
-          .from('legal_acceptances')
-          .upsert({
-            user_id: user.id,
-            document_type: 'creator_agreement',
-            document_version: POLICY_VERSIONS.creator_agreement,
-          }, { onConflict: 'user_id,document_type,document_version', ignoreDuplicates: true });
-
-        // Trigger welcome creator email
-        sendNotificationEmail(enriched.contact?.email || user.email, 'welcome_creator', {
-          creator_name: enriched.name
-        });
-      } catch (err) {
-        console.error('Error inserting creator directory data:', err);
-        savedListing = enriched;
-      }
+    if (!supabaseConfigured || !user?.id) {
+      throw new Error('Sign in to a creator account before submitting your application.');
     }
+
+    const application = {
+      name: listing.name,
+      business_name: listing.businessName || null,
+      avatar: listing.avatar,
+      bio: listing.bio,
+      experience: listing.experience,
+      years_experience: listing.years_experience,
+      tags: listing.tags || [],
+      city: listing.location?.city || null,
+      state: listing.location?.state || null,
+      country: 'US',
+      zip: listing.location?.zip || null,
+      region_key: listing.location?.regionKey || 'us-tier2',
+      email: listing.contact?.email || user.email || null,
+      phone: listing.contact?.phone || null,
+      video_intro_url: listing.video_intro_url || listing.videoIntroUrl || null,
+      primary_pillar: listing.primary_pillar,
+      sub_niches: listing.sub_niches || [],
+      portfolio: (listing.portfolio || []).map(item => ({
+        service_id: item.subNicheId || item.serviceId || null,
+        title: item.title,
+        description: item.description,
+        image_url: item.imageUrl || item.image_url || null,
+        media_type: item.media_type || item.mediaType || 'image',
+        bunny_video_id: item.bunny_video_id || getBunnyVideoId(item.videoRef || ''),
+      })),
+    };
+
+    const { data: row, error } = await supabase.rpc('submit_creator_application', {
+      p_application: application,
+      p_document_version: POLICY_VERSIONS.creator_agreement,
+    });
+    if (error) throw error;
+
+    const savedListing = {
+      ...listing,
+      id: row.id,
+      user_id: user.id,
+      createdAt: row.created_at,
+      review_status: row.review_status,
+      verification_status: row.verification_status,
+    };
     const updated = [savedListing, ...listings.filter(item => item.user_id !== user?.id)];
     setListings(updated);
     saveListings(updated);
-    if (onSwitchToSearch) onSwitchToSearch();
+    void sendNotificationEmail(application.email, 'welcome_creator', {
+      creator_name: application.name,
+    });
+    navigate('/dashboard?onboarding=application-submitted');
   };
 
   const handleDelete = (id) => {

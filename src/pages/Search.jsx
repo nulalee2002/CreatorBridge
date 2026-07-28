@@ -141,6 +141,7 @@ export function Search({ dark }) {
     setLoading(true);
     setSearched(true);
 
+    // search_creators enforces creator_listing_is_public_ready in the database.
     const { data, error } = await supabase.rpc('search_creators', { query: q });
 
     setLoading(false);

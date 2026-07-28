@@ -197,12 +197,17 @@ function CreatorReviewTab({ dark }) {
                   <button
                     type="button"
                     onClick={() => approve(c.listing_id)}
-                    disabled={working === c.listing_id}
+                    disabled={working === c.listing_id || !c.approval_ready}
                     className="rounded-full bg-gold-500 px-4 py-1.5 text-xs font-bold text-charcoal-950 transition-colors hover:bg-gold-600 disabled:opacity-50"
                   >
                     {working === c.listing_id ? 'Working…' : 'Approve'}
                   </button>
                 </div>
+                {!c.approval_ready && (
+                  <p className="mt-3 text-right text-[11px] text-gold-400">
+                    Approval is locked until the creator completes every profile, portfolio, package, and payout requirement.
+                  </p>
+                )}
               </div>
             )}
           </div>
