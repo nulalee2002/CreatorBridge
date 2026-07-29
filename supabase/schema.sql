@@ -1201,3 +1201,7 @@ CREATE POLICY "Anyone can view post likes"
   ON network_post_likes FOR SELECT
   TO anon, authenticated
   USING (true);
+
+-- The production change-order evidence model is defined incrementally in
+-- 20260729131000_project_change_orders.sql. This baseline intentionally keeps
+-- provider-backed document and payment state out of public profile tables.
