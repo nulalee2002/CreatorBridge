@@ -80,6 +80,14 @@ Deno.serve(async (req) => {
           .eq('pdf_ref', ref)
           .maybeSingle();
         authorized = !!contract && [contract.client_id, contract.creator_user_id].includes(activeUserId);
+        if (!authorized) {
+          const { data: changeOrder } = await supabaseAdmin
+            .from('contract_change_orders')
+            .select('client_id,creator_user_id,pdf_ref')
+            .eq('pdf_ref', ref)
+            .maybeSingle();
+          authorized = !!changeOrder && [changeOrder.client_id, changeOrder.creator_user_id].includes(activeUserId);
+        }
       }
 
       if (!authorized && parsed.bucket === 'signatures') {
@@ -103,6 +111,21 @@ Deno.serve(async (req) => {
               .eq('id', contractSignature.contract_id)
               .maybeSingle();
             authorized = !!contract && [contract.client_id, contract.creator_user_id].includes(activeUserId);
+          }
+        }
+        if (!authorized) {
+          const { data: changeOrderSignature } = await supabaseAdmin
+            .from('change_order_signatures')
+            .select('change_order_id')
+            .eq('signature_image_ref', ref)
+            .maybeSingle();
+          if (changeOrderSignature?.change_order_id) {
+            const { data: changeOrder } = await supabaseAdmin
+              .from('contract_change_orders')
+              .select('client_id,creator_user_id')
+              .eq('id', changeOrderSignature.change_order_id)
+              .maybeSingle();
+            authorized = !!changeOrder && [changeOrder.client_id, changeOrder.creator_user_id].includes(activeUserId);
           }
         }
       }
