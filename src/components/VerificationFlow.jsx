@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Check, Upload, Video } from 'lucide-react';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
+import { IdentityVerification } from './IdentityVerification.jsx';
 
 function StepRow({ number, title, description, status, children, dark }) {
   const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
@@ -48,6 +49,7 @@ export function VerificationFlow({ creator, dark, onUpdate }) {
   const [saving, setSaving] = useState(false);
   const [credentialNote, setCredentialNote] = useState('');
   const [credSaved, setCredSaved] = useState(false);
+  const [identityTrust, setIdentityTrust] = useState({ loaded: false, identityVerified: false });
 
   const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
   const inputCls = `w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all ${
@@ -55,8 +57,10 @@ export function VerificationFlow({ creator, dark, onUpdate }) {
          : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-gold-500'
   }`;
 
-  // Step 1: Identity, auto-verified if Stripe is connected
-  const identityDone = creator?.stripe_onboarded === true;
+  // Human identity and payout onboarding are separate trust requirements.
+  const identityDone = identityTrust.loaded && identityTrust.identityVerified;
+  const payoutDone = creator?.stripe_onboarded === true
+    && creator?.payouts_enabled === true;
 
   // Step 2: Portfolio, need 3+ CreatorBridge-hosted media items
   const portfolioItems = creator?.portfolio || creator?.portfolio_items || [];
@@ -76,7 +80,7 @@ export function VerificationFlow({ creator, dark, onUpdate }) {
   const credentialsDone = steps.credentials_submitted === true;
 
   // Overall status
-  const allCoreComplete = identityDone && portfolioDone && introDone;
+  const allCoreComplete = identityDone && payoutDone && portfolioDone && introDone;
   const currentStatus = allCoreComplete && credentialsDone ? 'pro_verified'
     : allCoreComplete ? 'verified'
     : 'unverified';
@@ -120,20 +124,36 @@ export function VerificationFlow({ creator, dark, onUpdate }) {
         <StepRow
           number={1}
           title="Identity Verification"
-          description="Verified automatically when you connect your Stripe payment account."
+          description="Stripe Identity checks a government ID and live selfie. This is separate from payout setup."
           status={identityDone ? 'done' : 'pending'}
           dark={dark}
         >
-          {!identityDone && (
+          <IdentityVerification
+            dark={dark}
+            compact
+            purpose="creator_application"
+            unlockCopy="Identity verification is required before a creator application can enter review."
+            onStatusChange={setIdentityTrust}
+          />
+        </StepRow>
+
+        <StepRow
+          number={2}
+          title="Payout Account"
+          description="Stripe Connect enables CreatorBridge to pay you after completed projects."
+          status={payoutDone ? 'done' : 'pending'}
+          dark={dark}
+        >
+          {!payoutDone && (
             <p className={`text-xs ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
-              Connect your payment account from the Payments tab to verify your identity.
+              Complete payout onboarding from the Payments tab. Payout setup does not replace identity verification.
             </p>
           )}
         </StepRow>
 
-        {/* Step 2: Portfolio */}
+        {/* Step 3: Portfolio */}
         <StepRow
-          number={2}
+          number={3}
           title="Portfolio Verification"
           description="Add at least 3 CreatorBridge-hosted portfolio photos or Bunny videos."
           status={portfolioDone ? 'done' : hostedPortfolio.length > 0 ? 'partial' : 'pending'}
@@ -156,9 +176,9 @@ export function VerificationFlow({ creator, dark, onUpdate }) {
           </div>
         </StepRow>
 
-        {/* Step 3: Intro Video */}
+        {/* Step 4: Intro Video */}
         <StepRow
-          number={3}
+          number={4}
           title="Intro Video"
           description="Upload your required Bunny-hosted intro from the Video Intro tab."
           status={introDone ? 'done' : 'pending'}
@@ -169,9 +189,9 @@ export function VerificationFlow({ creator, dark, onUpdate }) {
           </p>
         </StepRow>
 
-        {/* Step 4: Credentials (optional) */}
+        {/* Step 5: Credentials (optional) */}
         <StepRow
-          number={4}
+          number={5}
           title="Professional Credentials"
           description="Optional: Submit proof of certifications (FAA Part 107, business license, insurance). Admin reviews manually."
           status={credentialsDone ? 'done' : 'pending'}

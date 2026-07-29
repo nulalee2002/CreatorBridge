@@ -4,6 +4,7 @@ import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { getStorageDisplayUrl } from '../utils/storage.js';
 import { ContractView } from './ContractView.jsx';
 import { SignaturePad } from './SignaturePad.jsx';
+import { IdentityVerification } from './IdentityVerification.jsx';
 
 export const CONTRACT_CONSENT_TEXT = 'By signing, I agree this electronic signature is legally binding and I have authority to enter this agreement.';
 
@@ -33,6 +34,7 @@ export function ContractSignModal({ open, contract: initialContract, userId, onC
   const [submitting, setSubmitting] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState('');
+  const [identityTrust, setIdentityTrust] = useState({ loaded: false, identityVerified: false });
 
   const signerRole = useMemo(() => {
     if (!contract || !userId) return null;
@@ -106,6 +108,10 @@ export function ContractSignModal({ open, contract: initialContract, userId, onC
   }
 
   async function signAgreement() {
+    if (!identityTrust.identityVerified) {
+      setError('Complete identity verification before signing this agreement.');
+      return;
+    }
     if (!signerRole || !legalName.trim() || !consented || !signatureValue || !reachedEnd) return;
     setSubmitting(true);
     setError('');
@@ -173,6 +179,20 @@ export function ContractSignModal({ open, contract: initialContract, userId, onC
               </div>
             ) : (
               <div className="mt-7">
+                <IdentityVerification
+                  dark
+                  compact
+                  purpose="first_contract"
+                  unlockCopy="Both project parties verify their identity before either signature can be recorded."
+                  onStatusChange={setIdentityTrust}
+                />
+                {!identityTrust.identityVerified ? (
+                  <div className="mt-5 flex items-start gap-3 rounded-md border border-[#c9a15e]/25 bg-[#c9a15e]/8 p-4 text-xs leading-5 text-[#b3a892]">
+                    <FileSignature size={17} className="mt-0.5 shrink-0 text-[#c9a15e]" />
+                    The agreement remains available to review. Signature controls unlock after the signed Stripe webhook confirms your identity.
+                  </div>
+                ) : (
+                  <>
                 {!reachedEnd && (
                   <div className="mb-5 flex items-start gap-3 rounded-md border border-[#c9a15e]/25 bg-[#c9a15e]/8 p-4 text-xs leading-5 text-[#b3a892]">
                     <FileSignature size={17} className="mt-0.5 shrink-0 text-[#c9a15e]" /> Review the complete agreement above. Signing unlocks after you reach the end.
@@ -202,6 +222,8 @@ export function ContractSignModal({ open, contract: initialContract, userId, onC
                 <button type="button" onClick={signAgreement} disabled={!reachedEnd || !legalName.trim() || !consented || !signatureValue || submitting} className="mt-6 flex h-14 w-full items-center justify-center gap-2 rounded-md border border-[#c97a55] bg-[#9c4a33] px-5 text-sm font-bold uppercase tracking-[0.18em] text-white shadow-[0_12px_35px_rgba(156,74,51,0.32)] transition hover:bg-[#b85a3e] disabled:cursor-not-allowed disabled:opacity-35">
                   {submitting ? <Loader2 size={17} className="animate-spin" /> : <FileSignature size={17} />} Sign and seal
                 </button>
+                  </>
+                )}
               </div>
             )}
 

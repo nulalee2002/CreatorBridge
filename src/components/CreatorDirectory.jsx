@@ -19,6 +19,12 @@ import { sendNotificationEmail } from '../lib/notifications.js';
 import { CreatorAvatar } from './CreatorAvatar.jsx';
 import { creatorListingMeetsPublicRules } from '../utils/creatorReadiness.js';
 import { PhoneVerification } from './PhoneVerification.jsx';
+import { IdentityVerification } from './IdentityVerification.jsx';
+import {
+  clearCreatorApplicationDraft,
+  loadCreatorApplicationDraft,
+  saveCreatorApplicationDraft,
+} from '../utils/creatorApplicationDraft.js';
 
 // Initialize seed data (version-gated, replaces stale seeds automatically)
 initSeedData();
@@ -391,25 +397,36 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
   const [serviceLimit, setServiceLimit] = useState('');
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showCreatorAgreementModal, setShowCreatorAgreementModal] = useState(false);
-  const [form, setForm] = useState({
-    name: '', businessName: '', bio: '', experience: 'mid',
-    avatar: '', tags: '',
-    location: { city: '', state: '', country: 'US', zip: '' },
-    primary_pillar: '',
-    sub_niches: [],
-    portfolio: [],
-    contact: { email: '', phone: '' },
-    yearsExperience: '',
-    usBasedConfirm: false,
-    ageConfirm: false,
-    videoIntroUrl: '',
-    insuranceAck: false,
-    lockConfirm: false,
-    reviewNoticeConfirm: false,
-    tosAccepted: false,
-    creatorAgreementAccepted: false,
-    aiOriginalWorkConfirm: false,
-    aiToolsDisclosure: [],
+  const [form, setForm] = useState(() => {
+    const draft = user?.id ? loadCreatorApplicationDraft(localStorage, user.id) : null;
+    const defaults = {
+      name: '', businessName: '', bio: '', experience: 'mid',
+      avatar: '', tags: '',
+      location: { city: '', state: '', country: 'US', zip: '' },
+      primary_pillar: '',
+      sub_niches: [],
+      portfolio: [],
+      contact: { email: '', phone: '' },
+      yearsExperience: '',
+      usBasedConfirm: false,
+      ageConfirm: false,
+      videoIntroUrl: '',
+      insuranceAck: false,
+      lockConfirm: false,
+      reviewNoticeConfirm: false,
+      tosAccepted: false,
+      creatorAgreementAccepted: false,
+      aiOriginalWorkConfirm: false,
+      aiToolsDisclosure: [],
+    };
+    return draft
+      ? {
+          ...defaults,
+          ...draft,
+          location: { ...defaults.location, ...(draft.location || {}) },
+          contact: { ...defaults.contact, ...(draft.contact || {}) },
+        }
+      : defaults;
   });
   const [step, setStep] = useState(1);
   const [portfolioUploadState, setPortfolioUploadState] = useState({});
@@ -419,6 +436,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [phoneTrust, setPhoneTrust] = useState({ loaded: false, verified: false });
+  const [identityTrust, setIdentityTrust] = useState({ loaded: false, identityVerified: false });
 
   useEffect(() => {
     let active = true;
@@ -449,6 +467,14 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
       if (profilePhotoPreviewUrl?.startsWith('blob:')) URL.revokeObjectURL(profilePhotoPreviewUrl);
     };
   }, [profilePhotoPreviewUrl]);
+
+  useEffect(() => {
+    if (!user?.id) return undefined;
+    const timer = window.setTimeout(() => {
+      saveCreatorApplicationDraft(localStorage, user.id, form);
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [form, user?.id]);
 
   const TOTAL_STEPS = 5;
   const BLOCKED_EXPERIENCE = ['Less than 1 year', '1 year'];
@@ -645,7 +671,8 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	    profilePhotoMet && videoIntroMet && bioLen >= 100 && portfolioMet &&
 	    form.insuranceAck && form.lockConfirm && form.reviewNoticeConfirm &&
 	    form.tosAccepted && form.creatorAgreementAccepted && form.aiOriginalWorkConfirm &&
-      phoneTrust.loaded && phoneTrust.verified);
+      phoneTrust.loaded && phoneTrust.verified &&
+      identityTrust.loaded && identityTrust.identityVerified);
 
 	  const publishChecks = [
 	    { label: 'Creator identity', done: !!form.name && bioLen >= 100 && profilePhotoMet },
@@ -654,6 +681,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	    { label: 'Proof of work', done: videoIntroMet && portfolioMet },
 	    { label: 'Contact email', done: !!form.contact.email },
       { label: 'Phone verified by SMS', done: phoneTrust.loaded && phoneTrust.verified },
+      { label: 'Identity verified by Stripe', done: identityTrust.loaded && identityTrust.identityVerified },
 	    { label: 'Final acknowledgments', done: form.insuranceAck && form.lockConfirm && form.reviewNoticeConfirm && form.tosAccepted && form.creatorAgreementAccepted && form.aiOriginalWorkConfirm },
 	  ];
 
@@ -661,6 +689,8 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
     if (!canPublish) {
       if (!phoneTrust.loaded || !phoneTrust.verified) {
         setFormError('Verify your phone number before submitting your creator application.');
+      } else if (!identityTrust.loaded || !identityTrust.identityVerified) {
+        setFormError('Complete the secure identity check before submitting your creator application.');
       } else if (!profilePhotoMet) {
         setFormError('Upload a real profile photo before submitting. Initials or placeholder icons are not enough for review.');
       } else if (!videoIntroMet) {
@@ -715,6 +745,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
     setSubmitting(true);
     try {
       await onSave(listing);
+      clearCreatorApplicationDraft(localStorage, user?.id);
     } catch (error) {
       setFormError(error?.message || 'Your application could not be saved. Nothing was submitted; please try again.');
     } finally {
@@ -1296,6 +1327,15 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
                     setPhoneTrust(status);
                     if (status.phone) setContact('phone', status.phone);
                   }}
+                />
+              </div>
+              <div className="mt-4">
+                <IdentityVerification
+                  dark={dark}
+                  purpose="creator_application"
+                  unlockCopy="A government ID and live selfie confirm that every creator is a real adult and prevent duplicate creator portfolios."
+                  onStatusChange={setIdentityTrust}
+                  onBeforeRedirect={() => saveCreatorApplicationDraft(localStorage, user?.id, form)}
                 />
               </div>
 	          </div>

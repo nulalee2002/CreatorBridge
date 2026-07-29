@@ -63,6 +63,21 @@ const creatorDirectory = optionalSource('src/components/CreatorDirectory.jsx');
 expect(clientVerification.includes('<PhoneVerification'), 'Client verification must use the shared phone component');
 expect(creatorDirectory.includes('<PhoneVerification'), 'Creator application must use the shared phone component');
 
+const createIdentitySession = optionalSource('supabase/functions/create-identity-session/index.ts');
+const identityConsent = optionalSource('src/components/IdentityConsent.jsx');
+const identityPolicy = optionalSource('supabase/functions/_shared/identityPolicy.js');
+const identityVerification = optionalSource('src/components/IdentityVerification.jsx');
+const contractSignModal = optionalSource('src/components/ContractSignModal.jsx');
+expect(identityPolicy.includes('require_live_capture'), 'Stripe Identity must require live document capture');
+expect(identityPolicy.includes('require_matching_selfie'), 'Stripe Identity must require a matching selfie');
+expect(createIdentitySession.includes('identity_consents'), 'Stripe Identity session creation must record dedicated consent');
+expect(createIdentitySession.includes('idempotencyKey'), 'Stripe Identity session creation must be idempotent');
+expect(`${identityConsent}\n${identityPolicy}`.includes('government-issued ID'), 'Identity consent must explain government ID processing');
+expect(`${identityConsent}\n${identityPolicy}`.includes('live selfie'), 'Identity consent must explain live selfie processing');
+expect(identityVerification.includes("functions.invoke('create-identity-session'"), 'Identity UI must start sessions through the authenticated Edge Function');
+expect(creatorDirectory.includes('<IdentityVerification'), 'Creator submission must show identity verification');
+expect(contractSignModal.includes('<IdentityVerification'), 'Contract signing must show identity verification');
+
 if (failures.length) {
   console.error(failures.join('\n'));
   process.exit(1);
@@ -74,4 +89,5 @@ console.log(JSON.stringify({
   providerDataMinimized: true,
   publicProfilePhoneLeakPrevented: true,
   phoneSharedAcrossRoles: true,
+  consentedIdentitySession: true,
 }, null, 2));

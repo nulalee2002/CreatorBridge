@@ -123,6 +123,9 @@ create table if not exists public.identity_review_actions (
 
 create index if not exists idx_identity_verifications_user_latest
   on public.identity_verifications (user_id, created_at desc);
+create unique index if not exists idx_identity_verifications_one_pending_user
+  on public.identity_verifications (user_id)
+  where status = 'pending';
 create index if not exists idx_identity_verifications_review_queue
   on public.identity_verifications (status, updated_at desc)
   where status in ('manual_review', 'duplicate_restricted', 'rejected', 'reverification_required');

@@ -50,6 +50,7 @@ function getRouteTitle(pathname) {
   if (pathname.startsWith('/admin')) return 'Admin Dashboard | CreatorBridge';
   if (pathname.startsWith('/terms')) return 'Terms | CreatorBridge';
   if (pathname.startsWith('/privacy')) return 'Privacy | CreatorBridge';
+  if (pathname.startsWith('/verification/identity')) return 'Identity Verification | CreatorBridge';
   if (pathname.startsWith('/creator-agreement')) return 'Creator Agreement | CreatorBridge';
   if (pathname.startsWith('/dispute-policy')) return 'Dispute Policy | CreatorBridge';
   if (pathname.startsWith('/register')) return 'Apply to Join | CreatorBridge';
@@ -98,6 +99,7 @@ const CreatorAgreement = lazy(() => import('./pages/CreatorAgreement.jsx').then(
 const DisputePolicy = lazy(() => import('./pages/DisputePolicy.jsx').then(m => ({ default: m.DisputePolicy })));
 const JoinAsCreator = lazy(() => import('./pages/JoinAsCreator.jsx').then(m => ({ default: m.JoinAsCreator })));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage.jsx').then(m => ({ default: m.ResetPasswordPage })));
+const IdentityReturnPage = lazy(() => import('./pages/IdentityReturnPage.jsx').then(m => ({ default: m.IdentityReturnPage })));
 const QuickQuoteMode = lazy(() => import('./components/QuickQuoteMode.jsx').then(m => ({ default: m.QuickQuoteMode })));
 const LandingPage = lazy(() => import('./pages/LandingPage.jsx').then(m => ({ default: m.LandingPage })));
 
@@ -1128,6 +1130,11 @@ export default function App() {
         <Route path="/join-as-creator" element={<LazyRoute dark={dark}><JoinAsCreator dark={dark} /></LazyRoute>} />
         <Route path="/privacy" element={<LazyRoute dark={dark}><TermsPage dark={dark} /></LazyRoute>} />
         <Route path="/reset-password" element={<LazyRoute dark={dark}><ResetPasswordPage dark={dark} /></LazyRoute>} />
+        <Route path="/verification/identity/return" element={
+          <AuthRequired dark={dark} user={user} loading={authLoading} role="client" title="Sign in to view identity verification." copy="Identity status belongs to your authenticated CreatorBridge account.">
+            <LazyRoute dark={dark}><IdentityReturnPage dark={dark} /></LazyRoute>
+          </AuthRequired>
+        } />
         <Route path="/calculator" element={<HandoffPage page={handoffPages.rateCalculator} bgImage="/images/creatorbridge/backgrounds/08-sitewide/bg-audio-workstation.jpg" />} />
         <Route path="/rate-calculator" element={<HandoffPage page={handoffPages.rateCalculator} bgImage="/images/creatorbridge/backgrounds/08-sitewide/bg-audio-workstation.jpg" />} />
         <Route path="*" element={<NotFoundRoute dark={dark} />} />
