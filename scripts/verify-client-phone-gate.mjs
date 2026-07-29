@@ -24,6 +24,7 @@ const root = new URL('..', import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), 'utf8');
 
 const clientVerification = read('src/components/ClientVerification.jsx');
+const creatorDirectory = read('src/components/CreatorDirectory.jsx');
 const projectBoard = read('src/pages/ProjectBoard.jsx');
 const migrations = [
   ...read('supabase/migrations/20260519120000_harden_project_budget_checkout.sql').split('\n'),
@@ -37,20 +38,20 @@ if (phoneGateMigration) {
 const migrationText = migrations.join('\n');
 
 assert(
-  existsSync(new URL('supabase/functions/client-phone-send-code/index.ts', root)),
-  'Missing client-phone-send-code edge function'
+  existsSync(new URL('supabase/functions/phone-send-code/index.ts', root)),
+  'Missing shared phone-send-code edge function'
 );
 assert(
-  existsSync(new URL('supabase/functions/client-phone-check-code/index.ts', root)),
-  'Missing client-phone-check-code edge function'
+  existsSync(new URL('supabase/functions/phone-check-code/index.ts', root)),
+  'Missing shared phone-check-code edge function'
 );
 assert(
-  clientVerification.includes("functions.invoke('client-phone-send-code'"),
-  'ClientVerification must call client-phone-send-code'
+  clientVerification.includes('<PhoneVerification'),
+  'ClientVerification must use the shared phone verification component'
 );
 assert(
-  clientVerification.includes("functions.invoke('client-phone-check-code'"),
-  'ClientVerification must call client-phone-check-code'
+  creatorDirectory.includes('<PhoneVerification'),
+  'Creator applications must use the shared phone verification component'
 );
 assert(
   !clientVerification.includes('Email confirmed'),

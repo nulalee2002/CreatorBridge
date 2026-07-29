@@ -244,6 +244,7 @@ grant execute on function creatorbridge_private.user_identity_verified(uuid) to 
 create or replace function public.get_my_trust_status()
 returns table (
   phone_status text,
+  phone_e164 text,
   phone_verified boolean,
   phone_verified_at timestamptz,
   identity_status text,
@@ -274,6 +275,7 @@ begin
   )
   select
     coalesce(phone.status, 'unverified')::text,
+    phone.phone_e164,
     creatorbridge_private.user_phone_verified(v_user_id),
     phone.verified_at,
     coalesce(identity.status, 'consent_required')::text,

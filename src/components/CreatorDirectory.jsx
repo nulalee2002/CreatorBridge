@@ -18,6 +18,7 @@ import { checkCreatorText, logFilterEvent, CREATOR_TEXT_BLOCK_MESSAGE } from '..
 import { sendNotificationEmail } from '../lib/notifications.js';
 import { CreatorAvatar } from './CreatorAvatar.jsx';
 import { creatorListingMeetsPublicRules } from '../utils/creatorReadiness.js';
+import { PhoneVerification } from './PhoneVerification.jsx';
 
 // Initialize seed data (version-gated, replaces stale seeds automatically)
 initSeedData();
@@ -417,6 +418,7 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
   const [introUploadState, setIntroUploadState] = useState('');
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [phoneTrust, setPhoneTrust] = useState({ loaded: false, verified: false });
 
   useEffect(() => {
     let active = true;
@@ -642,7 +644,8 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	    pillarSelected &&
 	    profilePhotoMet && videoIntroMet && bioLen >= 100 && portfolioMet &&
 	    form.insuranceAck && form.lockConfirm && form.reviewNoticeConfirm &&
-	    form.tosAccepted && form.creatorAgreementAccepted && form.aiOriginalWorkConfirm);
+	    form.tosAccepted && form.creatorAgreementAccepted && form.aiOriginalWorkConfirm &&
+      phoneTrust.loaded && phoneTrust.verified);
 
 	  const publishChecks = [
 	    { label: 'Creator identity', done: !!form.name && bioLen >= 100 && profilePhotoMet },
@@ -650,12 +653,15 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	    { label: 'Craft + specialties', done: pillarSelected },
 	    { label: 'Proof of work', done: videoIntroMet && portfolioMet },
 	    { label: 'Contact email', done: !!form.contact.email },
+      { label: 'Phone verified by SMS', done: phoneTrust.loaded && phoneTrust.verified },
 	    { label: 'Final acknowledgments', done: form.insuranceAck && form.lockConfirm && form.reviewNoticeConfirm && form.tosAccepted && form.creatorAgreementAccepted && form.aiOriginalWorkConfirm },
 	  ];
 
   const handleSubmit = async () => {
     if (!canPublish) {
-      if (!profilePhotoMet) {
+      if (!phoneTrust.loaded || !phoneTrust.verified) {
+        setFormError('Verify your phone number before submitting your creator application.');
+      } else if (!profilePhotoMet) {
         setFormError('Upload a real profile photo before submitting. Initials or placeholder icons are not enough for review.');
       } else if (!videoIntroMet) {
         setFormError('Upload your required CreatorBridge intro video before submitting.');
@@ -1270,18 +1276,28 @@ function RegisterForm({ onSave, dark, onCancel, user }) {
 	                {form.contact.email ? 'Email added' : 'Email required'}
 	              </span>
 	            </div>
-	            <div className="grid gap-3 md:grid-cols-2">
-	              {[
-	                { key: 'email',     label: 'Email *',          placeholder: 'hello@yourstudio.com',  type: 'email' },
-	                { key: 'phone',     label: 'Phone',            placeholder: '(555) 000-0000',        type: 'tel' },
-	              ].map(({ key, label, placeholder, type }) => (
-	                <div key={key}>
-	                  <p className={labelCls}>{label}</p>
-	                  <input type={type} value={form.contact[key]} onChange={e => setContact(key, e.target.value)} placeholder={placeholder}
-	                    className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`} />
-	                </div>
-	              ))}
-	            </div>
+	            <div>
+                <p className={labelCls}>Email *</p>
+                <input
+                  type="email"
+                  value={form.contact.email}
+                  onChange={e => setContact('email', e.target.value)}
+                  placeholder="hello@yourstudio.com"
+                  className={`w-full px-3 py-2.5 text-sm rounded-xl border outline-none transition-all ${inputCls}`}
+                />
+              </div>
+              <div className="mt-4">
+                <PhoneVerification
+                  dark={dark}
+                  purpose="creator_application"
+                  initialPhone={form.contact.phone}
+                  unlockCopy="Every creator verifies control of a phone number before an application can enter review."
+                  onStatusChange={status => {
+                    setPhoneTrust(status);
+                    if (status.phone) setContact('phone', status.phone);
+                  }}
+                />
+              </div>
 	          </div>
 
 	          {/* Insurance and liability */}

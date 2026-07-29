@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Check, X, AlertCircle, Loader2 } from 'lucide-react';
+import { Check, X, AlertCircle } from 'lucide-react';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { recentFilterCount } from '../utils/messageFilter.js';
+import { PhoneVerification } from './PhoneVerification.jsx';
 
 // ── Spam scoring ────────────────────────────────────────────────
 /**
@@ -99,11 +100,7 @@ export function ClientVerification({ user, dark, onComplete, requireLevel = 'bas
   const [saving, setSaving]   = useState(false);
   const [saved, setSaved]     = useState(false);
   const [error, setError]     = useState('');
-  const [phoneMessage, setPhoneMessage] = useState('');
-  const [otpCode, setOtpCode] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [sendingCode, setSendingCode] = useState(false);
-  const [checkingCode, setCheckingCode] = useState(false);
+  const [phoneTrust, setPhoneTrust] = useState({ loaded: false, verified: false });
 
   const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
   const inputCls = `w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all ${
@@ -192,87 +189,13 @@ export function ClientVerification({ user, dark, onComplete, requireLevel = 'bas
     if (requireLevel !== 'contact' || profileData.phone_verified) onComplete?.();
   }
 
-  async function sendPhoneCode() {
-    setError('');
-    setPhoneMessage('');
-    if (!form.phone.trim()) {
-      setError('Enter a phone number before requesting a code.');
-      return;
-    }
-    if (!supabaseConfigured) {
-      setError('Phone verification requires the live CreatorBridge backend.');
-      return;
-    }
-
-    setSendingCode(true);
-    const { data, error: invokeError } = await supabase.functions.invoke('client-phone-send-code', {
-      body: { phone: form.phone },
-    });
-    setSendingCode(false);
-
-    if (invokeError || data?.error) {
-      setError(data?.error || invokeError?.message || 'Verification code could not be sent.');
-      return;
-    }
-
-    setOtpSent(true);
-    if (data?.phone) setForm(f => ({ ...f, phone: data.phone }));
-    setPhoneMessage('Verification code sent. Enter it below to finish.');
-    await loadProfile();
-  }
-
-  async function checkPhoneCode() {
-    setError('');
-    setPhoneMessage('');
-    if (!otpCode.trim()) {
-      setError('Enter the SMS verification code.');
-      return;
-    }
-    if (!supabaseConfigured) {
-      setError('Phone verification requires the live CreatorBridge backend.');
-      return;
-    }
-
-    setCheckingCode(true);
-    const { data, error: invokeError } = await supabase.functions.invoke('client-phone-check-code', {
-      body: { phone: form.phone, code: otpCode },
-    });
-    setCheckingCode(false);
-
-    if (invokeError || data?.error || !data?.phoneVerified) {
-      setError(data?.error || invokeError?.message || 'Verification code could not be confirmed.');
-      return;
-    }
-
-    const verifiedAt = new Date().toISOString();
-    const nextProfile = {
-      ...(profile || {}),
-      user_id: user.id,
-      userId: user.id,
-      phone: data.phone || form.phone,
-      phone_verified: true,
-      phoneVerified: true,
-      phone_verified_at: verifiedAt,
-      phoneVerifiedAt: verifiedAt,
-      display_name: profile?.display_name || form.displayName,
-      displayName: profile?.displayName || form.displayName,
-      tos_accepted_at: profile?.tos_accepted_at || (form.tosAccepted ? verifiedAt : null),
-      tosAcceptedAt: profile?.tosAcceptedAt || (form.tosAccepted ? verifiedAt : null),
-    };
-    setProfile(nextProfile);
-    setForm(f => ({ ...f, phone: data.phone || f.phone }));
-    setOtpCode('');
-    setOtpSent(false);
-    setPhoneMessage('Phone verified. You can now post project briefs.');
-    onComplete?.();
-    await loadProfile();
-  }
-
   // Check if already complete
   const emailOk = !!user?.email;
   const nameOk  = !!(profile?.display_name || profile?.displayName || form.displayName);
   const tosOk   = !!(profile?.tos_accepted_at || profile?.tosAcceptedAt);
-  const phoneOk = !!(profile?.phone_verified || profile?.phoneVerified) && !!(profile?.phone_verified_at || profile?.phoneVerifiedAt);
+  const phoneOk = supabaseConfigured
+    ? phoneTrust.loaded && phoneTrust.verified
+    : !!(profile?.phone_verified || profile?.phoneVerified) && !!(profile?.phone_verified_at || profile?.phoneVerifiedAt);
 
   const basicComplete = emailOk && nameOk && tosOk;
   const contactComplete = basicComplete && phoneOk;
@@ -328,50 +251,17 @@ export function ClientVerification({ user, dark, onComplete, requireLevel = 'bas
         )}
 
         {requireLevel === 'contact' && !phoneOk && (
-          <div className="space-y-2">
-            <label className={`text-xs font-medium mb-1 block ${textSub}`}>Phone Number</label>
-            <input
-              type="tel"
-              value={form.phone}
-              onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-              placeholder="+1 (555) 000-0000"
-              className={inputCls}
-            />
-            <button
-              type="button"
-              onClick={sendPhoneCode}
-              disabled={sendingCode || !form.phone.trim()}
-              className={`w-full py-2.5 rounded-xl border text-sm font-bold transition-all ${
-                dark
-                  ? 'border-gold-500/35 text-gold-300 hover:bg-gold-500/10 disabled:opacity-40'
-                  : 'border-gold-300 text-gold-700 hover:bg-gold-100 disabled:opacity-40'
-              }`}
-            >
-              {sendingCode ? <span className="inline-flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Sending code...</span> : 'Send SMS code'}
-            </button>
-            {otpSent && (
-              <div className="space-y-2">
-                <label className={`text-xs font-medium block ${textSub}`}>Verification Code</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={otpCode}
-                  onChange={e => setOtpCode(e.target.value)}
-                  placeholder="123456"
-                  className={inputCls}
-                />
-                <button
-                  type="button"
-                  onClick={checkPhoneCode}
-                  disabled={checkingCode || !otpCode.trim()}
-                  className="w-full py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 text-charcoal-900 text-sm font-bold transition-all"
-                >
-                  {checkingCode ? <span className="inline-flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Verifying...</span> : 'Verify code'}
-                </button>
-              </div>
-            )}
-            {phoneMessage && <p className="text-xs text-gold-400 bg-gold-400/10 rounded-lg px-3 py-2">{phoneMessage}</p>}
-          </div>
+          <PhoneVerification
+            dark={dark}
+            purpose="client_contact"
+            initialPhone={form.phone}
+            unlockCopy="Phone verification is required before you can post a brief, request a quote, or contact a creator."
+            onStatusChange={status => {
+              setPhoneTrust(status);
+              if (status.phone) setForm(current => ({ ...current, phone: status.phone }));
+            }}
+            onVerified={() => onComplete?.()}
+          />
         )}
 
         {!tosOk && (

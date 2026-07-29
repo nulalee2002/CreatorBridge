@@ -52,6 +52,7 @@
     "verify:booking-e2e": "node --env-file=.env scripts/verify-booking-e2e.mjs",
     "test:contracts": "node --test tests/contractTerms.test.js",
     "test:human-identity": "node --test tests/humanIdentityPolicy.test.js",
+    "test:phone-verification": "node --test tests/phoneVerification.test.js",
     "test:date-keys": "node --test tests/dateKeys.test.js",
     "verify:contracts": "node scripts/verify-contract-esign-rebook.mjs",
     "verify:human-identity": "node scripts/verify-human-identity-foundation.mjs",

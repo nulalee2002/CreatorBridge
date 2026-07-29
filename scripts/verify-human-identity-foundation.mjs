@@ -8,6 +8,13 @@ const expect = (condition, message) => {
   if (!condition) failures.push(message);
 };
 const source = path => readFileSync(join(root, path), 'utf8');
+const optionalSource = path => {
+  try {
+    return source(path);
+  } catch {
+    return '';
+  }
+};
 const migrationSource = () => readdirSync(join(root, 'supabase/migrations'))
   .filter(name => name.includes('human_identity') || name.includes('identity_admin_review'))
   .map(name => source(`supabase/migrations/${name}`))
@@ -41,6 +48,21 @@ for (const forbidden of [
   expect(!sql.toLowerCase().includes(forbidden), `Identity migrations must not persist prohibited field: ${forbidden}`);
 }
 
+const phoneSend = optionalSource('supabase/functions/phone-send-code/index.ts');
+const phoneCheck = optionalSource('supabase/functions/phone-check-code/index.ts');
+const phoneUi = optionalSource('src/components/PhoneVerification.jsx');
+expect(phoneSend.includes('auth.getUser'), 'Shared phone send function must derive the caller from Supabase Auth');
+expect(phoneCheck.includes('auth.getUser'), 'Shared phone check function must derive the caller from Supabase Auth');
+expect(phoneSend.includes('account_phone_verifications'), 'Shared phone send function must reset the private trust record');
+expect(phoneCheck.includes('account_phone_verifications'), 'Shared phone check function must persist the private trust record');
+expect(phoneUi.includes("functions.invoke('phone-send-code'"), 'Shared phone UI must call phone-send-code');
+expect(phoneUi.includes("functions.invoke('phone-check-code'"), 'Shared phone UI must call phone-check-code');
+
+const clientVerification = optionalSource('src/components/ClientVerification.jsx');
+const creatorDirectory = optionalSource('src/components/CreatorDirectory.jsx');
+expect(clientVerification.includes('<PhoneVerification'), 'Client verification must use the shared phone component');
+expect(creatorDirectory.includes('<PhoneVerification'), 'Creator application must use the shared phone component');
+
 if (failures.length) {
   console.error(failures.join('\n'));
   process.exit(1);
@@ -51,4 +73,5 @@ console.log(JSON.stringify({
   trustSchema: true,
   providerDataMinimized: true,
   publicProfilePhoneLeakPrevented: true,
+  phoneSharedAcrossRoles: true,
 }, null, 2));
