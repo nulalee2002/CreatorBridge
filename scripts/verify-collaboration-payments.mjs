@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { calculateCollaborationFees } from '../src/config/collaborationFees.js';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
+import { provisionQaTrust } from './lib/qaTrust.mjs';
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const sql = readdirSync(join(root,'supabase/migrations')).filter(f=>f.endsWith('.sql')).map(f=>readFileSync(join(root,'supabase/migrations',f),'utf8')).join('\n').toLowerCase();
 const fnPath = join(root,'supabase/functions/create-collaboration-payment/index.ts');
@@ -44,10 +45,14 @@ let live=null;
 if(Object.values(cfg).every(Boolean)){
  const opts={auth:{persistSession:false,autoRefreshToken:false}};const prime=createClient(cfg.url,cfg.anon,opts);const admin=createClient(cfg.url,cfg.service,opts);const stripe=new Stripe(cfg.stripe);
  const {data:auth,error:ae}=await prime.auth.signInWithPassword({email:cfg.email,password:cfg.password});if(ae)throw ae;
- let uid,lid,pid,cid,paymentId,intentId;
+ let uid,lid,pid,cid,paymentId,intentId,restorePrimeTrust,restoreTargetTrust,sourceBefore;
  try{
-  const {data:source,error:se}=await admin.from('creator_listings').select('*').eq('user_id',auth.user.id).eq('review_status','approved').limit(1).single();if(se)throw se;if(!source.stripe_account_id)throw new Error('QA creator payout account required');
+  restorePrimeTrust=await provisionQaTrust(admin,auth.user.id);
+  const {data:existingSource,error:se}=await admin.from('creator_listings').select('*').eq('user_id',auth.user.id).limit(1).single();if(se)throw se;
+  sourceBefore={id:existingSource.id,review_status:existingSource.review_status,verified:existingSource.verified,verification_status:existingSource.verification_status};
+  const {data:source,error:sourceReadyError}=await admin.from('creator_listings').update({review_status:'approved',verified:true,verification_status:'verified'}).eq('id',existingSource.id).select('*').single();if(sourceReadyError)throw sourceReadyError;if(!source.stripe_account_id)throw new Error('QA creator payout account required');
   const {data:u,error:ue}=await admin.auth.admin.createUser({email:`qa-pay-${crypto.randomUUID()}@example.invalid`,email_confirm:true,user_metadata:{role:'creator',full_name:'QA Payee'}});if(ue)throw ue;uid=u.user.id;
+  restoreTargetTrust=await provisionQaTrust(admin,uid);
   const copy={...source};for(const k of ['id','created_at','updated_at','search_vector'])delete copy[k];Object.assign(copy,{user_id:uid,name:'QA Payee',business_name:'QA Payee',email:`qa-${uid}@example.invalid`,review_status:'approved'});
   const {data:l,error:le}=await admin.from('creator_listings').insert(copy).select('id').single();if(le)throw le;lid=l.id;
   const {data:p,error:pe}=await admin.from('projects').insert({title:'QA ACH collaboration',description:'Temporary payment verification.',status:'collaboration_draft'}).select('id').single();if(pe)throw pe;pid=p.id;
@@ -65,7 +70,9 @@ if(Object.values(cfg).every(Boolean)){
   live={achOnly:true,buyerFeeWaived:true,processingCostAssignedToPrime:true,status:'processing'};
  }finally{
   if(intentId){try{await stripe.paymentIntents.cancel(intentId)}catch{}}
-  if(paymentId)await admin.from('collaboration_payments').delete().eq('id',paymentId);if(cid)await admin.from('creator_collaborations').delete().eq('id',cid);if(pid)await admin.from('projects').delete().eq('id',pid);if(lid)await admin.from('creator_listings').delete().eq('id',lid);if(uid)await admin.auth.admin.deleteUser(uid);await prime.auth.signOut();
+  if(paymentId)await admin.from('collaboration_payments').delete().eq('id',paymentId);if(cid)await admin.from('creator_collaborations').delete().eq('id',cid);if(pid)await admin.from('projects').delete().eq('id',pid);if(lid)await admin.from('creator_listings').delete().eq('id',lid);
+  if(sourceBefore)await admin.from('creator_listings').update({review_status:sourceBefore.review_status,verified:sourceBefore.verified,verification_status:sourceBefore.verification_status}).eq('id',sourceBefore.id);
+  if(restoreTargetTrust)await restoreTargetTrust();if(restorePrimeTrust)await restorePrimeTrust();if(uid)await admin.auth.admin.deleteUser(uid);await prime.auth.signOut();
  }
 }
 console.log(JSON.stringify({ok:true,checks:tests.length,live},null,2));

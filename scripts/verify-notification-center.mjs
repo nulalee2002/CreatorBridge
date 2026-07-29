@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { provisionQaTrust } from './lib/qaTrust.mjs';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
@@ -32,10 +33,13 @@ const creatorSupabase = makeClient();
 const adminSupabase = SUPABASE_SERVICE_ROLE_KEY ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) : null;
 let messageId = null;
 let notificationId = null;
+let restoreClientTrust = null;
 
 try {
   const clientUser = await signIn(clientSupabase, CLIENT_EMAIL, CLIENT_PASSWORD);
   const creatorUser = await signIn(creatorSupabase, CREATOR_EMAIL, CREATOR_PASSWORD);
+  assert(adminSupabase, 'Missing SUPABASE_SERVICE_ROLE_KEY for isolated QA trust setup');
+  restoreClientTrust = await provisionQaTrust(adminSupabase, clientUser.id);
 
   const conversationId = crypto.randomUUID();
   const token = crypto.randomUUID().slice(0, 8);
@@ -102,4 +106,5 @@ try {
   if (adminSupabase && messageId) {
     await adminSupabase.from('messages').delete().eq('id', messageId);
   }
+  if (restoreClientTrust) await restoreClientTrust();
 }

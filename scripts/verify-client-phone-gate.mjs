@@ -102,6 +102,11 @@ if (!staticOnly && supabaseUrl && anonKey && serviceKey && clientPass) {
     .select('phone, phone_verified, phone_verified_at, display_name, tos_accepted_at')
     .eq('user_id', userId)
     .maybeSingle();
+  const { data: originalPhoneTrust } = await admin
+    .from('account_phone_verifications')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle();
 
   const baseProfile = {
     user_id: userId,
@@ -116,6 +121,16 @@ if (!staticOnly && supabaseUrl && anonKey && serviceKey && clientPass) {
       ...baseProfile,
       phone_verified: false,
       phone_verified_at: null,
+    }, { onConflict: 'user_id' });
+    await admin.from('account_phone_verifications').upsert({
+      user_id: userId,
+      phone_e164: baseProfile.phone,
+      status: 'pending',
+      verified_at: null,
+      provider: 'twilio',
+      provider_service_reference: 'automated_qa',
+      attempt_count: 0,
+      updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' });
 
     const blocked = await client.rpc('create_project_brief', {
@@ -137,6 +152,16 @@ if (!staticOnly && supabaseUrl && anonKey && serviceKey && clientPass) {
       ...baseProfile,
       phone_verified: true,
       phone_verified_at: new Date().toISOString(),
+    }, { onConflict: 'user_id' });
+    await admin.from('account_phone_verifications').upsert({
+      user_id: userId,
+      phone_e164: baseProfile.phone,
+      status: 'verified',
+      verified_at: new Date().toISOString(),
+      provider: 'twilio',
+      provider_service_reference: 'automated_qa',
+      attempt_count: 0,
+      updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' });
 
     const allowed = await client.rpc('create_project_brief', {
@@ -163,6 +188,11 @@ if (!staticOnly && supabaseUrl && anonKey && serviceKey && clientPass) {
         tos_accepted_at: originalProfile.tos_accepted_at,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' });
+    }
+    if (originalPhoneTrust) {
+      await admin.from('account_phone_verifications').upsert(originalPhoneTrust, { onConflict: 'user_id' });
+    } else {
+      await admin.from('account_phone_verifications').delete().eq('user_id', userId);
     }
   }
 }

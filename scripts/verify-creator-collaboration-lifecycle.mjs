@@ -2,6 +2,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
+import { provisionQaTrust } from './lib/qaTrust.mjs';
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const sql = readdirSync(join(root, 'supabase/migrations')).filter((f) => f.endsWith('.sql')).sort()
@@ -66,9 +67,23 @@ if (Object.values(config).every(Boolean)) {
   const { error: clientAuthError } = await client.auth.signInWithPassword({ email: config.clientEmail, password: config.clientPassword });
   if (clientAuthError) throw clientAuthError;
   let targetUserId; let targetListingId; let collaborationId; let projectId;
+  let restorePrimeTrust; let restoreTargetTrust; let primeListingBefore;
   try {
-    const { data: primeListing, error: primeListingError } = await service.from('creator_listings').select('*').eq('user_id', primeAuth.user.id).eq('review_status', 'approved').limit(1).single();
+    restorePrimeTrust = await provisionQaTrust(service, primeAuth.user.id);
+    const { data: existingPrimeListing, error: primeListingError } = await service.from('creator_listings').select('*').eq('user_id', primeAuth.user.id).limit(1).single();
     if (primeListingError) throw primeListingError;
+    primeListingBefore = {
+      id: existingPrimeListing.id,
+      review_status: existingPrimeListing.review_status,
+      verified: existingPrimeListing.verified,
+      verification_status: existingPrimeListing.verification_status,
+    };
+    const { data: primeListing, error: primeReadyError } = await service.from('creator_listings')
+      .update({ review_status: 'approved', verified: true, verification_status: 'verified' })
+      .eq('id', existingPrimeListing.id)
+      .select('*')
+      .single();
+    if (primeReadyError) throw primeReadyError;
     const selfHire = await prime.rpc('create_creator_collaboration', { p_collaborator_listing_id: primeListing.id, p_project_id: null, p_scope: 'A complete professional self hire rejection test.', p_amount_cents: 25000, p_deadline: '2030-01-01', p_service_category: 'Post Production', p_workspace_provider: 'frame_io' });
     if (!selfHire.error) throw new Error('Self-hire was not rejected.');
 
@@ -76,6 +91,7 @@ if (Object.values(config).every(Boolean)) {
     const { data: tempAuth, error: tempAuthError } = await service.auth.admin.createUser({ email: `qa-collaborator-${crypto.randomUUID()}@example.invalid`, password, email_confirm: true, user_metadata: { role: 'creator', full_name: 'QA Collaborator' } });
     if (tempAuthError) throw tempAuthError;
     targetUserId = tempAuth.user.id;
+    restoreTargetTrust = await provisionQaTrust(service, targetUserId);
     const copy = { ...primeListing };
     for (const key of ['id','created_at','updated_at','search_vector']) delete copy[key];
     Object.assign(copy, { user_id: targetUserId, name: 'QA Collaborator', business_name: 'QA Collaborator Studio', email: `qa-${targetUserId}@example.invalid`, stripe_account_id: null, review_status: 'approved', open_to_creator_collaborations: true });
@@ -108,6 +124,15 @@ if (Object.values(config).every(Boolean)) {
     if (collaborationId) await service.from('creator_collaborations').delete().eq('id', collaborationId);
     if (projectId) await service.from('projects').delete().eq('id', projectId);
     if (targetListingId) await service.from('creator_listings').delete().eq('id', targetListingId);
+    if (primeListingBefore) {
+      await service.from('creator_listings').update({
+        review_status: primeListingBefore.review_status,
+        verified: primeListingBefore.verified,
+        verification_status: primeListingBefore.verification_status,
+      }).eq('id', primeListingBefore.id);
+    }
+    if (restoreTargetTrust) await restoreTargetTrust();
+    if (restorePrimeTrust) await restorePrimeTrust();
     if (targetUserId) await service.auth.admin.deleteUser(targetUserId);
     await Promise.all([prime.auth.signOut(), client.auth.signOut(), target.auth.signOut()]);
   }
