@@ -90,6 +90,45 @@ for (const forbidden of ['raw_payload', 'verification_report_json', 'selfie_url'
   expect(!protectedIdentitySources.includes(forbidden), `Identity functions must not persist prohibited field: ${forbidden}`);
 }
 
+for (const expected of [
+  'public.user_identity_verified',
+  'creatorbridge_private.user_phone_verified(v_user_id)',
+  'creatorbridge_private.user_identity_verified(v_user_id)',
+  'Phone verification is required before submitting a creator application',
+  'Identity verification is required before submitting a creator application',
+  'Phone verification is required before contacting creators',
+  'Both project parties must complete identity verification',
+]) {
+  expect(sql.includes(expected), `Identity enforcement migration missing: ${expected}`);
+}
+
+const signContract = optionalSource('supabase/functions/sign-contract/index.ts');
+const createPaymentIntent = optionalSource('supabase/functions/create-payment-intent/index.ts');
+const createCallToken = optionalSource('supabase/functions/create-call-token/index.ts');
+const collaborationPayment = optionalSource('supabase/functions/create-collaboration-payment/index.ts');
+for (const [name, contents] of [
+  ['contract signing', signContract],
+  ['project payment', createPaymentIntent],
+  ['call joining', createCallToken],
+]) {
+  expect(
+    contents.includes("rpc('require_verified_project_parties'"),
+    `${name} must enforce both project parties through the shared server predicate`,
+  );
+  expect(
+    contents.includes('IDENTITY_VERIFICATION_REQUIRED'),
+    `${name} must return a stable identity gate code`,
+  );
+}
+expect(
+  collaborationPayment.includes("rpc('user_identity_verified'"),
+  'Creator collaboration funding must verify both creators through the shared server predicate',
+);
+expect(
+  collaborationPayment.includes('IDENTITY_VERIFICATION_REQUIRED'),
+  'Creator collaboration funding must return a stable identity gate code',
+);
+
 if (failures.length) {
   console.error(failures.join('\n'));
   process.exit(1);

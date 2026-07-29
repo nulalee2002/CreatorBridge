@@ -166,6 +166,26 @@ Deno.serve(async (req) => {
       );
     }
 
+    const { data: trustRows, error: trustError } = await supabaseAdmin
+      .rpc('require_verified_project_parties', { p_project_id: projectId });
+    const trust = Array.isArray(trustRows) ? trustRows[0] : trustRows;
+    if (trustError) {
+      console.error('create-payment-intent identity gate error:', trustError);
+      return new Response(
+        JSON.stringify({ error: 'Identity status could not be verified', code: 'IDENTITY_GATE_UNAVAILABLE' }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (!trust?.both_verified) {
+      return new Response(
+        JSON.stringify({
+          error: 'Both project parties must complete identity verification before payment.',
+          code: 'IDENTITY_VERIFICATION_REQUIRED',
+        }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const projectStatus = String(project.status || '').toLowerCase();
 
     const { data: listing, error: listingError } = await supabaseAdmin

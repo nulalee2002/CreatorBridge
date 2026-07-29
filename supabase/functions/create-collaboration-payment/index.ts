@@ -17,6 +17,15 @@ Deno.serve(async (req) => {
     const { data: collaboration } = await admin.from('creator_collaborations').select('*, collaborator:creator_listings!collaborator_listing_id(stripe_account_id)').eq('id', collaborationId).single();
     if (!collaboration || collaboration.prime_user_id !== auth.user.id) return reply({ error: 'Only the hiring creator can fund this collaboration' }, 403);
     if (!['accepted','funding_pending'].includes(collaboration.status)) return reply({ error: 'The collaborator must accept before funding' }, 409);
+    const [{ data: primeVerified, error: primeTrustError }, { data: collaboratorVerified, error: collaboratorTrustError }] = await Promise.all([
+      admin.rpc('user_identity_verified', { p_user_id: collaboration.prime_user_id }),
+      admin.rpc('user_identity_verified', { p_user_id: collaboration.collaborator_user_id }),
+    ]);
+    if (primeTrustError || collaboratorTrustError) return reply({ error: 'Identity status could not be verified', code: 'IDENTITY_GATE_UNAVAILABLE' }, 503);
+    if (!primeVerified || !collaboratorVerified) return reply({
+      error: 'Both creators must complete identity verification before collaboration funding.',
+      code: 'IDENTITY_VERIFICATION_REQUIRED',
+    }, 409);
     const { count } = await admin.from('transactions').select('id', { count: 'exact', head: true }).eq('creator_id', collaboration.collaborator_listing_id).eq('final_status', 'released');
     const base = Number(collaboration.amount_cents);
     const fees = calculateCollaborationFees(base, count ?? 0);

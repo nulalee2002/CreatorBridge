@@ -30,6 +30,8 @@ ok('prime pays ACH cost',calculateCollaborationFees(25000,0).primeChargeCents>25
 ok('ledger exists',sql.includes('create table if not exists public.collaboration_payments'));
 ok('ACH only',fn.includes("payment_method_types: ['us_bank_account']"));
 ok('trusted amount',fn.includes("from('creator_collaborations')")&&!fn.includes('amountCents } = await req.json'));
+ok('both creators identity verified',(fn.match(/rpc\('user_identity_verified'/g)||[]).length>=2);
+ok('stable identity gate code',fn.includes('IDENTITY_VERIFICATION_REQUIRED'));
 ok('settlement authoritative',webhook.includes('creator_collaborations')&&webhook.includes("status: 'funded'"));
 ok('returns handled',webhook.includes('payment_intent.payment_failed')&&webhook.includes('collaboration_payments'));
 ok('idempotency',sql.includes('stripe_payment_intent_id text unique'));

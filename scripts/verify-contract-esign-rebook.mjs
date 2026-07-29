@@ -48,6 +48,8 @@ if (fs.existsSync(signFunctionPath)) {
     "checkRateLimit(req, { maxRequests: 8",
     "`${contract.id}/${signerRole}.png`",
     "rpc('refresh_contract_signature_status'",
+    "rpc('require_verified_project_parties'",
+    'IDENTITY_VERIFICATION_REQUIRED',
   ]) {
     if (!signing.includes(expected)) failures.push(`Signing function missing: ${expected}`);
   }

@@ -28,6 +28,8 @@ assert.match(callRoom, /leave\([^)]*true/, 'The creator host must end the Zoom s
 assert.match(callsPanel, /setNow\(Date\.now\(\)\)/, 'Join and no-show windows must update while the page stays open');
 
 assert.match(tokenFunction, /startedAt:/, 'The token response must include the shared call start time');
+assert.match(tokenFunction, /rpc\('require_verified_project_parties'/, 'Joining a call must enforce both parties through the shared identity predicate');
+assert.match(tokenFunction, /IDENTITY_VERIFICATION_REQUIRED/, 'Joining a call must return a stable identity gate code');
 
 const validationBranch = webhook.indexOf("event?.event === 'endpoint.url_validation'");
 const signatureCheck = webhook.indexOf('signature mismatch');
@@ -63,6 +65,7 @@ assert.match(migrations, /sync-call-recordings[^\n]*[\s\S]*?\*\/5 \* \* \* \*/, 
 assert.match(migrations, /p_availability_date date/, 'Scheduling must bind the selected availability date');
 assert.match(migrations, /pg_advisory_xact_lock/, 'The three-call cap must be concurrency safe');
 assert.match(migrations, /for update/, 'Additional-call requests must be claimed atomically');
+assert.match(migrations, /Both project parties must complete identity verification/, 'Scheduling a call must require both parties to be identity verified');
 assert.match(
   hardeningMigration,
   /create or replace function public\.schedule_project_call\(\s*p_project_id uuid,\s*p_scheduled_at timestamptz\s*\)[\s\S]*return public\.schedule_project_call\(p_project_id, p_scheduled_at, v_availability_date\)/,

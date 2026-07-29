@@ -88,6 +88,20 @@ Deno.serve(async (req) => {
     const role = userId === call.creator_id ? 'creator' : userId === call.client_id ? 'client' : null;
     if (!role) return json({ error: 'Only the call parties can join this call' }, 403);
 
+    const { data: trustRows, error: trustError } = await admin
+      .rpc('require_verified_project_parties', { p_project_id: call.project_id });
+    const trust = Array.isArray(trustRows) ? trustRows[0] : trustRows;
+    if (trustError) {
+      console.error('create-call-token identity gate error:', trustError);
+      return json({ error: 'Identity status could not be verified', code: 'IDENTITY_GATE_UNAVAILABLE' }, 503);
+    }
+    if (!trust?.both_verified) {
+      return json({
+        error: 'Both project parties must complete identity verification before joining a call.',
+        code: 'IDENTITY_VERIFICATION_REQUIRED',
+      }, 409);
+    }
+
     if (!['scheduled', 'in_progress'].includes(call.status)) {
       return json({ error: 'This call is not open to join' }, 409);
     }

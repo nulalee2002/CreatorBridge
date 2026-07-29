@@ -82,6 +82,20 @@ Deno.serve(async (req) => {
     if (contract.status === 'void') return json({ error: 'A void agreement cannot be signed' }, 409);
     if (signedContentHash !== contract.content_hash) return json({ error: 'The agreement changed. Review the latest version before signing.' }, 409);
 
+    const { data: trustRows, error: trustError } = await admin
+      .rpc('require_verified_project_parties', { p_project_id: contract.project_id });
+    const trust = Array.isArray(trustRows) ? trustRows[0] : trustRows;
+    if (trustError) {
+      console.error('sign-contract identity gate error:', trustError);
+      return json({ error: 'Identity status could not be verified', code: 'IDENTITY_GATE_UNAVAILABLE' }, 503);
+    }
+    if (!trust?.both_verified) {
+      return json({
+        error: 'Both project parties must complete identity verification before signing.',
+        code: 'IDENTITY_VERIFICATION_REQUIRED',
+      }, 409);
+    }
+
     const { data: existing } = await admin
       .from('contract_signatures')
       .select('*')

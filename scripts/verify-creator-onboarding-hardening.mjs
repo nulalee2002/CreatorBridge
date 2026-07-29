@@ -11,6 +11,11 @@ const source = path => readFileSync(join(root, path), 'utf8');
 
 const migrationName = readdirSync(join(root, 'supabase/migrations'))
   .find(name => name.endsWith('_harden_creator_onboarding.sql'));
+const allSql = readdirSync(join(root, 'supabase/migrations'))
+  .filter(name => name.endsWith('.sql'))
+  .sort()
+  .map(name => source(`supabase/migrations/${name}`))
+  .join('\n');
 expect(Boolean(migrationName), 'Missing harden_creator_onboarding migration');
 
 if (migrationName) {
@@ -33,6 +38,14 @@ if (migrationName) {
   ]) {
     expect(sql.includes(expected), `Creator onboarding migration missing: ${expected}`);
   }
+}
+for (const expected of [
+  'Phone verification is required before submitting a creator application',
+  'Identity verification is required before submitting a creator application',
+  'creatorbridge_private.user_phone_verified(cl.user_id)',
+  'creatorbridge_private.user_identity_verified(cl.user_id)',
+]) {
+  expect(allSql.includes(expected), `Creator trust enforcement missing: ${expected}`);
 }
 
 const directory = source('src/components/CreatorDirectory.jsx');
