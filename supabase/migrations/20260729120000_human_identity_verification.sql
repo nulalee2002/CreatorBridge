@@ -360,6 +360,54 @@ $$;
 revoke all on function public.require_verified_project_parties(uuid) from public, anon;
 grant execute on function public.require_verified_project_parties(uuid) to authenticated, service_role;
 
+create or replace function public.claim_identity_provider_event(
+  p_event_id text,
+  p_event_type text,
+  p_provider_session_id text
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_claimed text;
+begin
+  insert into public.identity_provider_events (
+    event_id,
+    event_type,
+    provider_session_id,
+    processing_status,
+    processing_error,
+    received_at,
+    processed_at
+  )
+  values (
+    p_event_id,
+    p_event_type,
+    p_provider_session_id,
+    'processing',
+    null,
+    now(),
+    null
+  )
+  on conflict (event_id) do update
+  set processing_status = 'processing',
+      processing_error = null,
+      received_at = now(),
+      processed_at = null
+  where public.identity_provider_events.processing_status = 'failed'
+  returning event_id into v_claimed;
+
+  return v_claimed is not null;
+end;
+$$;
+
+revoke all on function public.claim_identity_provider_event(text, text, text)
+  from public, anon, authenticated;
+grant execute on function public.claim_identity_provider_event(text, text, text)
+  to service_role;
+
 comment on table public.account_phone_verifications is
   'Private, provider-backed phone possession state. This table is the authorization source; public profile fields are not.';
 comment on table public.identity_verifications is

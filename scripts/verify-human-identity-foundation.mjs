@@ -78,6 +78,18 @@ expect(identityVerification.includes("functions.invoke('create-identity-session'
 expect(creatorDirectory.includes('<IdentityVerification'), 'Creator submission must show identity verification');
 expect(contractSignModal.includes('<IdentityVerification'), 'Contract signing must show identity verification');
 
+const identityWebhook = optionalSource('supabase/functions/stripe-identity-webhook/index.ts');
+expect(identityWebhook.includes('STRIPE_IDENTITY_WEBHOOK_SECRET'), 'Identity webhook must use its dedicated signing secret');
+expect(identityWebhook.includes('constructEventAsync'), 'Identity webhook must verify Stripe signatures');
+expect(identityWebhook.includes('claim_identity_provider_event'), 'Identity webhook must claim provider events idempotently');
+expect(identityWebhook.includes('identity.verification_session.verified'), 'Identity webhook must process verified sessions');
+expect(identityWebhook.includes('identity.verification_session.requires_input'), 'Identity webhook must process failed sessions');
+
+const protectedIdentitySources = `${createIdentitySession}\n${identityWebhook}`.toLowerCase();
+for (const forbidden of ['raw_payload', 'verification_report_json', 'selfie_url', 'face_embedding']) {
+  expect(!protectedIdentitySources.includes(forbidden), `Identity functions must not persist prohibited field: ${forbidden}`);
+}
+
 if (failures.length) {
   console.error(failures.join('\n'));
   process.exit(1);
@@ -90,4 +102,5 @@ console.log(JSON.stringify({
   publicProfilePhoneLeakPrevented: true,
   phoneSharedAcrossRoles: true,
   consentedIdentitySession: true,
+  signedIdentityWebhook: true,
 }, null, 2));

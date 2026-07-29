@@ -17,6 +17,7 @@ const OPTIONAL_VERCEL = [
 const REQUIRED_SUPABASE_SECRETS = [
   'STRIPE_SECRET_KEY',
   'STRIPE_WEBHOOK_SECRET',
+  'STRIPE_IDENTITY_WEBHOOK_SECRET',
   'SITE_URL',
   'SUPABASE_URL',
   'SUPABASE_SERVICE_ROLE_KEY',
@@ -67,6 +68,7 @@ function findUsedEnvNames() {
     'supabase/functions/create-connect-account/index.ts',
     'supabase/functions/create-payment-intent/index.ts',
     'supabase/functions/stripe-webhook/index.ts',
+    'supabase/functions/stripe-identity-webhook/index.ts',
     'supabase/functions/release-payment/index.ts',
     'supabase/functions/check-connect-status/index.ts',
     'supabase/functions/chatbot/index.ts',

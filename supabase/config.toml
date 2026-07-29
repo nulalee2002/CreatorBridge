@@ -396,6 +396,12 @@ verify_jwt = true
 enabled = true
 verify_jwt = true
 
+# Stripe calls this endpoint directly. Authenticity is enforced by the
+# dedicated Stripe Identity webhook signing secret inside the function.
+[functions.stripe-identity-webhook]
+enabled = true
+verify_jwt = false
+
 # Stripe calls this endpoint directly with no Supabase JWT; auth is the Stripe
 # signature check (STRIPE_WEBHOOK_SECRET) inside the function. verify_jwt MUST
 # stay false or the platform 401s every webhook and no payment ever settles.
