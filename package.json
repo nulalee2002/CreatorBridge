@@ -51,6 +51,7 @@
     "generate:sitemap": "node scripts/generate-sitemap.js",
     "verify:booking-e2e": "node --env-file=.env scripts/verify-booking-e2e.mjs",
     "test:contracts": "node --test tests/contractTerms.test.js",
+    "test:change-orders": "node --test tests/changeOrderTerms.test.js",
     "test:creator-draft": "node --test tests/creatorApplicationDraft.test.js",
     "test:human-identity": "node --test tests/humanIdentityPolicy.test.js",
     "test:identity-session": "node --test tests/identitySessionPolicy.test.js",
@@ -58,6 +59,7 @@
     "test:phone-verification": "node --test tests/phoneVerification.test.js",
     "test:date-keys": "node --test tests/dateKeys.test.js",
     "verify:contracts": "node scripts/verify-contract-esign-rebook.mjs",
+    "verify:change-orders": "node scripts/verify-change-orders.mjs",
     "verify:human-identity": "node scripts/verify-human-identity-foundation.mjs",
     "verify:video-calls": "node scripts/verify-video-calls.mjs"
   },

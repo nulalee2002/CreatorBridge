@@ -64,5 +64,5 @@ test('generated contract language avoids prohibited claims and Unicode dashes', 
   assert.equal(/\bescrow\b/i.test(copy), false);
   assert.equal(/\bmarketplace\b/i.test(copy), false);
   assert.equal(/notari[sz]/i.test(copy), false);
-  assert.match(copy, /attorney_review_required/);
+  assert.doesNotMatch(copy, /attorney_review_required/);
 });
