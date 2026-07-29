@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle, ChevronDown, ChevronUp, Filter,
-  Loader, Plus, RefreshCw, Search, ShieldCheck, Users, X,
+  Fingerprint, Loader, Plus, RefreshCw, Search, ShieldCheck, Users, X,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
 import { getPillar } from '../data/taxonomy.js';
+import { IdentityReviewTab } from '../components/admin/IdentityReviewTab.jsx';
 
 // ── Shared helpers ─────────────────────────────────────────────────────────────
 
@@ -720,6 +721,7 @@ export function AdminOperations({ dark }) {
 
   const tabs = [
     { id: 'review',     label: 'Creator Review', icon: Users },
+    { id: 'identity',   label: 'Identity Review', icon: Fingerprint },
     { id: 'violations', label: 'Violations',      icon: AlertTriangle },
   ];
 
@@ -756,6 +758,7 @@ export function AdminOperations({ dark }) {
       <div className={`rounded-2xl border overflow-hidden ${cardBg} shadow-sm`}>
         <div className="p-0">
           {tab === 'review'     && <CreatorReviewTab dark={dark} />}
+          {tab === 'identity'   && <IdentityReviewTab dark={dark} />}
           {tab === 'violations' && <ViolationsTab dark={dark} />}
         </div>
       </div>

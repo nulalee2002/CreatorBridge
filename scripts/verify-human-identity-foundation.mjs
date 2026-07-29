@@ -129,6 +129,26 @@ expect(
   'Creator collaboration funding must return a stable identity gate code',
 );
 
+for (const expected of [
+  'public.get_admin_identity_review_queue',
+  'public.admin_resolve_identity_review',
+  'request_secure_retry',
+  'clear_false_positive',
+  'confirm_duplicate',
+  'restore_original_account',
+  'Identity review reason is required',
+  'insert into public.identity_review_actions',
+]) {
+  expect(sql.includes(expected), `Identity admin review migration missing: ${expected}`);
+}
+const identityReviewTab = optionalSource('src/components/admin/IdentityReviewTab.jsx');
+const adminOperations = optionalSource('src/pages/AdminOperations.jsx');
+expect(identityReviewTab.includes("rpc('get_admin_identity_review_queue'"), 'Admin identity review must load the reduced server queue');
+expect(identityReviewTab.includes("rpc('admin_resolve_identity_review'"), 'Admin identity review must use the audited resolution RPC');
+expect(identityReviewTab.includes('provider_session_id'), 'Admin identity review must expose only the provider session reference');
+expect(!/selfie_url|face_embedding|verification_report_json/i.test(identityReviewTab), 'Admin UI must not fetch biometric evidence');
+expect(adminOperations.includes('<IdentityReviewTab'), 'Admin Operations must include the identity review tab');
+
 if (failures.length) {
   console.error(failures.join('\n'));
   process.exit(1);
