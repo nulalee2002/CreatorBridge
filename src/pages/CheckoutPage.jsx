@@ -13,6 +13,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import { SERVICES, normalizeServiceId } from '../data/rates.js';
 import { fromSupabaseProject, upsertLocalProject } from '../utils/projectStorage.js';
 import { CreatorAvatar } from '../components/CreatorAvatar.jsx';
+import { ChangeOrderFinalPayments } from '../components/change-orders/ChangeOrderFinalPayments.jsx';
 
 // ── Helpers ──────────────────────────────────────────────────────
 function loadProject(projectId) {
@@ -588,6 +589,7 @@ export function CheckoutPage({ dark }) {
               ? 'This CreatorBridge payment is complete.'
               : paymentType === 'final' ? 'Pay the remaining project balance.' : 'Confirm your CreatorBridge booking.'}
           </h1>
+          {paymentType === 'final' && <ChangeOrderFinalPayments projectId={project.id} />}
 
           {retainerBlockedByContract ? (
             <div className="mx-auto max-w-xl rounded-md border border-gold-500/25 bg-gold-500/8 p-5 text-center">

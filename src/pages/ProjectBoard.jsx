@@ -38,6 +38,9 @@ import { CollaborationSurvey } from '../components/analytics/CollaborationSurvey
 import { ContractAction } from '../components/ContractAction.jsx';
 import { ProjectCallsPanel } from '../components/calls/ProjectCallsPanel.jsx';
 import { RebookButton } from '../components/RebookButton.jsx';
+import { ChangeOrderPanel } from '../components/change-orders/ChangeOrderPanel.jsx';
+import { ProjectDocuments } from '../components/ProjectDocuments.jsx';
+import { ProjectProtectionGuide } from '../components/ProjectProtectionGuide.jsx';
 import {
   CLIENT_MINIMUM_PROJECT_ERROR,
   CLIENT_MINIMUM_PROJECT_NOTE,
@@ -1475,6 +1478,9 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
       <div>
         <h2 className="font-display font-bold text-xl text-white leading-snug">{localProject.title}</h2>
         <p className={`text-xs ${textSub} mt-1`}>Posted by {localProject.clientName} · {timeAgo(localProject.createdAt)}</p>
+        {isUuid(localProject.id) && localProject.status !== 'open' && (
+          <div className="mt-2"><ProjectProtectionGuide projectId={localProject.id} userId={user?.id} role={isClient ? 'client' : 'creator'} /></div>
+        )}
       </div>
 
       {/* Details list */}
@@ -1498,7 +1504,7 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
       <div>
         <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Timeline status</p>
         <div className={`p-3 rounded-xl border ${dark ? 'border-white/[0.07] bg-charcoal-900/40' : 'border-gray-200 bg-gray-50'}`}>
-          <ProjectTimeline status={localProject.status} dark={dark} />
+          <ProjectTimeline status={localProject.status} dark={dark} projectId={isUuid(localProject.id) ? localProject.id : null} />
         </div>
       </div>
 
@@ -1508,6 +1514,12 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
 
       {/* Video calls: unlocks at retainer_paid or later with a countersigned agreement */}
       <ProjectCallsPanel project={localProject} user={user} isClient={isClient} />
+      {isUuid(localProject.id) && ['retainer_paid', 'in_progress', 'revision', 'delivered', 'approved', 'completed', 'final_paid'].includes(localProject.status) && (
+        <>
+          <ChangeOrderPanel projectId={localProject.id} userId={user?.id} />
+          <ProjectDocuments projectId={localProject.id} />
+        </>
+      )}
 
       {/* Description */}
       <div>

@@ -30,6 +30,13 @@ Deno.serve(async req=>{
   const {data:signature,error:insertError}=await admin.from('change_order_signatures').insert({change_order_id:order.id,signer_user_id:auth.user.id,signer_role:signerRole,signer_name:String(signerName).trim(),method,signature_image_ref:`storage://signatures/${path}`,consent_text:CONSENT_TEXT,signed_content_hash:order.content_hash,user_agent:req.headers.get('user-agent')||null,ip_address:(req.headers.get('x-forwarded-for')||'').split(',')[0].trim()||null}).select('*').single();
   if(insertError)throw insertError;
   const {data:refreshed,error:refreshError}=await admin.rpc('refresh_change_order_signature_status',{p_change_order_id:order.id});if(refreshError)throw refreshError;
+  await admin.rpc('create_platform_notification',{
+    p_recipient_id:signerRole==='client'?order.creator_user_id:order.client_id,
+    p_type:refreshed.status==='active'||refreshed.status==='awaiting_additional_retainer'?'contract_countersigned':'contract_signed',
+    p_title:refreshed.status==='active'?'No-cost change order active':refreshed.status==='awaiting_additional_retainer'?'Change order signed, added retainer due':'The other party signed the change order',
+    p_body:refreshed.status==='awaiting_additional_retainer'?'The client pays the added retainer before the new scope becomes active.':'Review the project change-order status inside CreatorBridge.',
+    p_action_url:'/projects',p_metadata:{project_id:order.project_id,change_order_id:order.id},p_actor_id:auth.user.id,p_response_due_at:null,
+  });
   return reply({signature,changeOrder:await renderAndStoreChangeOrderPdf(admin,req,refreshed.id)});
  }catch(error){console.error('sign-change-order error:',error);return reply({error:error.message||'Change-order signature failed'},500)}
 });

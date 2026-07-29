@@ -495,7 +495,7 @@ function Packages({ selected, setSelected, style, onBook }) {
       <div className="mb-6">
         <Eyebrow>Packages</Eyebrow>
         <h2 className="text-2xl md:text-3xl serif font-medium leading-tight">Choose a package to start a booking.</h2>
-        <p className="text-sm text-[var(--text-secondary)] max-w-md mt-2">Every booking includes CreatorBridge's 50/50 protected payment structure. Custom scopes are negotiable after first call. Video calls unlock after you book, once the agreement is signed and the retainer is paid.</p>
+        <p className="text-sm text-[var(--text-secondary)] max-w-md mt-2">Every booking includes CreatorBridge's 50/50 protected payment structure. After a call, any material change to scope, price, dates, revisions, or rights uses a separately signed change order. Video calls unlock after both signatures and the retainer.</p>
       </div>
       <div className="grid md:grid-cols-3 gap-4">
         {packages.map(p => {

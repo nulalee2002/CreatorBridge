@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Check, Download, FileText, History, Loader2, PencilLine } from 'lucide-react';
+import { Check, Download, FilePlus2, FileText, History, Loader2, PencilLine } from 'lucide-react';
 import { supabase } from '../../lib/supabase.js';
 import { CALL_RETENTION_TEXT } from '../../lib/callLegal.js';
 
@@ -193,6 +193,15 @@ export function CallSummary({ call, user }) {
                 className="flex items-center gap-1.5 rounded-lg border border-white/[0.09] px-3 py-1.5 text-[11px] font-bold text-charcoal-200 transition hover:border-gold-500/35 hover:text-white"
               >
                 <History size={12} /> {showHistory ? 'Hide history' : `History (${revisions.length})`}
+              </button>
+            )}
+            {summary.status === 'agreed' && (
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('creatorbridge:create-change-order', { detail: { projectId: summary.project_id, summaryId: summary.id } }))}
+                className="flex items-center gap-1.5 rounded-lg border border-gold-500/30 bg-gold-500/10 px-3 py-1.5 text-[11px] font-bold text-gold-300"
+              >
+                <FilePlus2 size={12} /> Create change order
               </button>
             )}
           </div>
