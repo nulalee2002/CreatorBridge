@@ -392,6 +392,10 @@ verify_jwt = true
 enabled = true
 verify_jwt = true
 
+[functions.create-change-order-payment]
+enabled = true
+verify_jwt = true
+
 [functions.phone-send-code]
 enabled = true
 verify_jwt = true

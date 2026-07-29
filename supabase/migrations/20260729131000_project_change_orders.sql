@@ -61,6 +61,8 @@ create table if not exists public.change_order_payments (
   client_fee_pct numeric not null check (client_fee_pct between 0 and 100),
   retainer_payment_intent text unique,
   final_payment_intent text unique,
+  retainer_stripe_event_id text unique,
+  final_stripe_event_id text unique,
   retainer_status text not null default 'pending' check (retainer_status in ('pending','processing','paid','failed','released')),
   final_status text not null default 'pending' check (final_status in ('pending','processing','paid','failed','released')),
   retainer_transfer_id text unique,

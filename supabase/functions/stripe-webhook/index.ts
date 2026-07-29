@@ -1,5 +1,6 @@
 import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { projectChangeOrderFinalsPaid, releasePaidChangeOrders } from '../_shared/changeOrderRelease.ts';
 // stripe-webhook is validated via Stripe signature, not rate limited
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
@@ -70,6 +71,7 @@ async function paymentFingerprintFromIntent(pi: Stripe.PaymentIntent) {
 }
 
 async function markProjectCompleted(supabaseAdmin: ReturnType<typeof createClient>, txn: Record<string, any>) {
+  if (!(await projectChangeOrderFinalsPaid(supabaseAdmin, txn.project_id))) return;
   const now = new Date().toISOString();
   const { data: listing } = await supabaseAdmin
     .from('creator_listings')
@@ -100,6 +102,7 @@ async function markProjectCompleted(supabaseAdmin: ReturnType<typeof createClien
 async function releaseCreatorPayout(supabaseAdmin: ReturnType<typeof createClient>, txn: Record<string, any>) {
   if (txn.final_transfer_id || txn.final_status === 'released') return;
   if (txn.retainer_status !== 'paid' || txn.final_status !== 'paid') return;
+  if (!(await projectChangeOrderFinalsPaid(supabaseAdmin, txn.project_id))) return;
 
   const { data: creatorListing } = await supabaseAdmin
     .from('creator_listings')
@@ -359,6 +362,52 @@ Deno.serve(async (req) => {
 
       case 'payment_intent.succeeded': {
         const pi = event.data.object as Stripe.PaymentIntent;
+        const paymentFlow = pi.metadata?.paymentFlow;
+        if (paymentFlow === 'change_order') {
+          const phase = pi.metadata?.paymentType === 'change_order_retainer'
+            ? 'retainer'
+            : pi.metadata?.paymentType === 'change_order_final'
+              ? 'final'
+              : null;
+          if (!phase || !pi.metadata?.changeOrderId || pi.currency !== 'usd') {
+            throw new Error('Invalid change-order payment metadata');
+          }
+          const { data: ledger } = await supabaseAdmin
+            .from('change_order_payments')
+            .select('*')
+            .eq('change_order_id', pi.metadata.changeOrderId)
+            .eq(phase === 'retainer' ? 'retainer_payment_intent' : 'final_payment_intent', pi.id)
+            .maybeSingle();
+          if (!ledger) throw new Error('Trusted change-order payment ledger not found');
+          const expectedAmount = phase === 'retainer'
+            ? Number(ledger.retainer_amount_cents)
+            : Number(ledger.final_amount_cents) + Math.round(Number(ledger.added_amount_cents) * Number(ledger.client_fee_pct) / 100);
+          if (pi.amount !== expectedAmount) throw new Error('Change-order payment amount mismatch');
+          const now = new Date().toISOString();
+          const patch = phase === 'retainer'
+            ? { retainer_status: 'paid', retainer_paid_at: now, retainer_stripe_event_id: event.id, updated_at: now }
+            : { final_status: 'paid', final_paid_at: now, final_stripe_event_id: event.id, updated_at: now };
+          await supabaseAdmin.from('change_order_payments').update(patch).eq('id', ledger.id);
+          if (phase === 'retainer') {
+            await supabaseAdmin.from('contract_change_orders')
+              .update({ status: 'active', activated_at: now, updated_at: now })
+              .eq('id', ledger.change_order_id)
+              .eq('status', 'awaiting_additional_retainer');
+          } else {
+            const { data: txn } = await supabaseAdmin.from('transactions').select('*')
+              .eq('project_id', ledger.project_id).maybeSingle();
+            if (txn && await projectChangeOrderFinalsPaid(supabaseAdmin, ledger.project_id)) {
+              const { data: listing } = await supabaseAdmin.from('creator_listings')
+                .select('stripe_account_id').eq('id', ledger.creator_id).maybeSingle();
+              if (listing?.stripe_account_id) {
+                await releasePaidChangeOrders(supabaseAdmin, stripe, ledger.project_id, listing.stripe_account_id);
+              }
+              await markProjectCompleted(supabaseAdmin, txn);
+              await releaseCreatorPayout(supabaseAdmin, txn);
+            }
+          }
+          break;
+        }
         if (pi.metadata?.paymentType === 'creator_collaboration') {
           const settledAt = new Date().toISOString();
           const { data: payment } = await supabaseAdmin.from('collaboration_payments').update({ status: 'succeeded', stripe_event_id: event.id, settled_at: settledAt, updated_at: settledAt }).eq('stripe_payment_intent_id', pi.id).select('collaboration_id').maybeSingle();
@@ -440,6 +489,24 @@ Deno.serve(async (req) => {
 
       case 'payment_intent.payment_failed': {
         const pi = event.data.object as Stripe.PaymentIntent;
+        const paymentFlow = pi.metadata?.paymentFlow;
+        if (paymentFlow === 'change_order') {
+          const phase = pi.metadata?.paymentType === 'change_order_retainer'
+            ? 'retainer'
+            : pi.metadata?.paymentType === 'change_order_final'
+              ? 'final'
+              : null;
+          if (phase && pi.metadata?.changeOrderId) {
+            await supabaseAdmin.from('change_order_payments')
+              .update({
+                [phase === 'retainer' ? 'retainer_status' : 'final_status']: 'failed',
+                updated_at: new Date().toISOString(),
+              })
+              .eq('change_order_id', pi.metadata.changeOrderId)
+              .eq(phase === 'retainer' ? 'retainer_payment_intent' : 'final_payment_intent', pi.id);
+          }
+          break;
+        }
         if (pi.metadata?.paymentType === 'creator_collaboration') {
           await supabaseAdmin.from('collaboration_payments').update({ status: 'failed', stripe_event_id: event.id, updated_at: new Date().toISOString() }).eq('stripe_payment_intent_id', pi.id);
           await supabaseAdmin.from('creator_collaborations').update({ status: 'accepted', updated_at: new Date().toISOString() }).eq('id', pi.metadata.collaborationId).eq('status', 'funding_pending');

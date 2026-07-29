@@ -1,6 +1,7 @@
 import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
+import { projectChangeOrderFinalsPaid, releasePaidChangeOrders } from '../_shared/changeOrderRelease.ts';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
   apiVersion: '2024-06-20',
@@ -141,6 +142,12 @@ Deno.serve(async (req) => {
         { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    if (!(await projectChangeOrderFinalsPaid(supabaseAdmin, txn.project_id))) {
+      return new Response(
+        JSON.stringify({ error: 'Every active change-order final must be paid before creator payout release' }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const { data: creatorListing } = await supabaseAdmin
       .from('creator_listings')
@@ -155,6 +162,12 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    const changeOrderTransfers = await releasePaidChangeOrders(
+      supabaseAdmin,
+      stripe,
+      txn.project_id,
+      creatorStripeAccountId,
+    );
 
     // Net to creator: full project amount minus the creator platform fee.
     const netToCreator = Number(txn.project_amount || 0) - Number(txn.creator_fee_amount || 0);
@@ -238,6 +251,7 @@ Deno.serve(async (req) => {
       metadata: {
         retainerTransferId: retainerTransfer.id,
         finalTransferId:    finalTransfer.id,
+        changeOrderTransfers,
         amount:        netToCreator,
         autoApprove,
         adminRelease:  isAdmin,
@@ -291,6 +305,7 @@ Deno.serve(async (req) => {
         success: true,
         retainerTransferId: retainerTransfer.id,
         finalTransferId: finalTransfer.id,
+        changeOrderTransfers,
         netToCreator,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
