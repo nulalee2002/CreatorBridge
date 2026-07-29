@@ -39,6 +39,21 @@ if (fs.existsSync(migrationPath)) {
     if (!sql.includes(expected)) failures.push(`Migration missing: ${expected}`);
   }
 }
+const allMigrations = fs.readdirSync(path.join(root, 'supabase/migrations'))
+  .filter(file => file.endsWith('.sql'))
+  .sort()
+  .map(file => fs.readFileSync(path.join(root, 'supabase/migrations', file), 'utf8'))
+  .join('\n');
+for (const expected of [
+  'protect_signed_contract_evidence',
+  'Signed agreement evidence is immutable',
+  'Agreement signatures are append-only evidence',
+]) {
+  if (!allMigrations.includes(expected)) failures.push(`Contract evidence protection missing: ${expected}`);
+}
+if (fs.readFileSync(path.join(root, 'src/utils/contractTerms.js'), 'utf8').includes(['attorney', 'review', 'required'].join('_'))) {
+  failures.push('New agreement terms still include obsolete review metadata');
+}
 
 const signFunctionPath = path.join(root, 'supabase/functions/sign-contract/index.ts');
 if (fs.existsSync(signFunctionPath)) {

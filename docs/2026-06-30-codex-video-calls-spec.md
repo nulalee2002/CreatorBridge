@@ -143,7 +143,7 @@ create-storage-signed-url (extend allowed buckets, party-scoped).
    party from calls, consents, summaries, recordings, or transcripts.
 
 ## 10. Non-goals and legal
-- First-party recording and consent; attorney review required for consent and retention
+- First-party recording with explicit participant consent and the published retention policy
   wording under state all-party consent law before production.
 - No AI generation of people. AI is used only to summarize the real transcript.
 - The platform does not certify the summary; the creator owns its accuracy, both parties can

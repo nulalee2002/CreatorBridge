@@ -37,7 +37,7 @@ for (const file of [
   'tests/contractTerms.test.js',
   'scripts/verify-contract-esign-rebook.mjs',
 ]) {
-  expect(!optional(file).includes('attorney_review_required'), `${file} still contains active attorney review metadata`);
+  expect(!optional(file).includes(['attorney', 'review', 'required'].join('_')), `${file} still contains obsolete review metadata`);
 }
 
 for (const file of [

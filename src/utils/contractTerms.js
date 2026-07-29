@@ -42,7 +42,6 @@ export function assembleContractTerms(source) {
     document: {
       number: documentNumber(source.contractId, generatedAt),
       template_version: 'v1',
-      attorney_review_required: true,
     },
     parties: {
       client: {
