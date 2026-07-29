@@ -288,7 +288,7 @@ export async function createContractPdf({
   drawSignature(clientSignature, 'Client', margin + signatureWidth + 14);
   y += 38;
 
-  writeWrapped('Draft template for review. Final clause language and the electronic signature flow require entertainment-attorney review for enforceability under ESIGN and UETA before production use.', { x: margin, width: contentWidth, size: 7.5, color: COLORS.stone, style: 'italic' });
+  writeWrapped('Both parties review and sign the same document. CreatorBridge records each signature against the exact document hash and never signs on behalf of either party.', { x: margin, width: contentWidth, size: 7.5, color: COLORS.stone, style: 'italic' });
   drawFooter();
 
   doc.addPage();

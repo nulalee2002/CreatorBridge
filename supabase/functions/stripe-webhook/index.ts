@@ -1,6 +1,7 @@
 import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { projectChangeOrderFinalsPaid, releasePaidChangeOrders } from '../_shared/changeOrderRelease.ts';
+import { isIdentityEventType, processIdentityEvent } from '../_shared/identityEventProcessor.js';
 // stripe-webhook is validated via Stripe signature, not rate limited
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
@@ -331,6 +332,10 @@ Deno.serve(async (req) => {
   );
 
   try {
+    if (isIdentityEventType(event.type)) {
+      return await processIdentityEvent({ event, stripe, admin: supabaseAdmin });
+    }
+
     const { data: processedEvent } = await supabaseAdmin
       .from('payment_events')
       .select('id')

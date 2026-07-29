@@ -169,7 +169,7 @@ export function ContractView({ contract, signatures = [], signatureUrls = {}, on
           </div>
 
           <div className="mt-10 border-t border-[#c9a15e]/15 pt-5 text-center text-[10px] italic leading-5 text-[#8a806e]">
-            Draft template for review. Final clause language and the electronic signature flow require entertainment-attorney review for enforceability under ESIGN and UETA before production use.
+            Both parties review and sign the same document. CreatorBridge records each signature against the exact document hash and never signs on behalf of either party.
           </div>
         </div>
       </article>

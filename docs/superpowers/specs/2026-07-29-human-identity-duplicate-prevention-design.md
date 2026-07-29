@@ -242,3 +242,6 @@ Automated tests and live sandbox checks must demonstrate:
 - Annual forced reverification.
 - Any claim that identity verification is a background check.
 
+## Rollout Status
+
+Implemented and deployed to the CreatorBridge Supabase project on July 29, 2026. The production database contains private phone trust, consent, reduced identity outcome, provider-event, and audited review records with RLS enabled. Shared Twilio verification supports both roles. Stripe Identity uses live document capture and a matching live selfie after dedicated consent, while CreatorBridge stores no raw ID image, selfie, face vector, or provider report. Server gates now protect creator submission and approval, contract signing, project and collaboration funding, call scheduling and joining, and change-order activation. Stripe test-mode Identity events are routed through the existing signature-verified CreatorBridge webhook. Static policy tests and read-only production health probes pass. A real human sandbox completion remains a manual QA exercise because it requires the participant to present an ID and live selfie.

@@ -227,7 +227,7 @@ export function ContractSignModal({ open, contract: initialContract, userId, onC
               </div>
             )}
 
-            <p className="mt-7 text-center text-[11px] leading-5 text-[#8a806e]">Each signature records the name, timestamp, IP, device, and hash of the exact document signed. This is a first-party electronic signature and requires entertainment-attorney review before production reliance.</p>
+            <p className="mt-7 text-center text-[11px] leading-5 text-[#8a806e]">Each signature records the name, timestamp, IP, device, and hash of the exact document signed. CreatorBridge never signs on behalf of either party.</p>
           </section>
         </div>
       </div>

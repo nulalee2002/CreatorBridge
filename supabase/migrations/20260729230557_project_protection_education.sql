@@ -1,4 +1,5 @@
 -- Deterministic project-lifecycle education. This acknowledgment is not legal,
+-- Production migration history aligned with the managed Supabase rollout.
 -- recording, or biometric consent.
 create table if not exists public.project_guide_acknowledgments (
   project_id uuid not null references public.projects(id) on delete cascade,
@@ -11,6 +12,7 @@ create table if not exists public.project_guide_acknowledgments (
 alter table public.project_guide_acknowledgments enable row level security;
 revoke all on public.project_guide_acknowledgments from public,anon,authenticated;
 grant select on public.project_guide_acknowledgments to authenticated;
+grant all on public.project_guide_acknowledgments to service_role;
 create policy project_guide_party_read on public.project_guide_acknowledgments for select to authenticated
 using (user_id=(select auth.uid()) or public.is_platform_admin((select auth.uid())));
 

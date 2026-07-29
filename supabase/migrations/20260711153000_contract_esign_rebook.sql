@@ -300,8 +300,7 @@ begin
   v_terms := jsonb_build_object(
     'document', jsonb_build_object(
       'number', 'CB-' || to_char(now(), 'YYYY') || '-' || upper(substr(replace(v_contract_id::text, '-', ''), 1, 6)),
-      'template_version', 'v1',
-      'attorney_review_required', true
+      'template_version', 'v1'
     ),
     'parties', jsonb_build_object(
       'client', jsonb_build_object(

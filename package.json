@@ -61,6 +61,8 @@
     "verify:contracts": "node scripts/verify-contract-esign-rebook.mjs",
     "verify:change-orders": "node scripts/verify-change-orders.mjs",
     "verify:human-identity": "node scripts/verify-human-identity-foundation.mjs",
+    "verify:human-identity-live": "node --env-file=.env scripts/verify-human-identity-live.mjs",
+    "verify:change-orders-live": "node --env-file=.env scripts/verify-change-orders-live.mjs",
     "verify:video-calls": "node scripts/verify-video-calls.mjs"
   },
   "dependencies": {
@@ -75,13 +77,13 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-helmet-async": "^3.0.0",
-    "react-router-dom": "7.18.1",
+    "react-router-dom": "7.18.2",
     "stripe": "^22.0.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.2",
     "autoprefixer": "^10.4.17",
-    "postcss": "^8.5.10",
+    "postcss": "^8.5.18",
     "tailwindcss": "^3.4.1",
     "vite": "^8.0.16"
   },

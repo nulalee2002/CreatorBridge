@@ -1,4 +1,5 @@
 -- Enforce CreatorBridge trust requirements at the database boundary.
+-- Production migration history aligned with the managed Supabase rollout.
 -- Browser state and public profile fields are never authorization sources.
 
 create or replace function public.user_identity_verified(
@@ -13,7 +14,7 @@ as $$
 declare
   v_requester uuid := auth.uid();
 begin
-  if coalesce(auth.role(), '') <> 'service_role'
+  if coalesce(auth.jwt() ->> 'role', '') <> 'service_role'
     and v_requester is distinct from p_user_id
     and not public.is_platform_admin(v_requester) then
     raise exception 'Identity status access denied' using errcode = '42501';

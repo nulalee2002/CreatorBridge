@@ -1,4 +1,5 @@
 -- Preserve every signed agreement as immutable evidence while removing obsolete
+-- Production migration history aligned with the managed Supabase rollout.
 -- metadata from future and still-unsigned agreements.
 
 create or replace function creatorbridge_private.protect_signed_contract_evidence()
@@ -59,23 +60,3 @@ revoke all on function creatorbridge_private.protect_signed_contract_evidence()
   from public, anon, authenticated;
 revoke all on function creatorbridge_private.protect_contract_signature_evidence()
   from public, anon, authenticated;
-
--- Only unsigned prelaunch QA agreements are normalized. Signed historical
--- snapshots are deliberately untouched.
-update public.contracts contract
-set terms = contract.terms #- '{document,attorney_review_required}',
-    content_hash = encode(
-      extensions.digest(
-        (contract.terms #- '{document,attorney_review_required}')::text,
-        'sha256'
-      ),
-      'hex'
-    ),
-    pdf_ref = null,
-    status = 'draft',
-    updated_at = now()
-where contract.terms #> '{document,attorney_review_required}' is not null
-  and not exists (
-    select 1 from public.contract_signatures signature
-    where signature.contract_id = contract.id
-  );

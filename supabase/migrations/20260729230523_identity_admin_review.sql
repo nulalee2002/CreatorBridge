@@ -1,4 +1,5 @@
 -- Reduced, audited identity review. Biometric evidence stays with Stripe.
+-- Production migration history aligned with the managed Supabase rollout.
 
 create or replace function public.get_admin_identity_review_queue()
 returns table (

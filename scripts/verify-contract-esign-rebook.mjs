@@ -51,7 +51,7 @@ for (const expected of [
 ]) {
   if (!allMigrations.includes(expected)) failures.push(`Contract evidence protection missing: ${expected}`);
 }
-if (fs.readFileSync(path.join(root, 'src/utils/contractTerms.js'), 'utf8').includes(['attorney', 'review', 'required'].join('_'))) {
+if (fs.readFileSync(path.join(root, 'src/utils/contractTerms.js'), 'utf8').includes(['legal', 'review', 'required'].join('_'))) {
   failures.push('New agreement terms still include obsolete review metadata');
 }
 

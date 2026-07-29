@@ -2,7 +2,7 @@ export function getPlatformGuideResponse(question = '') {
   const q = String(question).toLowerCase();
 
   if (q.includes('contract') || q.includes('agreement') || q.includes('electronic signature') || q.includes('e-sign') || q.includes('esign') || q.includes('countersign')) {
-    return 'After a client accepts a proposal, CreatorBridge prepares a production agreement from the accepted brief, proposal amount, and selected creator package. The client and creator each review and sign the same terms before the retainer can be paid. A saved signature speeds up a repeat booking, but it never signs automatically. Each signing event records the name, timestamp, IP, device, and exact document hash. This first-party e-sign flow still requires entertainment-attorney review before production reliance.';
+    return 'After a client accepts a proposal, CreatorBridge prepares a production agreement from the accepted brief, proposal amount, and selected creator package. The client and creator each review and sign the same terms before the retainer can be paid. A saved signature speeds up a repeat booking, but it never signs automatically. Each signing event records the name, timestamp, IP, device, and exact document hash.';
   }
 
   if (q.includes('rebook') || q.includes('book again') || q.includes('repeat booking') || q.includes('hire again') || q.includes('saved creator')) {

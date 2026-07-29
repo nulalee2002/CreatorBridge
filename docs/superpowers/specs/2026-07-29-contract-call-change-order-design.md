@@ -277,3 +277,6 @@ Automated and browser verification must demonstrate:
 - Treating a call summary as a contract amendment.
 - Off-platform signatures, payment, or scope changes.
 
+## Rollout Status
+
+Implemented and deployed to the CreatorBridge Supabase project on July 29, 2026. The protected lifecycle is accepted proposal, generated agreement, both signatures, 50 percent retainer, kickoff call, agreed call summary, separately signed change order when material terms change, added payment when applicable, and production. Original signed agreement evidence, change-order terms, signatures, and successful payment evidence are immutable. Project documents include the original agreement, change orders, agreed call summaries, and original and added payment receipts. Both parties receive a permanent project guide and server-derived timeline. Calls and money movement retain server-side identity, signature, and payment gates. Active UI, help content, Edge Functions, and newly generated PDFs contain no attorney-review requirement or warning. Contract, change-order, call, identity, onboarding, margin, platform, build, and read-only production health checks pass.

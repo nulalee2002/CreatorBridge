@@ -26,6 +26,11 @@ for (const expected of [
   'public.refresh_change_order_signature_status',
   'price_delta_cents >= 0',
   'enable row level security',
+  'from public.contracts contract',
+  "'original_retainer_receipt'::text",
+  "'original_final_receipt'::text",
+  "'change_order_retainer_receipt'::text",
+  "'change_order_final_receipt'::text",
 ]) {
   expect(migrations.includes(expected), `Change-order migrations missing: ${expected}`);
 }
@@ -37,7 +42,7 @@ for (const file of [
   'tests/contractTerms.test.js',
   'scripts/verify-contract-esign-rebook.mjs',
 ]) {
-  expect(!optional(file).includes(['attorney', 'review', 'required'].join('_')), `${file} still contains obsolete review metadata`);
+  expect(!optional(file).includes(['legal', 'review', 'required'].join('_')), `${file} still contains obsolete review metadata`);
 }
 
 for (const file of [
@@ -64,6 +69,13 @@ expect(storage.includes('contract_change_orders'), 'Private downloads must autho
 const board = optional('src/pages/ProjectBoard.jsx');
 expect(board.includes('<ProjectDocuments'), 'Project Board must expose participant documents');
 expect(board.includes('<ChangeOrderPanel'), 'Project Board must expose change-order workflow');
+const guide = optional('src/components/ProjectProtectionGuide.jsx');
+expect(guide.includes('if (saveError)'), 'Project guide must remain open when acknowledgment persistence fails');
+expect(guide.includes('disabled={saving}'), 'Project guide must prevent duplicate acknowledgment submissions');
+expect(
+  migrations.includes("if tg_op = 'DELETE' then") && migrations.includes("return old;"),
+  'Immutable change-order evidence trigger must handle deletes before reading NEW',
+);
 
 if (failures.length) {
   console.error(failures.join('\n'));

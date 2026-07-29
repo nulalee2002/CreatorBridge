@@ -1,9 +1,10 @@
 -- CreatorBridge provider-backed human identity and phone trust foundation.
+-- Production migration history aligned with the managed Supabase rollout.
 -- Provider media and raw provider payloads never belong in CreatorBridge tables.
 
 create schema if not exists creatorbridge_private;
 revoke all on schema creatorbridge_private from public;
-grant usage on schema creatorbridge_private to authenticated, service_role;
+grant usage on schema creatorbridge_private to service_role;
 
 create table if not exists public.account_phone_verifications (
   user_id uuid primary key references auth.users(id) on delete cascade,
@@ -239,10 +240,10 @@ as $$
   ), false);
 $$;
 
-revoke all on function creatorbridge_private.user_phone_verified(uuid) from public, anon;
-revoke all on function creatorbridge_private.user_identity_verified(uuid) from public, anon;
-grant execute on function creatorbridge_private.user_phone_verified(uuid) to authenticated, service_role;
-grant execute on function creatorbridge_private.user_identity_verified(uuid) to authenticated, service_role;
+revoke all on function creatorbridge_private.user_phone_verified(uuid) from public, anon, authenticated;
+revoke all on function creatorbridge_private.user_identity_verified(uuid) from public, anon, authenticated;
+grant execute on function creatorbridge_private.user_phone_verified(uuid) to service_role;
+grant execute on function creatorbridge_private.user_identity_verified(uuid) to service_role;
 
 create or replace function public.get_my_trust_status()
 returns table (
@@ -340,7 +341,7 @@ begin
     raise exception 'Accepted creator could not be verified' using errcode = 'P0002';
   end if;
 
-  if coalesce(auth.role(), '') <> 'service_role'
+  if coalesce(auth.jwt() ->> 'role', '') <> 'service_role'
     and not public.is_platform_admin(v_requester)
     and v_requester not in (v_project.client_id, v_creator_user_id) then
     raise exception 'Project party access required' using errcode = '42501';

@@ -14,6 +14,8 @@ const STEPS = [
 
 export function ProjectProtectionGuide({ projectId, userId, role = 'client' }) {
   const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
   useEffect(() => {
     if (!projectId || !userId) return;
     supabase.from('project_guide_acknowledgments').select('project_id')
@@ -21,7 +23,17 @@ export function ProjectProtectionGuide({ projectId, userId, role = 'client' }) {
       .then(({ data }) => { if (!data) setOpen(true); });
   }, [projectId, userId]);
   async function acknowledge() {
-    await supabase.rpc('acknowledge_project_protection_guide', { p_project_id: projectId, p_guide_version: VERSION });
+    setSaving(true);
+    setError('');
+    const { error: saveError } = await supabase.rpc('acknowledge_project_protection_guide', {
+      p_project_id: projectId,
+      p_guide_version: VERSION,
+    });
+    setSaving(false);
+    if (saveError) {
+      setError('We could not save your acknowledgment. Please try again.');
+      return;
+    }
     setOpen(false);
   }
   return (
@@ -33,7 +45,8 @@ export function ProjectProtectionGuide({ projectId, userId, role = 'client' }) {
             <div className="flex justify-between gap-4"><div><p className="text-[10px] font-bold uppercase tracking-[0.25em] text-gold-400">Protected project guide</p><h2 className="mt-2 font-display text-3xl font-bold text-white">{role === 'creator' ? 'How you get approved and paid' : 'How your project stays protected'}</h2></div><button onClick={() => setOpen(false)} aria-label="Close"><X className="text-charcoal-300" /></button></div>
             <div className="mt-6 space-y-4">{STEPS.map(([n,title,body])=><div key={n} className="flex gap-4"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold-500 text-xs font-bold text-charcoal-950">{n}</span><div><p className="text-sm font-bold text-white">{title}</p><p className="mt-1 text-xs leading-5 text-charcoal-300">{body}</p></div></div>)}</div>
             <p className="mt-6 rounded-lg border border-white/10 p-3 text-[10px] leading-4 text-charcoal-400">Opening or acknowledging this guide is educational only. It is not a legal signature, recording consent, or biometric consent.</p>
-            <button onClick={acknowledge} className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-gold-500 py-3 text-xs font-bold text-charcoal-950"><Check size={14} /> I understand the project flow</button>
+            {error && <p role="alert" className="mt-4 text-xs text-red-300">{error}</p>}
+            <button onClick={acknowledge} disabled={saving} className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-gold-500 py-3 text-xs font-bold text-charcoal-950 disabled:opacity-60"><Check size={14} /> {saving ? 'Saving…' : 'I understand the project flow'}</button>
           </div>
         </div>
       )}

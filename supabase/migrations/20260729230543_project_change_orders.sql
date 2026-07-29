@@ -1,4 +1,5 @@
 -- Immutable, separately signed and funded changes to an original agreement.
+-- Production migration history aligned with the managed Supabase rollout.
 
 create table if not exists public.contract_change_orders (
   id uuid primary key default gen_random_uuid(),
@@ -105,6 +106,13 @@ using ((select auth.uid()) in (client_id, creator_user_id) or public.is_platform
 create or replace function creatorbridge_private.protect_change_order_evidence()
 returns trigger language plpgsql security definer set search_path = '' as $$
 begin
+  if tg_op = 'DELETE' then
+    if old.status <> 'draft' then
+      raise exception 'Proposed change orders cannot be deleted' using errcode = '55000';
+    end if;
+    return old;
+  end if;
+
   if old.status <> 'draft' and (
     new.project_id is distinct from old.project_id
     or new.contract_id is distinct from old.contract_id
@@ -117,10 +125,7 @@ begin
     or new.price_delta_cents is distinct from old.price_delta_cents
     or new.content_hash is distinct from old.content_hash
   ) then raise exception 'Proposed change order evidence is immutable' using errcode = '55000'; end if;
-  if tg_op = 'DELETE' and old.status <> 'draft' then
-    raise exception 'Proposed change orders cannot be deleted' using errcode = '55000';
-  end if;
-  return case when tg_op = 'DELETE' then old else new end;
+  return new;
 end $$;
 
 create or replace function creatorbridge_private.protect_change_order_signature()
@@ -130,6 +135,13 @@ begin raise exception 'Change order signatures are append-only evidence' using e
 create or replace function creatorbridge_private.protect_change_order_payment()
 returns trigger language plpgsql security definer set search_path = '' as $$
 begin
+  if tg_op = 'DELETE' then
+    if old.retainer_status in ('paid','released') or old.final_status in ('paid','released') then
+      raise exception 'Successful change-order payment evidence cannot be deleted' using errcode = '55000';
+    end if;
+    return old;
+  end if;
+
   if old.retainer_status in ('paid','released') and (
     new.added_amount_cents is distinct from old.added_amount_cents
     or new.retainer_amount_cents is distinct from old.retainer_amount_cents
@@ -147,8 +159,12 @@ create trigger protect_change_order_evidence before update or delete on public.c
 for each row execute function creatorbridge_private.protect_change_order_evidence();
 create trigger protect_change_order_signature before update or delete on public.change_order_signatures
 for each row execute function creatorbridge_private.protect_change_order_signature();
-create trigger protect_change_order_payment before update on public.change_order_payments
+create trigger protect_change_order_payment before update or delete on public.change_order_payments
 for each row execute function creatorbridge_private.protect_change_order_payment();
+
+revoke all on function creatorbridge_private.protect_change_order_evidence() from public, anon, authenticated;
+revoke all on function creatorbridge_private.protect_change_order_signature() from public, anon, authenticated;
+revoke all on function creatorbridge_private.protect_change_order_payment() from public, anon, authenticated;
 
 create or replace function public.get_project_change_orders(p_project_id uuid)
 returns setof public.contract_change_orders
@@ -156,11 +172,13 @@ language plpgsql stable security definer set search_path = '' as $$
 declare v_user_id uuid := auth.uid();
 begin
   if not exists (
-    select 1 from public.contract_change_orders change_order
-    where change_order.project_id = p_project_id
-      and (v_user_id in (change_order.client_id, change_order.creator_user_id) or public.is_platform_admin(v_user_id))
-  ) and not exists (
-    select 1 from public.projects project where project.id = p_project_id and project.client_id = v_user_id
+    select 1
+    from public.contracts contract
+    where contract.project_id = p_project_id
+      and (
+        v_user_id in (contract.client_id, contract.creator_user_id)
+        or public.is_platform_admin(v_user_id)
+      )
   ) then raise exception 'Project document access denied' using errcode = '42501'; end if;
   return query select * from public.contract_change_orders where project_id = p_project_id order by sequence_number;
 end $$;
@@ -182,6 +200,30 @@ begin
     union all
     select 'agreed_call_summary'::text, summary.id, 'Call summary', summary.status, null::text, summary.created_at
     from public.call_summaries summary where summary.project_id = p_project_id and summary.status = 'agreed'
+    union all
+    select 'original_retainer_receipt'::text, transaction.id, 'Original agreement retainer',
+      transaction.retainer_status, null::text, coalesce(transaction.retainer_paid_at, transaction.created_at)
+    from public.transactions transaction
+    where transaction.project_id = p_project_id::text
+    union all
+    select 'original_final_receipt'::text, transaction.id, 'Original agreement final payment',
+      transaction.final_status, null::text, coalesce(transaction.final_paid_at, transaction.created_at)
+    from public.transactions transaction
+    where transaction.project_id = p_project_id::text
+    union all
+    select 'change_order_retainer_receipt'::text, payment.id,
+      change_order.document_number || ' added retainer', payment.retainer_status, null::text,
+      coalesce(payment.retainer_paid_at, payment.created_at)
+    from public.change_order_payments payment
+    join public.contract_change_orders change_order on change_order.id = payment.change_order_id
+    where payment.project_id = p_project_id
+    union all
+    select 'change_order_final_receipt'::text, payment.id,
+      change_order.document_number || ' added final payment', payment.final_status, null::text,
+      coalesce(payment.final_paid_at, payment.created_at)
+    from public.change_order_payments payment
+    join public.contract_change_orders change_order on change_order.id = payment.change_order_id
+    where payment.project_id = p_project_id
     order by created_at;
 end $$;
 revoke all on function public.get_project_documents(uuid) from public, anon;

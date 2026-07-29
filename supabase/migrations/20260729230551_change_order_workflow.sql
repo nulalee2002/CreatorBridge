@@ -1,4 +1,5 @@
 -- Authorized, hash-bound change-order lifecycle transitions.
+-- Production migration history aligned with the managed Supabase rollout.
 
 create or replace function public.create_change_order_draft(
   p_project_id uuid,
@@ -174,7 +175,7 @@ create or replace function public.refresh_change_order_signature_status(p_change
 returns public.contract_change_orders language plpgsql security definer set search_path = public, pg_temp as $$
 declare v_order public.contract_change_orders%rowtype; v_client boolean; v_creator boolean; v_next text;
 begin
-  if coalesce(auth.role(),'') <> 'service_role' then raise exception 'Service access required' using errcode = '42501'; end if;
+  if coalesce(auth.jwt() ->> 'role','') <> 'service_role' then raise exception 'Service access required' using errcode = '42501'; end if;
   select * into v_order from public.contract_change_orders where id=p_change_order_id for update;
   if not found then raise exception 'Change order not found' using errcode = 'P0002'; end if;
   if v_order.status in ('declined','void','superseded','active') then return v_order; end if;

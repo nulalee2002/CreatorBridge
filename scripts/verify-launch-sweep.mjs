@@ -16,6 +16,10 @@ const checks = [
   ['client phone gate', ['npm', ['run', 'verify:client-phone-gate']]],
   ['release-payment security', ['npm', ['run', 'verify:release-payment-security']]],
   ['admin/support/search', ['npm', ['run', 'verify:admin-support-search']]],
+  ['human identity', ['npm', ['run', 'verify:human-identity']]],
+  ['contracts', ['npm', ['run', 'verify:contracts']]],
+  ['change orders', ['npm', ['run', 'verify:change-orders']]],
+  ['video calls', ['npm', ['run', 'verify:video-calls']]],
 ];
 
 function run(command, args) {

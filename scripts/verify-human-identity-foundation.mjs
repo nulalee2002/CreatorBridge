@@ -21,6 +21,7 @@ const migrationSource = () => readdirSync(join(root, 'supabase/migrations'))
   .join('\n');
 
 const sql = migrationSource();
+expect(!sql.includes('auth.role()'), 'New identity migrations must use current JWT role claims instead of auth.role()');
 for (const expected of [
   'create table if not exists public.identity_consents',
   'create table if not exists public.identity_verifications',
@@ -79,13 +80,16 @@ expect(creatorDirectory.includes('<IdentityVerification'), 'Creator submission m
 expect(contractSignModal.includes('<IdentityVerification'), 'Contract signing must show identity verification');
 
 const identityWebhook = optionalSource('supabase/functions/stripe-identity-webhook/index.ts');
+const identityEventProcessor = optionalSource('supabase/functions/_shared/identityEventProcessor.js');
+const paymentWebhook = optionalSource('supabase/functions/stripe-webhook/index.ts');
 expect(identityWebhook.includes('STRIPE_IDENTITY_WEBHOOK_SECRET'), 'Identity webhook must use its dedicated signing secret');
 expect(identityWebhook.includes('constructEventAsync'), 'Identity webhook must verify Stripe signatures');
-expect(identityWebhook.includes('claim_identity_provider_event'), 'Identity webhook must claim provider events idempotently');
-expect(identityWebhook.includes('identity.verification_session.verified'), 'Identity webhook must process verified sessions');
-expect(identityWebhook.includes('identity.verification_session.requires_input'), 'Identity webhook must process failed sessions');
+expect(identityEventProcessor.includes('claim_identity_provider_event'), 'Identity webhook must claim provider events idempotently');
+expect(identityEventProcessor.includes('identity.verification_session.verified'), 'Identity webhook must process verified sessions');
+expect(identityEventProcessor.includes('identity.verification_session.requires_input'), 'Identity webhook must process failed sessions');
+expect(paymentWebhook.includes('isIdentityEventType(event.type)'), 'Configured Stripe webhook must route identity events');
 
-const protectedIdentitySources = `${createIdentitySession}\n${identityWebhook}`.toLowerCase();
+const protectedIdentitySources = `${createIdentitySession}\n${identityWebhook}\n${identityEventProcessor}`.toLowerCase();
 for (const forbidden of ['raw_payload', 'verification_report_json', 'selfie_url', 'face_embedding']) {
   expect(!protectedIdentitySources.includes(forbidden), `Identity functions must not persist prohibited field: ${forbidden}`);
 }
@@ -162,4 +166,5 @@ console.log(JSON.stringify({
   phoneSharedAcrossRoles: true,
   consentedIdentitySession: true,
   signedIdentityWebhook: true,
+  currentRoleChecks: true,
 }, null, 2));
