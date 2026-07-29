@@ -22,6 +22,79 @@ create table if not exists profiles (
   updated_at timestamptz default now()
 );
 
+-- Provider-backed phone and human identity state is private. Do not add phone,
+-- government-ID, selfie, face, or raw provider fields to the public profile.
+create table if not exists account_phone_verifications (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  phone_e164 text not null check (phone_e164 ~ '^\+[1-9][0-9]{7,14}$'),
+  status text not null default 'pending' check (status in ('pending', 'verified')),
+  verified_at timestamptz,
+  provider text not null default 'twilio' check (provider = 'twilio'),
+  provider_service_reference text,
+  last_sent_at timestamptz,
+  attempt_count integer not null default 0 check (attempt_count >= 0),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists identity_consents (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  consent_version text not null,
+  purpose text not null,
+  accepted_at timestamptz not null default now(),
+  ip_address inet,
+  user_agent text,
+  created_at timestamptz not null default now(),
+  unique (user_id, consent_version, purpose)
+);
+
+create table if not exists identity_verifications (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  consent_id uuid not null references identity_consents(id) on delete restrict,
+  provider text not null default 'stripe_identity',
+  provider_session_id text not null unique,
+  purpose text not null,
+  status text not null default 'pending',
+  adult_verified boolean,
+  document_status text,
+  selfie_status text,
+  provider_error_code text,
+  risk_label text,
+  attempt_count integer not null default 1,
+  review_reason text,
+  duplicate_of_user_id uuid references auth.users(id) on delete restrict,
+  reverification_reason text,
+  verified_at timestamptz,
+  restricted_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists identity_provider_events (
+  event_id text primary key,
+  event_type text not null,
+  provider_session_id text,
+  processing_status text not null default 'processing',
+  processing_error text,
+  received_at timestamptz not null default now(),
+  processed_at timestamptz
+);
+
+create table if not exists identity_review_actions (
+  id uuid primary key default uuid_generate_v4(),
+  verification_id uuid not null references identity_verifications(id) on delete restrict,
+  target_user_id uuid not null references auth.users(id) on delete restrict,
+  reviewer_user_id uuid not null references auth.users(id) on delete restrict,
+  action text not null,
+  reason text not null,
+  linked_original_user_id uuid references auth.users(id) on delete restrict,
+  previous_status text not null,
+  resulting_status text not null,
+  created_at timestamptz not null default now()
+);
+
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS referral_code text;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS referred_by_code text;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS first_booking_fee_waived boolean DEFAULT false;
