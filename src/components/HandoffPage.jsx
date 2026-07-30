@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 
 const PILLARS = [
   {
@@ -55,6 +55,15 @@ const PILLARS = [
   },
 ];
 
+const HANDOFF_CONTROL_LABELS = {
+  market: 'US market',
+  'loc-slider': 'Number of locations',
+  'deliver-slider': 'Number of deliverables',
+  'crew-slider': 'Crew size',
+  'rev-slider': 'Revision rounds',
+  usage: 'Usage rights',
+};
+
 function ensureHandoffGlobals() {
   window.CB = window.CB || {};
   window.CB.PILLARS = PILLARS;
@@ -65,15 +74,23 @@ function ensureHandoffGlobals() {
 export function HandoffPage({ page, bgImage }) {
   const rootRef = useRef(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    if (root.dataset.handoffReady === 'true') return;
+    root.innerHTML = page.html;
     root.dataset.handoffReady = 'true';
 
     ensureHandoffGlobals();
     const run = new Function('root', page.script);
     run(root);
+    Object.entries(HANDOFF_CONTROL_LABELS).forEach(([id, label]) => {
+      root.querySelector(`#${id}`)?.setAttribute('aria-label', label);
+    });
+
+    return () => {
+      root.replaceChildren();
+      delete root.dataset.handoffReady;
+    };
   }, [page]);
 
   if (bgImage) {
@@ -86,7 +103,6 @@ export function HandoffPage({ page, bgImage }) {
         <div
           ref={rootRef}
           className="cb-handoff-page relative z-0"
-          dangerouslySetInnerHTML={{ __html: page.html }}
         />
       </div>
     );
@@ -96,7 +112,6 @@ export function HandoffPage({ page, bgImage }) {
     <div
       ref={rootRef}
       className="cb-handoff-page"
-      dangerouslySetInnerHTML={{ __html: page.html }}
     />
   );
 }

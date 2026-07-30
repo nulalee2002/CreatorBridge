@@ -31,6 +31,9 @@ for (const expected of [
   "'original_final_receipt'::text",
   "'change_order_retainer_receipt'::text",
   "'change_order_final_receipt'::text",
+  'transaction.project_id = p_project_id',
+  'listing.user_id = v_user_id',
+  "raise exception 'Project document access denied'",
 ]) {
   expect(migrations.includes(expected), `Change-order migrations missing: ${expected}`);
 }

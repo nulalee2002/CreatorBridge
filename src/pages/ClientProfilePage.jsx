@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   ArrowRight, Briefcase, CheckCircle2, Clock, CreditCard, FileText,
   Globe, Image, MessageSquare, Phone, Search, ShieldCheck, Star, User, Users, Zap,
@@ -158,8 +158,8 @@ export function ClientProfilePage({ dark }) {
         .from('client_profiles')
         .select('*')
         .eq('user_id', user.id)
-        .maybeSingle();
-      profile = data;
+        .limit(1);
+      profile = data?.[0] || null;
 
       const { data: quoteRows } = await supabase
         .from('quote_requests')

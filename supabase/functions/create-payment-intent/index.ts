@@ -231,8 +231,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Contract-backed retainers require contracts.status = 'countersigned'.
-    // Projects without a contract remain eligible as legacy bookings.
+    // Every retainer requires contracts.status = 'countersigned'. CreatorBridge
+    // does not permit legacy or contractless bookings.
     if (normalizedPaymentType === 'retainer') {
       const { data: contract, error: contractError } = await supabaseAdmin
         .from('contracts')
@@ -245,7 +245,7 @@ Deno.serve(async (req) => {
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      if (contract && contract.status !== 'countersigned') {
+      if (!contract || contract.status !== 'countersigned') {
         return new Response(
           JSON.stringify({ error: 'Both parties need to sign the agreement before the retainer can be paid.' }),
           { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

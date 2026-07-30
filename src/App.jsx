@@ -1,5 +1,5 @@
 import { lazy, Suspense, useReducer, useEffect, useMemo, useState, useCallback, useRef, startTransition } from 'react';
-import { Routes, Route, Link, useNavigate as useRouterNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Link, useNavigate as useRouterNavigate, useLocation } from 'react-router';
 
 // Wrap react-router's navigate in React.startTransition so that navigating to a
 // lazy-loaded route (anything under <LazyRoute>) does not blank the page with
@@ -38,9 +38,12 @@ function getRouteTitle(pathname) {
   if (pathname.startsWith('/find')) return 'Find Creators | CreatorBridge';
   if (pathname.startsWith('/projects')) return 'Project Board | CreatorBridge';
   if (pathname.startsWith('/network')) return 'Creator Network | CreatorBridge';
-  if (pathname.startsWith('/calculator')) return 'Rate Calculator | CreatorBridge';
+  if (pathname.startsWith('/calculator') || pathname.startsWith('/rate-calculator')) return 'Rate Calculator | CreatorBridge';
   if (pathname.startsWith('/dashboard/build-team')) return 'Build Your Team | CreatorBridge';
   if (pathname.startsWith('/dashboard')) return 'Creator Dashboard | CreatorBridge';
+  if (pathname.startsWith('/collaboration/')) return 'Collaboration Payment | CreatorBridge';
+  if (pathname.startsWith('/checkout/')) return 'Secure Checkout | CreatorBridge';
+  if (pathname.startsWith('/matches/')) return 'Creator Matches | CreatorBridge';
   if (pathname.startsWith('/client')) return 'Client Dashboard | CreatorBridge';
   if (pathname.startsWith('/messages')) return 'Messages | CreatorBridge';
   if (pathname.startsWith('/admin/analytics')) return 'Platform Intelligence | CreatorBridge';
@@ -53,12 +56,14 @@ function getRouteTitle(pathname) {
   if (pathname.startsWith('/verification/identity')) return 'Identity Verification | CreatorBridge';
   if (pathname.startsWith('/creator-agreement')) return 'Creator Agreement | CreatorBridge';
   if (pathname.startsWith('/dispute-policy')) return 'Dispute Policy | CreatorBridge';
+  if (pathname.startsWith('/join-as-creator')) return 'Join CreatorBridge | CreatorBridge';
+  if (pathname.startsWith('/reset-password')) return 'Reset Password | CreatorBridge';
   if (pathname.startsWith('/register')) return 'Apply to Join | CreatorBridge';
   if (pathname.startsWith('/login')) return 'Sign In | CreatorBridge';
   if (pathname.startsWith('/signup')) return 'Create Account | CreatorBridge';
   if (pathname.startsWith('/search')) return 'Search | CreatorBridge';
   if (pathname.startsWith('/creator/')) return null;
-  return 'CreatorBridge';
+  return 'Page Not Found | CreatorBridge';
 }
 
 import { SERVICES, RATES, PACKAGE_TIERS } from './data/rates.js';

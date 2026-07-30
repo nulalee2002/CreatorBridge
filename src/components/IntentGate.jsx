@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Zap, X } from 'lucide-react';
 import { normalizeServiceId } from '../data/rates.js';
 import { PILLARS, SUB_NICHES_BY_PILLAR } from '../data/taxonomy.js';

@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router-dom';
-import { Video, Mic, Calendar, Film, Instagram, Camera, CheckCircle, ShieldCheck, Award, ArrowRight, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router';
+import { Video, Mic, Calendar, Film, Smartphone, Camera, CheckCircle, ShieldCheck, Award, ArrowRight, MapPin } from 'lucide-react';
 
 export function JoinAsCreator({ dark }) {
   const navigate = useNavigate();
@@ -73,7 +73,7 @@ export function JoinAsCreator({ dark }) {
           </div>
           <div className={cardCls}>
             <div className="w-10 h-10 rounded-xl bg-gold-500/10 text-gold-400 flex items-center justify-center mb-4">
-              <Instagram size={20} />
+              <Smartphone size={20} />
             </div>
             <h3 className={`font-bold text-base mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>Social Media Content</h3>
             <p className={`text-xs leading-relaxed ${textSub}`}>Optimized vertical reels, TikTok clips, captions, and platform-native stills.</p>

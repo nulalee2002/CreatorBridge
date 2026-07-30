@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Zap, X, Star, MapPin, ChevronRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { matchCreators, loadAllCreatorsForMatching } from '../utils/matchingAlgorithm.js';
 import { SERVICES } from '../data/rates.js';
 import { TierBadge } from './TierBadge.jsx';

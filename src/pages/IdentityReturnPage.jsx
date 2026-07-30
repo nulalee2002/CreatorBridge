@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { ArrowRight, Clock3, Loader2 } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router';
 import { identityReturnPath, validateIdentityPurpose } from '../../supabase/functions/_shared/identityPolicy.js';
 import { useTrustStatus } from '../hooks/useTrustStatus.js';
 

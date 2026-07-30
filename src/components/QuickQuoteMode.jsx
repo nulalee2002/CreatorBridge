@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { ArrowRight, ArrowLeft, Zap, Calendar, FileText, Package } from 'lucide-react';
 import { SERVICES, PACKAGE_TIERS } from '../data/rates.js';
 import { PILLARS, getSubNichesForPillar } from '../data/taxonomy.js';

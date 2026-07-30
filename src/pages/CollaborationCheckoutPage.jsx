@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { getStripe } from '../lib/stripe.js';
 import { supabase } from '../lib/supabase.js';
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const isUuid = value => UUID_PATTERN.test(String(value || ''));
 
 function ACHForm({ summary }) {
   const stripe = useStripe(); const elements = useElements(); const navigate = useNavigate();
@@ -13,6 +16,22 @@ function ACHForm({ summary }) {
 
 export function CollaborationCheckoutPage() {
   const { collaborationId }=useParams(); const [secret,setSecret]=useState(''); const [summary,setSummary]=useState(null); const [error,setError]=useState('');
-  useEffect(()=>{supabase.functions.invoke('create-collaboration-payment',{body:{collaborationId}}).then(({data,error:e})=>{if(e||data?.error)setError(data?.error||e.message);else{setSecret(data.clientSecret);setSummary(data);}})},[collaborationId]);
+  useEffect(() => {
+    if (!isUuid(collaborationId)) {
+      setError('This collaboration payment link is invalid or incomplete.');
+      return;
+    }
+
+    supabase.functions
+      .invoke('create-collaboration-payment', { body: { collaborationId } })
+      .then(({ data, error: invokeError }) => {
+        if (invokeError || data?.error) {
+          setError(data?.error || invokeError.message);
+        } else {
+          setSecret(data.clientSecret);
+          setSummary(data);
+        }
+      });
+  }, [collaborationId]);
   return <main className="mx-auto max-w-2xl px-5 py-12 text-white"><p className="text-[10px] uppercase tracking-[.25em] text-gold-400">Protected creator payment</p><h1 className="mt-2 font-display text-4xl font-bold">Fund your collaborator</h1><p className="mt-3 mb-7 text-sm text-charcoal-300">ACH settlement can take several business days. The private production workspace stays locked until Stripe confirms settlement.</p>{error?<p className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">{error}</p>:secret&&summary?<Elements stripe={getStripe()} options={{clientSecret:secret,appearance:{theme:'night'}}}><ACHForm summary={summary}/></Elements>:<p>Preparing secure ACH payment…</p>}</main>;
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { SEO } from '../components/SEO.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { SEED_CREATORS, SHOW_DEMO_CREATORS } from '../data/seedCreators.js';
@@ -1155,8 +1155,15 @@ function getCreatorData(id) {
   };
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isUuid(value) {
+  return UUID_PATTERN.test(String(value || ''));
+}
+
 async function fetchCreatorData(id) {
   if (!supabaseConfigured || !id) return null;
+  if (!isUuid(id)) return null;
   const { data: listing, error } = await supabase
     .from('creator_listings')
     .select('*, creator_services(*), portfolio_items(*), packages(*), reviews(*)')
@@ -1236,10 +1243,16 @@ export function CreatorProfilePage() {
 
   if (!data) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center px-6 text-center">
-        <h1 className="serif text-3xl text-[var(--text)]">Profile unavailable</h1>
-        <p className="mt-3 max-w-md text-sm text-[var(--text-dim)]">This creator profile is unavailable or has not been approved.</p>
-      </div>
+      <>
+        <SEO
+          title="Profile unavailable"
+          description="This CreatorBridge creator profile is unavailable or has not been approved."
+        />
+        <div className="min-h-[70vh] flex flex-col items-center justify-center px-6 text-center">
+          <h1 className="serif text-3xl text-[var(--text)]">Profile unavailable</h1>
+          <p className="mt-3 max-w-md text-sm text-[var(--text-dim)]">This creator profile is unavailable or has not been approved.</p>
+        </div>
+      </>
     );
   }
 

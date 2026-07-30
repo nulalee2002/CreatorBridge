@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AlertCircle, CalendarPlus, Loader2, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 
 function isoDate(value) {

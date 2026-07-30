@@ -116,9 +116,25 @@ assert(profile.includes("import { creatorListingMeetsPublicRules } from '../util
 assert(profile.includes("import { SEED_CREATORS, SHOW_DEMO_CREATORS } from '../data/seedCreators.js';"), 'Public profile page must respect the launch demo-creator flag');
 assert(profile.includes("if (SHOW_DEMO_CREATORS && (id === 'demo' || id === 'seed-2'))"), 'Sample profile must be development-only');
 assert(profile.includes('if (supabaseConfigured) return null;'), 'Configured public profiles must load from Supabase instead of local cache');
+assert(profile.includes('if (!isUuid(id)) return null;'), 'Public profile routes must reject malformed listing ids before querying Supabase');
+assert(profile.includes('title="Profile unavailable"'), 'Unavailable creator profiles must set a stable document title');
 
 const app = source('src/App.jsx');
 assert(!app.includes("navigate('/creator/demo')"), 'Public navigation must not link to the fabricated sample profile');
+for (const title of [
+  'Collaboration Payment | CreatorBridge',
+  'Secure Checkout | CreatorBridge',
+  'Creator Matches | CreatorBridge',
+  'Join CreatorBridge | CreatorBridge',
+  'Reset Password | CreatorBridge',
+  'Page Not Found | CreatorBridge',
+]) {
+  assert(app.includes(title), `Application route titles must include: ${title}`);
+}
+assert(
+  app.includes("pathname.startsWith('/calculator') || pathname.startsWith('/rate-calculator')"),
+  'Rate calculator aliases must share the same document title',
+);
 
 const projectBoard = source('src/pages/ProjectBoard.jsx');
 const projectTimeline = source('src/components/ProjectTimeline.jsx');
@@ -140,6 +156,14 @@ assert(
   authModal.includes('max-h-[calc(100dvh-2rem)]') && authModal.includes('overflow-y-auto'),
   'Account access must remain vertically scrollable on compact phones',
 );
+assert(
+  authModal.includes('aria-hidden="true"') && authModal.includes('tabIndex={-1}'),
+  'The signup honeypot must stay out of the accessibility and keyboard trees',
+);
+assert(
+  authModal.includes('min-h-8 min-w-8') && authModal.includes('items-center justify-center'),
+  'Password visibility controls must keep a usable desktop hit area',
+);
 
 const handoffStyles = source('src/styles/creatorbridge-handoff.css');
 assert(
@@ -147,8 +171,81 @@ assert(
   'Coarse-pointer phone layouts must define a dedicated touch-target rule',
 );
 assert(
-  handoffStyles.includes('min-height:44px !important'),
-  'Phone controls must provide a 44px minimum touch target',
+  handoffStyles.includes('min-height:44px !important') && handoffStyles.includes('min-width:44px !important'),
+  'Phone controls must provide a 44px minimum touch target in both dimensions',
+);
+assert(
+  handoffStyles.includes('footer.site button') && handoffStyles.includes('input:not([type="checkbox"])'),
+  'Phone touch rules must outrank compact footer controls and include form fields',
+);
+
+const handoffPage = source('src/components/HandoffPage.jsx');
+assert(
+  handoffPage.includes('useLayoutEffect') && handoffPage.includes('root.innerHTML = page.html'),
+  'Generated handoff pages must initialize from a fresh DOM tree during React layout effects',
+);
+assert(
+  handoffPage.includes('root.replaceChildren()') && !handoffPage.includes('dangerouslySetInnerHTML'),
+  'Generated handoff cleanup must remove bound DOM instead of relying on a replay guard',
+);
+for (const label of [
+  'US market',
+  'Number of locations',
+  'Number of deliverables',
+  'Crew size',
+  'Revision rounds',
+  'Usage rights',
+]) {
+  assert(handoffPage.includes(label), `Rate calculator control missing accessible name: ${label}`);
+}
+assert(
+  handoffPage.includes("setAttribute('aria-label', label)"),
+  'Generated handoff controls must receive their accessible names before interaction',
+);
+
+const resetPassword = source('src/pages/ResetPasswordPage.jsx');
+assert(resetPassword.includes('sessionChecked'), 'Password reset must distinguish an invalid link from an in-progress session check');
+assert(resetPassword.includes('Reset link unavailable'), 'Password reset must explain when a recovery link is missing or expired');
+assert(resetPassword.includes('<h1'), 'Password reset must expose a page-level heading');
+
+const messagesPage = source('src/pages/MessagesPage.jsx');
+assert(
+  messagesPage.includes('aria-label="Open conversation"'),
+  'The icon-only Messages action must expose an accessible name',
+);
+
+const clientProfile = source('src/pages/ClientProfilePage.jsx');
+assert(
+  clientProfile.includes(".from('client_profiles')") &&
+    clientProfile.includes('.limit(1)') &&
+    clientProfile.includes('profile = data?.[0] || null'),
+  'Creator hiring view must load an optional client profile without a 406 response',
+);
+const clientReputation = source('src/components/ClientReputationBadge.jsx');
+assert(
+  clientReputation.includes('.limit(1)') && clientReputation.includes('const profile = data?.[0]'),
+  'Optional client reputation reads must not request a singular response for a new creator',
+);
+
+const collaborationCheckout = source('src/pages/CollaborationCheckoutPage.jsx');
+assert(
+  collaborationCheckout.includes('if (!isUuid(collaborationId))'),
+  'Collaboration checkout must reject malformed identifiers before invoking its payment function',
+);
+
+const checkoutPage = source('src/pages/CheckoutPage.jsx');
+assert(
+  checkoutPage.includes('const retainerBlockedByCreator') &&
+    checkoutPage.includes('Choose a creator before checkout.'),
+  'Project checkout must block an open project before creator acceptance',
+);
+assert(
+  checkoutPage.includes("(!contract || contract.status !== 'countersigned')"),
+  'Project checkout must block retainers until a countersigned contract exists',
+);
+assert(
+  !checkoutPage.includes('Demo fallback only before a project has an accepted creator.'),
+  'Project checkout must never substitute a demo creator for an unaccepted project',
 );
 
 const dashboard = source('src/pages/CreatorDashboard.jsx');

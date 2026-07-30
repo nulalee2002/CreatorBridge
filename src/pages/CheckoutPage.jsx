@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import {
   ArrowLeft, Check, CreditCard, Loader, Shield, AlertCircle, Briefcase,
@@ -10,7 +10,7 @@ import { FeeBreakdown } from '../components/FeeBreakdown.jsx';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { ContractAction } from '../components/ContractAction.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
-import { SERVICES, normalizeServiceId } from '../data/rates.js';
+import { SERVICES } from '../data/rates.js';
 import { fromSupabaseProject, upsertLocalProject } from '../utils/projectStorage.js';
 import { CreatorAvatar } from '../components/CreatorAvatar.jsx';
 import { ChangeOrderFinalPayments } from '../components/change-orders/ChangeOrderFinalPayments.jsx';
@@ -26,14 +26,8 @@ function loadCreatorForProject(project) {
   try {
     const all = JSON.parse(localStorage.getItem('creator-directory') || '[]');
     const acceptedCreatorId = project.acceptedCreatorId || project.accepted_creator_id;
-    if (acceptedCreatorId) {
-      return all.find(c => c.id === acceptedCreatorId) || null;
-    }
-    const projectServiceId = normalizeServiceId(project.serviceId || project.service || project.serviceType);
-    // Demo fallback only before a project has an accepted creator.
-    return all.find(c =>
-      (c.services || []).some(s => normalizeServiceId(s.serviceId || s.service_id || s.name) === projectServiceId)
-    ) || null;
+    if (!acceptedCreatorId) return null;
+    return all.find(c => c.id === acceptedCreatorId) || null;
   } catch { return null; }
 }
 
@@ -539,9 +533,13 @@ export function CheckoutPage({ dark }) {
   const paymentAlreadyComplete = paymentType === 'final'
     ? ['paid', 'released'].includes(transaction?.final_status)
     : ['paid', 'released'].includes(transaction?.retainer_status);
+  const acceptedCreatorId = project?.acceptedCreatorId || project?.accepted_creator_id;
+  const retainerBlockedByCreator = paymentType === 'retainer'
+    && !acceptedCreatorId;
   const retainerBlockedByContract = paymentType === 'retainer'
-    && contract
-    && contract.status !== 'countersigned';
+    && Boolean(acceptedCreatorId)
+    && (!contract || contract.status !== 'countersigned');
+  const retainerBlocked = retainerBlockedByCreator || retainerBlockedByContract;
 
   if (loading) {
     return (
@@ -587,11 +585,27 @@ export function CheckoutPage({ dark }) {
           <h1 className={`font-display text-3xl md:text-4xl font-bold text-center mb-6 ${dark ? 'text-white' : 'text-gray-900'}`}>
             {paymentAlreadyComplete
               ? 'This CreatorBridge payment is complete.'
+              : retainerBlockedByCreator ? 'Choose a creator before checkout.'
               : paymentType === 'final' ? 'Pay the remaining project balance.' : 'Confirm your CreatorBridge booking.'}
           </h1>
           {paymentType === 'final' && <ChangeOrderFinalPayments projectId={project.id} />}
 
-          {retainerBlockedByContract ? (
+          {retainerBlockedByCreator ? (
+            <div className="mx-auto max-w-xl rounded-md border border-gold-500/25 bg-gold-500/8 p-5 text-center">
+              <Briefcase size={24} className="mx-auto text-gold-400" />
+              <h2 className={`mt-3 font-display text-2xl font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>Accept a creator proposal first.</h2>
+              <p className={`mx-auto mt-2 max-w-md text-sm leading-6 ${textSub}`}>
+                Review your Smart Match results and accept one creator. CreatorBridge will then generate the production agreement for both signatures before any retainer can be paid.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate(`/matches/${project.id}`)}
+                className="btn-gold mx-auto mt-5"
+              >
+                Review creator matches
+              </button>
+            </div>
+          ) : retainerBlockedByContract ? (
             <div className="mx-auto max-w-xl rounded-md border border-gold-500/25 bg-gold-500/8 p-5 text-center">
               <Shield size={24} className="mx-auto text-gold-400" />
               <h2 className={`mt-3 font-display text-2xl font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>Both signatures come before payment.</h2>
@@ -602,7 +616,7 @@ export function CheckoutPage({ dark }) {
             <StepBar step={paymentAlreadyComplete ? 3 : step} dark={dark} />
           )}
 
-          {!retainerBlockedByContract && paymentAlreadyComplete && (
+          {!retainerBlocked && paymentAlreadyComplete && (
             <ConfirmationStep
               project={project}
               creator={creator}
@@ -611,7 +625,7 @@ export function CheckoutPage({ dark }) {
               paymentResult={{ paymentType }}
             />
           )}
-          {!retainerBlockedByContract && !paymentAlreadyComplete && step === 1 && (
+          {!retainerBlocked && !paymentAlreadyComplete && step === 1 && (
             <ReviewStep
               project={project}
               creator={creator}
@@ -623,7 +637,7 @@ export function CheckoutPage({ dark }) {
               onNext={() => setStep(2)}
             />
           )}
-          {!retainerBlockedByContract && !paymentAlreadyComplete && step === 2 && (
+          {!retainerBlocked && !paymentAlreadyComplete && step === 2 && (
             <PaymentStep
               fees={fees}
               project={project}
@@ -635,7 +649,7 @@ export function CheckoutPage({ dark }) {
               onSuccess={(result) => { setPayment({ ...result, paymentType }); setStep(3); }}
             />
           )}
-          {!retainerBlockedByContract && !paymentAlreadyComplete && step === 3 && (
+          {!retainerBlocked && !paymentAlreadyComplete && step === 3 && (
             <ConfirmationStep project={project} creator={creator} fees={fees} dark={dark} paymentResult={paymentResult} />
           )}
         </div>

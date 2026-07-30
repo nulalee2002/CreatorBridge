@@ -3144,5 +3144,14 @@ textarea:focus,
   .btn-gold,
   .btn-ghost {
     min-height:44px !important;
+    min-width:44px !important;
+  }
+
+  footer.site button,
+  footer.site a[role="button"],
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  select,
+  textarea {
+    min-height:44px !important;
   }
 }

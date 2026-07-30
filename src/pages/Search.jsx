@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import { Search as SearchIcon, MapPin, ExternalLink, Loader } from 'lucide-react';
 import { supabase } from '../lib/supabase.js';
 import { SEO } from '../components/SEO.jsx';

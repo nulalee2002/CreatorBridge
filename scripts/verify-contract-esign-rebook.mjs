@@ -87,6 +87,19 @@ if (!payment.includes("contracts.status = 'countersigned'")) {
 if (!payment.includes('Both parties need to sign the agreement before the retainer can be paid.')) {
   failures.push('Payment function is missing the approved contract gate error');
 }
+if (!payment.includes("if (!contract || contract.status !== 'countersigned')")) {
+  failures.push('Payment function must reject retainers when the project agreement is missing');
+}
+if (payment.includes('Projects without a contract remain eligible as legacy bookings.')) {
+  failures.push('Payment function still allows legacy contractless retainers');
+}
+const bookingE2E = fs.readFileSync(path.join(root, 'scripts/verify-booking-e2e.mjs'), 'utf8');
+if (
+  !bookingE2E.includes(".from('contracts').insert") ||
+  !bookingE2E.includes("status: 'countersigned'")
+) {
+  failures.push('Booking E2E must seed the completed signature state before testing retainer payment');
+}
 
 const contractHelp = getPlatformGuideResponse('How do I sign the contract?') || '';
 if (!contractHelp.includes('before the retainer can be paid') || !contractHelp.includes('never signs automatically')) {

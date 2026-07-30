@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import {
   MessageSquare, Send, Search, ArrowLeft, MoreVertical,
   User, Check, CheckCheck, Circle, AlertTriangle,
@@ -674,6 +674,7 @@ export function MessagesPage({ dark }) {
                 <div className="flex items-center justify-between mb-3">
                   <h2 className={`font-display font-bold text-base ${dark ? 'text-white' : 'text-gray-900'}`}>Messages</h2>
                   <button type="button" onClick={() => setShowNew(true)}
+                    aria-label="Open conversation"
                     className="inline-flex min-h-[34px] min-w-[34px] items-center justify-center rounded-lg bg-gold-500 text-charcoal-900 transition-all hover:bg-gold-600">
                     <MessageSquare size={13} />
                   </button>

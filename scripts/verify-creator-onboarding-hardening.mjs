@@ -8,6 +8,12 @@ const expect = (condition, message) => {
   if (!condition) failures.push(message);
 };
 const source = path => readFileSync(join(root, path), 'utf8');
+const collectSourceFiles = directory => readdirSync(join(root, directory), { withFileTypes: true })
+  .flatMap(entry => {
+    const relative = join(directory, entry.name);
+    return entry.isDirectory() ? collectSourceFiles(relative) : [relative];
+  })
+  .filter(path => /\.(?:js|jsx|mjs)$/.test(path));
 
 const migrationName = readdirSync(join(root, 'supabase/migrations'))
   .find(name => name.endsWith('_harden_creator_onboarding.sql'));
@@ -90,8 +96,45 @@ expect(
 
 const pkg = JSON.parse(source('package.json'));
 expect(
-  pkg.dependencies?.['react-router-dom'] === '7.18.1',
-  'react-router-dom must be pinned to 7.18.1, which fixes the applicable client-side advisories',
+  pkg.dependencies?.['react-router'] === '8.3.0',
+  'react-router must be pinned to advisory-clean 8.3.0',
+);
+expect(
+  !pkg.dependencies?.['react-router-dom'],
+  'React Router 8 must not retain the removed react-router-dom compatibility package',
+);
+expect(
+  pkg.dependencies?.react === '19.2.7' && pkg.dependencies?.['react-dom'] === '19.2.7',
+  'React and React DOM must meet the React Router 8 security baseline',
+);
+expect(
+  pkg.dependencies?.['lucide-react'] === '1.27.0',
+  'Lucide React must use a release with declared React 19 compatibility',
+);
+const legacyRouterImports = collectSourceFiles('src')
+  .filter(path => source(path).includes("from 'react-router-dom'"));
+expect(
+  legacyRouterImports.length === 0,
+  `React Router 8 source imports must use react-router: ${legacyRouterImports.join(', ')}`,
+);
+const authModal = source('src/components/auth/AuthModal.jsx');
+expect(
+  authModal.includes('function GoogleGIcon') && authModal.includes('<GoogleGIcon />') && !authModal.includes('Chrome,'),
+  'Google sign-in must use its own accessible mark instead of Lucide Chrome branding',
+);
+const joinAsCreator = source('src/pages/JoinAsCreator.jsx');
+expect(
+  joinAsCreator.includes('<Smartphone size={20} />') && !joinAsCreator.includes('Instagram,'),
+  'Social media services must use a neutral content icon instead of removed platform branding',
+);
+const liveOnboarding = source('scripts/verify-creator-onboarding-live.mjs');
+expect(
+  liveOnboarding.includes("status: 'verified'") &&
+    liveOnboarding.includes("provider: 'twilio'") &&
+    liveOnboarding.includes('unverifiedPhoneSubmission') &&
+    liveOnboarding.includes("provider: 'stripe_identity'") &&
+    liveOnboarding.includes('unverifiedIdentitySubmission'),
+  'Live creator onboarding QA must exercise the required phone and human-identity gates before atomic submission',
 );
 expect(
   pkg.overrides?.dompurify === '3.4.12',

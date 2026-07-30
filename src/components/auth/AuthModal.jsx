@@ -1,10 +1,21 @@
 import { useState } from 'react';
-import { X, Mail, Lock, User, Building2, Users, Eye, EyeOff, Chrome, Phone } from 'lucide-react';
+import { X, Mail, Lock, User, Building2, Users, Eye, EyeOff, Phone } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { supabase, supabaseConfigured } from '../../lib/supabase.js';
 import { TurnstileWidget, turnstileConfigured } from '../TurnstileWidget.jsx';
 import { sendNotificationEmail } from '../../lib/notifications.js';
 import { POLICY_VERSIONS, POLICY_LINKS, REACCEPT_DAYS, requiredPoliciesForRole } from '../../config/legal.js';
+
+function GoogleGIcon() {
+  return (
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0">
+      <path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.8 3-4.3 3-7.3Z" />
+      <path fill="#34A853" d="M12 22c2.7 0 5-.9 6.6-2.5L15.4 17c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.2H3.1v2.6A10 10 0 0 0 12 22Z" />
+      <path fill="#FBBC05" d="M6.4 13.8A6 6 0 0 1 6.1 12c0-.6.1-1.2.3-1.8V7.6H3.1A10 10 0 0 0 2 12c0 1.6.4 3 1.1 4.4l3.3-2.6Z" />
+      <path fill="#EA4335" d="M12 6c1.5 0 2.8.5 3.8 1.5l2.9-2.8A9.7 9.7 0 0 0 12 2a10 10 0 0 0-8.9 5.6l3.3 2.6C7.2 7.8 9.4 6 12 6Z" />
+    </svg>
+  );
+}
 
 export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = 'client', onOpenTerms, onOpenCreatorRegistration }) {
   const { signIn, signUp, signInWithGoogle, profile: authProfile } = useAuth();
@@ -536,7 +547,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
                                 className={`${inputCls} pl-10 pr-10`} />
                               <button type="button" onClick={() => setShowPass(s => !s)}
                                 aria-label={showPass ? 'Hide password' : 'Show password'}
-                                className={`absolute right-3 top-1/2 -translate-y-1/2 ${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-400 hover:text-gray-900'}`}>
+                                className={`absolute right-2 top-1/2 -translate-y-1/2 min-h-8 min-w-8 flex items-center justify-center rounded-lg ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
                                 {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
                               </button>
                             </div>
@@ -614,7 +625,7 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
                             className={`w-full py-3 rounded-xl border flex items-center justify-center gap-2 text-xs font-semibold transition-all ${
                               dark ? 'border-white/[0.09] text-charcoal-200 hover:border-gold-500/35 hover:text-white hover:bg-white/[0.025]' : 'border-gray-200 text-gray-600 hover:text-gray-900'
                             }`}>
-                            <Chrome size={14} /> Continue with Google
+                            <GoogleGIcon /> Continue with Google
                           </button>
 
                           <p className={`text-center text-[10px] mt-4 ${dark ? 'text-charcoal-600' : 'text-gray-400'}`}>

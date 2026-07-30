@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
 const SECTIONS = [
   { id: 'overview',     title: '1. Dispute Policy Overview' },

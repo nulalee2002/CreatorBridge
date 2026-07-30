@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase.js';
 import { BrandMark } from '../components/BrandLogo.jsx';
@@ -13,21 +13,32 @@ export function ResetPasswordPage({ dark }) {
   const [error, setError]             = useState('');
   const [done, setDone]               = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
+  const [sessionChecked, setSessionChecked] = useState(false);
 
   // Supabase embeds the recovery token in the URL hash.
   // Calling getSession() after onAuthStateChange fires with SIGNED_IN + recovery
   // gives us an active session we can use to updateUser.
   useEffect(() => {
+    let active = true;
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+        if (!active) return;
         setSessionReady(true);
+        setSessionChecked(true);
       }
     });
     // Also check if session already exists (page reload case)
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setSessionReady(true);
+      if (!active) return;
+      setSessionReady(Boolean(session));
+      setSessionChecked(true);
+    }).catch(() => {
+      if (active) setSessionChecked(true);
     });
-    return () => subscription.unsubscribe();
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   async function handleSubmit(e) {
@@ -63,9 +74,9 @@ export function ResetPasswordPage({ dark }) {
             <p className="text-gold-400 mt-4 mb-2" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
               Account Access
             </p>
-            <h2 className={`font-display font-bold text-2xl mt-1 ${dark ? 'text-white' : 'text-gray-900'}`}>
-              Creator<span className="text-gradient-gold">Bridge</span>
-            </h2>
+            <h1 className={`font-display font-bold text-2xl mt-1 ${dark ? 'text-white' : 'text-gray-900'}`}>
+              Reset your password
+            </h1>
           </div>
 
           {done ? (
@@ -76,9 +87,23 @@ export function ResetPasswordPage({ dark }) {
                 You're all set. Redirecting you to the homepage now.
               </p>
             </div>
-          ) : !sessionReady ? (
+          ) : !sessionChecked ? (
             <div className="text-center py-4">
               <p className={`text-sm ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>Verifying your reset link...</p>
+            </div>
+          ) : !sessionReady ? (
+            <div className="text-center py-4 space-y-4">
+              <p className={`text-sm font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>Reset link unavailable</p>
+              <p className={`text-xs leading-5 ${dark ? 'text-charcoal-300' : 'text-gray-500'}`}>
+                This password-reset link is missing, expired, or has already been used. Request a new link from the sign-in screen.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate('/login')}
+                className="w-full min-h-11 rounded-xl bg-gold-500 px-4 text-sm font-bold text-charcoal-900 transition-all hover:bg-gold-600"
+              >
+                Return to Sign In
+              </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -102,7 +127,8 @@ export function ResetPasswordPage({ dark }) {
                   autoFocus
                 />
                 <button type="button" onClick={() => setShowPass(s => !s)}
-                  className={`absolute right-3 top-1/2 -translate-y-1/2 ${dark ? 'text-charcoal-300 hover:text-white' : 'text-gray-400 hover:text-gray-900'}`}>
+                  aria-label={showPass ? 'Hide password' : 'Show password'}
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 min-h-8 min-w-8 flex items-center justify-center rounded-lg ${dark ? 'text-charcoal-300 hover:text-white hover:bg-white/[0.04]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}>
                   {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>

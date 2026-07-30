@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { MapPin, Star, ArrowRight } from 'lucide-react';
 import { SERVICES } from '../data/rates.js';
 import { REGIONS } from '../data/regions.js';

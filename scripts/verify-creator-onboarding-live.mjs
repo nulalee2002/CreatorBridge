@@ -23,6 +23,7 @@ const adminClient = createClient(url, anonKey, {
 const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 const email = `drl33+onboarding-${stamp}@creatorbridge.studio`;
 const password = `CB-Onboarding-${stamp}!`;
+const phoneE164 = `+1480${String(Date.now()).slice(-7)}`;
 let userId = null;
 let listingId = null;
 
@@ -40,7 +41,7 @@ const validApplication = {
   zip: '85004',
   region_key: 'us-tier2',
   email,
-  phone: null,
+  phone: phoneE164,
   video_intro_url: `bunny:onboarding-intro-${stamp}`,
   primary_pillar: 'video_production',
   sub_niches: ['vp_brand_films'],
@@ -95,6 +96,57 @@ try {
 
   const signedIn = await creatorClient.auth.signInWithPassword({ email, password });
   if (signedIn.error) throw signedIn.error;
+
+  const unverifiedPhoneSubmission = await creatorClient.rpc('submit_creator_application', {
+    p_application: validApplication,
+    p_document_version: '1.0',
+  });
+  if (!unverifiedPhoneSubmission.error || !/phone verification is required/i.test(unverifiedPhoneSubmission.error.message)) {
+    throw new Error('Creator application was not blocked before Twilio phone verification.');
+  }
+
+  const phoneVerification = await service.from('account_phone_verifications').upsert({
+    user_id: userId,
+    phone_e164: phoneE164,
+    status: 'verified',
+    verified_at: new Date().toISOString(),
+    provider: 'twilio',
+    provider_service_reference: 'automated_qa',
+    attempt_count: 0,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'user_id' });
+  if (phoneVerification.error) throw phoneVerification.error;
+
+  const unverifiedIdentitySubmission = await creatorClient.rpc('submit_creator_application', {
+    p_application: validApplication,
+    p_document_version: '1.0',
+  });
+  if (!unverifiedIdentitySubmission.error || !/identity verification is required/i.test(unverifiedIdentitySubmission.error.message)) {
+    throw new Error('Creator application was not blocked before human identity verification.');
+  }
+
+  const identityConsent = await service.from('identity_consents').insert({
+    user_id: userId,
+    consent_version: 'creatorbridge-identity-consent-v1',
+    purpose: 'creator_application',
+    user_agent: 'CreatorBridge automated QA',
+  }).select('id').single();
+  if (identityConsent.error) throw identityConsent.error;
+
+  const identityVerification = await service.from('identity_verifications').insert({
+    user_id: userId,
+    consent_id: identityConsent.data.id,
+    provider: 'stripe_identity',
+    provider_session_id: `vs_qa_onboarding_${stamp}`,
+    purpose: 'creator_application',
+    status: 'verified',
+    adult_verified: true,
+    document_status: 'verified',
+    selfie_status: 'verified',
+    risk_label: 'clear',
+    verified_at: new Date().toISOString(),
+  });
+  if (identityVerification.error) throw identityVerification.error;
 
   const malformed = {
     ...validApplication,
@@ -159,6 +211,8 @@ try {
   console.log(JSON.stringify({
     ok: true,
     rollbackOnInvalidApplication: true,
+    phoneGateBlockedUnverifiedApplication: true,
+    identityGateBlockedUnverifiedApplication: true,
     atomicApplicationCounts: savedCounts,
     duplicateBlocked: true,
     prematureAdminApprovalBlocked: true,

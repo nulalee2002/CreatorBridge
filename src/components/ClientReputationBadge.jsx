@@ -41,12 +41,13 @@ export async function loadClientReputation(clientId) {
         .from('client_profiles')
         .select('avg_rating, total_projects_completed, cancellation_rate, total_reviews, spam_score')
         .eq('user_id', clientId)
-        .single();
-      if (data) return {
-        avgRating:        data.avg_rating || 0,
-        totalProjects:    data.total_projects_completed || 0,
-        completionRate:   data.cancellation_rate != null ? Math.round(100 - data.cancellation_rate) : 100,
-        totalReviews:     data.total_reviews || 0,
+        .limit(1);
+      const profile = data?.[0];
+      if (profile) return {
+        avgRating:        profile.avg_rating || 0,
+        totalProjects:    profile.total_projects_completed || 0,
+        completionRate:   profile.cancellation_rate != null ? Math.round(100 - profile.cancellation_rate) : 100,
+        totalReviews:     profile.total_reviews || 0,
       };
     }
     const all = JSON.parse(localStorage.getItem('cm-client-profiles') || '[]');

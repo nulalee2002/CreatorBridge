@@ -6,6 +6,7 @@
 // transfers to the creator's connected account.
 // Run: node --env-file=.env scripts/verify-booking-e2e.mjs
 import { createClient } from '@supabase/supabase-js';
+import { createHash } from 'node:crypto';
 import Stripe from 'stripe';
 
 const cfg = {
@@ -46,9 +47,77 @@ async function pollTxn(projectId, predicate, label, timeoutMs = 120_000) {
   throw new Error(`Timed out waiting for ${label} (webhook may not be configured for test events)`);
 }
 
-let projectId, appId, listingBefore, retainerIntentId, finalIntentId;
+const runId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+let projectId, appId, contractId, listingBefore, retainerIntentId, finalIntentId;
+const trustFixtures = [];
 const summary = { mode: 'stripe_test', steps: [] };
 const step = (name, detail) => { summary.steps.push({ name, ...detail }); console.log(`OK  ${name}${detail ? ' ' + JSON.stringify(detail) : ''}`); };
+
+async function ensureVerifiedQaTrust(client, userId, index) {
+  const { data: trustRows, error: trustError } = await client.rpc('get_my_trust_status');
+  if (trustError) throw trustError;
+  const trust = Array.isArray(trustRows) ? trustRows[0] : trustRows;
+  if (trust?.phone_verified && trust?.identity_verified) return;
+
+  const { data: originalPhone, error: phoneReadError } = await admin
+    .from('account_phone_verifications')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (phoneReadError) throw phoneReadError;
+
+  let phoneTouched = false;
+  if (!trust?.phone_verified) {
+    const suffix = String((Number(String(Date.now()).slice(-4)) + index) % 10000).padStart(4, '0');
+    const phone = await admin.from('account_phone_verifications').upsert({
+      user_id: userId,
+      phone_e164: `+1480555${suffix}`,
+      status: 'verified',
+      verified_at: new Date().toISOString(),
+      provider: 'twilio',
+      provider_service_reference: 'automated_booking_qa',
+      attempt_count: 0,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id' });
+    if (phone.error) throw phone.error;
+    phoneTouched = true;
+  }
+
+  let consentId = null;
+  let verificationId = null;
+  if (!trust?.identity_verified) {
+    const consent = await admin.from('identity_consents').insert({
+      user_id: userId,
+      consent_version: `booking-qa-${runId}-${index}`,
+      purpose: 'reverification',
+      user_agent: 'CreatorBridge Stripe test-mode booking QA',
+    }).select('id').single();
+    if (consent.error) throw consent.error;
+    consentId = consent.data.id;
+
+    const verification = await admin.from('identity_verifications').insert({
+      user_id: userId,
+      consent_id: consentId,
+      provider: 'stripe_identity',
+      provider_session_id: `vs_booking_qa_${runId}_${index}`,
+      purpose: 'reverification',
+      status: 'verified',
+      adult_verified: true,
+      document_status: 'verified',
+      selfie_status: 'verified',
+      risk_label: 'clear',
+      verified_at: new Date().toISOString(),
+    }).select('id').single();
+    if (verification.error) throw verification.error;
+    verificationId = verification.data.id;
+  }
+
+  trustFixtures.push({ userId, originalPhone, phoneTouched, consentId, verificationId });
+  const { data: refreshedRows, error: refreshedError } = await client.rpc('get_my_trust_status');
+  if (refreshedError) throw refreshedError;
+  const refreshed = Array.isArray(refreshedRows) ? refreshedRows[0] : refreshedRows;
+  assert(refreshed?.phone_verified && refreshed?.identity_verified, 'QA trust fixture did not verify both phone and identity');
+}
 
 try {
   // 1. Sign in both QA accounts
@@ -58,11 +127,15 @@ try {
   const { data: creatorAuth, error: cre } = await creatorSb.auth.signInWithPassword({ email: cfg.creatorEmail, password: cfg.creatorPassword });
   if (cre) throw cre;
   step('signed in QA client + creator');
+  await ensureVerifiedQaTrust(clientSb, clientId, 1);
+  await ensureVerifiedQaTrust(creatorSb, creatorAuth.user.id, 2);
+  step('verified QA phone and identity trust');
 
-  // 2. QA creator listing (approved + payout account)
+  // 2. QA creator listing with a test payout account. The money-path fixture
+  // does not publish or approve this listing.
   const { data: listing, error: le } = await admin.from('creator_listings')
     .select('id, user_id, stripe_account_id, completed_projects, rating, completion_rate, next_project_fee_pct')
-    .eq('user_id', creatorAuth.user.id).eq('review_status', 'approved').limit(1).single();
+    .eq('user_id', creatorAuth.user.id).limit(1).single();
   if (le) throw le;
   assert(listing.stripe_account_id, 'QA creator has no Stripe payout account');
   listingBefore = { ...listing };
@@ -91,7 +164,42 @@ try {
   await admin.from('projects').update({ accepted_application_id: appId }).eq('id', projectId);
   step('created accepted project + proposal', { projectId });
 
-  // 4. Retainer intent via the DEPLOYED function, as the client
+  // 4. Seed the state reached after both users sign the same generated
+  // agreement. This money-path test intentionally adds no signature rows so
+  // its temporary contract can be removed after the Stripe test completes;
+  // signature immutability is covered by the contract verification suite.
+  const contractTerms = {
+    document: { number: `CB-QA-${runId}` },
+    project: { id: projectId, title: 'QA E2E booking verification' },
+    pricing: {
+      currency: 'USD',
+      total: PROJECT_RATE_DOLLARS,
+      retainer: PROJECT_RATE_DOLLARS / 2,
+      final: PROJECT_RATE_DOLLARS / 2,
+    },
+  };
+  const contractHash = createHash('sha256')
+    .update(JSON.stringify(contractTerms))
+    .digest('hex');
+  const signedAt = new Date().toISOString();
+  const { data: contract, error: contractError } = await admin.from('contracts').insert({
+    project_id: projectId,
+    client_id: clientId,
+    creator_id: listing.id,
+    creator_user_id: creatorAuth.user.id,
+    template_version: 'qa-money-path-v1',
+    terms: contractTerms,
+    content_hash: contractHash,
+    status: 'countersigned',
+    client_signed_at: signedAt,
+    creator_signed_at: signedAt,
+    countersigned_at: signedAt,
+  }).select('id').single();
+  if (contractError) throw contractError;
+  contractId = contract.id;
+  step('seeded countersigned agreement state');
+
+  // 5. Retainer intent via the DEPLOYED function, as the client
   const { data: retainer, error: rfe } = await clientSb.functions.invoke('create-payment-intent', {
     body: { projectId, creatorId: listing.id, clientId, paymentType: 'retainer' },
   });
@@ -172,8 +280,24 @@ try {
     if (id) { try { const pi = await stripe.paymentIntents.retrieve(id); if (!['succeeded', 'canceled'].includes(pi.status)) await stripe.paymentIntents.cancel(id); } catch {} }
   }
   if (projectId) await admin.from('transactions').delete().eq('project_id', projectId);
+  if (contractId) await admin.from('contracts').delete().eq('id', contractId);
   if (appId) await admin.from('project_applications').delete().eq('id', appId);
   if (projectId) await admin.from('projects').delete().eq('id', projectId);
+  for (const fixture of trustFixtures.reverse()) {
+    if (fixture.verificationId) {
+      await admin.from('identity_verifications').delete().eq('id', fixture.verificationId);
+    }
+    if (fixture.consentId) {
+      await admin.from('identity_consents').delete().eq('id', fixture.consentId);
+    }
+    if (fixture.phoneTouched) {
+      if (fixture.originalPhone) {
+        await admin.from('account_phone_verifications').upsert(fixture.originalPhone, { onConflict: 'user_id' });
+      } else {
+        await admin.from('account_phone_verifications').delete().eq('user_id', fixture.userId);
+      }
+    }
+  }
   if (listingBefore) {
     await admin.from('creator_listings').update({
       completed_projects: listingBefore.completed_projects,
@@ -182,5 +306,5 @@ try {
       next_project_fee_pct: listingBefore.next_project_fee_pct,
     }).eq('id', listingBefore.id);
   }
-  console.log('Cleanup complete (QA rows removed, listing counters restored).');
+  console.log('Cleanup complete (QA rows and trust fixtures removed, listing counters restored).');
 }

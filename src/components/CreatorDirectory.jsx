@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { getNewCreatorSpotlight } from '../utils/matchingAlgorithm.js';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Search, MapPin, Star, X, Plus, Trash2, ArrowRight, Filter, UserPlus, Heart, BadgeCheck, AlertCircle, Upload, Video, Image as ImageIcon } from 'lucide-react';
 import { SERVICES, RATES, MARKETPLACE_CATEGORIES, getMarketplaceServiceIds, serviceMatchesMarketplaceCategory } from '../data/rates.js';
 import { PILLARS, SUB_NICHES_BY_PILLAR, getPillar, getSubNiche, LEGACY_SERVICE_TO_PILLAR, MAX_SUB_NICHES } from '../data/taxonomy.js';
