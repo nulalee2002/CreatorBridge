@@ -282,12 +282,17 @@ export function AuthModal({ dark, onClose, defaultTab = 'login', defaultRole = '
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="CreatorBridge account access"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:items-center"
+    >
       {/* Backdrop */}
       <div className="cb-modal-backdrop" onClick={onClose} />
 
       {/* Modal */}
-      <div className={`relative w-full max-w-md rounded-[28px] border shadow-2xl overflow-hidden ${
+      <div className={`relative my-auto max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-[28px] border shadow-2xl ${
         dark ? 'bg-charcoal-950 border-white/[0.08]' : 'bg-white border-gray-200'
       }`}>
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/60 to-transparent" />

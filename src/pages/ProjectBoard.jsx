@@ -1504,7 +1504,12 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
       <div>
         <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Timeline status</p>
         <div className={`p-3 rounded-xl border ${dark ? 'border-white/[0.07] bg-charcoal-900/40' : 'border-gray-200 bg-gray-50'}`}>
-          <ProjectTimeline status={localProject.status} dark={dark} projectId={isUuid(localProject.id) ? localProject.id : null} />
+          <ProjectTimeline
+            status={localProject.status}
+            dark={dark}
+            projectId={isUuid(localProject.id) ? localProject.id : null}
+            enabled={Boolean(user?.id && localProject.status !== 'open')}
+          />
         </div>
       </div>
 

@@ -4,10 +4,13 @@ import { supabase } from '../lib/supabase.js';
 
 const PAID = new Set(['paid', 'released']);
 
-export function ProjectTimeline({ status, dark, projectId }) {
+export function ProjectTimeline({ status, dark, projectId, enabled = true }) {
   const [records, setRecords] = useState(null);
   useEffect(() => {
-    if (!projectId) return;
+    if (!projectId || !enabled) {
+      setRecords(null);
+      return;
+    }
     let active = true;
     Promise.all([
       supabase.from('contracts').select('status').eq('project_id', projectId).maybeSingle(),
@@ -27,7 +30,7 @@ export function ProjectTimeline({ status, dark, projectId }) {
       });
     });
     return () => { active = false; };
-  }, [projectId, status]);
+  }, [enabled, projectId, status]);
 
   const steps = useMemo(() => {
     const accepted = !['open', 'draft'].includes(status);

@@ -120,6 +120,37 @@ assert(profile.includes('if (supabaseConfigured) return null;'), 'Configured pub
 const app = source('src/App.jsx');
 assert(!app.includes("navigate('/creator/demo')"), 'Public navigation must not link to the fabricated sample profile');
 
+const projectBoard = source('src/pages/ProjectBoard.jsx');
+const projectTimeline = source('src/components/ProjectTimeline.jsx');
+assert(
+  projectBoard.includes('enabled={Boolean(user?.id && localProject.status !=='),
+  'Public Project Board must not enable protected lifecycle reads for signed-out visitors',
+);
+assert(
+  projectTimeline.includes('if (!projectId || !enabled)'),
+  'Project timeline must stop before protected lifecycle reads when disabled',
+);
+
+const authModal = source('src/components/auth/AuthModal.jsx');
+assert(
+  authModal.includes('role="dialog"') && authModal.includes('aria-modal="true"'),
+  'Account access must expose an accessible modal dialog',
+);
+assert(
+  authModal.includes('max-h-[calc(100dvh-2rem)]') && authModal.includes('overflow-y-auto'),
+  'Account access must remain vertically scrollable on compact phones',
+);
+
+const handoffStyles = source('src/styles/creatorbridge-handoff.css');
+assert(
+  handoffStyles.includes('@media (pointer:coarse) and (max-width:767px)'),
+  'Coarse-pointer phone layouts must define a dedicated touch-target rule',
+);
+assert(
+  handoffStyles.includes('min-height:44px !important'),
+  'Phone controls must provide a 44px minimum touch target',
+);
+
 const dashboard = source('src/pages/CreatorDashboard.jsx');
 assert(dashboard.includes('getPublicProfileReadinessChecks'), 'Dashboard readiness strip must use the shared readiness checks');
 

@@ -3135,3 +3135,14 @@ textarea:focus,
     color:#7BCF99 !important;
   }
 }
+
+/* Coarse-pointer phones need forgiving controls even when the compact visual
+   language uses small type. This changes the hit area, not the typography. */
+@media (pointer:coarse) and (max-width:767px) {
+  button,
+  [role="button"],
+  .btn-gold,
+  .btn-ghost {
+    min-height:44px !important;
+  }
+}
