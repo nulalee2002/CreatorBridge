@@ -176,6 +176,7 @@ export function CreatorHiringDashboard({ dark = true }) {
         initialSearchQuery={directorySearchQuery}
         initialPillarFilter={selectedRole.pillar}
         collaborationOnly
+        embedded
       />
     </div>
   );

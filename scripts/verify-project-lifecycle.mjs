@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'node:fs';
+import { provisionQaTrust } from './lib/qaTrust.mjs';
 
 function loadEnv() {
   const env = { ...process.env };
@@ -70,6 +71,7 @@ async function runTests() {
   let projectId = null;
   let transactionId = null;
   let disputeId = null;
+  let restoreClientTrust = async () => {};
 
   const { data: clientAuth, error: clientAuthErr } = await clientClient.auth.signInWithPassword({
     email: clientEmail,
@@ -98,8 +100,10 @@ async function runTests() {
     updated_at: qaVerifiedAt,
   }, { onConflict: 'user_id' });
   if (qaClientProfileErr) throw qaClientProfileErr;
+  restoreClientTrust = await provisionQaTrust(serviceClient, clientUserId);
   console.log('- QA client phone verification is present for the project lifecycle test.');
 
+  try {
   const { data: adminAuth, error: adminAuthErr } = await adminClient.auth.signInWithPassword({
     email: adminEmail,
     password: adminPass
@@ -289,31 +293,40 @@ async function runTests() {
   if (finalProjErr) throw finalProjErr;
   console.log(`✅ Project status transitioned to: ${finalProject.status}`);
 
-  // Clean up
-  console.log('\nCleaning up created test records...');
-  const { error: cleanDisputeErr } = await serviceClient.from('disputes').delete().eq('id', disputeId);
-  if (cleanDisputeErr) console.warn('Warning during dispute cleanup:', cleanDisputeErr.message);
-
-  const { error: cleanTxnErr } = await serviceClient.from('transactions').delete().eq('id', transactionId);
-  if (cleanTxnErr) console.warn('Warning during transaction cleanup:', cleanTxnErr.message);
-
-  const { error: cleanProjErr } = await serviceClient.from('projects').delete().eq('id', projectId);
-  if (cleanProjErr) console.warn('Warning during project cleanup:', cleanProjErr.message);
-
-  if (originalClientProfile) {
-    const { error: restoreClientErr } = await serviceClient.from('client_profiles').update({
-      phone: originalClientProfile.phone,
-      phone_verified: originalClientProfile.phone_verified,
-      phone_verified_at: originalClientProfile.phone_verified_at,
-      display_name: originalClientProfile.display_name,
-      tos_accepted_at: originalClientProfile.tos_accepted_at,
-      updated_at: new Date().toISOString(),
-    }).eq('user_id', clientUserId);
-    if (restoreClientErr) console.warn('Warning during client profile restore:', restoreClientErr.message);
-  }
-
-  console.log('✅ Cleanup complete.');
   console.log('\n--- ALL PROJECT LIFECYCLE AND DISPUTE TESTS PASSED SUCCESSFULLY! ---');
+  } finally {
+    console.log('\nCleaning up created test records...');
+    if (disputeId) {
+      const { error: cleanDisputeErr } = await serviceClient.from('disputes').delete().eq('id', disputeId);
+      if (cleanDisputeErr) console.warn('Warning during dispute cleanup:', cleanDisputeErr.message);
+    }
+    if (transactionId) {
+      const { error: cleanTxnErr } = await serviceClient.from('transactions').delete().eq('id', transactionId);
+      if (cleanTxnErr) console.warn('Warning during transaction cleanup:', cleanTxnErr.message);
+    }
+    if (projectId) {
+      const { error: cleanProjErr } = await serviceClient.from('projects').delete().eq('id', projectId);
+      if (cleanProjErr) console.warn('Warning during project cleanup:', cleanProjErr.message);
+    }
+    await restoreClientTrust();
+    if (originalClientProfile) {
+      const { error: restoreClientErr } = await serviceClient.from('client_profiles').update({
+        phone: originalClientProfile.phone,
+        phone_verified: originalClientProfile.phone_verified,
+        phone_verified_at: originalClientProfile.phone_verified_at,
+        display_name: originalClientProfile.display_name,
+        tos_accepted_at: originalClientProfile.tos_accepted_at,
+        updated_at: new Date().toISOString(),
+      }).eq('user_id', clientUserId);
+      if (restoreClientErr) console.warn('Warning during client profile restore:', restoreClientErr.message);
+    } else {
+      await serviceClient.from('client_profiles').delete().eq('user_id', clientUserId);
+    }
+    await creatorClient.auth.signOut();
+    await clientClient.auth.signOut();
+    await adminClient.auth.signOut();
+    console.log('✅ Cleanup complete.');
+  }
 }
 
 runTests().catch(err => {

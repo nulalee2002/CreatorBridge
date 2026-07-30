@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'node:fs';
+import { provisionQaTrust } from './lib/qaTrust.mjs';
 
 function loadEnv() {
   const env = { ...process.env };
@@ -19,9 +20,10 @@ function loadEnv() {
 const env = loadEnv();
 const supabaseUrl = env.VITE_SUPABASE_URL;
 const supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY;
+const supabaseServiceKey = env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Error: Missing environment variables VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY');
+if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
+  console.error('Error: Missing environment variables VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY');
   process.exit(1);
 }
 
@@ -52,6 +54,9 @@ async function runTests() {
   const adminClient = createClient(supabaseUrl, supabaseAnonKey, {
     auth: { persistSession: false, autoRefreshToken: false }
   });
+  const serviceClient = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
 
   console.log('\nLogging in test users...');
   const { data: creatorAuth, error: creatorAuthErr } = await creatorClient.auth.signInWithPassword({
@@ -78,6 +83,11 @@ async function runTests() {
   const adminUserId = adminAuth.user.id;
   console.log(`- Admin logged in. ID: ${adminUserId}`);
 
+  const restoreAdminTrust = await provisionQaTrust(serviceClient, adminUserId);
+  const restoreClientTrust = await provisionQaTrust(serviceClient, clientUserId);
+  const messageIds = [];
+
+  try {
   // 1. Test clean message transmission (no active booking: admin to creator)
   console.log(`\n1. Testing clean message transmission (no active booking)...`);
   const cleanMsgText = 'Hello! I am checking on the platform status. No contact details here.';
@@ -87,9 +97,9 @@ async function runTests() {
   });
 
   if (cleanMsgErr) {
-    console.error('❌ Failed clean message transmission:', cleanMsgErr.message);
-    process.exit(1);
+    throw new Error(`Failed clean message transmission: ${cleanMsgErr.message}`);
   }
+  messageIds.push(cleanMsg.id);
   console.log('✅ Clean message sent successfully! Message ID:', cleanMsg.id);
 
   // 2. Test contact details blocking (no active booking: admin to creator)
@@ -111,8 +121,7 @@ async function runTests() {
     if (blockErr && blockErr.message.includes('Contact details must stay inside CreatorBridge')) {
       console.log(`✅ Correctly blocked: "${text}"`);
     } else {
-      console.error(`❌ FAILED to block: "${text}"`, blockErr ? blockErr.message : 'Message went through!');
-      process.exit(1);
+      throw new Error(`Failed to block contact details in "${text}": ${blockErr ? blockErr.message : 'Message went through'}`);
     }
   }
 
@@ -125,9 +134,9 @@ async function runTests() {
   });
 
   if (allowErr) {
-    console.error('❌ Failed to allow contact info with active booking:', allowErr.message);
-    process.exit(1);
+    throw new Error(`Failed to allow contact info with active booking: ${allowErr.message}`);
   }
+  messageIds.push(allowedMsg.id);
   console.log('✅ Message containing contact details successfully permitted due to active booking! Message ID:', allowedMsg.id);
 
   // 4. Test read receipt status marking
@@ -154,12 +163,22 @@ async function runTests() {
   console.log(`- After marking: Message read status is ${messagesAfter.read}`);
 
   if (messagesAfter.read !== true) {
-    console.error('❌ Failed: Message was not marked read!');
-    process.exit(1);
+    throw new Error('Message was not marked read');
   }
   console.log('✅ Read receipt successfully processed!');
 
   console.log('\n--- ALL MESSAGING AND SECURITY TESTS PASSED SUCCESSFULLY! ---');
+  } finally {
+    if (messageIds.length > 0) {
+      const { error: cleanupError } = await serviceClient.from('messages').delete().in('id', messageIds);
+      if (cleanupError) console.warn('Warning during message cleanup:', cleanupError.message);
+    }
+    await restoreClientTrust();
+    await restoreAdminTrust();
+    await creatorClient.auth.signOut();
+    await clientClient.auth.signOut();
+    await adminClient.auth.signOut();
+  }
 }
 
 runTests().catch(err => {

@@ -14,6 +14,7 @@ import { SERVICES } from '../data/rates.js';
 import { fromSupabaseProject, upsertLocalProject } from '../utils/projectStorage.js';
 import { CreatorAvatar } from '../components/CreatorAvatar.jsx';
 import { ChangeOrderFinalPayments } from '../components/change-orders/ChangeOrderFinalPayments.jsx';
+import { isSupabaseUuid } from '../utils/ids.js';
 
 // ── Helpers ──────────────────────────────────────────────────────
 function loadProject(projectId) {
@@ -450,6 +451,14 @@ export function CheckoutPage({ dark }) {
       setContract(null);
 
       try {
+        if (!isSupabaseUuid(projectId)) {
+          if (!cancelled) {
+            setProject(null);
+            setCreator(null);
+          }
+          return;
+        }
+
         let p = null;
         if (supabaseConfigured) {
           const { data } = await supabase
@@ -553,7 +562,7 @@ export function CheckoutPage({ dark }) {
     return (
       <div className={`min-h-screen flex flex-col items-center justify-center gap-4 ${dark ? 'bg-transparent text-white' : 'bg-gray-50 text-gray-900'}`}>
         <Briefcase size={40} className="text-gold-400" />
-        <h2 className="font-display text-xl font-bold">Project not found</h2>
+        <h1 className="font-display text-xl font-bold">Project not found</h1>
         <button type="button" onClick={() => navigate('/projects')}
           className="px-5 py-2.5 rounded-xl bg-gold-500 text-charcoal-900 font-bold text-sm">
           Back to Projects

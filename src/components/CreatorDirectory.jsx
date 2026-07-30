@@ -1584,6 +1584,7 @@ export function CreatorDirectory({
   initialSearchQuery = '',
   initialPillarFilter = 'all',
   collaborationOnly = false,
+  embedded = false,
 }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -1933,82 +1934,86 @@ export function CreatorDirectory({
   return (
     <div className="relative w-full min-h-screen">
       <div className="cb-home-wide relative z-0 mx-auto w-full px-5 sm:px-8 lg:px-14 2xl:px-16 py-10 md:py-14">
-        <div className="mb-4 flex items-center gap-2 text-[11px] text-charcoal-500">
-          <button type="button" onClick={() => navigate('/')} className="inline-flex min-h-[34px] items-center transition-colors hover:text-white">Home</button>
-          <span className="opacity-40">/</span>
-          <span className="text-charcoal-200">Find Creators</span>
-        </div>
+        {!embedded && (
+          <>
+            <div className="mb-4 flex items-center gap-2 text-[11px] text-charcoal-500">
+              <button type="button" onClick={() => navigate('/')} className="inline-flex min-h-[34px] items-center transition-colors hover:text-white">Home</button>
+              <span className="opacity-40">/</span>
+              <span className="text-charcoal-200">Find Creators</span>
+            </div>
 
-        <div className="creator-directory-hero relative mb-8 overflow-hidden rounded-3xl border border-white/[0.08]">
-          <img src="/images/creatorbridge/backgrounds/06-page-headers/header-findcreators-onset-crew.jpg" alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover" style={{ opacity: 0.6, filter: 'brightness(0.8) saturate(1.05)' }} loading="lazy" />
-          <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(13,13,15,0.94) 0%, rgba(13,13,15,0.8) 40%, rgba(13,13,15,0.5) 74%, rgba(13,13,15,0.32) 100%)' }} />
-          <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(13,13,15,0.2) 0%, rgba(13,13,15,0.08) 55%, rgba(13,13,15,0.55) 100%)' }} />
-          <div className="relative z-10 grid gap-6 p-6 md:p-10 lg:grid-cols-12 lg:items-end">
-          <div className="creator-directory-hero-copy lg:col-span-7">
-            <p className="eyebrow mb-2">
-              Browse the network · US-only
-            </p>
-            <h1 className="serif text-4xl md:text-5xl font-medium leading-[1.05] text-white">
-              Verified creators, <span className="gold-text">sorted by what matters</span>.
-            </h1>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--text-secondary)]">
-              Filter by primary pillar, Video Production, Photography, or Post Production, then narrow by specialty. Every creator commits to one pillar and 1-3 specialties.
-            </p>
-          </div>
-          
-          <div className="relative z-10 lg:col-span-5">
-            <div className="liquid-glass flex items-center gap-2 rounded-xl p-1.5">
-              <Search size={16} className="ml-2 text-charcoal-500" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search by name, studio, specialty, city"
-                className="min-h-[34px] min-w-0 flex-1 bg-transparent py-2 text-sm text-white outline-none placeholder:text-charcoal-500"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  aria-label="Clear search"
-                  className="rounded-lg p-2 text-charcoal-500 transition-colors hover:text-white"
-                >
-                  <X size={15} />
-                </button>
-              )}
-              <button type="button" className="btn-gold text-[11px]" style={{ minHeight: '34px', padding: '0.5rem 1rem' }}>
-                Search
-              </button>
+            <div className="creator-directory-hero relative mb-8 overflow-hidden rounded-3xl border border-white/[0.08]">
+              <img src="/images/creatorbridge/backgrounds/06-page-headers/header-findcreators-onset-crew.jpg" alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover" style={{ opacity: 0.6, filter: 'brightness(0.8) saturate(1.05)' }} loading="lazy" />
+              <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(13,13,15,0.94) 0%, rgba(13,13,15,0.8) 40%, rgba(13,13,15,0.5) 74%, rgba(13,13,15,0.32) 100%)' }} />
+              <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(13,13,15,0.2) 0%, rgba(13,13,15,0.08) 55%, rgba(13,13,15,0.55) 100%)' }} />
+              <div className="relative z-10 grid gap-6 p-6 md:p-10 lg:grid-cols-12 lg:items-end">
+                <div className="creator-directory-hero-copy lg:col-span-7">
+                  <p className="eyebrow mb-2">
+                    Browse the network · US-only
+                  </p>
+                  <h1 className="serif text-4xl md:text-5xl font-medium leading-[1.05] text-white">
+                    Verified creators, <span className="gold-text">sorted by what matters</span>.
+                  </h1>
+                  <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--text-secondary)]">
+                    Filter by primary pillar, Video Production, Photography, or Post Production, then narrow by specialty. Every creator commits to one pillar and 1-3 specialties.
+                  </p>
+                </div>
+
+                <div className="relative z-10 lg:col-span-5">
+                  <div className="liquid-glass flex items-center gap-2 rounded-xl p-1.5">
+                    <Search size={16} className="ml-2 text-charcoal-500" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      placeholder="Search by name, studio, specialty, city"
+                      className="min-h-[34px] min-w-0 flex-1 bg-transparent py-2 text-sm text-white outline-none placeholder:text-charcoal-500"
+                    />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery('')}
+                        aria-label="Clear search"
+                        className="rounded-lg p-2 text-charcoal-500 transition-colors hover:text-white"
+                      >
+                        <X size={15} />
+                      </button>
+                    )}
+                    <button type="button" className="btn-gold text-[11px]" style={{ minHeight: '34px', padding: '0.5rem 1rem' }}>
+                      Search
+                    </button>
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
+                    <div className="relative flex items-center">
+                      <MapPin size={14} className="absolute left-3 pointer-events-none text-charcoal-400" />
+                      <input
+                        type="text"
+                        maxLength={5}
+                        value={zip}
+                        onChange={e => setZip(e.target.value.replace(/\D/g,''))}
+                        placeholder="ZIP Code..."
+                        className="min-h-[34px] w-32 rounded-xl border border-white/[0.08] bg-charcoal-950/70 py-2 pl-9 pr-3 text-xs text-white outline-none placeholder-charcoal-500 focus:border-gold-500"
+                      />
+                    </div>
+
+                    <select
+                      value={sortBy}
+                      onChange={e => setSortBy(e.target.value)}
+                      aria-label="Sort creators"
+                      className="min-h-[34px] rounded-xl border border-white/[0.08] bg-charcoal-950/70 px-3 py-2 text-xs text-white outline-none focus:border-gold-500"
+                    >
+                      <option value="rating">Top Rated</option>
+                      <option value="reviews">Most Reviews</option>
+                      <option value="match">Best Budget Match</option>
+                      <option value="price_asc">Price: Low to High</option>
+                      <option value="price_desc">Price: High to Low</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
-              <div className="relative flex items-center">
-              <MapPin size={14} className="absolute left-3 pointer-events-none text-charcoal-400" />
-              <input 
-                type="text" 
-                maxLength={5} 
-                value={zip} 
-                onChange={e => setZip(e.target.value.replace(/\D/g,''))}
-                placeholder="ZIP Code..."
-                className="min-h-[34px] w-32 rounded-xl border border-white/[0.08] bg-charcoal-950/70 py-2 pl-9 pr-3 text-xs text-white outline-none placeholder-charcoal-500 focus:border-gold-500" 
-              />
-            </div>
-            
-            <select 
-              value={sortBy} 
-              onChange={e => setSortBy(e.target.value)}
-              aria-label="Sort creators"
-              className="min-h-[34px] rounded-xl border border-white/[0.08] bg-charcoal-950/70 px-3 py-2 text-xs text-white outline-none focus:border-gold-500"
-            >
-              <option value="rating">Top Rated</option>
-              <option value="reviews">Most Reviews</option>
-              <option value="match">Best Budget Match</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-            </select>
-            </div>
-          </div>
-          </div>
-        </div>
+          </>
+        )}
 
         {/* Mobile-only Filters toggle. On phones the filter sidebar is long
             and pushes creator cards far down the page. Collapse it by default

@@ -1,6 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'node:fs';
 import crypto from 'node:crypto';
+import {
+  buildQaCreatorListingPayload,
+  buildQaCreatorPortfolioItems,
+} from './lib/qaFixtures.mjs';
 
 function loadEnv() {
   const env = { ...process.env };
@@ -120,37 +124,11 @@ async function upsertClient(user) {
 
 async function seedCreator(user) {
   const now = new Date().toISOString();
-  const listingPayload = {
-    user_id: user.id,
-    name: 'Marcus Reed',
-    business_name: 'Copper Line Media',
-    avatar: 'CB',
-    bio: 'Phoenix based commercial videographer and production lead with 8 years of paid experience helping small businesses, nonprofits, and event teams turn practical briefs into polished video, photo, and podcast content. This QA profile is fully filled out to test CreatorBridge onboarding, service packaging, portfolio review, quote requests, and client booking flows from end to end.',
-    experience: 'senior',
-    years_experience: 8,
-    tags: ['Corporate', 'Brand Film', 'Podcast', 'Event Coverage', 'Editing'],
-    availability: 'available',
-    verified: true,
-    verification_status: 'verified',
-    review_status: 'approved',
-    plan: 'pro',
-    city: 'Phoenix',
-    state: 'AZ',
-    country: 'US',
-    zip: '85004',
-    region_key: 'us-tier2',
+  const listingPayload = buildQaCreatorListingPayload({
+    userId: user.id,
     email: accounts.creator.email,
-    phone: '480-555-0188',
-    website: 'https://creatorbridge.studio',
-    instagram: '@copperlinemedia_test',
-    rating: 4.9,
-    review_count: 12,
-    completed_projects: 14,
-    tier: 'proven',
-    completion_rate: 96,
-    video_intro_url: 'bunny:qa-creator-intro',
-    updated_at: now,
-  };
+    now,
+  });
 
   const existing = await admin
     .from('creator_listings')
@@ -203,32 +181,7 @@ async function seedCreator(user) {
   const serviceInsert = await admin.from('creator_services').insert(services);
   if (serviceInsert.error) throw serviceInsert.error;
 
-  const portfolio = [
-    {
-      listing_id: listingId,
-      service_id: 'video',
-      title: 'Founder Story Brand Film',
-      description: 'Test portfolio item for a 90-second founder story with interview lighting, b-roll, music, color, and captions.',
-      link: 'https://example.com/creatorbridge-test/founder-story-brand-film',
-      display_order: 0,
-    },
-    {
-      listing_id: listingId,
-      service_id: 'photography',
-      title: 'Corporate Event Photo Set',
-      description: 'Test portfolio item for conference coverage, speaker photos, candid networking, and sponsor deliverables.',
-      link: 'https://example.com/creatorbridge-test/corporate-event-photo-set',
-      display_order: 1,
-    },
-    {
-      listing_id: listingId,
-      service_id: 'podcast',
-      title: 'Podcast Launch Package',
-      description: 'Test portfolio item for a branded podcast trailer, three edited episodes, show notes, and social clips.',
-      link: 'https://example.com/creatorbridge-test/podcast-launch-package',
-      display_order: 2,
-    },
-  ];
+  const portfolio = buildQaCreatorPortfolioItems(listingId);
   const portfolioInsert = await admin.from('portfolio_items').insert(portfolio);
   if (portfolioInsert.error) throw portfolioInsert.error;
 
