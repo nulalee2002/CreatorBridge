@@ -2,6 +2,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
+import { createQaCleanupTracker } from './lib/qaCleanup.mjs';
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const migrationsDir = join(root, 'supabase/migrations');
@@ -146,13 +147,15 @@ if (Object.values(liveConfig).every(Boolean)) {
       authoritativeOutboxQueued: true,
     };
   } finally {
-    if (eventId) await service.from('platform_events').delete().eq('id', eventId);
+    const cleanup = createQaCleanupTracker('Platform intelligence QA cleanup');
+    if (eventId) await cleanup.check('delete platform event', service.from('platform_events').delete().eq('id', eventId));
     if (temporaryProjectId) {
-      await service.from('platform_event_outbox').delete().eq('entity_id', temporaryProjectId);
-      await service.from('projects').delete().eq('id', temporaryProjectId);
+      await cleanup.check('delete event outbox row', service.from('platform_event_outbox').delete().eq('entity_id', temporaryProjectId));
+      await cleanup.check('delete temporary project', service.from('projects').delete().eq('id', temporaryProjectId));
     }
-    if (temporaryUserId) await service.auth.admin.deleteUser(temporaryUserId);
-    await creator.auth.signOut();
+    if (temporaryUserId) await cleanup.check('delete temporary auth user', service.auth.admin.deleteUser(temporaryUserId));
+    await cleanup.check('sign out creator', creator.auth.signOut());
+    cleanup.assertComplete();
   }
 }
 

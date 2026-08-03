@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'node:fs';
+import { createQaCleanupTracker } from './lib/qaCleanup.mjs';
 
 function loadEnv() {
   const env = { ...process.env };
@@ -233,22 +234,23 @@ async function runTests() {
     console.log('\n--- ALL NETWORK AND MEMBERSHIP GATE TESTS PASSED SUCCESSFULLY! ---');
   } finally {
     console.log('\nRestoring QA data...');
+    const cleanup = createQaCleanupTracker('Network QA cleanup');
     if (listingWasChanged) {
-      const { error: restoreErr } = await serviceClient
+      await cleanup.check('restore creator listing approval', serviceClient
         .from('creator_listings')
         .update(normalizedState)
-        .eq('id', listingId);
-      if (restoreErr) console.warn('Warning: could not restore creator listing approval:', restoreErr.message);
-      else console.log('✅ Creator listing approval restored.');
+        .eq('id', listingId));
     }
     if (postId) {
-      const { error: postCleanErr } = await serviceClient.from('network_posts').delete().eq('id', postId);
-      if (postCleanErr) console.warn('Warning during network post cleanup:', postCleanErr.message);
+      await cleanup.check('delete network post', serviceClient.from('network_posts').delete().eq('id', postId));
     }
     if (chatId) {
-      const { error: chatCleanErr } = await serviceClient.from('state_chat_messages').delete().eq('id', chatId);
-      if (chatCleanErr) console.warn('Warning during chat cleanup:', chatCleanErr.message);
+      await cleanup.check('delete state chat message', serviceClient.from('state_chat_messages').delete().eq('id', chatId));
     }
+    await cleanup.check('sign out creator', creatorClient.auth.signOut());
+    await cleanup.check('sign out client', clientClient.auth.signOut());
+    await cleanup.check('sign out admin', adminClient.auth.signOut());
+    cleanup.assertComplete();
     console.log('✅ Cleanup complete.');
   }
 }

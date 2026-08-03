@@ -5,6 +5,7 @@ import { calculateCollaborationFees } from '../src/config/collaborationFees.js';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import { provisionQaTrust } from './lib/qaTrust.mjs';
+import { createQaCleanupTracker } from './lib/qaCleanup.mjs';
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const sql = readdirSync(join(root,'supabase/migrations')).filter(f=>f.endsWith('.sql')).map(f=>readFileSync(join(root,'supabase/migrations',f),'utf8')).join('\n').toLowerCase();
 const fnPath = join(root,'supabase/functions/create-collaboration-payment/index.ts');
@@ -56,7 +57,7 @@ if(Object.values(cfg).every(Boolean)){
   const copy={...source};for(const k of ['id','created_at','updated_at','search_vector'])delete copy[k];Object.assign(copy,{user_id:uid,name:'QA Payee',business_name:'QA Payee',email:`qa-${uid}@example.invalid`,review_status:'approved'});
   const {data:l,error:le}=await admin.from('creator_listings').insert(copy).select('id').single();if(le)throw le;lid=l.id;
   const {data:p,error:pe}=await admin.from('projects').insert({title:'QA ACH collaboration',description:'Temporary payment verification.',status:'collaboration_draft'}).select('id').single();if(pe)throw pe;pid=p.id;
-  await admin.from('project_participants').insert([{project_id:pid,user_id:auth.user.id,participant_role:'prime_contractor',creator_listing_id:source.id,status:'active'},{project_id:pid,user_id:uid,participant_role:'subcontractor',creator_listing_id:lid,status:'active'}]);
+  const {error:participantsError}=await admin.from('project_participants').insert([{project_id:pid,user_id:auth.user.id,participant_role:'prime_contractor',creator_listing_id:source.id,status:'active'},{project_id:pid,user_id:uid,participant_role:'subcontractor',creator_listing_id:lid,status:'active'}]);if(participantsError)throw participantsError;
   const {data:c,error:ce}=await admin.from('creator_collaborations').insert({project_id:pid,prime_user_id:auth.user.id,prime_listing_id:source.id,collaborator_user_id:uid,collaborator_listing_id:lid,service_category:'Post Production',scope:'Temporary ACH payment verification collaboration scope.',amount_cents:25000,deadline:'2030-01-01',project_context:'standalone',status:'accepted'}).select('id').single();if(ce)throw ce;cid=c.id;
   const {data:created,error:fe}=await prime.functions.invoke('create-collaboration-payment',{body:{collaborationId:cid}});
   if(fe||created?.error){
@@ -69,10 +70,18 @@ if(Object.values(cfg).every(Boolean)){
   const {data:pay}=await admin.from('collaboration_payments').select('id,buyer_platform_fee_cents,ach_processing_cost_cents,status').eq('stripe_payment_intent_id',intentId).single();paymentId=pay.id;if(pay.buyer_platform_fee_cents!==0||pay.ach_processing_cost_cents<=0)throw new Error('Live fee isolation failed');
   live={achOnly:true,buyerFeeWaived:true,processingCostAssignedToPrime:true,status:'processing'};
  }finally{
-  if(intentId){try{await stripe.paymentIntents.cancel(intentId)}catch{}}
-  if(paymentId)await admin.from('collaboration_payments').delete().eq('id',paymentId);if(cid)await admin.from('creator_collaborations').delete().eq('id',cid);if(pid)await admin.from('projects').delete().eq('id',pid);if(lid)await admin.from('creator_listings').delete().eq('id',lid);
-  if(sourceBefore)await admin.from('creator_listings').update({review_status:sourceBefore.review_status,verified:sourceBefore.verified,verification_status:sourceBefore.verification_status}).eq('id',sourceBefore.id);
-  if(restoreTargetTrust)await restoreTargetTrust();if(restorePrimeTrust)await restorePrimeTrust();if(uid)await admin.auth.admin.deleteUser(uid);await prime.auth.signOut();
+  const cleanup=createQaCleanupTracker('Collaboration payment QA cleanup');
+  if(intentId)await cleanup.check('cancel Stripe payment intent',async()=>{const intent=await stripe.paymentIntents.retrieve(intentId);if(!['canceled','succeeded'].includes(intent.status))await stripe.paymentIntents.cancel(intentId);return{error:null}});
+  if(paymentId)await cleanup.check('delete collaboration payment',admin.from('collaboration_payments').delete().eq('id',paymentId));
+  if(cid)await cleanup.check('delete creator collaboration',admin.from('creator_collaborations').delete().eq('id',cid));
+  if(pid)await cleanup.check('delete project',admin.from('projects').delete().eq('id',pid));
+  if(lid)await cleanup.check('delete target listing',admin.from('creator_listings').delete().eq('id',lid));
+  if(sourceBefore)await cleanup.check('restore source listing',admin.from('creator_listings').update({review_status:sourceBefore.review_status,verified:sourceBefore.verified,verification_status:sourceBefore.verification_status}).eq('id',sourceBefore.id));
+  if(restoreTargetTrust)await cleanup.check('restore target trust',restoreTargetTrust);
+  if(restorePrimeTrust)await cleanup.check('restore prime trust',restorePrimeTrust);
+  if(uid)await cleanup.check('delete target auth user',admin.auth.admin.deleteUser(uid));
+  await cleanup.check('sign out prime creator',prime.auth.signOut());
+  cleanup.assertComplete();
  }
 }
 console.log(JSON.stringify({ok:true,checks:tests.length,live},null,2));

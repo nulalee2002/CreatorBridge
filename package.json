@@ -16,6 +16,7 @@
     "verify:admin-support-search": "node --env-file=.env scripts/verify-admin-support-search.mjs",
     "verify:chatbot-guide": "node scripts/verify-chatbot-guide.mjs",
     "verify:chatbot-ai": "node --env-file=.env scripts/verify-chatbot-ai.mjs",
+    "verify:chatbot-quota-security-live": "node --env-file=.env scripts/verify-chatbot-quota-security-live.mjs",
     "verify:client-phone-gate": "node --env-file=.env scripts/verify-client-phone-gate.mjs",
     "verify:walled-garden-portfolio": "node scripts/verify-walled-garden-portfolio.mjs",
     "verify:client-invite-credit": "node scripts/verify-client-invite-credit.mjs",

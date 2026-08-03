@@ -28,6 +28,7 @@ import { handoffPages } from './data/handoffPages.js';
 import { NotificationBell } from './components/NotificationBell.jsx';
 import { CreatorAvatar } from './components/CreatorAvatar.jsx';
 import { BrandLogo } from './components/BrandLogo.jsx';
+import { getRouteShellClass } from './lib/routeShell.js';
 
 function makeId() {
   return globalThis.crypto?.randomUUID?.() || `id-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -841,8 +842,7 @@ export default function App() {
   }
 
   const bgMain = dark ? '' : 'bg-gray-50';
-  const isAccountRoute = location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/client');
-  const routeBackdropClass = location.pathname === '/' ? 'cb-home-route' : isAccountRoute ? 'cb-inner-route cb-account-route' : 'cb-inner-route';
+  const routeBackdropClass = getRouteShellClass(location.pathname);
   const routeBackdrop = getRouteBackdrop(location.pathname);
   const cardCls = `rounded-2xl border ${dark ? 'bg-charcoal-900/72 border-white/[0.07] shadow-[0_22px_70px_rgba(0,0,0,0.18)]' : 'bg-white border-gray-200'}`;
   return (

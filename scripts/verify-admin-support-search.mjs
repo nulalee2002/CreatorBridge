@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { createQaCleanupTracker } from './lib/qaCleanup.mjs';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -158,7 +159,9 @@ try {
     openSupportTicketCount: analyticsTickets.count ?? null,
   }, null, 2));
 } finally {
+  const cleanup = createQaCleanupTracker('Admin support QA cleanup');
   if (ticketId) {
-    await admin.from('support_tickets').delete().eq('id', ticketId);
+    await cleanup.check('delete support ticket', admin.from('support_tickets').delete().eq('id', ticketId));
   }
+  cleanup.assertComplete();
 }

@@ -5,6 +5,7 @@ import {
   buildQaCreatorListingPayload,
   buildQaCreatorPortfolioItems,
 } from './lib/qaFixtures.mjs';
+import { createQaCleanupTracker } from './lib/qaCleanup.mjs';
 
 function loadEnv() {
   const env = { ...process.env };
@@ -151,9 +152,11 @@ async function seedCreator(user) {
     listingId = data.id;
   }
 
-  await admin.from('creator_services').delete().eq('listing_id', listingId);
-  await admin.from('portfolio_items').delete().eq('listing_id', listingId);
-  await admin.from('packages').delete().eq('listing_id', listingId);
+  const reset = createQaCleanupTracker('QA creator fixture reset');
+  await reset.check('delete creator services', admin.from('creator_services').delete().eq('listing_id', listingId));
+  await reset.check('delete portfolio items', admin.from('portfolio_items').delete().eq('listing_id', listingId));
+  await reset.check('delete packages', admin.from('packages').delete().eq('listing_id', listingId));
+  reset.assertComplete();
 
   const services = [
     {

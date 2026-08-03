@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { createQaCleanupTracker } from './lib/qaCleanup.mjs';
 
 const url = process.env.VITE_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -76,6 +77,8 @@ try {
     deleteRowsByDefault: false,
   }, null, 2));
 } finally {
-  if (ticketId) await supabase.from('support_tickets').delete().eq('id', ticketId);
-  await supabase.storage.from('support-screenshots').remove([screenshotPath]);
+  const cleanup = createQaCleanupTracker('Support retention QA cleanup');
+  if (ticketId) await cleanup.check('delete support ticket', supabase.from('support_tickets').delete().eq('id', ticketId));
+  await cleanup.check('delete support screenshot', supabase.storage.from('support-screenshots').remove([screenshotPath]));
+  cleanup.assertComplete();
 }

@@ -275,36 +275,69 @@ try {
   console.error('\nE2E FAILED:', err.message);
   process.exitCode = 1;
 } finally {
-  // Cleanup: cancel unconfirmed intents, remove QA rows, restore listing counters
+  // Cleanup: cancel unconfirmed intents, remove QA rows, restore listing counters.
+  // Every delete result is checked and the run fails if any QA row survives:
+  // payment_events must go before transactions (its FK is NO ACTION, so an
+  // unchecked transactions delete fails silently and strands the project row).
+  const cleanupFailures = [];
+  const checked = async (label, builder) => {
+    const { error } = await builder;
+    if (error) cleanupFailures.push(`${label}: ${error.message}`);
+  };
   for (const id of [retainerIntentId, finalIntentId]) {
     if (id) { try { const pi = await stripe.paymentIntents.retrieve(id); if (!['succeeded', 'canceled'].includes(pi.status)) await stripe.paymentIntents.cancel(id); } catch {} }
   }
-  if (projectId) await admin.from('transactions').delete().eq('project_id', projectId);
-  if (contractId) await admin.from('contracts').delete().eq('id', contractId);
-  if (appId) await admin.from('project_applications').delete().eq('id', appId);
-  if (projectId) await admin.from('projects').delete().eq('id', projectId);
+  if (projectId) {
+    const { data: txRows, error: txReadError } = await admin
+      .from('transactions').select('id').eq('project_id', projectId);
+    if (txReadError) cleanupFailures.push(`read transactions: ${txReadError.message}`);
+    for (const tx of txRows || []) {
+      await checked(`payment_events of transaction ${tx.id}`,
+        admin.from('payment_events').delete().eq('transaction_id', tx.id));
+    }
+    await checked('transactions', admin.from('transactions').delete().eq('project_id', projectId));
+  }
+  if (contractId) await checked('contracts', admin.from('contracts').delete().eq('id', contractId));
+  if (appId) await checked('project_applications', admin.from('project_applications').delete().eq('id', appId));
+  if (projectId) await checked('projects', admin.from('projects').delete().eq('id', projectId));
   for (const fixture of trustFixtures.reverse()) {
     if (fixture.verificationId) {
-      await admin.from('identity_verifications').delete().eq('id', fixture.verificationId);
+      await checked('identity_verifications',
+        admin.from('identity_verifications').delete().eq('id', fixture.verificationId));
     }
     if (fixture.consentId) {
-      await admin.from('identity_consents').delete().eq('id', fixture.consentId);
+      await checked('identity_consents',
+        admin.from('identity_consents').delete().eq('id', fixture.consentId));
     }
     if (fixture.phoneTouched) {
       if (fixture.originalPhone) {
-        await admin.from('account_phone_verifications').upsert(fixture.originalPhone, { onConflict: 'user_id' });
+        await checked('restore account_phone_verifications',
+          admin.from('account_phone_verifications').upsert(fixture.originalPhone, { onConflict: 'user_id' }));
       } else {
-        await admin.from('account_phone_verifications').delete().eq('user_id', fixture.userId);
+        await checked('account_phone_verifications',
+          admin.from('account_phone_verifications').delete().eq('user_id', fixture.userId));
       }
     }
   }
   if (listingBefore) {
-    await admin.from('creator_listings').update({
+    await checked('restore creator_listings counters', admin.from('creator_listings').update({
       completed_projects: listingBefore.completed_projects,
       rating: listingBefore.rating,
       completion_rate: listingBefore.completion_rate,
       next_project_fee_pct: listingBefore.next_project_fee_pct,
-    }).eq('id', listingBefore.id);
+    }).eq('id', listingBefore.id));
   }
-  console.log('Cleanup complete (QA rows and trust fixtures removed, listing counters restored).');
+  if (projectId) {
+    const { count, error: residueError } = await admin
+      .from('projects').select('id', { count: 'exact', head: true }).eq('id', projectId);
+    if (residueError) cleanupFailures.push(`residue check: ${residueError.message}`);
+    else if ((count ?? 0) > 0) cleanupFailures.push(`project ${projectId} still exists after cleanup`);
+  }
+  if (cleanupFailures.length > 0) {
+    console.error('CLEANUP FAILED; QA rows remain in the database:');
+    for (const failure of cleanupFailures) console.error(`- ${failure}`);
+    process.exitCode = 1;
+  } else {
+    console.log('Cleanup complete (QA rows and trust fixtures removed, listing counters restored).');
+  }
 }

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { createQaCleanupTracker } from './lib/qaCleanup.mjs';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 
 function loadEnv() {
@@ -176,10 +177,13 @@ if (!staticOnly && supabaseUrl && anonKey && serviceKey && clientPass) {
     });
     if (allowed.error) throw allowed.error;
     assert(allowed.data?.id, 'Verified client should be able to post a project brief');
-    await admin.from('projects').delete().eq('id', allowed.data.id);
+    const allowedCleanup = createQaCleanupTracker('Client phone gate project cleanup');
+    await allowedCleanup.check('delete allowed project brief', admin.from('projects').delete().eq('id', allowed.data.id));
+    allowedCleanup.assertComplete();
   } finally {
+    const cleanup = createQaCleanupTracker('Client phone gate trust cleanup');
     if (originalProfile) {
-      await admin.from('client_profiles').upsert({
+      await cleanup.check('restore client profile', admin.from('client_profiles').upsert({
         user_id: userId,
         phone: originalProfile.phone,
         phone_verified: originalProfile.phone_verified,
@@ -187,13 +191,16 @@ if (!staticOnly && supabaseUrl && anonKey && serviceKey && clientPass) {
         display_name: originalProfile.display_name,
         tos_accepted_at: originalProfile.tos_accepted_at,
         updated_at: new Date().toISOString(),
-      }, { onConflict: 'user_id' });
+      }, { onConflict: 'user_id' }));
     }
     if (originalPhoneTrust) {
-      await admin.from('account_phone_verifications').upsert(originalPhoneTrust, { onConflict: 'user_id' });
+      await cleanup.check('restore phone verification',
+        admin.from('account_phone_verifications').upsert(originalPhoneTrust, { onConflict: 'user_id' }));
     } else {
-      await admin.from('account_phone_verifications').delete().eq('user_id', userId);
+      await cleanup.check('delete temporary phone verification',
+        admin.from('account_phone_verifications').delete().eq('user_id', userId));
     }
+    cleanup.assertComplete();
   }
 }
 

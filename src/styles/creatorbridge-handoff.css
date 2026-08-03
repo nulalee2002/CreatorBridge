@@ -189,6 +189,12 @@ body::after {
     linear-gradient(90deg, rgba(14,11,9,0.9) 0%, rgba(14,11,9,0.64) 50%, rgba(14,11,9,0.9) 100%);
 }
 
+/* Admin pages start closer to the viewport edge than the public and account
+   shells, so reserve explicit room for the fixed desktop navigation. */
+.cb-admin-route #cb-main-content {
+  padding-top:2.25rem;
+}
+
 /* Quiet down if user prefers reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .bg-grid { animation: none; }
@@ -1063,6 +1069,16 @@ select.input { appearance:none; padding-right:2rem;
     left:0.48rem;
     right:0.48rem;
     bottom:0.22rem;
+  }
+
+  /* The mobile navigation wraps onto two rows. Account pages already include
+     desktop clearance; these route-specific offsets cover only the additional
+     wrapped height without disturbing public and legal page spacing. */
+  .cb-account-route #cb-main-content {
+    padding-top:3rem;
+  }
+  .cb-admin-route #cb-main-content {
+    padding-top:3rem;
   }
 
   .cb-handoff-page > main[style*="padding-top"] {

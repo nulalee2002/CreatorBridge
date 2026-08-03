@@ -35,6 +35,9 @@ if (ownItemError) throw ownItemError;
 
 let validPostId = null;
 let temporaryUserId = null;
+let temporaryListingId = null;
+let temporaryItemId = null;
+const cleanupFailures = [];
 try {
   const base = {
     state_code: 'AZ',
@@ -87,6 +90,7 @@ try {
       .select('id')
       .single();
     if (temporaryListingError) throw temporaryListingError;
+    temporaryListingId = temporaryListing.id;
 
     const itemCopy = { ...ownItem };
     for (const key of ['id', 'created_at']) delete itemCopy[key];
@@ -100,6 +104,7 @@ try {
       .select('id, listing_id')
       .single();
     if (temporaryItemError) throw temporaryItemError;
+    temporaryItemId = temporaryItem.id;
     foreignItem = temporaryItem;
   }
 
@@ -113,7 +118,29 @@ try {
 
   console.log(JSON.stringify({ ok: true, ownerShareWorked: true, crossOwnerBlocked }, null, 2));
 } finally {
-  if (validPostId) await service.from('network_posts').delete().eq('id', validPostId);
-  if (temporaryUserId) await service.auth.admin.deleteUser(temporaryUserId);
+  // Cleanup must fail loudly: every delete result is checked, child rows are
+  // removed before their parents, and any failure exits non-zero so leftover
+  // QA rows can never hide behind a passing run.
+  if (validPostId) {
+    const { error } = await service.from('network_posts').delete().eq('id', validPostId);
+    if (error) cleanupFailures.push(`network_posts ${validPostId}: ${error.message}`);
+  }
+  if (temporaryItemId) {
+    const { error } = await service.from('portfolio_items').delete().eq('id', temporaryItemId);
+    if (error) cleanupFailures.push(`portfolio_items ${temporaryItemId}: ${error.message}`);
+  }
+  if (temporaryListingId) {
+    const { error } = await service.from('creator_listings').delete().eq('id', temporaryListingId);
+    if (error) cleanupFailures.push(`creator_listings ${temporaryListingId}: ${error.message}`);
+  }
+  if (temporaryUserId) {
+    const { error } = await service.auth.admin.deleteUser(temporaryUserId);
+    if (error) cleanupFailures.push(`auth user ${temporaryUserId}: ${error.message}`);
+  }
   await creator.auth.signOut();
+  if (cleanupFailures.length > 0) {
+    console.error('Cleanup failed; QA rows remain in the database:');
+    for (const failure of cleanupFailures) console.error(`- ${failure}`);
+    process.exitCode = 1;
+  }
 }

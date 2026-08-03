@@ -1,3 +1,5 @@
+import { createQaCleanupTracker } from './qaCleanup.mjs';
+
 const QA_CONSENT_VERSION = 'creatorbridge-automated-qa-v1';
 
 export async function provisionQaTrust(admin, userId) {
@@ -8,7 +10,7 @@ export async function provisionQaTrust(admin, userId) {
     .maybeSingle();
   if (phoneReadError) throw phoneReadError;
 
-  await admin.from('account_phone_verifications').upsert({
+  const { error: phoneUpsertError } = await admin.from('account_phone_verifications').upsert({
     user_id: userId,
     phone_e164: originalPhone?.phone_e164 || '+16025550100',
     status: 'verified',
@@ -20,6 +22,7 @@ export async function provisionQaTrust(admin, userId) {
     created_at: originalPhone?.created_at || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   }, { onConflict: 'user_id' });
+  if (phoneUpsertError) throw phoneUpsertError;
 
   const { data: latestIdentity, error: identityReadError } = await admin
     .from('identity_verifications')
@@ -81,16 +84,22 @@ export async function provisionQaTrust(admin, userId) {
   }
 
   return async function restoreQaTrust() {
+    const cleanup = createQaCleanupTracker(`QA trust restore for ${userId}`);
     if (createdVerificationId) {
-      await admin.from('identity_verifications').delete().eq('id', createdVerificationId);
+      await cleanup.check('delete identity verification',
+        admin.from('identity_verifications').delete().eq('id', createdVerificationId));
     }
     if (createdConsentId) {
-      await admin.from('identity_consents').delete().eq('id', createdConsentId);
+      await cleanup.check('delete identity consent',
+        admin.from('identity_consents').delete().eq('id', createdConsentId));
     }
     if (originalPhone) {
-      await admin.from('account_phone_verifications').upsert(originalPhone, { onConflict: 'user_id' });
+      await cleanup.check('restore phone verification',
+        admin.from('account_phone_verifications').upsert(originalPhone, { onConflict: 'user_id' }));
     } else {
-      await admin.from('account_phone_verifications').delete().eq('user_id', userId);
+      await cleanup.check('delete temporary phone verification',
+        admin.from('account_phone_verifications').delete().eq('user_id', userId));
     }
+    cleanup.assertComplete();
   };
 }

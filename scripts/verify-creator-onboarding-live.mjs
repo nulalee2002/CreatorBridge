@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { createQaCleanupTracker } from './lib/qaCleanup.mjs';
 
 const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
@@ -64,16 +65,18 @@ async function countRows(table, filters = []) {
 }
 
 async function cleanup() {
+  const tracker = createQaCleanupTracker('Creator onboarding QA cleanup');
   if (listingId) {
-    await service.from('portfolio_items').delete().eq('listing_id', listingId);
-    await service.from('packages').delete().eq('listing_id', listingId);
-    await service.from('creator_listings').delete().eq('id', listingId);
+    await tracker.check('delete portfolio items', service.from('portfolio_items').delete().eq('listing_id', listingId));
+    await tracker.check('delete packages', service.from('packages').delete().eq('listing_id', listingId));
+    await tracker.check('delete creator listing', service.from('creator_listings').delete().eq('id', listingId));
   }
   if (userId) {
-    await service.from('legal_acceptances').delete().eq('user_id', userId);
-    await service.from('profiles').delete().eq('id', userId);
-    await service.auth.admin.deleteUser(userId);
+    await tracker.check('delete legal acceptances', service.from('legal_acceptances').delete().eq('user_id', userId));
+    await tracker.check('delete profile', service.from('profiles').delete().eq('id', userId));
+    await tracker.check('delete auth user', service.auth.admin.deleteUser(userId));
   }
+  tracker.assertComplete();
 }
 
 try {

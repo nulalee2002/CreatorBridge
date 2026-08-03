@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { createQaCleanupTracker } from './lib/qaCleanup.mjs';
 import { provisionQaTrust } from './lib/qaTrust.mjs';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -100,11 +101,13 @@ try {
     unauthenticatedEmailBlocked: true,
   }, null, 2));
 } finally {
+  const cleanup = createQaCleanupTracker('Notification center QA cleanup');
   if (adminSupabase && notificationId) {
-    await adminSupabase.from('notifications').delete().eq('id', notificationId);
+    await cleanup.check('delete notification', adminSupabase.from('notifications').delete().eq('id', notificationId));
   }
   if (adminSupabase && messageId) {
-    await adminSupabase.from('messages').delete().eq('id', messageId);
+    await cleanup.check('delete message', adminSupabase.from('messages').delete().eq('id', messageId));
   }
-  if (restoreClientTrust) await restoreClientTrust();
+  if (restoreClientTrust) await cleanup.check('restore client trust', restoreClientTrust);
+  cleanup.assertComplete();
 }

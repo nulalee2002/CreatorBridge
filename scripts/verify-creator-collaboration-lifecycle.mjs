@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 import { provisionQaTrust } from './lib/qaTrust.mjs';
+import { createQaCleanupTracker } from './lib/qaCleanup.mjs';
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const sql = readdirSync(join(root, 'supabase/migrations')).filter((f) => f.endsWith('.sql')).sort()
@@ -121,20 +122,24 @@ if (Object.values(config).every(Boolean)) {
     if (acceptedRow.status !== 'accepted') throw new Error('Collaborator acceptance did not persist.');
     live = { selfHireBlocked: true, floorEnforced: true, standaloneCreated: true, outsideClientIsolated: true, collaboratorAccepted: true };
   } finally {
-    if (collaborationId) await service.from('creator_collaborations').delete().eq('id', collaborationId);
-    if (projectId) await service.from('projects').delete().eq('id', projectId);
-    if (targetListingId) await service.from('creator_listings').delete().eq('id', targetListingId);
+    const cleanup = createQaCleanupTracker('Creator collaboration lifecycle QA cleanup');
+    if (collaborationId) await cleanup.check('delete collaboration', service.from('creator_collaborations').delete().eq('id', collaborationId));
+    if (projectId) await cleanup.check('delete project', service.from('projects').delete().eq('id', projectId));
+    if (targetListingId) await cleanup.check('delete target listing', service.from('creator_listings').delete().eq('id', targetListingId));
     if (primeListingBefore) {
-      await service.from('creator_listings').update({
+      await cleanup.check('restore prime listing', service.from('creator_listings').update({
         review_status: primeListingBefore.review_status,
         verified: primeListingBefore.verified,
         verification_status: primeListingBefore.verification_status,
-      }).eq('id', primeListingBefore.id);
+      }).eq('id', primeListingBefore.id));
     }
-    if (restoreTargetTrust) await restoreTargetTrust();
-    if (restorePrimeTrust) await restorePrimeTrust();
-    if (targetUserId) await service.auth.admin.deleteUser(targetUserId);
-    await Promise.all([prime.auth.signOut(), client.auth.signOut(), target.auth.signOut()]);
+    if (restoreTargetTrust) await cleanup.check('restore target trust', restoreTargetTrust);
+    if (restorePrimeTrust) await cleanup.check('restore prime trust', restorePrimeTrust);
+    if (targetUserId) await cleanup.check('delete target auth user', service.auth.admin.deleteUser(targetUserId));
+    await cleanup.check('sign out prime', prime.auth.signOut());
+    await cleanup.check('sign out client', client.auth.signOut());
+    await cleanup.check('sign out target', target.auth.signOut());
+    cleanup.assertComplete();
   }
 }
 console.log(JSON.stringify({ ok: true, checks: checks.length, live }, null, 2));

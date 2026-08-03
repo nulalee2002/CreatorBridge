@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'node:fs';
 import { provisionQaTrust } from './lib/qaTrust.mjs';
+import { createQaCleanupTracker } from './lib/qaCleanup.mjs';
 
 function loadEnv() {
   const env = { ...process.env };
@@ -296,35 +297,33 @@ async function runTests() {
   console.log('\n--- ALL PROJECT LIFECYCLE AND DISPUTE TESTS PASSED SUCCESSFULLY! ---');
   } finally {
     console.log('\nCleaning up created test records...');
+    const cleanup = createQaCleanupTracker('Project lifecycle QA cleanup');
     if (disputeId) {
-      const { error: cleanDisputeErr } = await serviceClient.from('disputes').delete().eq('id', disputeId);
-      if (cleanDisputeErr) console.warn('Warning during dispute cleanup:', cleanDisputeErr.message);
+      await cleanup.check('delete dispute', serviceClient.from('disputes').delete().eq('id', disputeId));
     }
     if (transactionId) {
-      const { error: cleanTxnErr } = await serviceClient.from('transactions').delete().eq('id', transactionId);
-      if (cleanTxnErr) console.warn('Warning during transaction cleanup:', cleanTxnErr.message);
+      await cleanup.check('delete transaction', serviceClient.from('transactions').delete().eq('id', transactionId));
     }
     if (projectId) {
-      const { error: cleanProjErr } = await serviceClient.from('projects').delete().eq('id', projectId);
-      if (cleanProjErr) console.warn('Warning during project cleanup:', cleanProjErr.message);
+      await cleanup.check('delete project', serviceClient.from('projects').delete().eq('id', projectId));
     }
-    await restoreClientTrust();
+    await cleanup.check('restore client trust', restoreClientTrust);
     if (originalClientProfile) {
-      const { error: restoreClientErr } = await serviceClient.from('client_profiles').update({
+      await cleanup.check('restore client profile', serviceClient.from('client_profiles').update({
         phone: originalClientProfile.phone,
         phone_verified: originalClientProfile.phone_verified,
         phone_verified_at: originalClientProfile.phone_verified_at,
         display_name: originalClientProfile.display_name,
         tos_accepted_at: originalClientProfile.tos_accepted_at,
         updated_at: new Date().toISOString(),
-      }).eq('user_id', clientUserId);
-      if (restoreClientErr) console.warn('Warning during client profile restore:', restoreClientErr.message);
+      }).eq('user_id', clientUserId));
     } else {
-      await serviceClient.from('client_profiles').delete().eq('user_id', clientUserId);
+      await cleanup.check('delete temporary client profile', serviceClient.from('client_profiles').delete().eq('user_id', clientUserId));
     }
-    await creatorClient.auth.signOut();
-    await clientClient.auth.signOut();
-    await adminClient.auth.signOut();
+    await cleanup.check('sign out creator', creatorClient.auth.signOut());
+    await cleanup.check('sign out client', clientClient.auth.signOut());
+    await cleanup.check('sign out admin', adminClient.auth.signOut());
+    cleanup.assertComplete();
     console.log('✅ Cleanup complete.');
   }
 }

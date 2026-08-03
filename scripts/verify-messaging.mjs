@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'node:fs';
 import { provisionQaTrust } from './lib/qaTrust.mjs';
+import { createQaCleanupTracker } from './lib/qaCleanup.mjs';
 
 function loadEnv() {
   const env = { ...process.env };
@@ -86,6 +87,16 @@ async function runTests() {
   const restoreAdminTrust = await provisionQaTrust(serviceClient, adminUserId);
   const restoreClientTrust = await provisionQaTrust(serviceClient, clientUserId);
   const messageIds = [];
+  let projectId = null;
+  let transactionId = null;
+
+  const { data: creatorListing, error: listingError } = await serviceClient
+    .from('creator_listings')
+    .select('id')
+    .eq('user_id', creatorUserId)
+    .limit(1)
+    .single();
+  if (listingError) throw listingError;
 
   try {
   // 1. Test clean message transmission (no active booking: admin to creator)
@@ -127,6 +138,40 @@ async function runTests() {
 
   // 3. Test contact details allowed with active booking (client to creator)
   console.log(`\n3. Testing contact details allowed with active booking...`);
+  const { data: activeProject, error: projectError } = await serviceClient
+    .from('projects')
+    .insert({
+      client_id: clientUserId,
+      title: 'QA messaging active booking',
+      description: 'Temporary project used to verify contact sharing after a paid retainer.',
+      status: 'retainer_paid',
+      accepted_creator_id: creatorListing.id,
+    })
+    .select('id')
+    .single();
+  if (projectError) throw projectError;
+  projectId = activeProject.id;
+
+  const { data: activeTransaction, error: transactionError } = await serviceClient
+    .from('transactions')
+    .insert({
+      project_id: projectId,
+      creator_id: creatorListing.id,
+      client_id: clientUserId,
+      project_amount: 50000,
+      retainer_amount: 25000,
+      final_amount: 25000,
+      creator_fee_amount: 5000,
+      client_fee_amount: 2500,
+      platform_revenue: 7500,
+      retainer_status: 'paid',
+      final_status: 'pending',
+    })
+    .select('id')
+    .single();
+  if (transactionError) throw transactionError;
+  transactionId = activeTransaction.id;
+
   const contactText = 'Hey, here is my contact detail. Email me at info@creatorbridge.studio or phone 602-555-0100.';
   const { data: allowedMsg, error: allowErr } = await clientClient.rpc('send_creatorbridge_message', {
     p_recipient_id: creatorUserId,
@@ -169,15 +214,22 @@ async function runTests() {
 
   console.log('\n--- ALL MESSAGING AND SECURITY TESTS PASSED SUCCESSFULLY! ---');
   } finally {
+    const cleanup = createQaCleanupTracker('Messaging QA cleanup');
     if (messageIds.length > 0) {
-      const { error: cleanupError } = await serviceClient.from('messages').delete().in('id', messageIds);
-      if (cleanupError) console.warn('Warning during message cleanup:', cleanupError.message);
+      await cleanup.check('delete messages', serviceClient.from('messages').delete().in('id', messageIds));
     }
-    await restoreClientTrust();
-    await restoreAdminTrust();
-    await creatorClient.auth.signOut();
-    await clientClient.auth.signOut();
-    await adminClient.auth.signOut();
+    if (transactionId) {
+      await cleanup.check('delete active-booking transaction', serviceClient.from('transactions').delete().eq('id', transactionId));
+    }
+    if (projectId) {
+      await cleanup.check('delete active-booking project', serviceClient.from('projects').delete().eq('id', projectId));
+    }
+    await cleanup.check('restore client trust', restoreClientTrust);
+    await cleanup.check('restore admin trust', restoreAdminTrust);
+    await cleanup.check('sign out creator', creatorClient.auth.signOut());
+    await cleanup.check('sign out client', clientClient.auth.signOut());
+    await cleanup.check('sign out admin', adminClient.auth.signOut());
+    cleanup.assertComplete();
   }
 }
 
