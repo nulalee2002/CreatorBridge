@@ -1,3 +1,5 @@
+import { SUPPORT_EMAIL } from '../config/support.js';
+
 export function getPlatformGuideResponse(question = '') {
   const q = String(question).toLowerCase();
 
@@ -109,7 +111,7 @@ export function getPlatformGuideResponse(question = '') {
   }
 
   if (q.includes('contact') || q.includes('reach') || q.includes('email') || q.includes('phone') || q.includes('support') || q.includes('ticket')) {
-    return 'For account-specific issues, billing questions, or anything private, submit a support ticket or email drl33@creatorbridge.studio. For urgent payment or dispute matters, include URGENT in the subject so the team can triage it quickly.';
+    return `For account-specific issues, billing questions, or anything private, submit a support ticket or email ${SUPPORT_EMAIL}. For urgent payment or dispute matters, include URGENT in the subject so the team can triage it quickly.`;
   }
 
   if (q.includes('hello') || q.includes('hi') || q.includes('hey') || q.includes('what can you do') || q.includes('what can you help')) {

@@ -119,7 +119,26 @@ check('Directory accessibility contracts', 'src/components/CreatorDirectory.jsx'
 
 check('Network accessibility contracts', 'src/pages/NetworkingPage.jsx', [
   { label: 'state selector has an accessible name', test: includes('aria-label="Choose another state"') },
+  { label: 'renders truthful empty activity state', test: includes('No verified members have been active') },
+  { label: 'renders explicit provider configuration failure', test: includes('data provider is not configured') },
+  { label: 'does not ship fabricated seed activity', test: source => !/net-seed-|m-seed-|SEED_NETWORK_POSTS|MOCK_CHAT|MOCK_STATES/.test(source) },
 ]);
+
+check('Central support configuration', 'src/config/support.js', [
+  { label: 'supports an environment override', test: includes('VITE_SUPPORT_EMAIL') },
+  { label: 'keeps the established mailbox as fallback', test: includes('drl33@creatorbridge.studio') },
+]);
+
+check('Server support configuration', 'supabase/functions/_shared/support.ts', [
+  { label: 'supports a server secret override', test: includes("Deno.env.get('SUPPORT_EMAIL')") },
+  { label: 'keeps the established mailbox as fallback', test: includes('drl33@creatorbridge.studio') },
+]);
+
+checks.push({
+  name: 'Canonical public sitemap exists',
+  pass: fileExists('public/sitemap.xml')(),
+  path: 'public/sitemap.xml',
+});
 
 check('Smart Match reliability', 'src/utils/matchingAlgorithm.js', [
   { label: 'normalizes services before matching', test: includes('normalizeServiceId') },

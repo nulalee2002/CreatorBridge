@@ -32,11 +32,11 @@ export async function sendNotificationEmail(to, template, data) {
       body: { to, template, data }
     });
     if (error) {
-      console.error(`Failed to send email to ${to} using template ${template}:`, error);
+      console.error(`Failed to send notification email using template ${template}:`, error);
     } else {
       console.log(`Email successfully triggered for ${to} using template ${template}`);
     }
   } catch (err) {
-    console.error(`Network error invoking send-notification-email for ${to}:`, err);
+    console.error(`Network error invoking send-notification-email for template ${template}:`, err);
   }
 }

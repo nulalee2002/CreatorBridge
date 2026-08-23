@@ -10,11 +10,13 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
+          if (/src\/pages\/Admin(Dashboard|Support|Operations|Finance|Analytics)\.jsx$/.test(id)) return 'admin-routes';
           if (!id.includes('node_modules')) return undefined;
-          if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) return 'react-vendor';
+          if (id.includes('@zoom/videosdk')) return 'zoom-sdk';
+          if (id.includes('jspdf') || id.includes('jspdf-autotable') || id.includes('html2canvas') || id.includes('dompurify')) return 'pdf-vendor';
           if (id.includes('@supabase')) return 'supabase-vendor';
           if (id.includes('lucide-react')) return 'icons-vendor';
-          if (id.includes('jspdf') || id.includes('html2canvas') || id.includes('dompurify')) return undefined;
+          if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/react-router/')) return 'react-vendor';
           return undefined;
         },
       },

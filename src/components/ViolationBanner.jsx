@@ -1,4 +1,5 @@
 import { AlertTriangle, XCircle, ShieldOff } from 'lucide-react';
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '../config/support.js';
 
 /**
  * Displays the user's current violation/strike status on their dashboard.
@@ -22,8 +23,7 @@ export function ViolationBanner({ violations = [], dark }) {
           <p className="text-xs text-red-300 mt-1 leading-snug">
             Your account has been suspended due to repeated violations of our platform policies.
             Your profile is not visible to clients and you cannot send messages or accept projects.
-            {/* TODO: Update to support@creatorbridge.studio once domain email is active */}
-            To appeal, contact <a href="mailto:drl33@creatorbridge.studio" className="underline">drl33@creatorbridge.studio</a>.
+            To appeal, contact <a href={SUPPORT_MAILTO} className="underline">{SUPPORT_EMAIL}</a>.
           </p>
           <p className="text-[10px] text-red-400/70 mt-2">Strike 3 of 3 active</p>
         </div>

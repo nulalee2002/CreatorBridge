@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router';
 import { Download } from 'lucide-react';
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '../config/support.js';
 
 const SECTIONS = [
   { id: 'introduction', title: '1. Introduction & Scope' },
@@ -226,7 +227,7 @@ export function CreatorAgreement({ dark }) {
             <Section id="termination" title="7. Term and Termination" dark={dark}>
               <p>
                 This Agreement remains in effect until your account is closed. Either party may terminate this Agreement by deleting
-                the creator account or sending a termination request to <a href="mailto:drl33@creatorbridge.studio" className={linkCls}>drl33@creatorbridge.studio</a>.
+                the creator account or sending a termination request to <a href={SUPPORT_MAILTO} className={linkCls}>{SUPPORT_EMAIL}</a>.
               </p>
               <p>
                 Termination does not release you from completing any in-progress bookings, nor does it waive the 24-month non-circumvention
@@ -235,7 +236,7 @@ export function CreatorAgreement({ dark }) {
             </Section>
 
             <div className={`mt-8 pt-6 border-t text-xs ${dark ? 'border-white/[0.07] text-charcoal-300' : 'border-gray-200 text-gray-400'}`}>
-              <p>CreatorBridge Inc. Questions? Contact <a href="mailto:drl33@creatorbridge.studio" className={linkCls}>drl33@creatorbridge.studio</a></p>
+              <p>CreatorBridge Inc. Questions? Contact <a href={SUPPORT_MAILTO} className={linkCls}>{SUPPORT_EMAIL}</a></p>
             </div>
 
           </div>

@@ -44,7 +44,7 @@ const accounts = {
   creator: {
     email: 'drl33+creator@creatorbridge.studio',
     password: env.CREATORBRIDGE_QA_CREATOR_PASSWORD || env.QA_CREATOR_PASS || password('Creator'),
-    fullName: 'Marcus Reed',
+    fullName: 'CreatorBridge QA Creator',
     role: 'creator',
   },
   client: {

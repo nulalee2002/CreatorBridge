@@ -1,7 +1,7 @@
 export function buildQaCreatorListingPayload({ userId, email, now }) {
   return {
     user_id: userId,
-    name: 'Marcus Reed',
+    name: 'CreatorBridge QA Creator',
     business_name: 'Copper Line Media',
     avatar: 'CB',
     bio: 'Phoenix based commercial videographer and production lead with 8 years of paid experience helping small businesses, nonprofits, and event teams turn practical briefs into polished video, photo, and podcast content. This QA profile is fully filled out to test CreatorBridge onboarding, service packaging, portfolio review, quote requests, and client booking flows from end to end.',

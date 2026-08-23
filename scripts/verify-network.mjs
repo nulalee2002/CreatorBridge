@@ -134,7 +134,7 @@ async function runTests() {
       user_id: creatorUserId,
       content: 'This post should be blocked by RLS membership check.',
       post_type: 'general',
-      user_display_name: 'Marcus Reed',
+      user_display_name: 'CreatorBridge QA Creator',
       user_verification_status: 'unverified'
     });
 
@@ -185,7 +185,7 @@ async function runTests() {
       post_id: postId,
       user_id: creatorUserId,
       content: replyText,
-      user_display_name: 'Marcus Reed',
+      user_display_name: 'CreatorBridge QA Creator',
       user_verification_status: 'verified'
     })
     .select()
@@ -219,7 +219,7 @@ async function runTests() {
       state_code: 'AZ',
       user_id: creatorUserId,
       message: chatText,
-      user_display_name: 'Marcus Reed',
+      user_display_name: 'CreatorBridge QA Creator',
       user_verification_status: 'verified'
     })
     .select()

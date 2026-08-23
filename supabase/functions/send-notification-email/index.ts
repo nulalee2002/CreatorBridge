@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
+import { SUPPORT_EMAIL } from '../_shared/support.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -50,7 +51,7 @@ function getEmailTemplate(template: string, rawData: Record<string, any>): { sub
           <li><strong>30-Day Media Change Limit:</strong> Profile text can be edited after submission, but profile photo, intro video, and portfolio media uploads are limited for 30 days after submission or approval. This protects review quality and platform storage. If something urgent needs to be corrected, contact support to request media change approval.</li>
           <li><strong>Stripe Connect:</strong> Once approved, you will need to complete your Stripe Connect Express setup to connect a bank account or debit card. Listings go live only after payout details are linked.</li>
         </ul>
-        <p>If you have any questions during this time, please reach out to <a href="mailto:drl33@creatorbridge.studio" style="color: #d4a941; text-decoration: underline;">drl33@creatorbridge.studio</a>.</p>
+        <p>If you have any questions during this time, please reach out to <a href="mailto:${SUPPORT_EMAIL}" style="color: #d4a941; text-decoration: underline;">${SUPPORT_EMAIL}</a>.</p>
       `;
       break;
 
@@ -275,7 +276,7 @@ function getEmailTemplate(template: string, rawData: Record<string, any>): { sub
               <tr>
                 <td align="center" style="padding: 30px 40px; border-top: 1px solid #232429; font-size: 11px; color: #6b6e76;">
                   <p style="margin: 0 0 8px 0;">This is a transactional email from the CreatorBridge platform.</p>
-                  <p style="margin: 0;">CreatorBridge Inc. &middot; <a href="mailto:drl33@creatorbridge.studio" style="color: #d4a941; text-decoration: none;">drl33@creatorbridge.studio</a></p>
+                  <p style="margin: 0;">CreatorBridge Inc. &middot; <a href="mailto:${SUPPORT_EMAIL}" style="color: #d4a941; text-decoration: none;">${SUPPORT_EMAIL}</a></p>
                 </td>
               </tr>
               
@@ -346,13 +347,11 @@ Deno.serve(async (req) => {
 
     const apiKey = Deno.env.get('RESEND_API_KEY');
     if (!apiKey) {
-      console.warn(`[Local Mode] RESEND_API_KEY is not configured. Would send email to ${to}:`);
-      console.warn(`Subject: ${subject}`);
-      console.warn(`HTML preview length: ${html.length} chars`);
+      console.warn('Email provider is not configured; delivery was skipped.', { template, htmlLength: html.length });
       return jsonResponse({ success: true, message: 'Local mock success', logged: true });
     }
 
-    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'CreatorBridge <drl33@creatorbridge.studio>';
+    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || `CreatorBridge <${SUPPORT_EMAIL}>`;
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -369,7 +368,7 @@ Deno.serve(async (req) => {
 
     if (!response.ok) {
       const errBody = await response.text();
-      console.error('Resend API response error:', response.status, errBody);
+      console.error('Resend API response error:', { status: response.status, requestId: response.headers.get('x-request-id') });
       return jsonResponse({
         error: 'Failed to deliver email through Resend API',
         providerStatus: response.status,

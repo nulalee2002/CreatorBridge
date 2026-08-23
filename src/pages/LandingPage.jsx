@@ -1,4 +1,5 @@
 import { SEO } from '../components/SEO.jsx';
+import { SUPPORT_EMAIL } from '../config/support.js';
 
 const ORG_JSON_LD = {
   '@context': 'https://schema.org',
@@ -17,7 +18,7 @@ const ORG_JSON_LD = {
   },
   contactPoint: {
     '@type': 'ContactPoint',
-    email: 'drl33@creatorbridge.studio',
+    email: SUPPORT_EMAIL,
     contactType: 'customer support',
   },
 };

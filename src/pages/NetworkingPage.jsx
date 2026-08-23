@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router';
-import { MapPin, Send, Flag, Heart, MessageSquare, ChevronDown, Users, Lock } from 'lucide-react';
+import { Send, Flag, Heart, MessageSquare, Lock } from 'lucide-react';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
 import { checkMessage, logFilterEvent } from '../utils/messageFilter.js';
@@ -39,126 +39,7 @@ const US_STATES = [
   { code: 'WY', name: 'Wyoming' },
 ];
 
-const MOCK_STATES = [
-  { abbr: "CA", name: "California",   creators: 142, posts: 18, active: 23, hot: true },
-  { abbr: "NY", name: "New York",     creators: 118, posts: 14, active: 19, hot: true },
-  { abbr: "TX", name: "Texas",        creators: 89,  posts: 11, active: 12, hot: true },
-  { abbr: "FL", name: "Florida",      creators: 76,  posts: 9,  active: 14, hot: true },
-  { abbr: "IL", name: "Illinois",     creators: 54,  posts: 5,  active: 7,  hot: false },
-  { abbr: "GA", name: "Georgia",      creators: 47,  posts: 6,  active: 8,  hot: true },
-  { abbr: "AZ", name: "Arizona",      creators: 38,  posts: 7,  active: 9,  hot: true },
-  { abbr: "WA", name: "Washington",   creators: 41,  posts: 4,  active: 6,  hot: false },
-  { abbr: "MA", name: "Massachusetts",creators: 32,  posts: 3,  active: 4,  hot: false },
-  { abbr: "CO", name: "Colorado",     creators: 28,  posts: 4,  active: 5,  hot: false },
-  { abbr: "PA", name: "Pennsylvania", creators: 31,  posts: 2,  active: 3,  hot: false },
-  { abbr: "NC", name: "N. Carolina",  creators: 26,  posts: 3,  active: 4,  hot: false },
-  { abbr: "OR", name: "Oregon",       creators: 22,  posts: 2,  active: 3,  hot: false },
-  { abbr: "MI", name: "Michigan",     creators: 20,  posts: 1,  active: 2,  hot: false },
-  { abbr: "OH", name: "Ohio",         creators: 19,  posts: 1,  active: 2,  hot: false },
-  { abbr: "MN", name: "Minnesota",    creators: 17,  posts: 1,  active: 2,  hot: false },
-  { abbr: "NV", name: "Nevada",       creators: 21,  posts: 2,  active: 3,  hot: false },
-  { abbr: "UT", name: "Utah",         creators: 15,  posts: 1,  active: 2,  hot: false },
-  { abbr: "TN", name: "Tennessee",    creators: 23,  posts: 3,  active: 4,  hot: false },
-  { abbr: "VA", name: "Virginia",     creators: 18,  posts: 1,  active: 2,  hot: false },
-  { abbr: "OK", name: "Oklahoma",     creators: 9,   posts: 0,  active: 1,  hot: false },
-  { abbr: "WI", name: "Wisconsin",    creators: 11,  posts: 1,  active: 1,  hot: false },
-  { abbr: "MO", name: "Missouri",     creators: 13,  posts: 1,  active: 2,  hot: false },
-  { abbr: "LA", name: "Louisiana",    creators: 16,  posts: 2,  active: 3,  hot: false }
-];
-
-const SEED_NETWORK_POSTS = [
-  {
-    id: 'net-seed-1',
-    state_code: 'AZ',
-    user_display_name: 'Phoenix Media Co.',
-    user_verification_status: 'verified',
-    user_primary_service: 'Video Production',
-    post_type: 'collab',
-    content: 'Looking for a drone operator in the Phoenix area for an upcoming real estate project in Scottsdale. Dates are flexible in May. Drop a reply if interested.',
-    likes_count: 4,
-    reply_count: 2,
-    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'net-seed-2',
-    state_code: 'CA',
-    user_display_name: 'Elevation Films',
-    user_verification_status: 'pro_verified',
-    user_primary_service: 'Video Production',
-    post_type: 'portfolio',
-    creator_listing_id: 'demo',
-    portfolio_item_id: '1',
-    portfolio_item: {
-      id: '1',
-      title: 'Fintech Brand Film',
-      image_url: '/images/creatorbridge/backgrounds/03-featured-work/featured-warehouse-film-set.jpg',
-    },
-    content: 'Just wrapped a 3-day brand film shoot for a fintech startup in LA. I would love feedback on the pacing and color grade.',
-    likes_count: 12,
-    reply_count: 5,
-    created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'net-seed-3',
-    state_code: 'NY',
-    user_display_name: 'SoundWave Podcast',
-    user_verification_status: 'verified',
-    user_primary_service: 'Video Production',
-    post_type: 'industry_news',
-    content: 'Spotify just released their 2026 podcast trends report. Short-form video podcasts are up 340% year over year. If you are not already offering a video podcast package to clients, now is the time.',
-    likes_count: 8,
-    reply_count: 3,
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'net-seed-4',
-    state_code: 'TX',
-    user_display_name: 'Lone Star Visuals',
-    user_verification_status: 'verified',
-    user_primary_service: 'Photography',
-    post_type: 'looking_for_creator',
-    content: 'We are a Houston-based marketing agency looking for a verified headshot photographer for a quarterly executive portrait session. Professional studio preferred. Reply here if you match.',
-    likes_count: 6,
-    reply_count: 4,
-    created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'net-seed-5',
-    state_code: 'AZ',
-    user_display_name: 'Desert Sky Media',
-    user_verification_status: 'verified',
-    user_primary_service: 'Video Production',
-    post_type: 'general',
-    content: 'FAA just updated the Part 107 LAANC authorization zones around PHX Sky Harbor. If you are flying commercial jobs near the airport make sure your authorizations are current before your next shoot.',
-    likes_count: 9,
-    reply_count: 1,
-    created_at: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-  },
-];
-
-const MOCK_CHAT = {
-  general: [
-    { id: 'm-seed-1', name: "Naomi G.", time: "10:32", avatar: "/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg", text: "Good morning ☕️ shooting a brand piece in Venice today, weather's perfect" },
-    { id: 'm-seed-2', name: "Aria V.", time: "10:35", avatar: "/images/creatorbridge/handoff/photo-1494790108377-be9c29b29330.jpg", text: "Jealous. Miami's humid AF. Crew suiting up for an indoor shoot all day" },
-    { id: 'm-seed-3', name: "David P.", time: "10:38", avatar: "/images/creatorbridge/handoff/photo-1438761681033-6461ffad8d80.jpg", text: "Anyone tried the new Sony Burano on a real job? Considering renting for next week" },
-    { id: 'm-seed-4', name: "Mateo R.", time: "10:41", avatar: "/images/creatorbridge/handoff/photo-1500648767791-00dcc994a43e.jpg", text: "Cleared for Part 107 recertification today, back in the air next week" },
-    { id: 'm-seed-5', name: "Jordan M.", time: "10:44", avatar: "/images/creatorbridge/handoff/photo-1507003211169-0a1dd7228f2d.jpg", text: "Booked 4 podcast clients off the project board in May. CB scoring better than any cold outbound I've ever done" },
-    { id: 'm-seed-6', name: "Sofia P.", time: "10:48", avatar: "/images/creatorbridge/handoff/photo-1487412720507-e7ab37603c6f.jpg", text: "Lighting test shots from yesterday, full client approval before we even broke for lunch" }
-  ],
-  referrals: [
-    { id: 'm-seed-7', name: "Aria V.", time: "9:14", avatar: "/images/creatorbridge/handoff/photo-1494790108377-be9c29b29330.jpg", text: "Boutique hotel rebrand looking for video, anyone California-based with hospitality reel?" },
-    { id: 'm-seed-8', name: "Naomi G.", time: "9:18", avatar: "/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg", text: "I'll bite, DMing now" },
-    { id: 'm-seed-9', name: "David P.", time: "9:22", avatar: "/images/creatorbridge/handoff/photo-1438761681033-6461ffad8d80.jpg", text: "Aria solid pick, his Standard Hotels work was 10/10" }
-  ],
-  portfolio: [
-    { id: 'm-seed-10', name: "Sofia P.", time: "9:01", avatar: "/images/creatorbridge/handoff/photo-1487412720507-e7ab37603c6f.jpg", text: "I shared a new hospitality edit in the feed and would value notes on the opening sequence." },
-    { id: 'm-seed-11', name: "Mateo R.", time: "9:11", avatar: "/images/creatorbridge/handoff/photo-1500648767791-00dcc994a43e.jpg", text: "The pacing feels strong. I would hold the wide shot two beats longer before the first close-up." }
-  ],
-  leads: [
-    { id: 'm-seed-13', name: "Aria V.", time: "11:02", avatar: "/images/creatorbridge/handoff/photo-1494790108377-be9c29b29330.jpg", text: "Routing 2 commercial photo briefs to FL/CA, see today's main feed" },
-    { id: 'm-seed-14', name: "Dre W.", time: "11:08", avatar: "/images/creatorbridge/handoff/photo-1607746882042-944635dfe10e.jpg", text: "Atlanta tech conf needs 2nd shooter, June 14-15. Posted to project board, applying via CB" }
-  ]
-};
+const FEATURED_STATE_CODES = ['CA', 'NY', 'TX', 'FL', 'IL', 'GA', 'AZ', 'WA', 'MA', 'CO', 'PA'];
 
 const CONTACT_PATTERNS = [
   /@[a-zA-Z0-9_.]{2,}/,
@@ -200,17 +81,6 @@ function formatTime(iso) {
 
 function getInitials(name) {
   return sanitizePlainText(name || '?', 80).split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-}
-
-function getSeedAvatar(id) {
-  const seedAvatars = {
-    'net-seed-1': '/images/creatorbridge/handoff/photo-1507003211169-0a1dd7228f2d.jpg',
-    'net-seed-2': '/images/creatorbridge/handoff/photo-1531746020798-e6953c6e8e04.jpg',
-    'net-seed-3': '/images/creatorbridge/handoff/photo-1438761681033-6461ffad8d80.jpg',
-    'net-seed-4': '/images/creatorbridge/handoff/photo-1544005313-94ddf0286df2.jpg',
-    'net-seed-5': '/images/creatorbridge/handoff/photo-1502823403499-6ccfcf4fb453.jpg'
-  };
-  return seedAvatars[id] || null;
 }
 
 function getPostTypeLabel(type) {
@@ -278,37 +148,6 @@ function withSafeReplies(post) {
   };
 }
 
-function loadLocalPosts(stateCode) {
-  try {
-    const all = JSON.parse(localStorage.getItem('cm-network-posts') || '[]');
-    const seeds = SEED_NETWORK_POSTS.filter(p => p.state_code === stateCode).map(withSafeReplies);
-    const local = all.filter(p => p.state_code === stateCode).map(withSafeReplies);
-    const seedIds = seeds.map(s => s.id);
-    const merged = [...seeds, ...local.filter(p => !seedIds.includes(p.id))];
-    return merged.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  } catch { return []; }
-}
-
-function saveLocalPost(post) {
-  try {
-    const all = JSON.parse(localStorage.getItem('cm-network-posts') || '[]');
-    all.unshift(post);
-    localStorage.setItem('cm-network-posts', JSON.stringify(all));
-  } catch {}
-}
-
-function saveLocalReply(stateCode, postId, reply) {
-  try {
-    const all = JSON.parse(localStorage.getItem('cm-network-posts') || '[]');
-    const next = all.map(post => {
-      if (post.id !== postId || post.state_code !== stateCode) return post;
-      const replies = dedupeById([...(post.replies || []), reply]);
-      return { ...post, replies, reply_count: Math.max(post.reply_count || 0, replies.length) };
-    });
-    localStorage.setItem('cm-network-posts', JSON.stringify(next));
-  } catch {}
-}
-
 const encodeChannelMessage = (channel, text) => {
   if (channel === 'general') return text;
   return `[${channel}] ${text}`;
@@ -321,32 +160,6 @@ const decodeChannelMessage = (text) => {
   }
   return { channel: 'general', message: text };
 };
-
-function loadLocalChat(stateCode) {
-  const list = [];
-  Object.keys(MOCK_CHAT).forEach(channel => {
-    MOCK_CHAT[channel].forEach(m => {
-      list.push({
-        id: m.id,
-        state_code: stateCode,
-        user_display_name: m.name,
-        user_verification_status: 'verified',
-        user_primary_service: '',
-        message: channel === 'general' ? m.text : `[${channel}] ${m.text}`,
-        created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString()
-      });
-    });
-  });
-  return list;
-}
-
-function saveLocalMessage(stateCode, msg) {
-  try {
-    const all = JSON.parse(localStorage.getItem(`cm-state-chat-${stateCode}`) || '[]');
-    all.push(msg);
-    localStorage.setItem(`cm-state-chat-${stateCode}`, JSON.stringify(all));
-  } catch {}
-}
 
 function VerificationDot({ status }) {
   return null;
@@ -417,7 +230,7 @@ function PostCard({ post, dark, isVerified, onLike, onReport, onReply }) {
     setReplyText('');
   }
 
-  const avatarUrl = post.avatar_url || (post.id && post.id.startsWith('net-seed-') ? getSeedAvatar(post.id) : null);
+  const avatarUrl = post.avatar_url || null;
 
   return (
     <div className="post-card">
@@ -538,6 +351,7 @@ export function NetworkingPage({ dark, user, profile }) {
   const [selectedPortfolioItemId, setSelectedPortfolioItemId] = useState('');
   const [chatInput, setChatInput] = useState('');
   const [loadingPosts, setLoadingPosts] = useState(false);
+  const [loadingChat, setLoadingChat] = useState(false);
   const [postError, setPostError] = useState('');
   const [chatError, setChatError] = useState('');
   const chatBottomRef = useRef(null);
@@ -555,17 +369,11 @@ export function NetworkingPage({ dark, user, profile }) {
   );
 
   const displayStates = useMemo(() => {
-    const list = [...MOCK_STATES];
-    if (selectedState && !list.some(s => s.abbr === selectedState)) {
-      const fullState = US_STATES.find(s => s.code === selectedState);
-      list.push({
-        abbr: selectedState,
-        name: fullState ? fullState.name : selectedState,
-        creators: 14,
-        posts: 2,
-        active: 3,
-        hot: false
-      });
+    const list = FEATURED_STATE_CODES.map(code => US_STATES.find(state => state.code === code)).filter(Boolean)
+      .map(state => ({ abbr: state.code, name: state.name }));
+    if (selectedState && !list.some(state => state.abbr === selectedState)) {
+      const state = US_STATES.find(item => item.code === selectedState);
+      if (state) list.push({ abbr: state.code, name: state.name });
     }
     return list;
   }, [selectedState]);
@@ -574,10 +382,6 @@ export function NetworkingPage({ dark, user, profile }) {
     return displayStates.find(s => s.abbr === selectedState) || {
       abbr: selectedState,
       name: US_STATES.find(s => s.code === selectedState)?.name || selectedState,
-      creators: 12,
-      posts: 2,
-      active: 4,
-      hot: false
     };
   }, [displayStates, selectedState]);
 
@@ -667,11 +471,13 @@ export function NetworkingPage({ dark, user, profile }) {
       }
     } else {
       setPosts([]);
+      setPostError('The live CreatorBridge Network is unavailable because the data provider is not configured.');
     }
     setLoadingPosts(false);
   }
 
   async function loadChat() {
+    setLoadingChat(true);
     setChatError('');
     let msgs = [];
     if (supabaseConfigured) {
@@ -703,8 +509,10 @@ export function NetworkingPage({ dark, user, profile }) {
         .subscribe();
     } else {
       msgs = [];
+      setChatError('The live CreatorBridge chat is unavailable because the data provider is not configured.');
     }
     setMessages(msgs);
+    setLoadingChat(false);
   }
 
   async function handleSubmitPost(e) {
@@ -759,10 +567,7 @@ export function NetworkingPage({ dark, user, profile }) {
         return;
       }
       setPosts(prev => [withSafeReplies({ ...newPost, ...data, replies: [] }), ...prev]);
-    } else {
-      saveLocalPost(newPost);
-      setPosts(prev => [withSafeReplies(newPost), ...prev]);
-    }
+    } else return setPostError('Network posting is unavailable while the data provider is offline.');
     setPostContent('');
     setSelectedPortfolioItemId('');
   }
@@ -807,10 +612,7 @@ export function NetworkingPage({ dark, user, profile }) {
         return;
       }
       setMessages(prev => dedupeById([...prev, data]));
-    } else {
-      saveLocalMessage(selectedState, msg);
-      setMessages(prev => dedupeById([...prev, msg]));
-    }
+    } else return setChatError('Live chat is unavailable while the data provider is offline.');
     setChatInput('');
   }
 
@@ -852,9 +654,7 @@ export function NetworkingPage({ dark, user, profile }) {
         return null;
       }
       finalReply = mapReply(data);
-    } else {
-      saveLocalReply(selectedState, postId, finalReply);
-    }
+    } else return null;
 
     setPosts(prev => prev.map(post => {
       if (post.id !== postId) return post;
@@ -894,17 +694,6 @@ export function NetworkingPage({ dark, user, profile }) {
     });
   }, [messages, selectedChannel]);
 
-  const activeInStateStats = useMemo(() => {
-    // Verified creators count is based on state stats or actual posts count
-    const creatorsCount = activeStateObj?.creators || 12;
-    // Posts this week: count posts in list
-    const postsCount = posts.length || 0;
-    return {
-      creators: creatorsCount,
-      postsWeek: Math.max(activeStateObj?.posts || 0, postsCount)
-    };
-  }, [activeStateObj, posts]);
-
   const recentUsers = useMemo(() => {
     const list = [];
     const seen = new Set();
@@ -919,20 +708,18 @@ export function NetworkingPage({ dark, user, profile }) {
         });
       }
     });
-    // Add default if list too short
-    const fallbackUsers = [
-      { name: 'Naomi Greene', service: 'Video Director', initials: 'NG' },
-      { name: 'David Park', service: 'Cinematographer', initials: 'DP' },
-      { name: 'Aria Vasquez', service: 'Editor', initials: 'AV' },
-      { name: 'Sofia Pellizzari', service: 'Colorist', initials: 'SP' }
-    ];
-    fallbackUsers.forEach(u => {
-      if (list.length < 4 && !seen.has(u.name)) {
-        list.push(u);
+    messages.forEach(message => {
+      if (!seen.has(message.user_display_name)) {
+        seen.add(message.user_display_name);
+        list.push({
+          name: message.user_display_name,
+          service: message.user_primary_service,
+          initials: getInitials(message.user_display_name),
+        });
       }
     });
     return list.slice(0, 4);
-  }, [posts]);
+  }, [messages, posts]);
 
   return (
     <div className="min-h-screen text-[var(--text)] relative z-10 pb-20">
@@ -1196,6 +983,10 @@ export function NetworkingPage({ dark, user, profile }) {
               <div className="flex justify-center py-8">
                 <div className="animate-spin w-6 h-6 border-2 border-gold-500 border-t-transparent rounded-full" />
               </div>
+            ) : postError && posts.length === 0 ? (
+              <div className="liquid-glass rounded-2xl border border-red-500/25 p-10 text-center">
+                <p className="text-sm text-red-300">{postError}</p>
+              </div>
             ) : filteredPosts.length === 0 ? (
               <div className="liquid-glass rounded-2xl p-10 text-center">
                 <p className="text-sm text-[var(--text-dim)]">No posts found in this lane for {activeStateObj.name}. Be the first to share something.</p>
@@ -1266,7 +1057,11 @@ export function NetworkingPage({ dark, user, profile }) {
 
               {/* Chat Message Stream */}
               <div className="px-3 py-3 space-y-1.5 max-h-[420px] min-h-[300px] overflow-y-auto bg-charcoal-950/10">
-                {filteredMessages.length === 0 ? (
+                {loadingChat ? (
+                  <div className="flex justify-center py-10"><div className="h-5 w-5 animate-spin rounded-full border-2 border-gold-500 border-t-transparent" /></div>
+                ) : chatError && messages.length === 0 ? (
+                  <p className="px-3 py-10 text-center text-xs text-red-300">{chatError}</p>
+                ) : filteredMessages.length === 0 ? (
                   <p className="text-xs text-center py-10 text-[var(--text-dim)]">No messages in #{selectedChannel} yet. Start the conversation.</p>
                 ) : (
                   filteredMessages.map(msg => {
@@ -1375,6 +1170,7 @@ export function NetworkingPage({ dark, user, profile }) {
               <div>
                 <p className="text-[10px] uppercase tracking-wider text-[var(--text-dim)] mb-3">Recently Active</p>
                 <div className="space-y-3">
+                  {recentUsers.length === 0 && <p className="text-xs leading-5 text-[var(--text-dim)]">No verified members have been active in this state yet.</p>}
                   {recentUsers.map((u, i) => (
                     <div key={i} className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-full bg-gold-500/10 text-gold-400 flex items-center justify-center text-[10px] font-bold shrink-0 border border-white/[0.05]">

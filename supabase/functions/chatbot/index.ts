@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
+import { SUPPORT_EMAIL } from '../_shared/support.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -62,7 +63,7 @@ DELIVERY AND REVISIONS:
 Creators formally submit finished deliverables using direct upload or approved external links. Direct files remain through active review and for seven days after approval. Every project includes 2 revisions. Each additional revision costs the client exactly $50.
 
 DISPUTES:
-After delivery, the client has a five-day review window to approve, request a revision, or open a dispute. A revision or dispute pauses completion. If the client takes no action within five days, CreatorBridge auto-approves the delivery and attempts final payment; funds release only after Stripe confirms payment. Valid dispute reasons: work does not match the agreed brief, significantly fewer deliverables than agreed, technical quality makes work unusable, creator abandoned the project. Not valid: client changed their mind after delivery, wanting work outside the agreed scope, or minor style preferences after available revisions are exhausted. For urgent disputes email drl33@creatorbridge.studio with URGENT in the subject line.
+After delivery, the client has a five-day review window to approve, request a revision, or open a dispute. A revision or dispute pauses completion. If the client takes no action within five days, CreatorBridge auto-approves the delivery and attempts final payment; funds release only after Stripe confirms payment. Valid dispute reasons: work does not match the agreed brief, significantly fewer deliverables than agreed, technical quality makes work unusable, creator abandoned the project. Not valid: client changed their mind after delivery, wanting work outside the agreed scope, or minor style preferences after available revisions are exhausted. For urgent disputes email ${SUPPORT_EMAIL} with URGENT in the subject line.
 
 CREATOR TIERS:
 Launch is for new creators with no requirements. Proven requires 10 or more completed projects with good ratings. Signature requires 25 or more completed projects and high ratings. Elite is the highest tier and requires 50 or more completed projects with an exceptional track record. Higher tiers rank higher in search results and build more client trust.
@@ -92,7 +93,7 @@ GEOGRAPHIC AVAILABILITY:
 US only.
 
 SUPPORT:
-For account-specific issues, billing problems, or disputes needing human review email drl33@creatorbridge.studio. For urgent payment disputes mark subject line URGENT. Response within 24 hours.`;
+For account-specific issues, billing problems, or disputes needing human review email ${SUPPORT_EMAIL}. For urgent payment disputes mark subject line URGENT. Response within 24 hours.`;
 
 function jsonResponse(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {

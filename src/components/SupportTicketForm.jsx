@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
 import { sendNotificationEmail } from '../lib/notifications.js';
 import { sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
+import { SUPPORT_EMAIL } from '../config/support.js';
 
 const CATEGORIES = [
   { value: 'technical',        label: 'Technical Problem' },
@@ -15,7 +16,7 @@ const CATEGORIES = [
 
 // Where new-report alerts are emailed. Backend cleanup reads its own copy from
 // support_report_config; this is the front-end notify target.
-const ADMIN_SUPPORT_EMAIL = 'drl33@creatorbridge.studio';
+const ADMIN_SUPPORT_EMAIL = SUPPORT_EMAIL;
 const MAX_SCREENSHOT_BYTES = 8 * 1024 * 1024; // pre-compression guard
 
 // Downscale + re-encode a screenshot to a small JPEG so storage stays cheap.

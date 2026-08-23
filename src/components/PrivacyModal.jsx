@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { X } from 'lucide-react';
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '../config/support.js';
 
 export function PrivacyModal({ dark, onClose }) {
   const textBody = dark ? 'text-charcoal-300' : 'text-gray-600';
@@ -163,8 +164,7 @@ export function PrivacyModal({ dark, onClose }) {
               </ul>
               <p className="mt-3">
                 To exercise any of these rights, contact us at{' '}
-                <a href="mailto:drl33@creatorbridge.studio" className={linkCls}>drl33@creatorbridge.studio</a>.
-                {/* TODO: Update to support@creatorbridge.studio once domain email is active */}
+                <a href={SUPPORT_MAILTO} className={linkCls}>{SUPPORT_EMAIL}</a>.
                 We will respond to all requests within 30 days.
               </p>
             </section>
@@ -220,8 +220,7 @@ export function PrivacyModal({ dark, onClose }) {
               </p>
               <div className={cardCls}>
                 <p className={`font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>CreatorBridge Privacy</p>
-                <p>Email: <a href="mailto:drl33@creatorbridge.studio" className={linkCls}>drl33@creatorbridge.studio</a></p>
-                {/* TODO: Update to support@creatorbridge.studio once domain email is active */}
+                <p>Email: <a href={SUPPORT_MAILTO} className={linkCls}>{SUPPORT_EMAIL}</a></p>
               </div>
               <p className="mt-2">
                 We take privacy requests seriously and will respond within 30 days.
@@ -230,8 +229,7 @@ export function PrivacyModal({ dark, onClose }) {
             </section>
 
             <div className={`pt-4 border-t text-xs ${dark ? 'border-white/[0.07] text-charcoal-300' : 'border-gray-200 text-gray-400'}`}>
-              <p>CreatorBridge. Questions? Contact <a href="mailto:drl33@creatorbridge.studio" className={linkCls}>drl33@creatorbridge.studio</a></p>
-              {/* TODO: Update to support@creatorbridge.studio once domain email is active */}
+              <p>CreatorBridge. Questions? Contact <a href={SUPPORT_MAILTO} className={linkCls}>{SUPPORT_EMAIL}</a></p>
             </div>
           </div>
         </div>

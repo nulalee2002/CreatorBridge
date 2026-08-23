@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router';
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '../config/support.js';
 
 const SECTIONS = [
   { id: 'welcome',      title: '1. Welcome to CreatorBridge' },
@@ -253,7 +254,7 @@ export function TermsPage({ dark }) {
                 <li>
                   <strong className={dark ? 'text-white' : 'text-gray-900'}>Strike 3:</strong> Your account is suspended.
                   Your profile is removed from the directory. You cannot send messages or accept projects.
-                  You must contact <a href="mailto:drl33@creatorbridge.studio" className={linkCls}>drl33@creatorbridge.studio</a> to appeal.
+                  You must contact <a href={SUPPORT_MAILTO} className={linkCls}>{SUPPORT_EMAIL}</a> to appeal.
                 </li>
               </ul>
               <p>
@@ -340,7 +341,7 @@ export function TermsPage({ dark }) {
               </p>
               <p>
                 You may request deletion of your account and associated data at any time by contacting
-                {' '}<a href="mailto:drl33@creatorbridge.studio" className={linkCls}>drl33@creatorbridge.studio</a>.
+                {' '}<a href={SUPPORT_MAILTO} className={linkCls}>{SUPPORT_EMAIL}</a>.
                 Note that transaction records may be retained for legal and accounting purposes.
               </p>
             </Section>
@@ -363,7 +364,7 @@ export function TermsPage({ dark }) {
             </Section>
 
             <div className={`mt-8 pt-6 border-t text-xs ${dark ? 'border-white/[0.07] text-charcoal-300' : 'border-gray-200 text-gray-400'}`}>
-              <p>CreatorBridge Inc. Questions? Contact <a href="mailto:drl33@creatorbridge.studio" className={linkCls}>drl33@creatorbridge.studio</a></p>
+              <p>CreatorBridge Inc. Questions? Contact <a href={SUPPORT_MAILTO} className={linkCls}>{SUPPORT_EMAIL}</a></p>
             </div>
 
           </div>

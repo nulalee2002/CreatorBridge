@@ -6,8 +6,8 @@
  * Usage:
  *   node scripts/generate-sitemap.js
  *
- * Requires VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (or SUPABASE_SERVICE_ROLE_KEY)
- * to be available in the environment (or in a .env file at project root).
+ * Static public routes are always written. If public Supabase credentials are
+ * available, approved creator profile routes are added from the public API.
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -33,22 +33,18 @@ try {
 
 const SITE_URL      = 'https://www.creatorbridge.studio';
 const SUPABASE_URL  = process.env.VITE_SUPABASE_URL  || process.env.SUPABASE_URL;
-const SUPABASE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY
-                   || process.env.VITE_SUPABASE_ANON_KEY
+const SUPABASE_KEY  = process.env.VITE_SUPABASE_ANON_KEY
                    || process.env.SUPABASE_ANON_KEY;
-
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  console.error('Missing VITE_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY / VITE_SUPABASE_ANON_KEY');
-  process.exit(1);
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = SUPABASE_URL && SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
 // ── Static routes ─────────────────────────────────────────────────────────────
 const STATIC_ROUTES = [
   { path: '/',                 changefreq: 'daily',   priority: '1.0' },
   { path: '/find',             changefreq: 'daily',   priority: '0.9' },
+  { path: '/projects',         changefreq: 'daily',   priority: '0.8' },
+  { path: '/network',          changefreq: 'daily',   priority: '0.7' },
   { path: '/join-as-creator',  changefreq: 'weekly',  priority: '0.8' },
+  { path: '/calculator',       changefreq: 'monthly', priority: '0.6' },
   { path: '/terms-of-service', changefreq: 'monthly', priority: '0.4' },
   { path: '/creator-agreement',changefreq: 'monthly', priority: '0.4' },
   { path: '/dispute-policy',   changefreq: 'monthly', priority: '0.4' },
@@ -78,15 +74,18 @@ async function run() {
   const today = new Date().toISOString().slice(0, 10);
 
   // ── Fetch public creator profiles ─────────────────────────────────────────
-  const { data: creators, error } = await supabase
-    .from('creator_listings')
-    .select('id, display_name, updated_at')
-    .eq('review_status', 'approved')
-    .eq('verified', true)
-    .eq('is_suspended', false);   // exclude suspended creators
-
-  if (error) {
-    console.warn('Could not fetch creators:', error.message);
+  let creators = [];
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('creator_listings')
+      .select('id, updated_at')
+      .eq('review_status', 'approved')
+      .eq('verified', true)
+      .eq('is_suspended', false);
+    if (error) console.warn('Could not fetch public creator routes:', error.message);
+    creators = data || [];
+  } else {
+    console.warn('Public Supabase credentials are unavailable; writing the canonical static sitemap only.');
   }
 
   const creatorEntries = (creators || []).map(c => {

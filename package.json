@@ -20,6 +20,7 @@
     "verify:project-deliveries": "node scripts/verify-project-deliveries.mjs",
     "verify:project-review-jobs": "node scripts/verify-project-review-jobs.mjs",
     "verify:final-payment-policy": "node scripts/verify-final-payment-policy.mjs",
+    "verify:public-launch-cleanup": "node --test tests/publicLaunchCleanup.test.js tests/qaCleanup.test.js",
     "verify:admin-support-search": "node --env-file=.env scripts/verify-admin-support-search.mjs",
     "verify:chatbot-guide": "node scripts/verify-chatbot-guide.mjs",
     "verify:chatbot-ai": "node --env-file=.env scripts/verify-chatbot-ai.mjs",

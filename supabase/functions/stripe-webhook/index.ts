@@ -304,7 +304,7 @@ async function triggerWebhookEmail(
     });
 
     if (!res.ok) {
-      console.error(`Failed to send email notification inside webhook: ${res.status} ${await res.text()}`);
+      console.error('Failed to send email notification inside webhook:', { status: res.status });
     }
   } catch (err) {
     console.error('Error triggering webhook email:', err);

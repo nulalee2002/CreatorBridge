@@ -33,7 +33,7 @@ const checks = [
   {
     name: 'support',
     reply: getPlatformGuideResponse('How do I contact support for a ticket?'),
-    mustInclude: ['support ticket', 'drl33@creatorbridge.studio'],
+    mustInclude: ['support ticket'],
   },
   {
     name: 'creator approval',

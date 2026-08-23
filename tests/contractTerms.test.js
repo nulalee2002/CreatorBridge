@@ -10,7 +10,7 @@ const source = {
   contractId: '11111111-1111-4111-8111-111111111111',
   generatedAt: '2026-07-11T20:00:00.000Z',
   client: { userId: 'client-1', name: 'Sofia Present', company: 'Aritzia' },
-  creator: { userId: 'creator-1', listingId: 'listing-1', name: 'Marcus Reed', businessName: 'LensCraft Studios' },
+  creator: { userId: 'creator-1', listingId: 'listing-1', name: 'Jordan Lee', businessName: 'LensCraft Studios' },
   project: {
     id: 'project-1',
     title: 'Resort 2026 Brand Film',

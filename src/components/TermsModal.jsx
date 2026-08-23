@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '../config/support.js';
 
 const SECTIONS = [
   { id: 'welcome',      title: '1. Welcome to CreatorBridge' },
@@ -245,8 +246,7 @@ export function TermsModal({ dark, onClose }) {
               </li>
               <li>
                 <strong className={dark ? 'text-white' : 'text-gray-900'}>Strike 3:</strong> Your account is suspended.
-                {/* TODO: Update to support@creatorbridge.studio once domain email is active */}
-                You must contact <a href="mailto:drl33@creatorbridge.studio" className={linkCls}>drl33@creatorbridge.studio</a> to appeal.
+                You must contact <a href={SUPPORT_MAILTO} className={linkCls}>{SUPPORT_EMAIL}</a> to appeal.
               </li>
             </ul>
           </Section>
@@ -294,9 +294,8 @@ export function TermsModal({ dark, onClose }) {
               message filtering remains limited to enforcing safety and contact-sharing rules at send time.
             </p>
             <p>
-              {/* TODO: Update to support@creatorbridge.studio once domain email is active */}
               You may request deletion of your account and associated data at any time by contacting
-              {' '}<a href="mailto:drl33@creatorbridge.studio" className={linkCls}>drl33@creatorbridge.studio</a>.
+              {' '}<a href={SUPPORT_MAILTO} className={linkCls}>{SUPPORT_EMAIL}</a>.
               Note that transaction records may be retained for legal and accounting purposes.
             </p>
           </Section>
@@ -314,8 +313,7 @@ export function TermsModal({ dark, onClose }) {
           </Section>
 
           <div className={`pt-4 border-t text-xs ${dark ? 'border-white/[0.07] text-charcoal-300' : 'border-gray-200 text-gray-400'}`}>
-            {/* TODO: Update to support@creatorbridge.studio once domain email is active */}
-            <p>CreatorBridge Inc. Questions? Contact <a href="mailto:drl33@creatorbridge.studio" className={linkCls}>drl33@creatorbridge.studio</a></p>
+            <p>CreatorBridge Inc. Questions? Contact <a href={SUPPORT_MAILTO} className={linkCls}>{SUPPORT_EMAIL}</a></p>
           </div>
         </div>
 

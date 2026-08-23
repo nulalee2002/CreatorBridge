@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router';
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '../config/support.js';
 
 const SECTIONS = [
   { id: 'overview',     title: '1. Dispute Policy Overview' },
@@ -176,7 +177,7 @@ export function DisputePolicy({ dark }) {
             </Section>
 
             <div className={`mt-8 pt-6 border-t text-xs ${dark ? 'border-white/[0.07] text-charcoal-300' : 'border-gray-200 text-gray-400'}`}>
-              <p>CreatorBridge Inc. Questions? Contact <a href="mailto:drl33@creatorbridge.studio" className={linkCls}>drl33@creatorbridge.studio</a></p>
+              <p>CreatorBridge Inc. Questions? Contact <a href={SUPPORT_MAILTO} className={linkCls}>{SUPPORT_EMAIL}</a></p>
             </div>
 
           </div>
