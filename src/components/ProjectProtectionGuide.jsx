@@ -17,10 +17,22 @@ export function ProjectProtectionGuide({ projectId, userId, role = 'client' }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   useEffect(() => {
-    if (!projectId || !userId) return;
+    let active = true;
+    setOpen(false);
+    setError('');
+    if (!projectId || !userId) return () => { active = false; };
     supabase.from('project_guide_acknowledgments').select('project_id')
       .eq('project_id', projectId).eq('user_id', userId).eq('guide_version', VERSION).maybeSingle()
-      .then(({ data }) => { if (!data) setOpen(true); });
+      .then(({ data, error: lookupError }) => {
+        if (!active) return;
+        if (lookupError) {
+          setOpen(true);
+          setError('We could not load your project-guide status. You can reopen the guide and try again.');
+          return;
+        }
+        setOpen(!data);
+      });
+    return () => { active = false; };
   }, [projectId, userId]);
   async function acknowledge() {
     setSaving(true);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
 
 export function useProjectCompletion(projectId) {
@@ -7,8 +7,10 @@ export function useProjectCompletion(projectId) {
   const [paymentState, setPaymentState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const refreshSequence = useRef(0);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async ({ silent = false } = {}) => {
+    const requestId = ++refreshSequence.current;
     if (!supabaseConfigured || !supabase || !projectId) {
       setDeliveries([]);
       setRevisionState(null);
@@ -16,7 +18,7 @@ export function useProjectCompletion(projectId) {
       setLoading(false);
       return;
     }
-    setLoading(true);
+    if (!silent) setLoading(true);
     setError('');
     try {
       const [
@@ -40,17 +42,45 @@ export function useProjectCompletion(projectId) {
       if (deliveryError) throw deliveryError;
       if (revisionError) throw revisionError;
       if (transactionError) throw transactionError;
+      if (requestId !== refreshSequence.current) return;
       setDeliveries(deliveryRows || []);
       setRevisionState(revision || null);
       setPaymentState(transaction || null);
     } catch (cause) {
+      if (requestId !== refreshSequence.current) return;
       setError(cause?.message || 'Project delivery state could not be loaded.');
     } finally {
-      setLoading(false);
+      if (requestId === refreshSequence.current) setLoading(false);
     }
   }, [projectId]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    refresh();
+    return () => { refreshSequence.current += 1; };
+  }, [refresh]);
+
+  useEffect(() => {
+    if (!supabaseConfigured || !supabase || !projectId) return undefined;
+    const reconcile = () => refresh({ silent: true });
+    const channel = supabase
+      .channel(`project-completion-${projectId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'project_deliveries', filter: `project_id=eq.${projectId}` }, reconcile)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'project_revision_requests', filter: `project_id=eq.${projectId}` }, reconcile)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions', filter: `project_id=eq.${projectId}` }, reconcile)
+      .subscribe();
+    const intervalId = window.setInterval(reconcile, 5_000);
+    const reconcileVisibleState = () => {
+      if (document.visibilityState === 'visible') reconcile();
+    };
+    window.addEventListener('focus', reconcile);
+    document.addEventListener('visibilitychange', reconcileVisibleState);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', reconcile);
+      document.removeEventListener('visibilitychange', reconcileVisibleState);
+      supabase.removeChannel(channel);
+    };
+  }, [projectId, refresh]);
 
   const invoke = useCallback(async (functionName, body) => {
     const { data, error: functionError } = await supabase.functions.invoke(functionName, { body });

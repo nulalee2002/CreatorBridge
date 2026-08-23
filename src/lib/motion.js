@@ -18,7 +18,7 @@ gsap.registerPlugin(ScrollTrigger);
 // Public routes that receive motion. Dashboards, messages, checkout, and
 // admin stay intentionally still — those are work surfaces, not stages.
 const MOTION_ROUTES = new Set([
-  '/', '/find', '/projects', '/network', '/join-as-creator',
+  '/', '/find', '/network', '/join-as-creator',
   '/calculator', '/rate-calculator', '/terms', '/terms-of-service',
   '/creator-agreement', '/dispute-policy', '/privacy', '/search',
 ]);

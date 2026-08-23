@@ -1,11 +1,19 @@
 import { test, expect } from '@playwright/test';
 import { authFile, cleanupQaProjects, seedCompletionProjects, signInQa } from './helpers/qa.js';
 
-test.describe.configure({ mode: 'serial' });
+test.describe.configure({ mode: 'serial', timeout: 120_000 });
 
 async function openProject(page, project) {
   await page.goto(`/projects?project=${project.id}`);
   await expect(page.getByText(project.title, { exact: true }).first()).toBeVisible({ timeout: 20_000 });
+}
+
+async function acknowledgeProjectGuide(page) {
+  const guideHeading = page.getByText('Protected project guide', { exact: true });
+  const acknowledgeButton = page.getByRole('button', { name: 'I understand the project flow' });
+  await expect(acknowledgeButton).toBeVisible({ timeout: 10_000 });
+  await acknowledgeButton.click();
+  await expect(guideHeading).toHaveCount(0, { timeout: 10_000 });
 }
 
 async function submitExternalDelivery(page, project, version) {
@@ -21,7 +29,7 @@ async function submitExternalDelivery(page, project, version) {
 
 async function requestRevision(page, project, ordinal) {
   await openProject(page, project);
-  await expect(page.getByText(new RegExp(`${3 - ordinal} included remaining`))).toBeVisible();
+  await expect(page.getByText(new RegExp(`${3 - ordinal} included remaining`))).toBeVisible({ timeout: 20_000 });
   await page.getByRole('button', { name: 'Request revision', exact: true }).click();
   await page.getByPlaceholder('Describe the requested changes').fill(`Included revision ${ordinal}: adjust the final color treatment and export naming while preserving the approved scope.`);
   await page.getByRole('button', { name: 'Submit revision request' }).click();
@@ -45,6 +53,7 @@ test('formal delivery, two included revisions, paid lock, holds, isolation, and 
       });
     });
     await openProject(creatorPage, project);
+    await acknowledgeProjectGuide(creatorPage);
     await creatorPage.locator('input[type="file"]').setInputFiles({
       name: 'over-five-gigabytes.mov',
       mimeType: 'video/quicktime',
@@ -64,6 +73,8 @@ test('formal delivery, two included revisions, paid lock, holds, isolation, and 
     });
     expect([401, 403]).toContain(anonymousDownload.status());
 
+    await openProject(clientPage, project);
+    await acknowledgeProjectGuide(clientPage);
     await requestRevision(clientPage, project, 1);
     let { data: holds } = await fixture.admin.from('project_delivery_holds').select('hold_type,active').eq('delivery_id', firstDeliveries[0].id);
     expect(holds?.some(hold => hold.hold_type === 'revision' && hold.active)).toBeTruthy();
@@ -94,13 +105,9 @@ test('formal delivery, two included revisions, paid lock, holds, isolation, and 
     const { data: disputeDelivery, error: disputeDeliveryError } = await fixture.admin.from('project_deliveries').insert({
       project_id: untouchedProject.id,
       creator_user_id: firstConversation.data.creator_user_id,
-      version: 1,
-      status: 'under_review',
+      status: 'draft',
       note: 'Disposable delivery used to verify the dispute hold path.',
       idempotency_key: `e2e-dispute-${Date.now()}`,
-      review_started_at: reviewStartedAt,
-      review_deadline_at: reviewDeadlineAt,
-      submitted_at: reviewStartedAt,
     }).select('id').single();
     expect(disputeDeliveryError).toBeNull();
     const { error: disputeItemError } = await fixture.admin.from('project_delivery_items').insert({
@@ -113,9 +120,18 @@ test('formal delivery, two included revisions, paid lock, holds, isolation, and 
       uploaded_at: reviewStartedAt,
     });
     expect(disputeItemError).toBeNull();
+    const { error: finalizeDisputeDeliveryError } = await fixture.admin.from('project_deliveries').update({
+      version: 1,
+      status: 'under_review',
+      review_started_at: reviewStartedAt,
+      review_deadline_at: reviewDeadlineAt,
+      submitted_at: reviewStartedAt,
+    }).eq('id', disputeDelivery.id);
+    expect(finalizeDisputeDeliveryError).toBeNull();
     await fixture.admin.from('projects').update({ status: 'delivered', delivered_at: reviewStartedAt }).eq('id', untouchedProject.id);
 
     await openProject(clientPage, untouchedProject);
+    await acknowledgeProjectGuide(clientPage);
     await clientPage.getByRole('button', { name: 'Open dispute' }).first().click();
     await clientPage.getByRole('button', { name: 'Technical quality issues' }).click();
     await clientPage.getByPlaceholder(/Describe the issue in detail/).fill('This disposable QA dispute contains enough detail to validate that project review stops, funds remain held, and neither party can bypass the formal resolution workflow.');
@@ -138,8 +154,7 @@ test('formal delivery, two included revisions, paid lock, holds, isolation, and 
     await expect(clientPage.locator('[data-status="final_payment_attention"]')).toBeVisible();
     await expect(clientPage.getByText(/payout is not released until Stripe confirms success/)).toBeVisible();
   } finally {
-    await creatorContext.close();
-    await clientContext.close();
-    await cleanupQaProjects(fixture.admin, fixture.projectIds);
+    await cleanupQaProjects(fixture.admin, fixture.projectIds, fixture.phoneTrustState);
+    await Promise.allSettled([creatorContext.close(), clientContext.close()]);
   }
 });

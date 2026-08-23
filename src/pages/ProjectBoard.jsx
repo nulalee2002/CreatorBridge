@@ -2023,7 +2023,7 @@ export function ProjectBoard({ dark }) {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-8 items-start">
+          <div data-no-reveal className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-8 items-start">
             {/* Brief list. Hidden on mobile when a brief is open in detail
                 view, always visible on lg+. */}
             <div className={`space-y-4 ${mobileShowDetail ? 'hidden lg:block' : ''}`}>

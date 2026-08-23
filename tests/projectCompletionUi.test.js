@@ -8,6 +8,7 @@ const files = [
   'src/components/project/DeliveryHistory.jsx',
   'src/components/project/DeliveryReviewPanel.jsx',
   'src/components/project/RevisionPurchasePanel.jsx',
+  'src/components/ProjectProtectionGuide.jsx',
   'src/hooks/useProjectCompletion.js',
 ];
 
@@ -40,10 +41,32 @@ test('review UI uses two included revisions, exact $50, server deadline, and his
   assert.match(history, /downloadItem/);
 });
 
+test('completion state reconciles provider changes without browser-controlled approval', () => {
+  const hook = readFileSync(new URL(files[5], root), 'utf8');
+  assert.match(hook, /postgres_changes/);
+  assert.match(hook, /project_deliveries/);
+  assert.match(hook, /project_revision_requests/);
+  assert.match(hook, /transactions/);
+  assert.match(hook, /refresh\(\{ silent: true \}\)/);
+  assert.doesNotMatch(hook, /auto.?approve|approveProjectDelivery/i);
+});
+
 test('Project Board delegates delivery and revision actions to server completion state', () => {
   const board = readFileSync(new URL('src/pages/ProjectBoard.jsx', root), 'utf8');
+  const motion = readFileSync(new URL('src/lib/motion.js', root), 'utf8');
   assert.match(board, /ProjectCompletionPanel/);
+  assert.match(board, /data-no-reveal className="grid grid-cols-1 lg:grid-cols-\[1fr_420px\]/);
+  assert.doesNotMatch(motion, /MOTION_ROUTES[\s\S]{0,250}'\/projects'/);
   assert.doesNotMatch(board, /Max 200MB/i);
   assert.doesNotMatch(board, /72 \* 3600000/);
   assert.doesNotMatch(board, /setInterval\([\s\S]{0,200}autoApproved/);
+});
+
+test('project guide ignores stale lookups when the selected project changes', () => {
+  const guide = readFileSync(new URL('src/components/ProjectProtectionGuide.jsx', root), 'utf8');
+  assert.match(guide, /let active = true/);
+  assert.match(guide, /if \(!active\) return/);
+  assert.match(guide, /if \(lookupError\) \{\s*setOpen\(true\)/);
+  assert.match(guide, /setOpen\(!data\)/);
+  assert.match(guide, /active = false/);
 });

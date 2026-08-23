@@ -9,7 +9,7 @@ setup('authenticate dedicated client, creator, and admin QA accounts', async ({ 
   const storageKey = `sb-${projectRef}-auth-token`;
 
   for (const role of ['client', 'creator', 'admin']) {
-    const { client, session } = await signInQa(role);
+    const { session } = await signInQa(role);
     await page.goto('/');
     await page.evaluate(({ key, value }) => {
       localStorage.clear();
@@ -18,6 +18,5 @@ setup('authenticate dedicated client, creator, and admin QA accounts', async ({ 
     await page.reload();
     await expect(page.locator('body')).toBeVisible();
     await page.context().storageState({ path: authFile(role) });
-    await client.auth.signOut({ scope: 'local' });
   }
 });

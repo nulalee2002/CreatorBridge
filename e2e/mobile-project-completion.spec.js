@@ -20,7 +20,7 @@ test('creator can open formal delivery controls in the mobile master-detail flow
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(390);
   } finally {
+    await cleanupQaProjects(fixture.admin, fixture.projectIds, fixture.phoneTrustState);
     await context.close();
-    await cleanupQaProjects(fixture.admin, fixture.projectIds);
   }
 });
