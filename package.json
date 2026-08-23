@@ -22,6 +22,9 @@
     "verify:final-payment-policy": "node scripts/verify-final-payment-policy.mjs",
     "verify:public-launch-cleanup": "node --test tests/publicLaunchCleanup.test.js tests/qaCleanup.test.js",
     "verify:distributed-rate-limits": "node scripts/verify-distributed-rate-limits.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:public": "playwright test --project=public-desktop --project=public-mobile",
+    "verify:project-completion-live": "playwright test --project=authenticated-desktop --project=authenticated-mobile",
     "verify:admin-support-search": "node --env-file=.env scripts/verify-admin-support-search.mjs",
     "verify:chatbot-guide": "node scripts/verify-chatbot-guide.mjs",
     "verify:chatbot-ai": "node --env-file=.env scripts/verify-chatbot-ai.mjs",
@@ -94,6 +97,7 @@
     "tus-js-client": "^4.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.62.1",
     "@vitejs/plugin-react": "^6.0.2",
     "autoprefixer": "^10.4.17",
     "postcss": "^8.5.18",

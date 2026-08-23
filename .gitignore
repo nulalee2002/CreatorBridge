@@ -33,6 +33,7 @@ dist-verify/
 .superpowers/
 .worktrees/
 /output/
+/e2e/.auth/
 /backgrounds/
 
 # Local image previews (not for commit)

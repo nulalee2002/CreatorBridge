@@ -1,7 +1,19 @@
 import { spawn } from 'node:child_process';
 
 const checks = [
+  ['unit tests', ['npm', ['test']]],
   ['build', ['npm', ['run', 'build']]],
+  ['platform audit', ['npm', ['run', 'audit:platform']]],
+  ['dependency audit', ['npm', ['audit', '--audit-level=high']]],
+  ['launch trust guards', ['npm', ['run', 'verify:launch-trust-guards']]],
+  ['two included revisions', ['npm', ['run', 'verify:two-revisions']]],
+  ['revision ledgers', ['npm', ['run', 'verify:revision-ledgers']]],
+  ['paid revision policy', ['npm', ['run', 'verify:paid-revisions']]],
+  ['project deliveries', ['npm', ['run', 'verify:project-deliveries']]],
+  ['project review jobs', ['npm', ['run', 'verify:project-review-jobs']]],
+  ['final payment policy', ['npm', ['run', 'verify:final-payment-policy']]],
+  ['public launch cleanup', ['npm', ['run', 'verify:public-launch-cleanup']]],
+  ['distributed rate limits', ['npm', ['run', 'verify:distributed-rate-limits']]],
   ['notifications', ['npm', ['run', 'verify:notifications']]],
   ['email provider', ['npm', ['run', 'verify:email-provider']]],
   ['chatbot guide', ['npm', ['run', 'verify:chatbot-guide']]],
@@ -20,6 +32,7 @@ const checks = [
   ['contracts', ['npm', ['run', 'verify:contracts']]],
   ['change orders', ['npm', ['run', 'verify:change-orders']]],
   ['video calls', ['npm', ['run', 'verify:video-calls']]],
+  ['browser end to end', ['npm', ['run', 'test:e2e']]],
 ];
 
 function run(command, args) {
