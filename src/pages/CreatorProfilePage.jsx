@@ -77,12 +77,12 @@ let packages = [
   {
     id: "signature", name: "Signature", price: 1950, popular: true,
     tagline: "The right fit for most brand campaigns.",
-    items: ["Full-day shoot · up to 8 hrs", "60 edited high-res images", "Up to 2 locations", "5-day delivery", "3 revision rounds", "RAW files included", "Commercial license · 1 year"]
+    items: ["Full-day shoot · up to 8 hrs", "60 edited high-res images", "Up to 2 locations", "5-day delivery", "2 included revision rounds", "RAW files included", "Commercial license · 1 year"]
   },
   {
     id: "editorial", name: "Editorial", price: 4500, popular: false,
     tagline: "Multi-day, crew-supported productions.",
-    items: ["2-day production · crew + stylist", "120 edited images + behind-the-scenes", "Up to 4 locations", "3-day priority delivery", "Unlimited revisions", "RAW + uncompressed deliverables", "Buyout-eligible usage rights"]
+    items: ["2-day production · crew + stylist", "120 edited images + behind-the-scenes", "Up to 4 locations", "3-day priority delivery", "2 included revision rounds", "RAW + uncompressed deliverables", "Buyout-eligible usage rights"]
   }
 ];
 
@@ -1137,12 +1137,12 @@ function getCreatorData(id) {
     {
       id: 'signature', name: 'Signature', price: Math.round((base * 2.3) / 50) * 50, popular: true,
       tagline: 'The standard package for most projects.',
-      items: ['Full-day production', 'Expanded deliverables', 'Up to 2 locations', '5-day delivery', '3 revision rounds', 'Source files included', 'Commercial license · 1 year'],
+      items: ['Full-day production', 'Expanded deliverables', 'Up to 2 locations', '5-day delivery', '2 included revision rounds', 'Source files included', 'Commercial license · 1 year'],
     },
     {
       id: 'editorial', name: 'Editorial', price: Math.round((base * 5.3) / 50) * 50, popular: false,
       tagline: 'Multi-day, crew-supported productions.',
-      items: ['Multi-day production', 'Premium deliverables', 'Up to 4 locations', 'Priority delivery', 'Unlimited revisions', 'Full source deliverables', 'Buyout-eligible rights'],
+      items: ['Multi-day production', 'Premium deliverables', 'Up to 4 locations', 'Priority delivery', '2 included revision rounds', 'Full source deliverables', 'Buyout-eligible rights'],
     },
   ];
   // Seed creators use placeholder imagery, but labels must match their actual pillar/specialties.

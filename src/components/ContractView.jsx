@@ -139,7 +139,7 @@ export function ContractView({ contract, signatures = [], signatureUrls = {}, on
                   <span className="shrink-0 font-display text-2xl font-semibold tabular-nums text-[#eaf3ec]">{money(pricing.creator_net)}</span>
                 </div>
               </div>
-              <p className="mt-4 text-xs italic leading-6 text-[#8a806e]">CreatorBridge uses protected payment through Stripe. The final payment releases after client approval, or automatically 72 hours after delivery if the client does not respond.</p>
+              <p className="mt-4 text-xs italic leading-6 text-[#8a806e]">CreatorBridge uses protected payment through Stripe. The final payment is attempted after client approval, or automatically five calendar days after delivery if the client does not respond.</p>
             </Clause>
 
             <Clause number="IV" title="Cancellation, usage, and disputes">

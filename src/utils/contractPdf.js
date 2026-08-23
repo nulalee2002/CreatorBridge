@@ -238,7 +238,7 @@ export async function createContractPdf({
     },
   });
   y = (doc.lastAutoTable?.finalY || y + 50) + 6;
-  writeWrapped('CreatorBridge uses protected payment through Stripe. The final payment releases after client approval, or automatically 72 hours after delivery if the client does not respond.', { x: margin + 14, width: contentWidth - 14, size: 8.5, color: COLORS.stone, style: 'italic' });
+  writeWrapped('CreatorBridge uses protected payment through Stripe. The final payment is attempted after client approval, or automatically five calendar days after delivery if the client does not respond.', { x: margin + 14, width: contentWidth - 14, size: 8.5, color: COLORS.stone, style: 'italic' });
   y += 3;
 
   section('5', 'Cancellation', terms.cancellation);

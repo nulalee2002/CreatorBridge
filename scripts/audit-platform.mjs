@@ -191,7 +191,12 @@ checks.push(
 check('Admin route protection', 'src/App.jsx', [
   { label: 'lazy loads admin dashboard', test: includes('AdminDashboard') },
   { label: 'registers protected admin route', test: includes('path="/admin"') },
-  { label: 'uses owner-facing admin auth copy', test: includes('CreatorBridge admin visibility requires an authenticated owner account') },
+  { label: 'uses the dedicated admin boundary', test: includes('<AdminRequired') },
+]);
+
+check('Admin route authorization boundary', 'src/components/auth/AdminRequired.jsx', [
+  { label: 'checks the database administrator roster', test: includes("rpc('is_platform_admin'") },
+  { label: 'renders an explicit denied state', test: includes('Access denied') },
 ]);
 
 check('Admin dashboard access control', 'src/pages/AdminDashboard.jsx', [

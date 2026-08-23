@@ -155,8 +155,8 @@ export function CreatorAgreement({ dark }) {
                 <li><strong className={dark ? 'text-white' : 'text-gray-900'}>50% Final Payout:</strong> Paid by the client upon content delivery. Funds are released to your Connect account once the client approves the final work.</li>
               </ul>
               <p>
-                If a client fails to take action (approve, request a revision, or open a dispute) within the 72-hour review window after
-                delivery, the final payment is released automatically to protect you from payment delays.
+                If a client fails to take action (approve, request a revision, or open a dispute) within the five-day review window after
+                delivery, CreatorBridge automatically attempts the final payment to protect you from payment delays.
               </p>
             </Section>
 

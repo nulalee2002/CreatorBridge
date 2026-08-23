@@ -14,6 +14,7 @@
     "verify:email-provider": "node --env-file=.env scripts/verify-email-provider.mjs",
     "verify:release-payment-security": "node --env-file=.env scripts/verify-release-payment-security.mjs",
     "verify:launch-trust-guards": "node scripts/verify-launch-trust-guards.mjs",
+    "verify:two-revisions": "node scripts/verify-two-revisions.mjs",
     "verify:admin-support-search": "node --env-file=.env scripts/verify-admin-support-search.mjs",
     "verify:chatbot-guide": "node scripts/verify-chatbot-guide.mjs",
     "verify:chatbot-ai": "node --env-file=.env scripts/verify-chatbot-ai.mjs",

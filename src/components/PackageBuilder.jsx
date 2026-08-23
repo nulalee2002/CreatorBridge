@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Check, Package, Save } from 'lucide-react';
 import { SERVICES } from '../data/rates.js';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
+import { INCLUDED_REVISIONS } from '../config/projectCompletion.js';
 import {
   CREATOR_MINIMUM_PROJECT_ERROR,
   CREATOR_MINIMUM_PROJECT_NOTE,
@@ -46,7 +47,7 @@ function normalizePackageRow(row) {
     price: row.price === null || row.price === undefined ? '' : String(row.price),
     description: row.description || '',
     turnaroundDays: row.turnaround_days || '',
-    revisions: row.revisions ?? 1,
+    revisions: INCLUDED_REVISIONS,
     deliverables: row.deliverables?.length ? row.deliverables : [''],
   };
 }
@@ -80,7 +81,7 @@ function packageToRow(pkg, creatorId, index) {
     description: pkg.description || '',
     deliverables: buildDeliverables(pkg),
     turnaround_days: toNumberOrNull(pkg.turnaroundDays),
-    revisions: toNumberOrNull(pkg.revisions) ?? 1,
+    revisions: INCLUDED_REVISIONS,
     display_order: index,
   };
 }
@@ -146,7 +147,7 @@ function defaultPackage(name, serviceId) {
     price: '',
     description: '',
     turnaroundDays: '',
-    revisions: 1,
+    revisions: INCLUDED_REVISIONS,
     deliverables: [''],
   };
   if (serviceId === 'video') {
@@ -190,19 +191,11 @@ function VideoFields({ pkg, onUpdate, dark, inputCls, textSub, labelCls }) {
           onChange={e => onUpdate('videoLength', e.target.value)}
           className={inputCls} />
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <p className={labelCls}>Revision Rounds</p>
-          <input type="number" min={0} value={pkg.revisions || ''} placeholder="2"
-            onChange={e => onUpdate('revisions', e.target.value)}
-            className={inputCls} />
-        </div>
-        <div>
-          <p className={labelCls}>Turnaround (days)</p>
-          <input type="number" min={1} value={pkg.turnaroundDays || ''} placeholder="14"
-            onChange={e => onUpdate('turnaroundDays', e.target.value)}
-            className={inputCls} />
-        </div>
+      <div>
+        <p className={labelCls}>Turnaround (days)</p>
+        <input type="number" min={1} value={pkg.turnaroundDays || ''} placeholder="14"
+          onChange={e => onUpdate('turnaroundDays', e.target.value)}
+          className={inputCls} />
       </div>
       <div className="space-y-2">
         {[
@@ -247,19 +240,11 @@ function PhotographyFields({ pkg, onUpdate, dark, inputCls, textSub, labelCls })
             className={inputCls} />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <p className={labelCls}>Revision Rounds</p>
-          <input type="number" min={0} value={pkg.revisions || ''} placeholder="2"
-            onChange={e => onUpdate('revisions', e.target.value)}
-            className={inputCls} />
-        </div>
-        <div>
-          <p className={labelCls}>Turnaround (days)</p>
-          <input type="number" min={1} value={pkg.turnaroundDays || ''} placeholder="10"
-            onChange={e => onUpdate('turnaroundDays', e.target.value)}
-            className={inputCls} />
-        </div>
+      <div>
+        <p className={labelCls}>Turnaround (days)</p>
+        <input type="number" min={1} value={pkg.turnaroundDays || ''} placeholder="10"
+          onChange={e => onUpdate('turnaroundDays', e.target.value)}
+          className={inputCls} />
       </div>
       <div className="space-y-2">
         {[
@@ -281,19 +266,11 @@ function PhotographyFields({ pkg, onUpdate, dark, inputCls, textSub, labelCls })
 function BasicFields({ pkg, onUpdate, dark, inputCls, textSub, labelCls }) {
   return (
     <div className="space-y-3 mt-3">
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <p className={labelCls}>Revision Rounds</p>
-          <input type="number" min={0} value={pkg.revisions || ''} placeholder="2"
-            onChange={e => onUpdate('revisions', e.target.value)}
-            className={inputCls} />
-        </div>
-        <div>
-          <p className={labelCls}>Turnaround (days)</p>
-          <input type="number" min={1} value={pkg.turnaroundDays || ''} placeholder="7"
-            onChange={e => onUpdate('turnaroundDays', e.target.value)}
-            className={inputCls} />
-        </div>
+      <div>
+        <p className={labelCls}>Turnaround (days)</p>
+        <input type="number" min={1} value={pkg.turnaroundDays || ''} placeholder="7"
+          onChange={e => onUpdate('turnaroundDays', e.target.value)}
+          className={inputCls} />
       </div>
       <div>
         <p className={labelCls}>What's Included (one per line)</p>

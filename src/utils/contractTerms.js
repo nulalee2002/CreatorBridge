@@ -1,6 +1,6 @@
 const CANCELLATION_COPY = 'Before the retainer is paid, either party may cancel at no cost. After the retainer is paid and before delivery, the retainer is split evenly. The creator keeps 25 percent of the project total and the client receives 25 percent of the project total. No platform fees apply to a cancelled project. After delivery, cancellations and refunds are unavailable.';
 const USAGE_COPY = 'Creators retain ownership of their work unless the accepted brief or a signed agreement grants specific usage rights to the client. CreatorBridge does not claim ownership of work produced through the platform.';
-const DISPUTE_COPY = 'A party may open a dispute through CreatorBridge for delivered work that does not match the agreed scope. The client review window is 72 hours after delivery. CreatorBridge reviews the agreement, project messages, and delivered work.';
+const DISPUTE_COPY = 'A party may open a dispute through CreatorBridge for delivered work that does not match the agreed scope. The client review window is five calendar days after delivery. CreatorBridge reviews the agreement, project messages, and delivered work.';
 const COMMUNICATION_COPY = 'Project communication, files, approvals, and payment activity remain on CreatorBridge.';
 
 function requiredText(value, label) {
@@ -86,7 +86,7 @@ export function assembleContractTerms(source) {
       client_fee: clientFee,
       creator_net: money(total - creatorFee, 'Creator net'),
     },
-    revisions: Math.max(0, Math.round(Number(source.package.revisions || 0))),
+    revisions: INCLUDED_REVISIONS,
     usage: USAGE_COPY,
     cancellation: CANCELLATION_COPY,
     disputes: DISPUTE_COPY,
@@ -121,3 +121,4 @@ export const contractClauseCopy = Object.freeze({
   disputes: DISPUTE_COPY,
   communication: COMMUNICATION_COPY,
 });
+import { INCLUDED_REVISIONS } from '../config/projectCompletion.js';

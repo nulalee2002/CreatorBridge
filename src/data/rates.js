@@ -708,7 +708,7 @@ export const PACKAGE_TIERS = {
         { rateKey: 'editHourly', quantity: 20, label: 'Video Editing' },
         { rateKey: 'equipmentHourly', quantity: 10, label: 'Equipment Fee' },
       ],
-      includes: ['Full day on-site', '20 hrs editing', 'Full equipment package', '5 deliverables', '3 revisions', 'Color grading included'],
+      includes: ['Full day on-site', '20 hrs editing', 'Full equipment package', '5 deliverables', '2 revisions', 'Color grading included'],
     },
   },
   photography: {
@@ -847,7 +847,7 @@ export const PACKAGE_TIERS = {
         { rateKey: 'colorGradingHourly', quantity: 6, label: 'Color Grade' },
         { rateKey: 'motionGraphicsHourly', quantity: 4, label: 'Motion Graphics' },
       ],
-      includes: ['10+ min video', 'Full edit + color', 'Motion graphics', 'Audio mix/master', '3 revisions'],
+      includes: ['10+ min video', 'Full edit + color', 'Motion graphics', 'Audio mix/master', '2 revisions'],
     },
   },
 };

@@ -359,7 +359,7 @@ function RevisionRequestModal({ project, dark, onClose, onRevisionSubmitted }) {
             </div>
           ) : (
             <div className={`rounded-xl border p-3 text-xs ${dark ? 'border-white/[0.07] bg-charcoal-900/72 text-charcoal-300' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
-              Revision {revisionCount + 1} of 2 free revisions
+              Revision {revisionCount + 1} of 2 included revisions
             </div>
           )}
           <div>
