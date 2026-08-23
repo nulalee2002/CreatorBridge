@@ -11,6 +11,7 @@ const processor = readFileSync(new URL('../supabase/functions/process-final-paym
 const webhook = readFileSync(new URL('../supabase/functions/stripe-webhook/index.ts', import.meta.url), 'utf8');
 const retiredRelease = readFileSync(new URL('../supabase/functions/release-payment/index.ts', import.meta.url), 'utf8');
 const attention = readFileSync(new URL('../src/components/project/FinalPaymentAttention.jsx', import.meta.url), 'utf8');
+const supabaseConfig = readFileSync(new URL('../supabase/config.toml', import.meta.url), 'utf8');
 
 const transaction = { id: 'txn', final_amount: 50_000, client_fee_amount: 5_000 };
 const checks = [
@@ -20,6 +21,7 @@ const checks = [
   [finalPaymentAttemptKey('txn', 2) === finalPaymentAttemptKey('txn', 2), 'duplicate attempt idempotency'],
   [/for update skip locked/i.test(migration), 'atomic final-payment claims'],
   [migration.includes('creatorbridge_final_payment_url'), 'Vault-backed processor cron'],
+  [/\[functions\.process-final-payment\][\s\S]*?verify_jwt = false/.test(supabaseConfig), 'final payment cron JWT bypass'],
   [createIntent.includes("setup_future_usage: 'off_session'"), 'saved method for off-session final'],
   [createIntent.includes('payment_method_consent_at'), 'durable client consent'],
   [processor.includes('off_session: true') && processor.includes('confirm: true'), 'server final attempt'],

@@ -4,6 +4,7 @@ const migration = readFileSync(new URL('../supabase/migrations/20260823042137_sc
 const review = readFileSync(new URL('../supabase/functions/process-project-reviews/index.ts', import.meta.url), 'utf8');
 const cleanup = readFileSync(new URL('../supabase/functions/cleanup-project-deliveries/index.ts', import.meta.url), 'utf8');
 const email = readFileSync(new URL('../supabase/functions/send-notification-email/index.ts', import.meta.url), 'utf8');
+const supabaseConfig = readFileSync(new URL('../supabase/config.toml', import.meta.url), 'utf8');
 
 const checks = [
   [/project_delivery_events/.test(migration), 'event ledger'],
@@ -29,6 +30,8 @@ const checks = [
   [cleanup.includes("rpc('claim_project_delivery_cleanup'"), 'cleanup claim invocation'],
   [cleanup.includes("storage.from('project-deliveries').remove"), 'private object deletion'],
   [cleanup.includes("item_type', 'direct'"), 'external link preservation'],
+  [/\[functions\.process-project-reviews\][\s\S]*?verify_jwt = false/.test(supabaseConfig), 'review cron JWT bypass'],
+  [/\[functions\.cleanup-project-deliveries\][\s\S]*?verify_jwt = false/.test(supabaseConfig), 'cleanup cron JWT bypass'],
   [email.includes("case 'delivery_review_48h'"), '48-hour email'],
   [email.includes("case 'delivery_review_24h'"), '24-hour email'],
   [email.includes("case 'delivery_auto_approved'"), 'auto-approval email'],

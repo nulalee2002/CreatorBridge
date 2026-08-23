@@ -449,6 +449,21 @@ verify_jwt = false
 enabled = true
 verify_jwt = false
 
+# Project lifecycle cron jobs authenticate with the shared
+# x-platform-job-secret header. Gateway JWT verification must remain disabled
+# or pg_cron requests are rejected before the function can validate that secret.
+[functions.process-project-reviews]
+enabled = true
+verify_jwt = false
+
+[functions.cleanup-project-deliveries]
+enabled = true
+verify_jwt = false
+
+[functions.process-final-payment]
+enabled = true
+verify_jwt = false
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
