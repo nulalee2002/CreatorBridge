@@ -17,6 +17,7 @@ import { formatCurrency } from './utils/pricing.js';
 import { Moon, Sun, Zap, RotateCcw, Search, UserPlus, LogIn, LogOut, User, MessageSquare, Briefcase, LayoutDashboard, Users } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext.jsx';
 import { AuthModal } from './components/auth/AuthModal.jsx';
+import { AdminRequired } from './components/auth/AdminRequired.jsx';
 import { SupportTicketForm } from './components/SupportTicketForm.jsx';
 import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 import { TermsModal } from './components/TermsModal.jsx';
@@ -1104,29 +1105,29 @@ export default function App() {
         <Route path="/matches/:projectId" element={<LazyRoute dark={dark}><MatchResultsPage dark={dark} /></LazyRoute>} />
         <Route path="/network" element={<LazyRoute dark={dark}><NetworkingPage dark={dark} user={user} profile={authProfile} /></LazyRoute>} />
         <Route path="/admin" element={
-          <AuthRequired dark={dark} user={user} loading={authLoading} role="client" title="Sign in to view admin controls." copy="CreatorBridge admin visibility requires an authenticated owner account.">
+          <AdminRequired dark={dark} user={user} loading={authLoading}>
             <LazyRoute dark={dark}><AdminDashboard dark={dark} /></LazyRoute>
-          </AuthRequired>
+          </AdminRequired>
         } />
         <Route path="/admin/support" element={
-          <AuthRequired dark={dark} user={user} loading={authLoading} role="client" title="Sign in to view support tickets." copy="CreatorBridge admin visibility requires an authenticated owner account.">
+          <AdminRequired dark={dark} user={user} loading={authLoading}>
             <LazyRoute dark={dark}><AdminSupport dark={dark} /></LazyRoute>
-          </AuthRequired>
+          </AdminRequired>
         } />
         <Route path="/admin/operations" element={
-          <AuthRequired dark={dark} user={user} loading={authLoading} role="client" title="Sign in to access admin operations." copy="CreatorBridge admin visibility requires an authenticated owner account.">
+          <AdminRequired dark={dark} user={user} loading={authLoading}>
             <LazyRoute dark={dark}><AdminOperations dark={dark} /></LazyRoute>
-          </AuthRequired>
+          </AdminRequired>
         } />
         <Route path="/admin/finance" element={
-          <AuthRequired dark={dark} user={user} loading={authLoading} role="client" title="Sign in to access finance." copy="CreatorBridge admin visibility requires an authenticated owner account.">
+          <AdminRequired dark={dark} user={user} loading={authLoading}>
             <LazyRoute dark={dark}><AdminFinance dark={dark} /></LazyRoute>
-          </AuthRequired>
+          </AdminRequired>
         } />
         <Route path="/admin/analytics" element={
-          <AuthRequired dark={dark} user={user} loading={authLoading} role="client" title="Sign in to view analytics." copy="CreatorBridge admin visibility requires an authenticated owner account.">
+          <AdminRequired dark={dark} user={user} loading={authLoading}>
             <LazyRoute dark={dark}><AdminAnalytics dark={dark} /></LazyRoute>
-          </AuthRequired>
+          </AdminRequired>
         } />
         <Route path="/terms" element={<LazyRoute dark={dark}><TermsOfService dark={dark} /></LazyRoute>} />
         <Route path="/terms-of-service" element={<LazyRoute dark={dark}><TermsOfService dark={dark} /></LazyRoute>} />
