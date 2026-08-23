@@ -2,7 +2,7 @@
 
 One page that answers "is it ready and how do we know." Every claim links to a
 real artifact in this repo or names the command that proves it. Updated
-2026-07-09.
+2026-08-23.
 
 ---
 
@@ -21,7 +21,7 @@ real artifact in this repo or names the command that proves it. Updated
 
 ```
 cd "/Volumes/2Work 1-Drive/Claude & ChatGPT/content-pricing-calc"
-npm run verify:launch-sweep          # 13 automated launch checks (all PASS 2026-07-09)
+npm run verify:launch-sweep          # 32 automated launch checks (all PASS 2026-08-23)
 npm run verify:collaboration-fee-parity   # frontend/backend fee math identical
 npm run verify:booking-e2e           # full money path in Stripe TEST mode
 ```
@@ -53,16 +53,32 @@ back from production), and end-to-end by the E2E above.
 
 ## What is still open (the honest list)
 
-1. **Real creators** — the public directory is honestly empty until real US
-   creators are recruited and approved. The one QA listing is hidden by the
-   readiness gate and gets deleted at launch (after that, verify:booking-e2e
-   needs a new QA creator or a real one).
-2. **Paid services** — Bunny production (video), Twilio production (SMS), then
-   Stripe test->live as the very last step.
-3. **Attorney review** of Terms / cancellation / dispute wording.
-4. **Chatbot mode decision** — free guide only vs paid AI at launch.
-5. **Human-eye checks** that can't be automated: email rendering in a real
-   inbox, and a final live browser pass on mobile + desktop.
+1. **Real creators** — the live database has zero creator listings after the
+   Marcus Reed / Copper Line Media QA listing was deleted on 2026-08-23. The
+   public directory must remain honestly empty until real US creators are
+   recruited, reviewed, and approved.
+2. **Attorney review** — an entertainment attorney still needs to approve the
+   final Terms, cancellation, dispute, recording-consent, and electronic-
+   signature wording. Automated tests cannot close this gate.
+3. **Stripe live swap** — production was verified on 2026-08-23 to still use a
+   test publishable key and test backend secret. Install the live publishable,
+   secret, payment-webhook, and identity-webhook credentials, verify Connect and
+   redirect URLs, then reconcile one small controlled live payment and payout.
+4. **Zoom Event Subscription** — the deployed webhook is active, rejects
+   unsigned requests, and its signing secret is configured. The five-minute
+   recovery job also authenticates successfully to the Video SDK API. The Zoom
+   Marketplace Event Subscription toggle and its three selected events still
+   require direct provider-dashboard confirmation: `session.ended`,
+   `session.recording_completed`, and
+   `session.recording_transcript_completed` sent to
+   `https://mxizhszqhbhxzkkhgnmg.supabase.co/functions/v1/zoom-webhook`.
+5. **Paid-service acceptance** — confirm every enabled launch provider with a
+   real acceptance test, including Bunny production media, transactional email,
+   and any SMS gate retained for launch.
+6. **Human-eye checks** — verify transactional email rendering in a real inbox
+   and complete a final live browser pass on mobile and desktop.
 
-When 1-3 close, the remaining steps are mechanical: strip the QA account, flip
-Stripe live, soft launch.
+The Marcus QA listing cleanup is complete. Do not describe CreatorBridge as
+operationally launched until real creators, attorney sign-off, the Zoom Event
+Subscription confirmation, and the Stripe live swap with a reconciled live
+transaction are complete.

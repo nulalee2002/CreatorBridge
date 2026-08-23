@@ -57,6 +57,25 @@ test('release source contains no named launch QA identity', () => {
   }
 });
 
+test('launch documentation keeps every mandatory operational gate visible', () => {
+  const dossier = read('docs/creatorbridge-launch-dossier.md');
+  const scorecard = read('docs/creatorbridge-launch-dod-scorecard.md');
+  const requiredGates = [
+    'Real creators',
+    'Attorney review',
+    'Stripe live swap',
+    'Zoom Event Subscription',
+  ];
+
+  for (const gate of requiredGates) {
+    assert.match(dossier, new RegExp(gate, 'i'), `launch dossier omits ${gate}`);
+    assert.match(scorecard, new RegExp(gate, 'i'), `launch scorecard omits ${gate}`);
+  }
+  assert.match(dossier, /Marcus QA listing cleanup is complete/i);
+  assert.match(dossier, /session\.recording_completed/);
+  assert.match(dossier, /session\.recording_transcript_completed/);
+});
+
 test('heavy application routes and vendor libraries are split deliberately', () => {
   const app = read('src/App.jsx');
   const vite = read('vite.config.js');

@@ -316,7 +316,7 @@
 - [ ] Redact recipient addresses and unnecessary personal data from logs while retaining provider message/event IDs.
 - [ ] Generate a canonical sitemap matching intended public routes and verify `robots.txt` reference.
 - [ ] Convert large route imports to `React.lazy`/`Suspense` and configure stable manual chunks for vendor-heavy Zoom/PDF/admin paths.
-- [ ] Remove the Marcus Reed QA fixture after browser acceptance data no longer depends on it.
+- [x] Remove the Marcus Reed QA fixture after browser acceptance data no longer depends on it. Completed in the live database on 2026-08-23; remaining creator-listing count verified as zero.
 - [ ] Run cleanup tests, build, bundle inspection, public readiness, platform language, network, and support verifiers.
 - [ ] Commit with `fix: remove launch audit leftovers`.
 

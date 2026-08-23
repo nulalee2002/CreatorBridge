@@ -13,7 +13,11 @@ drl33+client@creatorbridge.studio
 
 Do not use the exact same email for both roles. Supabase Auth allows one user per email address.
 
-## Creator Test Profile
+## Retired Creator Test Profile
+
+This fixture is retained below only as historical QA documentation. Do not
+recreate or publish it. New automated tests use the unmistakable
+`CreatorBridge QA Creator` identity and must clean up their temporary rows.
 
 Name: Marcus Reed
 
@@ -81,21 +85,13 @@ It prints the generated test passwords after creation. Do not commit those passw
 
 ## Current Status
 
-Created on 2026-05-08 through the Supabase connector.
+The Marcus Reed / Copper Line Media creator listing and its cascaded sample
+services, portfolio items, and packages were deleted from the live database on
+2026-08-23. The live `creator_listings` count was verified as zero immediately
+after deletion. The Auth account may remain for private sign-in QA, but it has
+no creator listing and must not be counted or shown as platform talent.
 
-Creator listing ID:
-
-```text
-ff6c1f99-4ca0-41a9-9861-39ce4e993924
-```
-
-Verification:
-
-- creator Auth user confirmed
-- client Auth user confirmed
-- creator listing seeded as verified
-- 3 creator services seeded
-- 3 portfolio items seeded
-- 2 packages seeded
+The client QA account also remains private and must not own any public project
+brief at launch.
 
 Do not commit or store the generated passwords in this document.
