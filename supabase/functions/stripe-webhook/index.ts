@@ -311,6 +311,55 @@ async function triggerWebhookEmail(
   }
 }
 
+async function notifyRevisionPurchaseClient(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  purchase: Record<string, any>,
+  outcome: 'succeeded' | 'failed'
+) {
+  const title = outcome === 'succeeded'
+    ? 'Additional revision unlocked'
+    : 'Additional revision payment needs attention';
+  const body = outcome === 'succeeded'
+    ? 'Your $50 payment is confirmed. You can now submit one additional revision request.'
+    : 'The $50 payment was not completed, so no additional revision was unlocked.';
+
+  const { error: notificationError } = await supabaseAdmin.rpc('create_platform_notification', {
+    p_recipient_id: purchase.client_id,
+    p_type: 'system',
+    p_title: title,
+    p_body: body,
+    p_action_url: `/projects/${purchase.project_id}`,
+    p_metadata: { project_id: purchase.project_id, revision_purchase_id: purchase.id },
+    p_actor_id: null,
+    p_response_due_at: null,
+  });
+  if (notificationError) console.error('Paid-revision notification failed:', notificationError.message);
+
+  try {
+    const [{ data: authUser }, { data: project }] = await Promise.all([
+      supabaseAdmin.auth.admin.getUserById(purchase.client_id),
+      supabaseAdmin.from('projects').select('title').eq('id', purchase.project_id).maybeSingle(),
+    ]);
+    if (!authUser?.user?.email) return;
+    const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-notification-email`;
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''}`,
+      },
+      body: JSON.stringify({
+        to: authUser.user.email,
+        template: outcome === 'succeeded' ? 'revision_purchase_succeeded' : 'revision_purchase_failed',
+        data: { project_title: project?.title || 'your project' },
+      }),
+    });
+    if (!response.ok) console.error('Paid-revision email failed:', response.status);
+  } catch (error) {
+    console.error('Paid-revision email dispatch failed:', error instanceof Error ? error.message : error);
+  }
+}
+
 Deno.serve(async (req) => {
   const signature = req.headers.get('stripe-signature');
   if (!signature) {
@@ -368,6 +417,70 @@ Deno.serve(async (req) => {
       case 'payment_intent.succeeded': {
         const pi = event.data.object as Stripe.PaymentIntent;
         const paymentFlow = pi.metadata?.paymentFlow;
+        if (paymentFlow === 'paid_revision') {
+          if (
+            pi.metadata?.paymentType !== 'project_revision'
+            || !pi.metadata?.revisionPurchaseId
+            || pi.currency !== 'usd'
+            || pi.amount !== 5_000
+          ) {
+            throw new Error('Invalid paid-revision payment metadata or amount');
+          }
+
+          const { data: purchase, error: purchaseError } = await supabaseAdmin
+            .from('project_revision_purchases')
+            .select('id, project_id, client_id, creator_listing_id, gross_amount_cents, client_fee_cents, payment_status')
+            .eq('id', pi.metadata.revisionPurchaseId)
+            .eq('stripe_payment_intent_id', pi.id)
+            .maybeSingle();
+          if (purchaseError) throw purchaseError;
+          if (!purchase) throw new Error('Trusted paid-revision ledger not found');
+          if (Number(purchase.gross_amount_cents) !== 5_000 || Number(purchase.client_fee_cents) !== 0) {
+            throw new Error('Paid-revision ledger amount mismatch');
+          }
+
+          const settledAt = new Date().toISOString();
+          const { data: settled, error: settleError } = await supabaseAdmin
+            .from('project_revision_purchases')
+            .update({
+              payment_status: 'succeeded',
+              entitlement_status: 'available',
+              stripe_event_id: event.id,
+              failure_code: null,
+              paid_at: settledAt,
+              updated_at: settledAt,
+            })
+            .eq('id', purchase.id)
+            .eq('payment_status', 'pending')
+            .eq('entitlement_status', 'pending')
+            .select('id')
+            .maybeSingle();
+          if (settleError) throw settleError;
+
+          if (settled) {
+            const { data: creator } = await supabaseAdmin
+              .from('creator_listings')
+              .select('user_id')
+              .eq('id', purchase.creator_listing_id)
+              .maybeSingle();
+            await Promise.all([
+              notifyRevisionPurchaseClient(supabaseAdmin, purchase, 'succeeded'),
+              creator?.user_id
+                ? supabaseAdmin.rpc('create_platform_notification', {
+                    p_recipient_id: creator.user_id,
+                    p_type: 'system',
+                    p_title: 'Client purchased an additional revision',
+                    p_body: 'One paid revision is available for this project. You will be notified when the client submits the request.',
+                    p_action_url: `/projects/${purchase.project_id}`,
+                    p_metadata: { project_id: purchase.project_id, revision_purchase_id: purchase.id },
+                    p_actor_id: null,
+                    p_response_due_at: null,
+                  })
+                : Promise.resolve(),
+            ]);
+          }
+          break;
+        }
         if (paymentFlow === 'change_order') {
           const phase = pi.metadata?.paymentType === 'change_order_retainer'
             ? 'retainer'
@@ -495,6 +608,26 @@ Deno.serve(async (req) => {
       case 'payment_intent.payment_failed': {
         const pi = event.data.object as Stripe.PaymentIntent;
         const paymentFlow = pi.metadata?.paymentFlow;
+        if (paymentFlow === 'paid_revision') {
+          if (pi.metadata?.revisionPurchaseId && pi.metadata?.paymentType === 'project_revision') {
+            const { data: purchase } = await supabaseAdmin
+              .from('project_revision_purchases')
+              .update({
+                payment_status: 'failed',
+                failure_code: pi.last_payment_error?.code ?? 'payment_failed',
+                stripe_event_id: event.id,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', pi.metadata.revisionPurchaseId)
+              .eq('stripe_payment_intent_id', pi.id)
+              .eq('payment_status', 'pending')
+              .eq('entitlement_status', 'pending')
+              .select('id, project_id, client_id')
+              .maybeSingle();
+            if (purchase) await notifyRevisionPurchaseClient(supabaseAdmin, purchase, 'failed');
+          }
+          break;
+        }
         if (paymentFlow === 'change_order') {
           const phase = pi.metadata?.paymentType === 'change_order_retainer'
             ? 'retainer'
@@ -536,6 +669,30 @@ Deno.serve(async (req) => {
               failureReason:    pi.last_payment_error?.message ?? 'Unknown',
             },
           });
+        }
+        break;
+      }
+
+      case 'payment_intent.canceled': {
+        const pi = event.data.object as Stripe.PaymentIntent;
+        if (pi.metadata?.paymentFlow === 'paid_revision'
+          && pi.metadata?.paymentType === 'project_revision'
+          && pi.metadata?.revisionPurchaseId) {
+          const { data: purchase } = await supabaseAdmin
+            .from('project_revision_purchases')
+            .update({
+              payment_status: 'canceled',
+              failure_code: pi.cancellation_reason ?? 'canceled',
+              stripe_event_id: event.id,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', pi.metadata.revisionPurchaseId)
+            .eq('stripe_payment_intent_id', pi.id)
+            .eq('payment_status', 'pending')
+            .eq('entitlement_status', 'pending')
+            .select('id, project_id, client_id')
+            .maybeSingle();
+          if (purchase) await notifyRevisionPurchaseClient(supabaseAdmin, purchase, 'failed');
         }
         break;
       }

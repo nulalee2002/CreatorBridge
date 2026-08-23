@@ -127,6 +127,36 @@ function getEmailTemplate(template: string, rawData: Record<string, any>): { sub
       `;
       break;
 
+    case 'revision_purchase_succeeded':
+      subject = `Additional revision unlocked for ${rawData.project_title || 'your project'}`;
+      bodyContent = `
+        <h2 style="color: #d4a941; margin-top: 0; font-size: 20px;">Additional Revision Unlocked</h2>
+        <p>Hi ${data.client_name || 'Client'},</p>
+        <p>Your payment of <strong>$50.00</strong> for one additional revision on <strong>"${data.project_title || 'your project'}"</strong> is confirmed.</p>
+        <p>You can now submit one revision request from the delivery review panel. This purchase unlocks one request and does not expire while the project remains active.</p>
+      `;
+      break;
+
+    case 'revision_purchase_failed':
+      subject = `Additional revision payment needs attention`;
+      bodyContent = `
+        <h2 style="color: #d4a941; margin-top: 0; font-size: 20px;">Revision Payment Not Completed</h2>
+        <p>Hi ${data.client_name || 'Client'},</p>
+        <p>Your $50.00 payment for an additional revision on <strong>"${data.project_title || 'your project'}"</strong> was not completed.</p>
+        <p>No revision was unlocked and you were not charged by CreatorBridge for a successful purchase. Return to the project to try again or use another payment method.</p>
+      `;
+      break;
+
+    case 'revision_requested':
+      subject = `Revision requested for ${rawData.project_title || 'your project'}`;
+      bodyContent = `
+        <h2 style="color: #d4a941; margin-top: 0; font-size: 20px;">Revision Requested</h2>
+        <p>Hi ${data.creator_name || 'Creator'},</p>
+        <p>The client submitted a ${data.revision_source === 'paid' ? 'paid additional' : 'included'} revision request for <strong>"${data.project_title || 'your project'}"</strong>.</p>
+        <p>Open the project in CreatorBridge to review the instructions. The current review clock is paused until you formally submit the next delivery version.</p>
+      `;
+      break;
+
     case 'final_paid':
       subject = `Payment released: $${Number(data.payout_amount || 0).toFixed(2)}`;
       bodyContent = `
