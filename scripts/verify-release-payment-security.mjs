@@ -39,31 +39,30 @@ assert(
 
 const source = readFileSync(new URL('../supabase/functions/release-payment/index.ts', import.meta.url), 'utf8');
 assert(
-  source.includes("supabaseAdmin.auth.getUser(token)"),
+  source.includes('admin.auth.getUser(token)'),
   'release-payment must validate the caller token with Supabase Auth'
 );
 assert(
-  source.includes("authData.user.id === txn.client_id"),
-  'release-payment must authorize the paying client before release'
+  source.includes('SIGNED_STRIPE_WEBHOOK_REQUIRED'),
+  'release-payment must be a closed compatibility endpoint'
 );
 assert(
-  source.includes("rpc('is_platform_admin'"),
-  'release-payment must allow platform admin release through admin RPC check'
+  source.includes('Manual payout release is disabled'),
+  'release-payment must explain that manual payout release is disabled'
 );
 assert(
-  source.includes("Deno.env.get('PLATFORM_JOB_SECRET')"),
-  'release-payment must require PLATFORM_JOB_SECRET for trusted jobs'
+  !source.includes('stripe.transfers.create'),
+  'release-payment must not create Stripe transfers'
 );
 assert(
-  source.includes('supabaseAdmin.auth.admin.getUserById(creatorListing.user_id)'),
-  'release-payment email must resolve creator auth user through creator_listings.user_id'
+  !source.includes("final_status: 'released'"),
+  'release-payment must not mark a transaction released'
 );
 
 console.log(JSON.stringify({
   ok: true,
   unauthenticatedBlocked: true,
   invalidTokenBlocked: true,
-  clientOrAdminAuthorizationPresent: true,
-  trustedJobSecretPresent: true,
-  creatorEmailResolvedThroughListingUserId: true,
+  manualReleaseDisabled: true,
+  signedWebhookRequired: true,
 }, null, 2));

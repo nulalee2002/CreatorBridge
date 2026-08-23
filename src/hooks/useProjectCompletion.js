@@ -4,6 +4,7 @@ import { supabase, supabaseConfigured } from '../lib/supabase.js';
 export function useProjectCompletion(projectId) {
   const [deliveries, setDeliveries] = useState([]);
   const [revisionState, setRevisionState] = useState(null);
+  const [paymentState, setPaymentState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -11,13 +12,18 @@ export function useProjectCompletion(projectId) {
     if (!supabaseConfigured || !supabase || !projectId) {
       setDeliveries([]);
       setRevisionState(null);
+      setPaymentState(null);
       setLoading(false);
       return;
     }
     setLoading(true);
     setError('');
     try {
-      const [{ data: deliveryRows, error: deliveryError }, { data: revision, error: revisionError }] = await Promise.all([
+      const [
+        { data: deliveryRows, error: deliveryError },
+        { data: revision, error: revisionError },
+        { data: transaction, error: transactionError },
+      ] = await Promise.all([
         supabase
           .from('project_deliveries')
           .select('*, project_delivery_items(*)')
@@ -25,11 +31,18 @@ export function useProjectCompletion(projectId) {
           .neq('status', 'draft')
           .order('version', { ascending: false }),
         supabase.rpc('get_project_revision_state', { p_project_id: projectId }),
+        supabase
+          .from('transactions')
+          .select('id, final_status, final_payment_error_code, final_payment_error_message, final_payment_requires_action, final_payment_attention_at, final_payment_attempt_count')
+          .eq('project_id', projectId)
+          .maybeSingle(),
       ]);
       if (deliveryError) throw deliveryError;
       if (revisionError) throw revisionError;
+      if (transactionError) throw transactionError;
       setDeliveries(deliveryRows || []);
       setRevisionState(revision || null);
+      setPaymentState(transaction || null);
     } catch (cause) {
       setError(cause?.message || 'Project delivery state could not be loaded.');
     } finally {
@@ -89,9 +102,19 @@ export function useProjectCompletion(projectId) {
       p_delivery_id: deliveryId,
     });
     if (approveError) throw approveError;
+    try {
+      await invoke('process-final-payment', { projectId, recovery: false });
+    } catch (cause) {
+      setError('Delivery was approved and the final payment is safely queued. Automatic processing will retry shortly.');
+    }
     await refresh();
     return data;
-  }, [projectId, refresh]);
+  }, [invoke, projectId, refresh]);
+
+  const beginFinalPaymentRecovery = useCallback(() => invoke('process-final-payment', {
+    projectId,
+    recovery: true,
+  }), [invoke, projectId]);
 
   const disputeDelivery = useCallback(async (deliveryId) => {
     const { data, error: disputeError } = await supabase.rpc('pause_delivery_for_dispute', {
@@ -112,6 +135,7 @@ export function useProjectCompletion(projectId) {
   return {
     deliveries,
     revisionState,
+    paymentState,
     loading,
     error,
     refresh,
@@ -120,6 +144,7 @@ export function useProjectCompletion(projectId) {
     requestRevision,
     beginRevisionPurchase,
     approveDelivery,
+    beginFinalPaymentRecovery,
     disputeDelivery,
     downloadItem,
   };

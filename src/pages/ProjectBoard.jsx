@@ -1436,14 +1436,14 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
 
       {/* Video calls: unlocks at retainer_paid or later with a countersigned agreement */}
       <ProjectCallsPanel project={localProject} user={user} isClient={isClient} />
-      {isUuid(localProject.id) && ['retainer_paid', 'in_progress', 'revision', 'delivered', 'approved', 'completed', 'final_paid'].includes(localProject.status) && (
+      {isUuid(localProject.id) && ['retainer_paid', 'in_progress', 'revision', 'delivered', 'approved', 'final_payment_processing', 'final_payment_attention', 'completed', 'final_paid'].includes(localProject.status) && (
         <>
           <ChangeOrderPanel projectId={localProject.id} userId={user?.id} />
           <ProjectDocuments projectId={localProject.id} />
         </>
       )}
 
-      {isUuid(localProject.id) && ['retainer_paid', 'in_progress', 'revision', 'delivered', 'approved', 'completed', 'final_paid'].includes(localProject.status) && (
+      {isUuid(localProject.id) && ['retainer_paid', 'in_progress', 'revision', 'delivered', 'approved', 'final_payment_processing', 'final_payment_attention', 'completed', 'final_paid'].includes(localProject.status) && (
         <ProjectCompletionPanel
           project={localProject}
           isClient={isClient}

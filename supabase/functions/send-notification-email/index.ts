@@ -184,6 +184,16 @@ function getEmailTemplate(template: string, rawData: Record<string, any>): { sub
       `;
       break;
 
+    case 'final_payment_attention':
+      subject = `Final payment needs attention for ${rawData.project_title || 'your project'}`;
+      bodyContent = `
+        <h2 style="color: #d4a941; margin-top: 0; font-size: 20px;">Final Payment Needs Attention</h2>
+        <p>The delivery for <strong>"${data.project_title || 'your project'}"</strong> has been approved, but Stripe could not yet confirm the final payment.</p>
+        <p>${data.payment_message || 'Please open the project in CreatorBridge and complete the secure payment step.'}</p>
+        <p>Your payment is <strong>not marked paid or released</strong> until Stripe confirms it. Open the project board to retry securely.</p>
+      `;
+      break;
+
     case 'final_paid':
       subject = `Payment released: $${Number(data.payout_amount || 0).toFixed(2)}`;
       bodyContent = `

@@ -40,8 +40,8 @@ export function ProjectTimeline({ status, dark, projectId, enabled = true }) {
     const summary = records?.summaries?.some(item => item.status === 'agreed') || false;
     const pendingOrder = records?.orders?.some(order => ['draft','proposed','client_signed','creator_signed','countersigned','awaiting_additional_retainer'].includes(order.status));
     const termsReady = summary && !pendingOrder;
-    const production = ['in_progress','revision','delivered','approved','final_paid','completed'].includes(status);
-    const delivered = ['delivered','approved','final_paid','completed'].includes(status);
+    const production = ['in_progress','revision','delivered','approved','final_payment_processing','final_payment_attention','final_paid','completed'].includes(status);
+    const delivered = ['delivered','approved','final_payment_processing','final_payment_attention','final_paid','completed'].includes(status);
     const activePaidOrders = (records?.orders || []).filter(order => order.status === 'active' && order.price_delta_cents > 0);
     const paymentByOrder = new Map((records?.payments || []).map(payment => [payment.change_order_id, payment]));
     const addedFinalsPaid = activePaidOrders.every(order => PAID.has(paymentByOrder.get(order.id)?.final_status));

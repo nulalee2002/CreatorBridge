@@ -117,6 +117,7 @@ Deno.serve(async (req) => {
       creatorId,
       clientId,
       paymentType = 'retainer',  // 'retainer' | 'final'
+      savePaymentMethodForFinal = false,
     } = await req.json();
 
     const normalizedPaymentType = paymentType === 'final' ? 'final' : 'retainer';
@@ -124,6 +125,16 @@ Deno.serve(async (req) => {
     if (!projectId || !creatorId || !clientId) {
       return new Response(
         JSON.stringify({ error: 'projectId, creatorId, and clientId are required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (normalizedPaymentType === 'retainer' && savePaymentMethodForFinal !== true) {
+      return new Response(
+        JSON.stringify({
+          error: 'Consent to securely save this payment method for the final project balance is required.',
+          code: 'FINAL_PAYMENT_METHOD_CONSENT_REQUIRED',
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -204,7 +215,7 @@ Deno.serve(async (req) => {
 
     const { data: existingTxn } = await supabaseAdmin
       .from('transactions')
-      .select('id, retainer_status, final_status, retainer_payment_intent, final_payment_intent')
+      .select('id, retainer_status, final_status, retainer_payment_intent, final_payment_intent, stripe_customer_id')
       .eq('project_id', projectId)
       .eq('creator_id', creatorId)
       .eq('client_id', clientId)
@@ -352,10 +363,25 @@ Deno.serve(async (req) => {
       );
     }
 
+    let stripeCustomerId = existingTxn?.stripe_customer_id || null;
+    if (!stripeCustomerId) {
+      const customer = await stripe.customers.create({
+        email: authData.user.email || undefined,
+        metadata: {
+          creatorBridgeClientId: clientId,
+        },
+      }, {
+        idempotencyKey: `cb_customer_${clientId}`,
+      });
+      stripeCustomerId = customer.id;
+    }
+
     const paymentIntent = await stripe.paymentIntents.create({
       amount:   trustedFees.chargeAmountCents,
       currency: 'usd',
+      customer: stripeCustomerId,
       automatic_payment_methods: { enabled: true },
+      ...(normalizedPaymentType === 'retainer' ? { setup_future_usage: 'off_session' as const } : {}),
       metadata: {
         projectId:   projectId ?? '',
         paymentType: normalizedPaymentType,
@@ -364,6 +390,8 @@ Deno.serve(async (req) => {
         creatorUserId: creatorUserId ?? '',
         creatorCreditAppliedCents: String(trustedFees.creatorCreditAppliedCents),
         paymentFlow: 'platform_charge_then_transfer',
+        savePaymentMethodForFinal: String(normalizedPaymentType === 'retainer' && savePaymentMethodForFinal === true),
+        paymentMethodConsentVersion: '2026-08-23',
       },
     }, {
       idempotencyKey: `cb_${projectId}_${creatorId}_${clientId}_${normalizedPaymentType}`,
@@ -387,10 +415,16 @@ Deno.serve(async (req) => {
       payment_flow:        'platform_charge_then_transfer',
       booking_ip:          auditIpFromRequest(req),
       booking_user_agent:  req.headers.get('user-agent') || null,
+      stripe_customer_id:  stripeCustomerId,
       updated_at:          new Date().toISOString(),
       ...(normalizedPaymentType === 'final'
         ? { final_status: 'pending', final_payment_intent: paymentIntent.id }
-        : { retainer_status: 'pending', retainer_payment_intent: paymentIntent.id }),
+        : {
+            retainer_status: 'pending',
+            retainer_payment_intent: paymentIntent.id,
+            payment_method_consent_at: new Date().toISOString(),
+            payment_method_consent_version: '2026-08-23',
+          }),
     };
 
     if (existingTxn?.id) {

@@ -207,6 +207,7 @@ function CardForm({ fees, project, creator, dark, paymentType, creatorFeePct, cl
 
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
+  const [savePaymentMethodForFinal, setSavePaymentMethodForFinal] = useState(false);
   const textSub = dark ? 'text-charcoal-300' : 'text-gray-500';
   const isFinal = paymentType === 'final';
   const amountDue = isFinal ? fees.finalClientOwes : fees.retainerClientOwes;
@@ -239,11 +240,16 @@ function CardForm({ fees, project, creator, dark, paymentType, creatorFeePct, cl
         throw new Error('This creator has not connected a Stripe payout account yet. Ask the creator to finish payment setup before you pay the retainer.');
       }
 
+      if (!isFinal && !savePaymentMethodForFinal) {
+        throw new Error('Please authorize CreatorBridge to securely charge this card for the final balance after approval.');
+      }
+
       const { data, error: fnErr } = await createPaymentIntentWithRetry({
         projectId: project.id,
         creatorId: acceptedCreatorId,
         clientId: user.id,
         paymentType,
+        savePaymentMethodForFinal: !isFinal && savePaymentMethodForFinal,
       });
       if (fnErr) throw new Error(await getFunctionErrorMessage(fnErr));
       const clientSecret = data?.clientSecret;
@@ -306,6 +312,19 @@ function CardForm({ fees, project, creator, dark, paymentType, creatorFeePct, cl
         <p className={`text-[10px] mt-2 leading-4 ${textSub}`}>
           Paying the retainer unlocks video calls with your creator, held right inside CreatorBridge and recorded audio only for your shared project record.
         </p>
+        {!isFinal && (
+          <label className={`mt-4 flex cursor-pointer items-start gap-2 rounded-xl border p-3 text-xs leading-5 ${dark ? 'border-white/[0.09] bg-black/15 text-charcoal-200' : 'border-gray-200 bg-gray-50 text-gray-700'}`}>
+            <input
+              type="checkbox"
+              checked={savePaymentMethodForFinal}
+              onChange={event => setSavePaymentMethodForFinal(event.target.checked)}
+              className="mt-1 accent-amber-400"
+            />
+            <span>
+              I authorize CreatorBridge to securely save this payment method with Stripe and charge the final project balance after I approve the delivery or the five-day review window expires. CreatorBridge never stores my card number.
+            </span>
+          </label>
+        )}
       </div>
 
       {error && (
@@ -315,7 +334,7 @@ function CardForm({ fees, project, creator, dark, paymentType, creatorFeePct, cl
         </div>
       )}
 
-      <button type="button" onClick={handlePay} disabled={loading || !stripe}
+      <button type="button" onClick={handlePay} disabled={loading || !stripe || (!isFinal && !savePaymentMethodForFinal)}
         className="w-full py-3.5 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-50 text-charcoal-900 font-bold text-sm transition-all flex items-center justify-center gap-2">
         {loading ? <Loader size={15} className="animate-spin" /> : <CreditCard size={15} />}
         {loading ? 'Processing...' : `Pay ${dollarsToDisplay(amountDue)} ${isFinal ? 'Final Balance' : 'Retainer'}`}
@@ -388,9 +407,11 @@ function ConfirmationStep({ project, creator, fees, dark, paymentResult }) {
       </div>
 
       <div>
-        <h2 className={`font-display font-bold text-2xl ${dark ? 'text-white' : 'text-gray-900'}`}>Booking confirmed!</h2>
+        <h2 className={`font-display font-bold text-2xl ${dark ? 'text-white' : 'text-gray-900'}`}>{isFinal ? 'Final payment submitted' : 'Booking confirmed!'}</h2>
         <p className={`text-sm mt-1 ${textSub}`}>
-          Your {isFinal ? 'final payment' : 'retainer'} of {dollarsToDisplay(isFinal ? fees.finalClientOwes : fees.retainerClientOwes)} has been received.
+          {isFinal
+            ? `Stripe received your ${dollarsToDisplay(fees.finalClientOwes)} payment confirmation. CreatorBridge will mark it paid and release the creator payout only after the signed Stripe webhook succeeds.`
+            : `Your retainer of ${dollarsToDisplay(fees.retainerClientOwes)} has been received.`}
         </p>
       </div>
 

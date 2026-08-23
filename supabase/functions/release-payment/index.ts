@@ -1,320 +1,38 @@
-import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
-import { projectChangeOrderFinalsPaid, releasePaidChangeOrders } from '../_shared/changeOrderRelease.ts';
-
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
-  apiVersion: '2024-06-20',
-  httpClient: Stripe.createFetchHttpClient(),
-});
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-async function paymentIntentChargeId(paymentIntentId?: string | null) {
-  if (!paymentIntentId) return null;
+const json = (body: Record<string, unknown>, status: number) => new Response(JSON.stringify(body), {
+  status,
+  headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+});
 
-  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
-    expand: ['latest_charge'],
-  });
-  const latestCharge = paymentIntent.latest_charge;
-
-  if (typeof latestCharge === 'string') return latestCharge;
-  return latestCharge?.id ?? null;
-}
-
-async function grantReferralCreditForReleasedTransaction(
-  supabaseAdmin: ReturnType<typeof createClient>,
-  transactionId: string
-) {
-  const { error } = await supabaseAdmin.rpc('grant_referral_credit_for_released_transaction', {
-    p_transaction_id: transactionId,
-  });
-  if (error) {
-    console.warn('release-payment: referral credit grant skipped', error.message);
-  }
-}
-
-/**
- * release-payment
- * Called when:
- *   1. Client clicks "Approve Delivery"
- *   2. Auto-approve triggers after PLATFORM_FEES.autoApproveDays days
- *
- * Body: { transactionId, autoApprove?: boolean }
- *
- * Logic:
- *   - Creates one Stripe Transfer for the creator's net project payout
- *   - Requires both retainer and final payments to be paid first
- *   - Updates transaction final_status to 'released'
- *   - Logs a payment_event
- */
+// Compatibility tombstone. Creator payouts used to be manually releasable from
+// this endpoint. That path is intentionally closed: only a signature-verified
+// payment_intent.succeeded event in stripe-webhook may mark a final payment paid
+// and execute the idempotent creator transfer.
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-
-  const rateLimited = checkRateLimit(req, { maxRequests: 20, windowMs: 60_000 });
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const rateLimited = checkRateLimit(req, { maxRequests: 10, windowMs: 60_000 });
   if (rateLimited) return rateLimited;
 
-  try {
-    const { transactionId, autoApprove = false } = await req.json();
+  const admin = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+  );
+  const token = (req.headers.get('Authorization') || '').replace('Bearer ', '');
+  const { data: authData, error: authError } = token
+    ? await admin.auth.getUser(token)
+    : { data: { user: null }, error: new Error('Missing authorization token') };
 
-    if (!transactionId) {
-      return new Response(
-        JSON.stringify({ error: 'transactionId is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+  if (authError || !authData.user) return json({ error: 'Authentication is required' }, 403);
 
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    const authHeader = req.headers.get('Authorization') ?? '';
-    const token = authHeader.replace('Bearer ', '');
-    const { data: authData, error: authError } = token
-      ? await supabaseAdmin.auth.getUser(token)
-      : { data: { user: null }, error: new Error('Missing authorization token') };
-
-    const jobSecret = Deno.env.get('PLATFORM_JOB_SECRET') ?? '';
-    const suppliedJobSecret = req.headers.get('x-creatorbridge-job-secret') ?? '';
-    const isTrustedJob = Boolean(autoApprove && jobSecret && suppliedJobSecret === jobSecret);
-
-    if (!isTrustedJob && (authError || !authData.user)) {
-      return new Response(
-        JSON.stringify({ error: 'Authentication is required to release payment' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Fetch transaction, then fetch creator Stripe account separately. The schema now uses
-    // a foreign key uuid constraint for creator_id.
-    const { data: txn, error: txnErr } = await supabaseAdmin
-      .from('transactions')
-      .select('*')
-      .eq('id', transactionId)
-      .single();
-
-    if (txnErr || !txn) {
-      return new Response(
-        JSON.stringify({ error: 'Transaction not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    let isAuthorized = isTrustedJob;
-    let isAdmin = false;
-
-    if (!isTrustedJob && authData.user) {
-      if (authData.user.id === txn.client_id) {
-        isAuthorized = true;
-      } else {
-        const { data: checkAdmin, error: checkAdminErr } = await supabaseAdmin
-          .rpc('is_platform_admin', { p_user_id: authData.user.id });
-        if (!checkAdminErr && checkAdmin) {
-          isAuthorized = true;
-          isAdmin = true;
-        }
-      }
-    }
-
-    if (!isAuthorized) {
-      return new Response(
-        JSON.stringify({ error: 'Only the paying client or a platform admin can release this payment' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (txn.final_status === 'released' || txn.final_transfer_id) {
-      return new Response(
-        JSON.stringify({ error: 'Payment already released' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (txn.retainer_status !== 'paid' || txn.final_status !== 'paid') {
-      return new Response(
-        JSON.stringify({ error: 'Both retainer and final payment must be paid before creator payout release' }),
-        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    if (!(await projectChangeOrderFinalsPaid(supabaseAdmin, txn.project_id))) {
-      return new Response(
-        JSON.stringify({ error: 'Every active change-order final must be paid before creator payout release' }),
-        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const { data: creatorListing } = await supabaseAdmin
-      .from('creator_listings')
-      .select('stripe_account_id, user_id, name, business_name')
-      .eq('id', txn.creator_id)
-      .single();
-
-    const creatorStripeAccountId = creatorListing?.stripe_account_id;
-    if (!creatorStripeAccountId) {
-      return new Response(
-        JSON.stringify({ error: 'Creator has no connected Stripe account' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    const changeOrderTransfers = await releasePaidChangeOrders(
-      supabaseAdmin,
-      stripe,
-      txn.project_id,
-      creatorStripeAccountId,
-    );
-
-    // Net to creator: full project amount minus the creator platform fee.
-    const netToCreator = Number(txn.project_amount || 0) - Number(txn.creator_fee_amount || 0);
-
-    if (!netToCreator || netToCreator <= 0) {
-      return new Response(
-        JSON.stringify({ error: 'Creator payout amount could not be verified' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const retainerChargeId = await paymentIntentChargeId(txn.retainer_payment_intent);
-    const finalChargeId = await paymentIntentChargeId(txn.final_payment_intent);
-    const retainerTransferAmount = Math.min(netToCreator, Math.max(0, Number(txn.retainer_amount || 0)));
-    const finalTransferAmount = netToCreator - retainerTransferAmount;
-
-    if (!retainerChargeId || !finalChargeId || retainerTransferAmount <= 0 || finalTransferAmount <= 0) {
-      return new Response(
-        JSON.stringify({ error: 'Creator payout source charges could not be verified' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Create Stripe Transfers from the actual successful charge sources. This avoids
-    // a false release failure when the platform balance has not become available yet.
-    const retainerTransfer = await stripe.transfers.create({
-      amount:      retainerTransferAmount,
-      currency:    'usd',
-      destination: creatorStripeAccountId,
-      source_transaction: retainerChargeId,
-      metadata: {
-        transactionId,
-        paymentType: 'retainer_source_release',
-        autoApprove: String(autoApprove),
-        paymentFlow: 'platform_charge_then_transfer',
-      },
-    }, {
-      idempotencyKey: `cb_client_release_${transactionId}_retainer`,
-    });
-
-    const finalTransfer = await stripe.transfers.create({
-      amount:      finalTransferAmount,
-      currency:    'usd',
-      destination: creatorStripeAccountId,
-      source_transaction: finalChargeId,
-      metadata: {
-        transactionId,
-        paymentType: 'final_source_release',
-        autoApprove: String(autoApprove),
-        paymentFlow: 'platform_charge_then_transfer',
-      },
-    }, {
-      idempotencyKey: `cb_client_release_${transactionId}_final`,
-    });
-
-    // Update transaction
-    await supabaseAdmin
-      .from('transactions')
-      .update({
-        final_status:       'released',
-        retainer_transfer_id: retainerTransfer.id,
-        final_transfer_id:  finalTransfer.id,
-        final_released_at:  new Date().toISOString(),
-        updated_at:         new Date().toISOString(),
-      })
-      .eq('id', transactionId)
-      .is('final_transfer_id', null);
-
-    let eventType = 'client_approved_and_released';
-    if (isTrustedJob) {
-      eventType = 'auto_approved_and_released';
-    } else if (isAdmin) {
-      eventType = 'admin_approved_and_released';
-    }
-
-    // Log payment event
-    await supabaseAdmin.from('payment_events').insert({
-      transaction_id: transactionId,
-      event_type:     eventType,
-      actor_id:       isTrustedJob ? null : authData.user?.id ?? null,
-      metadata: {
-        retainerTransferId: retainerTransfer.id,
-        finalTransferId:    finalTransfer.id,
-        changeOrderTransfers,
-        amount:        netToCreator,
-        autoApprove,
-        adminRelease:  isAdmin,
-      },
-    });
-
-    await grantReferralCreditForReleasedTransaction(supabaseAdmin, transactionId);
-
-    // Send final_paid notification email to creator (best-effort, non-blocking).
-    try {
-      const [{ data: creatorAuth }, { data: project }] = await Promise.all([
-        creatorListing?.user_id
-          ? supabaseAdmin.auth.admin.getUserById(creatorListing.user_id)
-          : Promise.resolve({ data: null }),
-        supabaseAdmin.from('projects').select('title').eq('id', txn.project_id).single(),
-      ]);
-      const creatorEmail = creatorAuth?.user?.email;
-      if (creatorEmail) {
-        const notifyRes = await fetch(
-          `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-notification-email`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-            },
-            body: JSON.stringify({
-              to: creatorEmail,
-              template: 'final_paid',
-              data: {
-                creator_name:  creatorListing?.business_name
-                  ?? creatorListing?.name
-                  ?? creatorAuth.user.user_metadata?.display_name
-                  ?? creatorEmail,
-                project_title: project?.title ?? 'Your Project',
-                payout_amount: (netToCreator / 100).toFixed(2),
-              },
-            }),
-          }
-        );
-        if (!notifyRes.ok) {
-          console.warn('release-payment: notification email failed', await notifyRes.text());
-        }
-      }
-    } catch (emailErr) {
-      console.warn('release-payment: notification email error (non-fatal):', emailErr);
-    }
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        retainerTransferId: retainerTransfer.id,
-        finalTransferId: finalTransfer.id,
-        changeOrderTransfers,
-        netToCreator,
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  } catch (err) {
-    console.error('release-payment error:', err);
-    return new Response(
-      JSON.stringify({ error: err.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
+  return json({
+    error: 'Manual payout release is disabled. Creator payout is released only after CreatorBridge verifies Stripe’s signed final-payment webhook.',
+    code: 'SIGNED_STRIPE_WEBHOOK_REQUIRED',
+  }, 410);
 });

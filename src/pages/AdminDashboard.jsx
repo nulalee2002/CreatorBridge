@@ -165,38 +165,6 @@ export function AdminDashboard({ dark }) {
     }
   }
 
-  async function handleReleasePayment(transactionId) {
-    if (!supabaseConfigured || !supabase || submittingAction) return;
-    setSubmittingAction(true);
-    setError('');
-    try {
-      const { data: session } = await supabase.auth.getSession();
-      const token = session?.session?.access_token;
-      
-      const endpoint = `${supabase.supabaseUrl}/functions/v1/release-payment`;
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token || ''}`,
-        },
-        body: JSON.stringify({ transactionId, autoApprove: false }),
-      });
-
-      const resBody = await response.json();
-      if (!response.ok) {
-        throw new Error(resBody.error || 'Failed to release payout.');
-      }
-
-      await loadAdminData({ quiet: true });
-      window.alert('Payout successfully released through Stripe!');
-    } catch (err) {
-      setError(err.message || 'Failed to release payment.');
-    } finally {
-      setSubmittingAction(false);
-    }
-  }
-
   useEffect(() => {
     let active = true;
     const run = async () => {
@@ -227,7 +195,7 @@ export function AdminDashboard({ dark }) {
               Platform operations dashboard.
             </h1>
             <p className={`mt-4 max-w-2xl text-sm leading-7 md:text-base ${dark ? 'text-charcoal-300' : 'text-gray-600'}`}>
-              Manage pending creator listing reviews and manually release project payouts.
+              Manage pending creator listing reviews and monitor signed-webhook project payouts.
             </p>
           </div>
           <div className={`rounded-2xl border p-5 ${dark ? 'border-gold-500/18 bg-gold-500/10' : 'border-gold-200 bg-gold-50'}`}>
@@ -342,14 +310,14 @@ export function AdminDashboard({ dark }) {
         <Panel dark={dark} className="p-5 md:p-6 flex flex-col justify-between">
           <div>
             <p className="mb-2 text-gold-400" style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
-              Pending payouts
+              Payout monitoring
             </p>
-            <h2 className={`text-2xl font-black mb-4 ${dark ? 'text-white' : 'text-gray-950'}`}>Manual releases</h2>
+            <h2 className={`text-2xl font-black mb-4 ${dark ? 'text-white' : 'text-gray-950'}`}>Webhook releases</h2>
             
             {pendingTxns.length === 0 ? (
               <div className={`rounded-2xl border p-8 text-center ${dark ? 'border-white/[0.07] bg-white/[0.025]' : 'border-gray-200 bg-gray-50'}`}>
                 <CreditCard className="mx-auto mb-3 text-gold-400 opacity-60" size={24} />
-                <p className={`text-xs ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>No transactions pending payout release.</p>
+                <p className={`text-xs ${dark ? 'text-charcoal-400' : 'text-gray-500'}`}>No Stripe-confirmed transactions are waiting for payout completion.</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -368,14 +336,7 @@ export function AdminDashboard({ dark }) {
                         <p>Creator ID: {txn.creator_id?.slice(0, 8)}</p>
                         <p>Fee: ${fee} | Net to Creator: <span className="font-semibold text-gold-400">${net}</span></p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleReleasePayment(txn.id)}
-                        disabled={submittingAction}
-                        className="w-full rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-40 text-charcoal-950 py-2.5 font-bold transition-all text-center"
-                      >
-                        Release Payout
-                      </button>
+                      <p className={`rounded-xl border px-3 py-2 leading-5 ${dark ? 'border-gold-500/20 bg-gold-500/10 text-gold-200' : 'border-gold-200 bg-gold-50 text-gold-800'}`}>Stripe confirmed the payment. CreatorBridge’s signed webhook is completing the idempotent creator transfer; no manual release is permitted.</p>
                     </div>
                   );
                 })}

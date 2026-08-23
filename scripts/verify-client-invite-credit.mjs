@@ -14,7 +14,6 @@ const migrationFiles = readdirSync(migrationsDir)
 const allMigrations = migrationFiles.map(([, source]) => source).join('\n');
 
 const createPaymentIntent = readFileSync(join(root, 'supabase/functions/create-payment-intent/index.ts'), 'utf8');
-const releasePayment = readFileSync(join(root, 'supabase/functions/release-payment/index.ts'), 'utf8');
 const stripeWebhook = readFileSync(join(root, 'supabase/functions/stripe-webhook/index.ts'), 'utf8');
 const referralSection = readFileSync(join(root, 'src/components/ReferralSection.jsx'), 'utf8');
 const supportChatbot = readFileSync(join(root, 'src/components/SupportChatbot.jsx'), 'utf8');
@@ -71,9 +70,8 @@ assert(
 );
 
 assert(
-  releasePayment.includes("rpc('grant_referral_credit_for_released_transaction'") &&
   stripeWebhook.includes("rpc('grant_referral_credit_for_released_transaction'"),
-  'Referral credit grant must run after released payments in both release paths'
+  'Referral credit grant must run only after the signed-webhook release path'
 );
 assert(
   stripeWebhook.includes('consumeAppliedCreatorCredit') &&
@@ -117,6 +115,6 @@ console.log(JSON.stringify({
   migrationRulesPresent: true,
   creatorCreditOffsetsFutureCreatorFee: true,
   clientFeeWaiverRemainsClientOnly: true,
-  creditGrantAfterReleaseInBothPaths: true,
+  creditGrantAfterSignedWebhookRelease: true,
   pyramidRiskCopyRemoved: true,
 }, null, 2));

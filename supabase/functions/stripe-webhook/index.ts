@@ -536,6 +536,28 @@ Deno.serve(async (req) => {
         }
         const { projectId, paymentType, creatorId, clientId } = pi.metadata;
 
+        if (!['retainer', 'final'].includes(paymentType || '') || pi.currency !== 'usd') {
+          throw new Error('Invalid project payment metadata or currency');
+        }
+        const paymentIntentColumn = paymentType === 'retainer' ? 'retainer_payment_intent' : 'final_payment_intent';
+        const { data: trustedTxn, error: trustedTxnError } = await supabaseAdmin
+          .from('transactions')
+          .select('*')
+          .eq(paymentIntentColumn, pi.id)
+          .maybeSingle();
+        if (trustedTxnError || !trustedTxn) throw new Error('Trusted project payment ledger not found');
+        const expectedAmount = paymentType === 'retainer'
+          ? Number(trustedTxn.retainer_amount || 0)
+          : Number(trustedTxn.final_amount || 0) + Number(trustedTxn.client_fee_amount || 0);
+        if (
+          pi.amount !== expectedAmount
+          || String(trustedTxn.project_id) !== String(projectId)
+          || String(trustedTxn.creator_id) !== String(creatorId)
+          || String(trustedTxn.client_id) !== String(clientId)
+        ) {
+          throw new Error('Project payment amount or ownership mismatch');
+        }
+
         if (paymentType === 'retainer') {
           const paymentAudit = await paymentFingerprintFromIntent(pi);
           await supabaseAdmin
@@ -546,6 +568,7 @@ Deno.serve(async (req) => {
               retainer_paid_at:        new Date().toISOString(),
               client_payment_method_id: paymentAudit.paymentMethodId,
               client_payment_fingerprint: paymentAudit.fingerprint,
+              stripe_customer_id: typeof pi.customer === 'string' ? pi.customer : pi.customer?.id || null,
               updated_at:              new Date().toISOString(),
             })
             .eq('retainer_payment_intent', pi.id);
@@ -559,6 +582,11 @@ Deno.serve(async (req) => {
               final_paid_at:        new Date().toISOString(),
               client_payment_method_id: paymentAudit.paymentMethodId,
               client_payment_fingerprint: paymentAudit.fingerprint,
+              stripe_customer_id: typeof pi.customer === 'string' ? pi.customer : pi.customer?.id || trustedTxn.stripe_customer_id,
+              final_payment_error_code: null,
+              final_payment_error_message: null,
+              final_payment_requires_action: false,
+              final_payment_attention_at: null,
               updated_at:           new Date().toISOString(),
             })
             .eq('final_payment_intent', pi.id);
@@ -572,6 +600,9 @@ Deno.serve(async (req) => {
 
         if (txn) {
           if (paymentType === 'final') {
+            await supabaseAdmin.from('project_final_payment_jobs')
+              .update({ status: 'complete', claimed_at: null, last_error: null, updated_at: new Date().toISOString() })
+              .eq('transaction_id', txn.id);
             await markProjectCompleted(supabaseAdmin, txn);
             await releaseCreatorPayout(supabaseAdmin, {
               ...txn,
@@ -655,11 +686,39 @@ Deno.serve(async (req) => {
         // Find and log
         const { data: txn } = await supabaseAdmin
           .from('transactions')
-          .select('id')
+          .select('*')
           .eq(paymentType === 'retainer' ? 'retainer_payment_intent' : 'final_payment_intent', pi.id)
           .single();
 
         if (txn) {
+          if (paymentType === 'final') {
+            const now = new Date().toISOString();
+            const failureMessage = pi.last_payment_error?.message || 'The final payment could not be completed.';
+            await Promise.all([
+              supabaseAdmin.from('transactions').update({
+                final_status: 'attention',
+                final_payment_error_code: pi.last_payment_error?.code || 'payment_failed',
+                final_payment_error_message: failureMessage,
+                final_payment_requires_action: pi.last_payment_error?.code === 'authentication_required',
+                final_payment_attention_at: now,
+                updated_at: now,
+              }).eq('id', txn.id).not('final_status', 'in', '(paid,released)'),
+              supabaseAdmin.from('projects').update({ status: 'final_payment_attention' }).eq('id', txn.project_id),
+              supabaseAdmin.from('project_final_payment_jobs').update({
+                status: 'attention', last_error: failureMessage, claimed_at: null, updated_at: now,
+              }).eq('transaction_id', txn.id),
+              supabaseAdmin.rpc('create_platform_notification', {
+                p_recipient_id: txn.client_id,
+                p_type: 'payment',
+                p_title: 'Final payment needs attention',
+                p_body: failureMessage,
+                p_action_url: `/projects?project=${txn.project_id}`,
+                p_metadata: { project_id: txn.project_id, transaction_id: txn.id },
+                p_actor_id: null,
+                p_response_due_at: null,
+              }),
+            ]);
+          }
           await supabaseAdmin.from('payment_events').insert({
             transaction_id: txn.id,
             event_type:     `${paymentType}_payment_failed`,

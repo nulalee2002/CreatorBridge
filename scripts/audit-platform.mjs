@@ -205,7 +205,7 @@ check('Admin dashboard access control', 'src/pages/AdminDashboard.jsx', [
   { label: 'loads creator review queue through RPC', test: includes(".rpc('get_admin_creator_review_queue'") },
   { label: 'exposes creator review approval controls', test: includes('admin_approve_creator') },
   { label: 'exposes creator review rejection controls', test: includes('admin_reject_creator') },
-  { label: 'exposes payment release action controls', test: includes('release-payment') },
+  { label: 'does not expose a manual payment release action', test: source => !source.includes('release-payment') && !source.includes('Release Payout') },
 ]);
 
 check('Admin database foundation', 'supabase/migrations/20260516235356_admin_control_hub_foundation.sql', [
@@ -391,10 +391,10 @@ check('Stripe webhook completion path', 'supabase/functions/stripe-webhook/index
 ]);
 
 check('Payment release hardening', 'supabase/functions/release-payment/index.ts', [
-  { label: 'requires authenticated client or trusted job secret', test: includes('PLATFORM_JOB_SECRET') },
-  { label: 'verifies the paying client or admin before release', test: includes('Only the paying client or a platform admin can release this payment') },
-  { label: 'requires both payments before payout release', test: includes('Both retainer and final payment must be paid') },
-  { label: 'uses Stripe idempotency key for payout transfer', test: includes('idempotencyKey') },
+  { label: 'requires authentication even on the retired endpoint', test: includes('admin.auth.getUser(token)') },
+  { label: 'requires the signed Stripe webhook', test: includes('SIGNED_STRIPE_WEBHOOK_REQUIRED') },
+  { label: 'does not create transfers outside the signed webhook', test: source => !source.includes('stripe.transfers.create') },
+  { label: 'does not mark transactions released', test: source => !source.includes("final_status: 'released'") },
 ]);
 
 check('Supabase schema source', 'supabase/schema.sql', [

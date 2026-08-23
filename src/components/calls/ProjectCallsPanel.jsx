@@ -7,7 +7,7 @@ import { CallRoom } from './CallRoom.jsx';
 import { CallSummary } from './CallSummary.jsx';
 
 const UNLOCKED_STATUSES = new Set([
-  'retainer_paid', 'in_progress', 'revision', 'delivered', 'approved', 'completed', 'final_paid',
+  'retainer_paid', 'in_progress', 'revision', 'delivered', 'approved', 'final_payment_processing', 'final_payment_attention', 'completed', 'final_paid',
 ]);
 const INCLUDED_CALLS = 3;
 
