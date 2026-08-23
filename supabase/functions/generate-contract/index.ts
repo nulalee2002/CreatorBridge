@@ -16,7 +16,7 @@ function json(body: unknown, status = 200) {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  const rateLimited = checkRateLimit(req, { maxRequests: 10, windowMs: 60_000 });
+  const rateLimited = await checkRateLimit(req, { maxRequests: 10, windowMs: 60_000 });
   if (rateLimited) return rateLimited;
 
   try {

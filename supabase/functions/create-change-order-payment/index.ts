@@ -6,7 +6,7 @@ const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':
 const reply=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers});
 function creatorFeePct(completed:number){return completed>=25?6:completed>=10?8:10}
 Deno.serve(async req=>{
- if(req.method==='OPTIONS')return new Response('ok',{headers});const limited=checkRateLimit(req,{maxRequests:10,windowMs:60000});if(limited)return limited;
+ if(req.method==='OPTIONS')return new Response('ok',{headers});const limited= await checkRateLimit(req,{maxRequests:10,windowMs:60000,failClosed:true});if(limited)return limited;
  try{
   const {changeOrderId,phase}=await req.json();if(!changeOrderId||!['retainer','final'].includes(phase))return reply({error:'changeOrderId and valid phase are required'},400);
   const admin=createClient(Deno.env.get('SUPABASE_URL')||'',Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')||'');

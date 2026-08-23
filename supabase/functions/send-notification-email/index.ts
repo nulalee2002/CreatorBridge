@@ -323,7 +323,7 @@ Deno.serve(async (req) => {
   const authorized = await authorizeEmailRequest(req);
   if (!authorized.ok) return jsonResponse({ error: authorized.error }, authorized.status);
 
-  const rateLimited = checkRateLimit(req, { maxRequests: 20, windowMs: 60_000 });
+  const rateLimited = await checkRateLimit(req, { maxRequests: 20, windowMs: 60_000 });
   if (rateLimited) return rateLimited;
 
   try {

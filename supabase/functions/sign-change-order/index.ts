@@ -6,7 +6,7 @@ const CONSENT_TEXT='By signing, I agree this electronic signature is legally bin
 const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type','Content-Type':'application/json'};
 const reply=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers});
 Deno.serve(async req=>{
- if(req.method==='OPTIONS')return new Response('ok',{headers});const limited=checkRateLimit(req,{maxRequests:8,windowMs:60000});if(limited)return limited;
+ if(req.method==='OPTIONS')return new Response('ok',{headers});const limited= await checkRateLimit(req,{maxRequests:8,windowMs:60000,failClosed:true});if(limited)return limited;
  try{
   const {changeOrderId,signerName,method,signatureDataUrl,savedSignatureId,signedContentHash,consentText}=await req.json();
   if(!changeOrderId||String(signerName||'').trim().length<2||!['drawn','typed','saved'].includes(method)||consentText!==CONSENT_TEXT)return reply({error:'Complete signature and consent are required'},400);

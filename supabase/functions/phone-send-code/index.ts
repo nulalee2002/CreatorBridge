@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return json({ error: 'Method not allowed.' }, 405);
 
-  const rateLimited = checkRateLimit(req, { maxRequests: 5, windowMs: 60_000 });
+  const rateLimited = await checkRateLimit(req, { maxRequests: 5, windowMs: 60_000, failClosed: true });
   if (rateLimited) return rateLimited;
 
   try {

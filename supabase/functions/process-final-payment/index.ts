@@ -233,7 +233,7 @@ async function processTransaction(
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  const rateLimited = checkRateLimit(req, { maxRequests: 20, windowMs: 60_000 });
+  const rateLimited = await checkRateLimit(req, { maxRequests: 20, windowMs: 60_000, failClosed: true });
   if (rateLimited) return rateLimited;
 
   const admin = createClient(

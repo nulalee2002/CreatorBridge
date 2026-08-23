@@ -39,7 +39,7 @@ async function verifyUploadedObject(admin: ReturnType<typeof createClient>, item
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
-  const limited = checkRateLimit(req, { maxRequests: 10, windowMs: 60_000 });
+  const limited = await checkRateLimit(req, { maxRequests: 10, windowMs: 60_000, failClosed: true });
   if (limited) return limited;
 
   try {

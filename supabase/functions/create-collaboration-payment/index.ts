@@ -7,7 +7,7 @@ const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Head
 const reply = (body: unknown, status=200) => new Response(JSON.stringify(body), { status, headers });
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
-  const limited = checkRateLimit(req, { maxRequests: 8, windowMs: 60_000 }); if (limited) return limited;
+  const limited = await checkRateLimit(req, { maxRequests: 8, windowMs: 60_000, failClosed: true }); if (limited) return limited;
   try {
     const { collaborationId } = await req.json();
     const admin = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');

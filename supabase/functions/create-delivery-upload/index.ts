@@ -25,7 +25,7 @@ function safeFileName(value: string) {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
-  const limited = checkRateLimit(req, { maxRequests: 60, windowMs: 60_000 });
+  const limited = await checkRateLimit(req, { maxRequests: 60, windowMs: 60_000 });
   if (limited) return limited;
 
   try {

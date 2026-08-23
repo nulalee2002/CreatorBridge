@@ -1,59 +1,71 @@
-/**
- * In-memory rate limiter for Supabase Edge Functions.
- * Limits requests per IP per time window.
- *
- * Usage:
- *   import { checkRateLimit } from '../_shared/rateLimit.ts';
- *
- *   const limited = checkRateLimit(req, { maxRequests: 10, windowMs: 60_000 });
- *   if (limited) return limited; // returns 429 Response
- */
-
-// Simple in-memory store — resets when the edge function instance is recycled
-const store = new Map<string, { count: number; resetAt: number }>();
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { checkDistributedRateLimit } from './distributedRateLimit.ts';
 
 export interface RateLimitOptions {
   maxRequests: number;
   windowMs: number;
+  action?: string;
+  failClosed?: boolean;
 }
 
-/**
- * Returns a 429 Response if the caller exceeds the rate limit, otherwise null.
- * Key is derived from the caller's IP address.
- */
-export function checkRateLimit(
-  req: Request,
-  options: RateLimitOptions = { maxRequests: 20, windowMs: 60_000 }
-): Response | null {
+function requestSubject(req: Request): string {
   const ip =
     req.headers.get('cf-connecting-ip') ||
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    'unknown';
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+  if (ip) return `ip:${ip}`;
 
-  const now = Date.now();
-  const entry = store.get(ip);
+  const authorization = req.headers.get('authorization')?.trim();
+  if (authorization) return `authorization:${authorization}`;
+  return '';
+}
 
-  if (!entry || now > entry.resetAt) {
-    store.set(ip, { count: 1, resetAt: now + options.windowMs });
-    return null;
+function actionFor(req: Request, configured?: string): string {
+  if (configured) return configured;
+  try {
+    return new URL(req.url).pathname.split('/').filter(Boolean).pop() || 'edge-function';
+  } catch {
+    return 'edge-function';
+  }
+}
+
+function jsonResponse(status: number, retryAfterSeconds: number, error: string) {
+  return new Response(JSON.stringify({ error }), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      'Retry-After': String(Math.max(1, retryAfterSeconds)),
+      'Access-Control-Allow-Origin': '*',
+    },
+  });
+}
+
+export async function checkRateLimit(
+  req: Request,
+  options: RateLimitOptions = { maxRequests: 20, windowMs: 60_000 },
+): Promise<Response | null> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')?.trim();
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.trim();
+  const subject = requestSubject(req);
+  if (!supabaseUrl || !serviceRoleKey || !subject) {
+    return options.failClosed
+      ? jsonResponse(503, 60, 'Request protection is temporarily unavailable. Please try again shortly.')
+      : null;
   }
 
-  entry.count += 1;
+  const admin = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const result = await checkDistributedRateLimit(admin, {
+    action: actionFor(req, options.action),
+    subject,
+    limit: options.maxRequests,
+    windowSeconds: Math.max(1, Math.ceil(options.windowMs / 1000)),
+    failClosed: options.failClosed,
+  });
 
-  if (entry.count > options.maxRequests) {
-    const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
-    return new Response(
-      JSON.stringify({ error: 'Too many requests. Please slow down.' }),
-      {
-        status: 429,
-        headers: {
-          'Content-Type': 'application/json',
-          'Retry-After': String(retryAfter),
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
-    );
+  if (result.allowed) return null;
+  if (result.degraded) {
+    return jsonResponse(503, result.retryAfterSeconds, 'Request protection is temporarily unavailable. Please try again shortly.');
   }
-
-  return null;
+  return jsonResponse(429, result.retryAfterSeconds, 'Too many requests. Please slow down.');
 }

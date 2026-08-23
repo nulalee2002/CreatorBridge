@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
-  const rateLimited = checkRateLimit(req, { maxRequests: 20, windowMs: 60_000 });
+  const rateLimited = await checkRateLimit(req, { maxRequests: 20, windowMs: 60_000 });
   if (rateLimited) return rateLimited;
 
   try {

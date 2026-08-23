@@ -38,7 +38,7 @@ async function bytesForSavedSignature(admin: any, savedSignatureId: string, user
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  const rateLimited = checkRateLimit(req, { maxRequests: 8, windowMs: 60_000 });
+  const rateLimited = await checkRateLimit(req, { maxRequests: 8, windowMs: 60_000, failClosed: true });
   if (rateLimited) return rateLimited;
 
   try {
