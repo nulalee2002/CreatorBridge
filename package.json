@@ -59,6 +59,8 @@
     "test:identity-webhook": "node --test tests/identityWebhookPolicy.test.js",
     "test:phone-verification": "node --test tests/phoneVerification.test.js",
     "test:date-keys": "node --test tests/dateKeys.test.js",
+    "test:project-completion": "node --test tests/projectCompletionPolicy.test.js",
+    "test": "node --test tests/*.test.js",
     "verify:contracts": "node scripts/verify-contract-esign-rebook.mjs",
     "verify:change-orders": "node scripts/verify-change-orders.mjs",
     "verify:human-identity": "node scripts/verify-human-identity-foundation.mjs",
