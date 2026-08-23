@@ -1,6 +1,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
 import { SUPPORT_EMAIL } from '../_shared/support.ts';
+import {
+  classifyAuthenticatedEmailRequest,
+  normalizeEmail,
+  SUPPORTED_EMAIL_TEMPLATES,
+} from '../_shared/emailAuthorizationPolicy.js';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -291,7 +296,7 @@ function getEmailTemplate(template: string, rawData: Record<string, any>): { sub
   return { subject, html };
 }
 
-async function authorizeEmailRequest(req: Request) {
+async function authorizeEmailRequest(req: Request, payload: Record<string, any>) {
   const authHeader = req.headers.get('Authorization') ?? '';
   const token = authHeader.replace('Bearer ', '').trim();
   if (!token || authHeader === token) {
@@ -304,12 +309,51 @@ async function authorizeEmailRequest(req: Request) {
     return { ok: false, status: 500, error: 'Notification email service is not configured' };
   }
 
-  if (token === serviceRoleKey) return { ok: true, status: 200, error: '' };
+  if (token === serviceRoleKey) {
+    if (payload.verifyOnly === true || SUPPORTED_EMAIL_TEMPLATES.has(payload.template)) {
+      return { ok: true, status: 200, error: '' };
+    }
+    return { ok: false, status: 400, error: 'Unsupported notification template' };
+  }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data?.user) {
     return { ok: false, status: 401, error: 'Invalid authentication token' };
+  }
+
+  const policy = classifyAuthenticatedEmailRequest({
+    callerEmail: data.user.email,
+    to: payload.to,
+    template: payload.template,
+    data: payload.data,
+    supportEmail: SUPPORT_EMAIL,
+    verifyOnly: payload.verifyOnly === true,
+  });
+  if (!policy.allowed) {
+    return { ok: false, status: 403, error: 'This notification must be sent by a trusted platform workflow' };
+  }
+
+  if (policy.kind === 'project_application_accepted') {
+    const projectId = String(payload.data?.project_id || '');
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .select('client_id, accepted_creator_id')
+      .eq('id', projectId)
+      .eq('client_id', data.user.id)
+      .maybeSingle();
+    if (projectError || !project?.accepted_creator_id) {
+      return { ok: false, status: 403, error: 'Project notification authorization failed' };
+    }
+
+    const { data: listing, error: listingError } = await supabase
+      .from('creator_listings')
+      .select('email')
+      .eq('id', project.accepted_creator_id)
+      .maybeSingle();
+    if (listingError || normalizeEmail(listing?.email) !== normalizeEmail(payload.to)) {
+      return { ok: false, status: 403, error: 'Project notification recipient mismatch' };
+    }
   }
 
   return { ok: true, status: 200, error: '' };
@@ -320,14 +364,21 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
-  const authorized = await authorizeEmailRequest(req);
+  let payload: Record<string, any>;
+  try {
+    payload = await req.json();
+  } catch {
+    return jsonResponse({ error: 'A JSON request body is required' }, 400);
+  }
+
+  const authorized = await authorizeEmailRequest(req, payload);
   if (!authorized.ok) return jsonResponse({ error: authorized.error }, authorized.status);
 
   const rateLimited = await checkRateLimit(req, { maxRequests: 20, windowMs: 60_000 });
   if (rateLimited) return rateLimited;
 
   try {
-    const { to, template, data, verifyOnly } = await req.json();
+    const { to, template, data, verifyOnly } = payload;
 
     if (verifyOnly === true) {
       const apiKey = Deno.env.get('RESEND_API_KEY');

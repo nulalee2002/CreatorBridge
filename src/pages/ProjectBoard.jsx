@@ -211,7 +211,6 @@ function DeliverySubmitModal({ project, dark, onClose, onDelivered, creatorName 
       deliveryNotes: cleanNotes,
     };
     
-    let clientEmail = project.clientEmail || project.client_email || '';
     try {
       if (supabaseConfigured && isUuid(project.id)) {
         const { data, error: deliveryError } = await supabase
@@ -232,13 +231,6 @@ function DeliverySubmitModal({ project, dark, onClose, onDelivered, creatorName 
 
       const updated = updateProject(project.id, patch);
       onDelivered?.(updated.find(p => p.id === project.id));
-
-      // Send delivery_submitted email
-      sendNotificationEmail(clientEmail, 'delivery_submitted', {
-        client_name: project.clientName || 'Client',
-        project_title: project.title,
-        creator_name: creatorName || 'Creator'
-      });
 
       onClose();
     } catch (err) {
@@ -1367,6 +1359,7 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
     const proposedRate = app.rate || localProject.budgetMax || localProject.budgetMin || 0;
     const retainer = Math.round(proposedRate * 0.5);
     sendNotificationEmail(creatorEmail, 'application_accepted', {
+      project_id: localProject.id,
       creator_name: app.creatorName,
       project_title: localProject.title,
       retainer_amount: retainer
