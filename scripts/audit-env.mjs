@@ -1,4 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
 const root = process.cwd();
@@ -22,6 +23,7 @@ const REQUIRED_SUPABASE_SECRETS = [
   'SUPABASE_URL',
   'SUPABASE_SERVICE_ROLE_KEY',
   'PLATFORM_JOB_SECRET',
+  'RATE_LIMIT_HASH_SECRET',
   'TURNSTILE_SECRET_KEY',
   'RESEND_API_KEY',
 ];
@@ -46,6 +48,39 @@ function read(path) {
   return readFileSync(resolve(root, path), 'utf8');
 }
 
+function filesBelow(path) {
+  const full = resolve(root, path);
+  if (!existsSync(full)) return [];
+  const output = [];
+  for (const entry of readdirSync(full)) {
+    const relative = `${path}/${entry}`;
+    const info = statSync(resolve(root, relative));
+    if (info.isDirectory()) output.push(...filesBelow(relative));
+    else if (info.size <= 5_000_000) output.push(relative);
+  }
+  return output;
+}
+
+function trackedFiles() {
+  try {
+    return execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8' })
+      .split('\0')
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function readableText(path) {
+  try {
+    const buffer = readFileSync(resolve(root, path));
+    if (buffer.length > 5_000_000 || buffer.includes(0)) return '';
+    return buffer.toString('utf8');
+  } catch {
+    return '';
+  }
+}
+
 function parseEnvKeys(path) {
   const full = resolve(root, path);
   if (!existsSync(full)) return new Set();
@@ -59,35 +94,58 @@ function parseEnvKeys(path) {
 }
 
 function findUsedEnvNames() {
-  const files = [
-    'src/lib/supabase.js',
-    'src/lib/stripe.js',
-    'src/components/SupportChatbot.jsx',
-    'src/components/TurnstileWidget.jsx',
-    'src/components/GoogleCalendarConnect.jsx',
-    'supabase/functions/create-connect-account/index.ts',
-    'supabase/functions/create-payment-intent/index.ts',
-    'supabase/functions/stripe-webhook/index.ts',
-    'supabase/functions/stripe-identity-webhook/index.ts',
-    'supabase/functions/release-payment/index.ts',
-    'supabase/functions/check-connect-status/index.ts',
-    'supabase/functions/chatbot/index.ts',
-    'supabase/functions/submit-quote-request/index.ts',
-    'supabase/functions/send-notification-email/index.ts',
-  ];
+  const files = [...filesBelow('src'), ...filesBelow('supabase/functions')];
   const names = new Set();
   for (const file of files) {
     const source = read(file);
-    for (const match of source.matchAll(/import\.meta\.env\.([A-Z0-9_]+)/g)) names.add(match[1]);
+    for (const match of source.matchAll(/import\.meta\.env(?:\?\.)?\.?(?:\[['"])?([A-Z][A-Z0-9_]+)/g)) names.add(match[1]);
     for (const match of source.matchAll(/Deno\.env\.get\(['"]([A-Z0-9_]+)['"]\)/g)) names.add(match[1]);
   }
   return names;
+}
+
+const SECRET_SIGNATURES = [
+  { label: 'Stripe secret key', pattern: /\bsk_(?:test|live)_[A-Za-z0-9]{16,}\b/g },
+  { label: 'Stripe webhook signing secret', pattern: /\bwhsec_[A-Za-z0-9]{16,}\b/g },
+  { label: 'OpenAI secret key', pattern: /\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}\b/g },
+  { label: 'Anthropic secret key', pattern: /\bsk-ant-[A-Za-z0-9_-]{20,}\b/g },
+  { label: 'private key material', pattern: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g },
+  { label: 'assigned Supabase service-role key', pattern: /^\s*SUPABASE_SERVICE_ROLE_KEY\s*=\s*['"]?[A-Za-z0-9_.-]{20,}/gm },
+  { label: 'assigned Stripe secret', pattern: /^\s*STRIPE_SECRET_KEY\s*=\s*['"]?[^\s'";]{12,}/gm },
+];
+
+function scanSecretSignatures(paths, scope, failures) {
+  for (const path of paths) {
+    const source = readableText(path);
+    if (!source) continue;
+    for (const signature of SECRET_SIGNATURES) {
+      signature.pattern.lastIndex = 0;
+      if (signature.pattern.test(source)) failures.push(`${scope} contains ${signature.label}: ${path}`);
+    }
+  }
 }
 
 const localKeys = parseEnvKeys('.env');
 const usedNames = findUsedEnvNames();
 const failures = [];
 const warnings = [];
+
+const tracked = trackedFiles();
+for (const path of tracked) {
+  if (/^(?:.*\/)?\.env(?:\..+)?$/i.test(path) && !path.endsWith('.env.example')) {
+    failures.push(`Tracked environment file is not allowed: ${path}`);
+  }
+  if (/(?:^|\/)\.env\.txt$/i.test(path)) failures.push(`Legacy secret file is tracked: ${path}`);
+}
+scanSecretSignatures(tracked, 'Tracked source', failures);
+scanSecretSignatures(filesBelow('dist'), 'Build output', failures);
+
+for (const path of filesBelow('dist')) {
+  const source = readableText(path);
+  if (/SUPABASE_SERVICE_ROLE_KEY|STRIPE_SECRET_KEY|STRIPE_WEBHOOK_SECRET|RATE_LIMIT_HASH_SECRET/.test(source)) {
+    failures.push(`Build output references a backend-only secret name: ${path}`);
+  }
+}
 
 for (const name of REQUIRED_VERCEL) {
   if (!usedNames.has(name)) failures.push(`Required Vercel env is not referenced by code: ${name}`);
@@ -139,4 +197,4 @@ if (warnings.length > 0) {
   for (const warning of warnings) console.warn(`- ${warning}`);
 }
 
-console.log(`CreatorBridge environment audit passed. Checked ${usedNames.size} referenced environment names.`);
+console.log(`CreatorBridge environment audit passed. Checked ${usedNames.size} referenced environment names, ${tracked.length} tracked files, and ${filesBelow('dist').length} build files without printing secret values.`);
