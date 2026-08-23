@@ -88,6 +88,7 @@ async function runTests() {
   const restoreClientTrust = await provisionQaTrust(serviceClient, clientUserId);
   const messageIds = [];
   let projectId = null;
+  let secondProjectId = null;
   let transactionId = null;
 
   const { data: creatorListing, error: listingError } = await serviceClient
@@ -172,6 +173,41 @@ async function runTests() {
   if (transactionError) throw transactionError;
   transactionId = activeTransaction.id;
 
+  const { data: secondProject, error: secondProjectError } = await serviceClient
+    .from('projects')
+    .insert({
+      client_id: clientUserId,
+      title: 'QA messaging second project',
+      description: 'Temporary second project used to prove project conversations never merge.',
+      status: 'retainer_paid',
+      accepted_creator_id: creatorListing.id,
+    })
+    .select('id')
+    .single();
+  if (secondProjectError) throw secondProjectError;
+  secondProjectId = secondProject.id;
+
+  const { data: firstProjectMessage, error: firstProjectMessageError } = await clientClient.rpc('send_creatorbridge_message', {
+    p_recipient_id: creatorUserId,
+    p_body: 'First project thread verification message.',
+    p_project_id: projectId,
+  });
+  if (firstProjectMessageError) throw firstProjectMessageError;
+
+  const { data: secondProjectMessage, error: secondProjectMessageError } = await clientClient.rpc('send_creatorbridge_message', {
+    p_recipient_id: creatorUserId,
+    p_body: 'Second project thread verification message.',
+    p_project_id: secondProjectId,
+  });
+  if (secondProjectMessageError) throw secondProjectMessageError;
+  messageIds.push(firstProjectMessage.id, secondProjectMessage.id);
+  if (firstProjectMessage.conversation_id === secondProjectMessage.conversation_id) {
+    throw new Error('Two projects between the same parties were merged into one conversation');
+  }
+  if (firstProjectMessage.project_id !== projectId || secondProjectMessage.project_id !== secondProjectId) {
+    throw new Error('Project message rows were not bound to the trusted project mapping');
+  }
+
   const contactText = 'Hey, here is my contact detail. Email me at info@creatorbridge.studio or phone 602-555-0100.';
   const { data: allowedMsg, error: allowErr } = await clientClient.rpc('send_creatorbridge_message', {
     p_recipient_id: creatorUserId,
@@ -223,6 +259,9 @@ async function runTests() {
     }
     if (projectId) {
       await cleanup.check('delete active-booking project', serviceClient.from('projects').delete().eq('id', projectId));
+    }
+    if (secondProjectId) {
+      await cleanup.check('delete second messaging project', serviceClient.from('projects').delete().eq('id', secondProjectId));
     }
     await cleanup.check('restore client trust', restoreClientTrust);
     await cleanup.check('restore admin trust', restoreAdminTrust);

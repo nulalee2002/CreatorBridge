@@ -9,6 +9,7 @@ import { supabase, supabaseConfigured } from '../lib/supabase.js';
 import { SERVICES } from '../data/rates.js';
 import { sanitizeLongText, sanitizePlainText } from '../utils/inputSecurity.js';
 import { checkMessage, logFilterEvent } from '../utils/messageFilter.js';
+import { buildProjectThreadKey } from '../utils/projectConversations.js';
 import { ClientReputationBadge, loadClientReputation } from '../components/ClientReputationBadge.jsx';
 import { CreatorAvatar } from '../components/CreatorAvatar.jsx';
 
@@ -33,14 +34,20 @@ function buildThreads(messages, userId) {
   const map = {};
   messages.forEach(msg => {
     if (msg.senderId !== userId && msg.recipientId !== userId) return;
-    // Group by participant pair so repeat conversations with the same person
-    // collapse into one inbox thread instead of one thread per conversation id.
-    const tid = (msg.senderId && msg.recipientId)
-      ? [msg.senderId, msg.recipientId].sort().join('_')
-      : (msg.threadId || msg.remoteConversationId);
-    if (!map[tid]) map[tid] = { threadId: tid, remoteConversationId: msg.remoteConversationId || null, messages: [], otherUserId: null, otherName: null, otherAvatar: null };
+    const tid = buildProjectThreadKey(msg);
+    if (!map[tid]) map[tid] = {
+      threadId: tid,
+      projectId: msg.projectId || null,
+      projectTitle: msg.projectTitle || null,
+      remoteConversationId: msg.remoteConversationId || null,
+      messages: [],
+      otherUserId: null,
+      otherName: null,
+      otherAvatar: null,
+    };
     map[tid].messages.push(msg);
     if (msg.remoteConversationId && !map[tid].remoteConversationId) map[tid].remoteConversationId = msg.remoteConversationId;
+    if (msg.projectTitle && !map[tid].projectTitle) map[tid].projectTitle = msg.projectTitle;
     if (msg.senderId === userId) {
       map[tid].otherUserId   = msg.recipientId;
       map[tid].otherName     = msg.recipientName || 'Unknown';
@@ -87,8 +94,7 @@ function markMessagesRead(threadId, userId) {
   try {
     const all = JSON.parse(localStorage.getItem(LOCAL_MESSAGE_KEY) || '[]');
     const updated = all.map(m => {
-      const pairKey = (m.senderId && m.recipientId) ? [m.senderId, m.recipientId].sort().join('_') : null;
-      const inThread = m.threadId === threadId || m.remoteConversationId === threadId || pairKey === threadId;
+      const inThread = buildProjectThreadKey(m) === threadId;
       return inThread && m.recipientId === userId ? { ...m, read: true } : m;
     });
     localStorage.setItem(LOCAL_MESSAGE_KEY, JSON.stringify(updated));
@@ -126,7 +132,7 @@ function profileName(profile, fallback = 'Unknown') {
   return profile?.full_name || profile?.display_name || profile?.email || fallback;
 }
 
-function remoteMessageToLocal(row, currentUserId, profilesById = {}) {
+function remoteMessageToLocal(row, currentUserId, profilesById = {}, projectTitlesById = {}) {
   const senderProfile = profilesById[row.sender_id];
   const recipientProfile = profilesById[row.recipient_id];
   const otherId = row.sender_id === currentUserId ? row.recipient_id : row.sender_id;
@@ -134,7 +140,9 @@ function remoteMessageToLocal(row, currentUserId, profilesById = {}) {
     id: `remote-${row.id}`,
     remoteId: row.id,
     remoteConversationId: row.conversation_id,
-    threadId: row.conversation_id,
+    threadId: row.project_id ? `project:${row.project_id}` : `conversation:${row.conversation_id}`,
+    projectId: row.project_id || null,
+    projectTitle: row.project_id ? projectTitlesById[row.project_id] || 'Project conversation' : null,
     senderId: row.sender_id,
     senderName: profileName(senderProfile, row.sender_id === currentUserId ? 'Me' : 'CreatorBridge user'),
     senderAvatar: senderProfile?.avatar_url || null,
@@ -231,6 +239,11 @@ function ThreadItem({ thread, active, dark, onClick }) {
           <p className={`text-sm font-semibold truncate ${dark ? 'text-white' : 'text-gray-900'}`}>{thread.otherName}</p>
           <span className={`text-[10px] shrink-0 ${textSub}`}>{formatTime(last?.createdAt)}</span>
         </div>
+        {thread.projectTitle && (
+          <p className="mt-0.5 truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-gold-500">
+            {thread.projectTitle}
+          </p>
+        )}
         <div className="flex items-center justify-between gap-1 mt-0.5">
           <p className={`text-xs truncate ${unread ? (dark ? 'text-charcoal-300 font-medium' : 'text-gray-700 font-medium') : textSub}`}>
             {last?.text || 'No messages yet'}
@@ -424,7 +437,7 @@ export function MessagesPage({ dark }) {
       try {
         const { data, error } = await supabase
           .from('messages')
-          .select('id, conversation_id, sender_id, recipient_id, listing_id, body, read, created_at')
+          .select('id, conversation_id, sender_id, recipient_id, listing_id, project_id, body, read, created_at')
           .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
           .order('created_at', { ascending: true });
 
@@ -440,7 +453,17 @@ export function MessagesPage({ dark }) {
           profilesById = Object.fromEntries((profiles || []).map(profile => [profile.id, profile]));
         }
 
-        remoteMessages = (data || []).map(row => remoteMessageToLocal(row, user.id, profilesById));
+        const projectIds = [...new Set((data || []).map(row => row.project_id).filter(isUuid))];
+        let projectTitlesById = {};
+        if (projectIds.length) {
+          const { data: projects } = await supabase
+            .from('projects')
+            .select('id, title')
+            .in('id', projectIds);
+          projectTitlesById = Object.fromEntries((projects || []).map(project => [project.id, project.title]));
+        }
+
+        remoteMessages = (data || []).map(row => remoteMessageToLocal(row, user.id, profilesById, projectTitlesById));
       } catch (error) {
         console.warn('CreatorBridge messages Supabase load failed, using local fallback:', error?.message || error);
       }
@@ -468,13 +491,14 @@ export function MessagesPage({ dark }) {
           p_body: message.text,
           p_conversation_id: conversationId,
           p_listing_id: message.listingId || null,
+          p_project_id: message.projectId || null,
         });
 
       if (error) throw error;
       return remoteMessageToLocal(data, user.id, {
         [user.id]: { id: user.id, full_name: myName },
         [message.recipientId]: { id: message.recipientId, full_name: message.recipientName },
-      });
+      }, message.projectId ? { [message.projectId]: message.projectTitle || 'Project conversation' } : {});
     } catch (error) {
       console.warn('CreatorBridge messages Supabase save failed:', error?.message || error);
       throw error;
@@ -487,6 +511,11 @@ export function MessagesPage({ dark }) {
     refreshThreads().then(loaded => {
       if (cancelled) return;
       const with_ = searchParams.get('with');
+      const projectId = searchParams.get('project');
+      if (projectId) {
+        const projectThread = loaded.find(t => t.projectId === projectId);
+        if (projectThread) { setActiveThread(projectThread); setMobileView('thread'); return; }
+      }
       if (with_) {
         const existing = loaded.find(t => t.otherUserId === with_);
         if (existing) { setActiveThread(existing); setMobileView('thread'); }
@@ -535,6 +564,8 @@ export function MessagesPage({ dark }) {
       id:             makeLocalMessageId(),
       threadId:       activeThread.threadId,
       remoteConversationId: activeThread.remoteConversationId || (isUuid(activeThread.threadId) ? activeThread.threadId : null),
+      projectId:       activeThread.projectId || null,
+      projectTitle:    activeThread.projectTitle || null,
       senderId:       user.id,
       senderName:     myName,
       senderAvatar:   myAvatar,
@@ -644,8 +675,10 @@ export function MessagesPage({ dark }) {
     );
   }
 
-  const filteredThreads = threads.filter(t =>
-    !search || t.otherName?.toLowerCase().includes(search.toLowerCase())
+    const filteredThreads = threads.filter(t =>
+    !search
+    || t.otherName?.toLowerCase().includes(search.toLowerCase())
+    || t.projectTitle?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
