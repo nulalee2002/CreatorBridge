@@ -143,6 +143,9 @@ function remoteMessageToLocal(row, currentUserId, profilesById = {}, projectTitl
     threadId: row.project_id ? `project:${row.project_id}` : `conversation:${row.conversation_id}`,
     projectId: row.project_id || null,
     projectTitle: row.project_id ? projectTitlesById[row.project_id] || 'Project conversation' : null,
+    messageType: row.message_type || 'user',
+    pinned: !!row.pinned,
+    deliveryId: row.delivery_id || null,
     senderId: row.sender_id,
     senderName: profileName(senderProfile, row.sender_id === currentUserId ? 'Me' : 'CreatorBridge user'),
     senderAvatar: senderProfile?.avatar_url || null,
@@ -261,6 +264,17 @@ function ThreadItem({ thread, active, dark, onClick }) {
 
 // ── Message bubble ────────────────────────────────────────────────
 function Bubble({ msg, isMine, dark }) {
+  if (msg.pinned && ['delivery', 'revision'].includes(msg.messageType)) {
+    return (
+      <div className="my-3 rounded-xl border border-gold-500/30 bg-gold-500/10 p-3">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gold-400">
+          {msg.messageType === 'delivery' ? 'Formal delivery' : 'Revision request'}
+        </p>
+        <p className={`mt-1 text-xs leading-5 ${dark ? 'text-charcoal-200' : 'text-gray-700'}`}>{msg.text}</p>
+        {msg.projectId && <a href={`/projects?project=${msg.projectId}`} className="mt-2 inline-block text-xs font-bold text-gold-400 hover:text-gold-300">Open project review</a>}
+      </div>
+    );
+  }
   return (
     <div className={`flex ${isMine ? 'justify-end' : 'justify-start'} mb-2`}>
       <div className={`max-w-[72%] px-3 py-2 rounded-2xl text-sm ${
@@ -437,7 +451,7 @@ export function MessagesPage({ dark }) {
       try {
         const { data, error } = await supabase
           .from('messages')
-          .select('id, conversation_id, sender_id, recipient_id, listing_id, project_id, body, read, created_at')
+          .select('id, conversation_id, sender_id, recipient_id, listing_id, project_id, delivery_id, message_type, pinned, body, read, created_at')
           .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
           .order('created_at', { ascending: true });
 

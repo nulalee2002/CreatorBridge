@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import {
   Briefcase, Plus, MapPin, DollarSign,
   Check, X, Search, Send, Users,
@@ -41,6 +41,7 @@ import { RebookButton } from '../components/RebookButton.jsx';
 import { ChangeOrderPanel } from '../components/change-orders/ChangeOrderPanel.jsx';
 import { ProjectDocuments } from '../components/ProjectDocuments.jsx';
 import { ProjectProtectionGuide } from '../components/ProjectProtectionGuide.jsx';
+import { ProjectCompletionPanel } from '../components/project/ProjectCompletionPanel.jsx';
 import {
   CLIENT_MINIMUM_PROJECT_ERROR,
   CLIENT_MINIMUM_PROJECT_NOTE,
@@ -143,7 +144,7 @@ const STORAGE_NOTICE = 'Note: Files uploaded directly to CreatorBridge are store
 
 function getRemainingHours(deliveredAt) {
   if (!deliveredAt) return null;
-  const diff = 72 * 3600000 - (Date.now() - new Date(deliveredAt).getTime());
+  const diff = 120 * 3600000 - (Date.now() - new Date(deliveredAt).getTime());
   if (diff <= 0) return 0;
   return Math.ceil(diff / 3600000);
 }
@@ -265,7 +266,7 @@ function DeliverySubmitModal({ project, dark, onClose, onDelivered, creatorName 
             <p className={`text-[10px] mt-1 ${textSub}`}>Share a link to your completed deliverables. Make sure it is set to view-only or shared properly with the client.</p>
           </div>
           <div>
-            <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Or upload a small file directly (PDFs, images, audio only. Max 200MB)</p>
+            <p className={`text-xs font-medium mb-1.5 ${textSub}`}>Direct uploads share the project delivery's combined 5 GB limit.</p>
             <label className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border cursor-pointer transition-all ${dark ? 'border-white/[0.09] text-charcoal-300 hover:border-gold-500/35' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
               <Upload size={13} />
               <span className="text-sm">Choose file...</span>
@@ -354,7 +355,7 @@ function RevisionRequestModal({ project, dark, onClose, onRevisionSubmitted }) {
             <div className={`rounded-xl border p-4 ${dark ? 'border-gold-500/30 bg-gold-500/10' : 'border-gold-200 bg-gold-50'}`}>
               <p className={`text-sm font-semibold ${dark ? 'text-gold-400' : 'text-gold-700'}`}>Free revisions used ({revisionCount} of 2)</p>
               <p className={`text-xs mt-1 ${dark ? 'text-gold-300/80' : 'text-gold-600'}`}>
-                You have used your 2 included free revisions. A third revision requires an additional payment. The creator will provide a quote for the additional revision work.
+                You have used your 2 included revisions. Each additional revision costs exactly $50.00 through CreatorBridge.
               </p>
             </div>
           ) : (
@@ -372,7 +373,7 @@ function RevisionRequestModal({ project, dark, onClose, onRevisionSubmitted }) {
           {isPaidRevision ? (
             <button type="button" onClick={onClose}
               className="w-full py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-sm font-bold transition-all flex items-center justify-center gap-2">
-              Request Paid Revision (Contact Creator)
+              Purchase One Revision for $50.00
             </button>
           ) : (
             <button type="button" onClick={handleSubmit}
@@ -403,14 +404,14 @@ function ArchivedProjectNotice({ project, dark, onStatusChange }) {
     <div className={`rounded-xl border p-4 ${dark ? 'border-white/[0.07] bg-charcoal-900/72' : 'border-gray-200 bg-gray-50'}`}>
       <p className={`text-sm font-semibold mb-1 ${dark ? 'text-white' : 'text-gray-900'}`}>Files Removed</p>
       <p className={`text-xs mb-3 ${textSub}`}>
-        The files for this project were removed from CreatorBridge storage after 7 days as per our storage policy. You can request re-delivery from the creator for a $30 retrieval fee.
+        CreatorBridge-hosted files are removed seven days after approval unless an active hold applies. Contact support if the project record needs review.
       </p>
       {requested ? (
         <p className="text-xs text-gold-400 font-medium">Re-delivery requested. The creator has been notified.</p>
       ) : (
         <button type="button" onClick={requestRedelivery}
           className="px-4 py-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-charcoal-900 text-xs font-bold transition-all">
-          Request Re-Delivery ($30)
+          Contact CreatorBridge Support
         </button>
       )}
     </div>
@@ -1004,43 +1005,7 @@ function ProjectActionButtons({ project, isClient, canApply, applied, dark, onAp
       );
     }
     if (status === 'delivered') {
-      const remainHours = getRemainingHours(project.deliveredAt);
-      return (
-        <div className="space-y-2">
-          {remainHours !== null && remainHours > 0 && (
-            <div className={`flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-lg ${dark ? 'bg-gold-500/10 text-gold-400' : 'bg-gold-50 text-gold-600'}`}>
-              <Timer size={10} /> Auto-approves in {remainHours}h if no action taken
-            </div>
-          )}
-          <div className="flex gap-2">
-            <button type="button"
-              onClick={async e => {
-                e.stopPropagation();
-                try {
-                  await changeStatus('approved', { approvedAt: new Date().toISOString() });
-                  navigate(`/checkout/${project.id}?payment=final`);
-                } catch {
-                  window.alert('Could not approve delivery. Please try again before paying the final balance.');
-                }
-              }}
-              className="flex-1 py-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-1">
-              <ThumbsUp size={11} /> Approve &amp; Pay Final Balance
-            </button>
-          </div>
-          <div className="flex gap-2">
-            <button type="button"
-              onClick={e => { e.stopPropagation(); onOpenRevision?.(); }}
-              className="flex-1 py-2 rounded-xl bg-gold-500/12 border border-gold-500/25 text-gold-400 text-xs font-bold transition-all flex items-center justify-center gap-1">
-              <RotateCcw size={11} /> Request Revision
-            </button>
-            <button type="button"
-              onClick={e => { e.stopPropagation(); onOpenRevision?.('dispute'); }}
-              className="flex-1 py-2 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-bold transition-all flex items-center justify-center gap-1">
-              <AlertCircle size={11} /> Open Dispute
-            </button>
-          </div>
-        </div>
-      );
+      return <p className="text-center text-[10px] font-semibold text-gold-400">Open this project to review the formal delivery.</p>;
     }
     if (status === 'approved' || status === 'completed') {
       if (status === 'completed') {
@@ -1120,13 +1085,7 @@ function ProjectActionButtons({ project, isClient, canApply, applied, dark, onAp
     );
   }
   if (status === 'retainer_paid' || status === 'in_progress' || status === 'revision') {
-    return (
-      <button type="button"
-        onClick={e => { e.stopPropagation(); onOpenDelivery?.(); }}
-        className="w-full py-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5">
-        <Upload size={11} /> Submit Delivery
-      </button>
-    );
+    return <p className="text-center text-[10px] font-semibold text-gold-400">Open this project to submit finished deliverables.</p>;
   }
   return null;
 }
@@ -1144,10 +1103,6 @@ function InlineClientRep({ clientId, dark }) {
 // ── Project Card ─────────────────────────────────────────────────
 function ProjectCard({ project, dark, onApply, myApplications, isClient, canApply, onView, onStatusChange }) {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [showDelivery, setShowDelivery] = useState(false);
-  const [showRevision, setShowRevision] = useState(false);
-  const [showDispute, setShowDispute] = useState(false);
   const pillar   = getProjectPillar(project);
   const textSub  = dark ? 'text-charcoal-300' : 'text-gray-500';
   const applied  = myApplications.some(a => a.projectId === project.id);
@@ -1238,43 +1193,7 @@ function ProjectCard({ project, dark, onApply, myApplications, isClient, canAppl
         onApply={e => { e.stopPropagation(); onApply(project); }}
         onStatusChange={onStatusChange}
         navigate={navigate}
-        onOpenDelivery={() => setShowDelivery(true)}
-        onOpenRevision={(mode) => mode === 'dispute' ? setShowDispute(true) : setShowRevision(true)}
       />
-      {showDelivery && (
-        <DeliverySubmitModal
-          project={project}
-          dark={dark}
-          creatorName={user?.user_metadata?.full_name || 'Creator'}
-          onClose={() => setShowDelivery(false)}
-          onDelivered={(updatedProject) => {
-            setShowDelivery(false);
-            onStatusChange?.(project.id, 'delivered', updatedProject);
-          }}
-        />
-      )}
-      {showRevision && (
-        <RevisionRequestModal
-          project={project}
-          dark={dark}
-          onClose={() => setShowRevision(false)}
-          onRevisionSubmitted={(updatedProject) => {
-            setShowRevision(false);
-            onStatusChange?.(project.id, 'in_progress', updatedProject);
-          }}
-        />
-      )}
-      {showDispute && (
-        <DisputeModal
-          project={project}
-          dark={dark}
-          onClose={() => setShowDispute(false)}
-          onSubmitted={() => {
-            setShowDispute(false);
-            onStatusChange?.(project.id, 'disputed');
-          }}
-        />
-      )}
     </div>
   );
 }
@@ -1383,8 +1302,6 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
   const [showDispute, setShowDispute]       = useState(false);
   const [showCancel, setShowCancel]         = useState(false);
   const [showRateClient, setShowRateClient] = useState(false);
-  const [showDelivery, setShowDelivery]     = useState(false);
-  const [showRevision, setShowRevision]     = useState(false);
   const [localProject, setLocalProject]    = useState(project);
   const [acceptError, setAcceptError]      = useState('');
 
@@ -1526,6 +1443,16 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
         </>
       )}
 
+      {isUuid(localProject.id) && ['retainer_paid', 'in_progress', 'revision', 'delivered', 'approved', 'completed', 'final_paid'].includes(localProject.status) && (
+        <ProjectCompletionPanel
+          project={localProject}
+          isClient={isClient}
+          isCreator={canApply}
+          dark={dark}
+          onOpenDispute={() => setShowDispute(true)}
+        />
+      )}
+
       {/* Description */}
       <div>
         <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Description</p>
@@ -1584,28 +1511,6 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
         </div>
       )}
 
-      {/* Archived Project Notice */}
-      {isArchived(localProject) && (
-        <div>
-          <ArchivedProjectNotice project={localProject} dark={dark} onStatusChange={onStatusChange} />
-        </div>
-      )}
-
-      {/* Delivery link */}
-      {localProject.deliveryLink && localProject.status !== 'in_progress' && !isArchived(localProject) && (
-        <div className={`p-4 rounded-xl border ${dark ? 'border-white/[0.07] bg-charcoal-900/40' : 'border-gray-200 bg-gray-50'}`}>
-          <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${textSub}`}>Delivery</p>
-          <a href={localProject.deliveryLink} target="_blank" rel="noreferrer"
-            className="text-xs text-gold-400 hover:text-gold-300 underline break-all">
-            {localProject.deliveryLink}
-          </a>
-          {localProject.deliveryNotes && (
-            <p className={`text-xs mt-2 ${textSub}`}>{localProject.deliveryNotes}</p>
-          )}
-          <p className={`text-[9px] mt-2 ${textSub}`}>{STORAGE_NOTICE}</p>
-        </div>
-      )}
-
       {/* Actions Stack */}
       <div className="space-y-2 pt-2">
         <ProjectActionButtons
@@ -1620,8 +1525,6 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
             onStatusChange?.(id, st, patch);
           }}
           navigate={navigate}
-          onOpenDelivery={() => setShowDelivery(true)}
-          onOpenRevision={(mode) => mode === 'dispute' ? setShowDispute(true) : setShowRevision(true)}
         />
         {/* Rate Client - shown for creators on completed projects */}
         {canApply && project.status === 'completed' && (
@@ -1646,30 +1549,6 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
         )}
       </div>
 
-      {showDelivery && (
-        <DeliverySubmitModal
-          project={localProject}
-          dark={dark}
-          creatorName={user?.user_metadata?.full_name || 'Creator'}
-          onClose={() => setShowDelivery(false)}
-          onDelivered={(updatedProject) => {
-            setLocalProject(updatedProject);
-            onStatusChange?.(project.id, 'delivered', updatedProject);
-          }}
-        />
-      )}
-      {showRevision && (
-        <RevisionRequestModal
-          project={localProject}
-          dark={dark}
-          onClose={() => setShowRevision(false)}
-          onRevisionSubmitted={(updatedProject) => {
-            setLocalProject(updatedProject);
-            onStatusChange?.(project.id, 'in_progress', updatedProject);
-            setShowRevision(false);
-          }}
-        />
-      )}
       {showDispute && (
         <DisputeModal
           project={localProject}
@@ -1707,6 +1586,8 @@ function ProjectDetailPane({ project, dark, onApply, myApplications, application
 export function ProjectBoard({ dark }) {
   const { user } = useAuth();
   const navigate  = useNavigate();
+  const [searchParams] = useSearchParams();
+  const requestedProjectId = searchParams.get('project');
 
   const [projects, setProjects]         = useState([]);
   const [applications, setApplications] = useState([]);
@@ -1748,24 +1629,8 @@ export function ProjectBoard({ dark }) {
 
   useEffect(() => {
     let cancelled = false;
-    // Auto-approval: projects delivered more than the review window ago become
-    // approved and ready for final payment (client took no action).
     const raw = supabaseConfigured && !user ? [] : loadProjects();
-    const now = Date.now();
-    const reviewWindowMs = PLATFORM_FEES.autoApproveDays * 24 * 3600000;
-    const autoApproved = raw.map(p => {
-      if (p.status === 'delivered' && p.deliveredAt) {
-        const elapsed = now - new Date(p.deliveredAt).getTime();
-        if (elapsed >= reviewWindowMs) {
-          return { ...p, status: 'approved', approvedAt: p.approvedAt || new Date().toISOString(), autoApproved: true };
-        }
-      }
-      return p;
-    });
-    const anyChanged = autoApproved.some((p, i) => p.status !== raw[i].status);
-    if (anyChanged) saveProjects(autoApproved);
-    const local = anyChanged ? autoApproved : raw;
-    setProjects(local);
+    setProjects(raw);
     setApplications(loadApplications());
     if (user) {
       setCreatorListing(loadMyListing(user.id));
@@ -2000,6 +1865,10 @@ export function ProjectBoard({ dark }) {
   const projectBoardImage = '/images/creatorbridge/backgrounds/09-fallback/fallback-default-cover.jpg';
 
   useEffect(() => {
+    if (requestedProjectId && projects.some(project => project.id === requestedProjectId)) {
+      setActiveProjectId(requestedProjectId);
+      return;
+    }
     if (displayProjects.length > 0) {
       if (!activeProjectId || !displayProjects.some(p => p.id === activeProjectId)) {
         setActiveProjectId(displayProjects[0].id);
@@ -2007,7 +1876,7 @@ export function ProjectBoard({ dark }) {
     } else {
       setActiveProjectId(null);
     }
-  }, [displayProjects, activeProjectId]);
+  }, [displayProjects, activeProjectId, projects, requestedProjectId]);
 
   const activeProject = useMemo(() => {
     return projects.find(p => p.id === activeProjectId) || displayProjects[0] || null;
