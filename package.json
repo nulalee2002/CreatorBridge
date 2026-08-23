@@ -18,6 +18,7 @@
     "verify:revision-ledgers": "node scripts/verify-project-revision-ledgers.mjs",
     "verify:paid-revisions": "node scripts/verify-paid-revisions.mjs",
     "verify:project-deliveries": "node scripts/verify-project-deliveries.mjs",
+    "verify:project-review-jobs": "node scripts/verify-project-review-jobs.mjs",
     "verify:admin-support-search": "node --env-file=.env scripts/verify-admin-support-search.mjs",
     "verify:chatbot-guide": "node scripts/verify-chatbot-guide.mjs",
     "verify:chatbot-ai": "node --env-file=.env scripts/verify-chatbot-ai.mjs",

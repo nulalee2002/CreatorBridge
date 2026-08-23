@@ -127,6 +127,33 @@ function getEmailTemplate(template: string, rawData: Record<string, any>): { sub
       `;
       break;
 
+    case 'delivery_review_48h':
+      subject = `Two days left to review ${rawData.project_title || 'your delivery'}`;
+      bodyContent = `
+        <h2 style="color: #d4a941; margin-top: 0; font-size: 20px;">Two Days Left to Review</h2>
+        <p>The formal delivery for <strong>"${data.project_title || 'your project'}"</strong> is awaiting your review.</p>
+        <p>Open CreatorBridge to approve it, request a revision, or open a dispute before the five-day deadline. Only a formal action inside the project pauses completion.</p>
+      `;
+      break;
+
+    case 'delivery_review_24h':
+      subject = `One day left to review ${rawData.project_title || 'your delivery'}`;
+      bodyContent = `
+        <h2 style="color: #d4a941; margin-top: 0; font-size: 20px;">One Day Left to Review</h2>
+        <p>The formal delivery for <strong>"${data.project_title || 'your project'}"</strong> is awaiting your review.</p>
+        <p>If no revision or dispute is submitted before the deadline, CreatorBridge will approve the delivery and attempt the final payment. Payment is only released after Stripe confirms it.</p>
+      `;
+      break;
+
+    case 'delivery_auto_approved':
+      subject = `Review window completed for ${rawData.project_title || 'your project'}`;
+      bodyContent = `
+        <h2 style="color: #d4a941; margin-top: 0; font-size: 20px;">Review Window Completed</h2>
+        <p>The five-day review window for <strong>"${data.project_title || 'your project'}"</strong> ended without a revision request or dispute.</p>
+        <p>CreatorBridge has marked the delivery approved and is attempting the final payment. Funds are not described as paid or released until Stripe confirms the charge.</p>
+      `;
+      break;
+
     case 'revision_purchase_succeeded':
       subject = `Additional revision unlocked for ${rawData.project_title || 'your project'}`;
       bodyContent = `
