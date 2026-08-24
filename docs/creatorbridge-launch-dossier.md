@@ -64,21 +64,23 @@ back from production), and end-to-end by the E2E above.
    test publishable key and test backend secret. Install the live publishable,
    secret, payment-webhook, and identity-webhook credentials, verify Connect and
    redirect URLs, then reconcile one small controlled live payment and payout.
-4. **Zoom Event Subscription** — the deployed webhook is active, rejects
-   unsigned requests, and its signing secret is configured. The five-minute
-   recovery job also authenticates successfully to the Video SDK API. The Zoom
-   Marketplace Event Subscription toggle and its three selected events still
-   require direct provider-dashboard confirmation: `session.ended`,
-   `session.recording_completed`, and
-   `session.recording_transcript_completed` sent to
-   `https://mxizhszqhbhxzkkhgnmg.supabase.co/functions/v1/zoom-webhook`.
+4. **Zoom Event Subscription (verified 2026-08-23)** — the correct
+   `CreatorBridge Video` Build Platform app has Event Subscription enabled. Its
+   notification URL is validated and points to
+   `https://mxizhszqhbhxzkkhgnmg.supabase.co/functions/v1/zoom-webhook`. The
+   selected events include all three required by CreatorBridge:
+   `session.ended`, `session.recording_completed`, and
+   `session.recording_transcript_completed`. Zoom's recording-summary event is
+   also selected and is safely ignored by the webhook. The deployed endpoint
+   rejects unsigned requests, and the five-minute recovery job authenticates
+   successfully to the Video SDK API.
 5. **Paid-service acceptance** — confirm every enabled launch provider with a
    real acceptance test, including Bunny production media, transactional email,
    and any SMS gate retained for launch.
 6. **Human-eye checks** — verify transactional email rendering in a real inbox
    and complete a final live browser pass on mobile and desktop.
 
-The Marcus QA listing cleanup is complete. Do not describe CreatorBridge as
-operationally launched until real creators, attorney sign-off, the Zoom Event
-Subscription confirmation, and the Stripe live swap with a reconciled live
-transaction are complete.
+The Marcus QA listing cleanup is complete. The Zoom Event Subscription
+confirmation is also complete. Do not describe CreatorBridge as operationally
+launched until real creators, attorney sign-off, and the Stripe live swap with
+a reconciled live transaction are complete.

@@ -22,18 +22,19 @@ artifact (screenshot, query result, passing command output, or reviewed code).
   messaging all work. *Evidence needed: live upload/playback screenshots.*
 - ⛔ **Twilio production** — trial lifted, real SMS sends to a non-verified number,
   phone gate still blocks unverified clients. *Evidence: live send + gated post.*
-- ⛔ **Stripe live** — stays in **test mode** until every payment path passes; then
+- ⛔ **Stripe live swap** — stays in **test mode** until every payment path passes; then
   live keys/webhook/Connect/redirects + one tiny controlled live txn. *Verified
   2026-08-23:* the production frontend contains a test publishable key and the
   protected backend test-only endpoint confirms the server secret is also test
   mode.
-- ⬜ **Zoom Event Subscription** — `zoom-webhook` is ACTIVE with JWT verification
-  intentionally disabled in favor of Zoom signature verification; its signing
-  secret is configured, and the scheduled Video SDK REST recovery job returns
-  200. Directly confirm the Marketplace toggle, callback URL, and the
-  `session.ended`, `session.recording_completed`, and
-  `session.recording_transcript_completed` selections. No real call or webhook
-  delivery exists yet to prove the subscription end to end.
+- ✅ **Zoom Event Subscription** — *provider dashboard verified 2026-08-23:* the
+  correct `CreatorBridge Video` Build Platform app has Event Subscription
+  enabled, its CreatorBridge Edge Function URL is validated, and the selected
+  Video SDK events include `session.ended`, `session.recording_completed`, and
+  `session.recording_transcript_completed`. The deployed signature-verifying
+  webhook is ACTIVE, and the scheduled Video SDK REST recovery job returns 200.
+  A real two-party recorded call remains part of final acceptance QA, but the
+  provider configuration itself is complete.
 - ⬜ **Chatbot mode decision** — launch free/local guide only, or enable paid AI
   help (login + quota + token caps). Decision + cost control pending.
 - ⬜ **Resend/email** — review bounce logs, remove bad recipients, confirm no
@@ -130,13 +131,13 @@ artifact (screenshot, query result, passing command output, or reviewed code).
   Team, creator media/portfolio/readiness rules, collaboration payment checks,
   admin/support checks — the bulk of the Codex work record.
 - **⛔/⬜ Pending:** real creator recruitment, attorney review, Stripe live,
-  Zoom Event Subscription confirmation, other paid-service readiness, full live
-  browser QA, brand guide, and deployment discipline.
+  other paid-service readiness, full live browser QA, brand guide, and
+  deployment discipline.
 
 **Launch is not "done" until every row here is ✅ or a consciously accepted,
-documented deferral. Real creator onboarding, attorney sign-off, Zoom Event
-Subscription confirmation, and the Stripe live swap are mandatory operational
-gates and must appear in every launch summary.**
+documented deferral. Real creator onboarding, attorney sign-off, and the Stripe
+live swap remain mandatory operational gates. The verified Zoom Event
+Subscription must remain documented in every launch summary.**
 
 ---
 
