@@ -137,8 +137,8 @@ expect(
   'Live creator onboarding QA must exercise the required phone and human-identity gates before atomic submission',
 );
 expect(
-  pkg.overrides?.dompurify === '3.4.12',
-  'DOMPurify must be pinned through overrides to the audited safe version 3.4.12',
+  pkg.overrides?.dompurify === '3.4.14',
+  'DOMPurify must be pinned through overrides to the audited safe version 3.4.14',
 );
 
 if (failures.length) {

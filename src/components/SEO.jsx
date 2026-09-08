@@ -1,3 +1,4 @@
+import { useLayoutEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 
 const SITE_NAME    = 'CreatorBridge';
@@ -16,6 +17,18 @@ const DEFAULT_IMG  = `${SITE_URL}/images/og-default.jpg`;
  *   jsonLd      Optional plain object for JSON-LD structured data
  */
 export function SEO({ title, description, image, url, jsonLd }) {
+  // React 19 hoists Helmet metadata but does not replace static HTML tags.
+  // Keep the no-JS/default description for routes without their own SEO.
+  useLayoutEffect(() => {
+    const fallback = document.head.querySelector('meta[data-default-description]');
+    fallback?.remove();
+    return () => {
+      if (fallback && !document.head.querySelector('meta[data-default-description]')) {
+        document.head.appendChild(fallback);
+      }
+    };
+  }, []);
+
   const fullTitle    = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
   const metaDesc     = description || DEFAULT_DESC;
   const metaImage    = image       || DEFAULT_IMG;

@@ -28,3 +28,19 @@ test('public directory and Project Board stay honest when provider returns no re
   await page.goto('/projects');
   await expect(page.getByText('No briefs match your filters')).toBeVisible();
 });
+
+test('landing creator benefits have one SEO description and working signup links', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('meta[name="description"]')).toHaveCount(1);
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /free/i);
+  const benefits = page.locator('section[aria-labelledby="for-creators-heading"]');
+  await benefits.scrollIntoViewIfNeeded();
+  await expect(benefits.getByRole('heading', { name: 'Keep more of what you earn, and actually get paid.' })).toBeAttached();
+  const join = benefits.locator('a[href="/join-as-creator"]');
+  await join.scrollIntoViewIfNeeded();
+  await join.click();
+  await expect(page).toHaveURL(/\/join-as-creator$/);
+  await expect(page.locator('meta[name="description"]')).toHaveCount(1);
+  await page.goto('/login');
+  await expect(page.locator('meta[name="description"]')).toHaveCount(1);
+});

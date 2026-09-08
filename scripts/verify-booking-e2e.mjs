@@ -1,3 +1,4 @@
+import { provisionQaListing } from './lib/qaListing.mjs';
 // End-to-end booking money-path test, Stripe TEST MODE ONLY.
 // Exercises the real deployed functions and DB: accepted project -> retainer
 // intent (created by the deployed create-payment-intent) -> Stripe test
@@ -20,7 +21,7 @@ const cfg = {
   creatorPassword: process.env.CREATORBRIDGE_QA_CREATOR_PASSWORD,
 };
 const missing = Object.entries(cfg).filter(([, v]) => !v).map(([k]) => k);
-if (missing.length) { console.log(`SKIP: missing env ${missing.join(', ')}`); process.exit(0); }
+if (missing.length) { console.error(`BLOCKED: missing env ${missing.join(', ')}`); process.exit(1); }
 
 // HARD GUARD: never run this against live Stripe.
 if (!cfg.stripe.startsWith('sk_test_')) {
@@ -48,6 +49,7 @@ async function pollTxn(projectId, predicate, label, timeoutMs = 120_000) {
 }
 
 const runId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+let listingFixture;
 let projectId, appId, contractId, listingBefore, retainerIntentId, finalIntentId;
 const trustFixtures = [];
 const summary = { mode: 'stripe_test', steps: [] };
@@ -83,6 +85,8 @@ async function ensureVerifiedQaTrust(client, userId, index) {
     phoneTouched = true;
   }
 
+  const fixture = { userId, originalPhone, phoneTouched, consentId: null, verificationId: null };
+  trustFixtures.push(fixture);
   let consentId = null;
   let verificationId = null;
   if (!trust?.identity_verified) {
@@ -94,6 +98,7 @@ async function ensureVerifiedQaTrust(client, userId, index) {
     }).select('id').single();
     if (consent.error) throw consent.error;
     consentId = consent.data.id;
+    fixture.consentId = consentId;
 
     const verification = await admin.from('identity_verifications').insert({
       user_id: userId,
@@ -110,9 +115,9 @@ async function ensureVerifiedQaTrust(client, userId, index) {
     }).select('id').single();
     if (verification.error) throw verification.error;
     verificationId = verification.data.id;
+    fixture.verificationId = verificationId;
   }
 
-  trustFixtures.push({ userId, originalPhone, phoneTouched, consentId, verificationId });
   const { data: refreshedRows, error: refreshedError } = await client.rpc('get_my_trust_status');
   if (refreshedError) throw refreshedError;
   const refreshed = Array.isArray(refreshedRows) ? refreshedRows[0] : refreshedRows;
@@ -133,6 +138,7 @@ try {
 
   // 2. QA creator listing with a test payout account. The money-path fixture
   // does not publish or approve this listing.
+  listingFixture = await provisionQaListing(admin, creatorAuth.user, { stripe });
   const { data: listing, error: le } = await admin.from('creator_listings')
     .select('id, user_id, stripe_account_id, completed_projects, rating, completion_rate, next_project_fee_pct')
     .eq('user_id', creatorAuth.user.id).limit(1).single();
@@ -201,9 +207,9 @@ try {
 
   // 5. Retainer intent via the DEPLOYED function, as the client
   const { data: retainer, error: rfe } = await clientSb.functions.invoke('create-payment-intent', {
-    body: { projectId, creatorId: listing.id, clientId, paymentType: 'retainer' },
+    body: { projectId, creatorId: listing.id, clientId, paymentType: 'retainer', savePaymentMethodForFinal: true },
   });
-  if (rfe || retainer?.error) throw new Error(retainer?.error || rfe?.message || 'retainer intent failed');
+  if (rfe || retainer?.error) throw new Error(retainer?.error || await rfe?.context?.text() || rfe?.message || 'retainer intent failed');
   retainerIntentId = retainer.paymentIntentId;
   const retainerPi = await stripe.paymentIntents.retrieve(retainerIntentId);
   assert(retainerPi.amount === PROJECT_RATE_DOLLARS * 100 * 0.5,
@@ -236,7 +242,7 @@ try {
   const { data: fin, error: ffe } = await clientSb.functions.invoke('create-payment-intent', {
     body: { projectId, creatorId: listing.id, clientId, paymentType: 'final' },
   });
-  if (ffe || fin?.error) throw new Error(fin?.error || ffe?.message || 'final intent failed');
+  if (ffe || fin?.error) throw new Error(fin?.error || await ffe?.context?.text() || ffe?.message || 'final intent failed');
   finalIntentId = fin.paymentIntentId;
   const finalPi = await stripe.paymentIntents.retrieve(finalIntentId);
   const expectedFinalCents = PROJECT_RATE_DOLLARS * 100 * 0.5 + PROJECT_RATE_DOLLARS * 100 * 0.05;
@@ -332,6 +338,9 @@ try {
       .from('projects').select('id', { count: 'exact', head: true }).eq('id', projectId);
     if (residueError) cleanupFailures.push(`residue check: ${residueError.message}`);
     else if ((count ?? 0) > 0) cleanupFailures.push(`project ${projectId} still exists after cleanup`);
+  }
+  if (listingFixture) {
+    try { await listingFixture.cleanup(); } catch (error) { cleanupFailures.push(`remove QA listing: ${error.message}`); }
   }
   if (cleanupFailures.length > 0) {
     console.error('CLEANUP FAILED; QA rows remain in the database:');

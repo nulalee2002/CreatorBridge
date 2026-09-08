@@ -1,3 +1,5 @@
+import { createQaCleanupTracker } from '../../scripts/lib/qaCleanup.mjs';
+import { provisionQaListing } from '../../scripts/lib/qaListing.mjs';
 import { createClient } from '@supabase/supabase-js';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -58,39 +60,43 @@ export async function signInQa(role) {
 }
 
 export async function cleanupQaProjects(admin, projectIds, phoneTrustState = null) {
+  const cleanup = createQaCleanupTracker('Browser project QA cleanup');
   const { data: transactions } = projectIds.length
     ? await admin.from('transactions').select('id').in('project_id', projectIds)
     : { data: [] };
   const transactionIds = (transactions || []).map(row => row.id);
   if (transactionIds.length) {
-    await admin.from('disputes').delete().in('transaction_id', transactionIds);
-    await admin.from('payment_events').delete().in('transaction_id', transactionIds);
-    await admin.from('project_final_payment_jobs').delete().in('transaction_id', transactionIds);
+    await cleanup.check('clean disputes', admin.from('disputes').delete().in('transaction_id', transactionIds));
+    await cleanup.check('clean payment_events', admin.from('payment_events').delete().in('transaction_id', transactionIds));
+    await cleanup.check('clean project_final_payment_jobs', admin.from('project_final_payment_jobs').delete().in('transaction_id', transactionIds));
   }
-  const { data: deliveries } = await admin.from('project_deliveries').select('id').in('project_id', projectIds);
+  const { data: deliveries } = projectIds.length ? await admin.from('project_deliveries').select('id').in('project_id', projectIds) : { data: [] };
   const deliveryIds = (deliveries || []).map(row => row.id);
-  if (projectIds.length) await admin.from('project_revision_purchases').update({ consumed_request_id: null }).in('project_id', projectIds);
+  if (projectIds.length) await cleanup.check('clean project_revision_purchases', admin.from('project_revision_purchases').update({ consumed_request_id: null }).in('project_id', projectIds));
   if (deliveryIds.length) {
-    await admin.from('project_delivery_holds').delete().in('delivery_id', deliveryIds);
-    await admin.from('project_delivery_events').delete().in('delivery_id', deliveryIds);
-    await admin.from('project_revision_requests').delete().in('delivery_id', deliveryIds);
-    await admin.from('messages').delete().in('delivery_id', deliveryIds);
-    await admin.from('project_delivery_items').delete().in('delivery_id', deliveryIds);
-    await admin.from('project_deliveries').delete().in('id', deliveryIds);
+    await cleanup.check('clean project_delivery_holds', admin.from('project_delivery_holds').delete().in('delivery_id', deliveryIds));
+    await cleanup.check('clean project_delivery_events', admin.from('project_delivery_events').delete().in('delivery_id', deliveryIds));
+    await cleanup.check('clean project_revision_requests', admin.from('project_revision_requests').delete().in('delivery_id', deliveryIds));
+    await cleanup.check('clean messages', admin.from('messages').delete().in('delivery_id', deliveryIds));
+    await cleanup.check('clean project_delivery_items', admin.from('project_delivery_items').delete().in('delivery_id', deliveryIds));
+    await cleanup.check('clean project_deliveries', admin.from('project_deliveries').delete().in('id', deliveryIds));
   }
   if (projectIds.length) {
-    await admin.from('project_revision_purchases').delete().in('project_id', projectIds);
-    await admin.from('messages').delete().in('project_id', projectIds);
-    await admin.from('project_conversations').delete().in('project_id', projectIds);
-    await admin.from('project_applications').delete().in('project_id', projectIds);
-    await admin.from('transactions').delete().in('project_id', projectIds);
-    await admin.from('projects').delete().in('id', projectIds);
+    await cleanup.check('clean project_revision_purchases', admin.from('project_revision_purchases').delete().in('project_id', projectIds));
+    await cleanup.check('clean messages', admin.from('messages').delete().in('project_id', projectIds));
+    await cleanup.check('clean project_conversations', admin.from('project_conversations').delete().in('project_id', projectIds));
+    await cleanup.check('clean project_applications', admin.from('project_applications').delete().in('project_id', projectIds));
+    await cleanup.check('clean transactions', admin.from('transactions').delete().in('project_id', projectIds));
+    await cleanup.check('clean contracts', admin.from('contracts').delete().in('project_id', projectIds));
+    await cleanup.check('clean projects', admin.from('projects').delete().in('id', projectIds));
   }
+  if (phoneTrustState?.listingCleanup) await cleanup.check('remove QA listing', phoneTrustState.listingCleanup);
   if (phoneTrustState?.original) {
-    await admin.from('account_phone_verifications').upsert(phoneTrustState.original, { onConflict: 'user_id' });
+    await cleanup.check('clean account_phone_verifications', admin.from('account_phone_verifications').upsert(phoneTrustState.original, { onConflict: 'user_id' }));
   } else if (phoneTrustState?.userId) {
-    await admin.from('account_phone_verifications').delete().eq('user_id', phoneTrustState.userId);
+    await cleanup.check('clean account_phone_verifications', admin.from('account_phone_verifications').delete().eq('user_id', phoneTrustState.userId));
   }
+  cleanup.assertComplete();
 }
 
 export async function seedCompletionProjects() {
@@ -103,86 +109,93 @@ export async function seedCompletionProjects() {
     .maybeSingle();
   if (phoneTrustError) throw phoneTrustError;
   const phoneTrustState = { userId: client.id, original: originalPhoneTrust || null };
-  const { error: verifyPhoneError } = await admin.from('account_phone_verifications').upsert({
-    ...(originalPhoneTrust || {}),
-    user_id: client.id,
-    phone_e164: originalPhoneTrust?.phone_e164 || '+16025550100',
-    status: 'verified',
-    verified_at: new Date().toISOString(),
-    provider: 'twilio',
-    provider_service_reference: 'project_completion_e2e',
-    updated_at: new Date().toISOString(),
-  }, { onConflict: 'user_id' });
-  if (verifyPhoneError) throw verifyPhoneError;
-  const { data: listing, error: listingError } = await admin
-    .from('creator_listings')
-    .select('id,user_id')
-    .eq('user_id', creator.id)
-    .eq('review_status', 'approved')
-    .limit(1)
-    .maybeSingle();
-  if (listingError || !listing) throw listingError || new Error('Approved creator QA listing is required');
+  let projects = [];
+  try {
+    const listingFixture = await provisionQaListing(admin, creator);
+    phoneTrustState.listingCleanup = listingFixture.cleanup;
+    const { error: verifyPhoneError } = await admin.from('account_phone_verifications').upsert({
+      ...(originalPhoneTrust || {}),
+      user_id: client.id,
+      phone_e164: originalPhoneTrust?.phone_e164 || '+16025550100',
+      status: 'verified',
+      verified_at: new Date().toISOString(),
+      provider: 'twilio',
+      provider_service_reference: 'project_completion_e2e',
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id' });
+    if (verifyPhoneError) throw verifyPhoneError;
+    const { data: listing, error: listingError } = await admin
+      .from('creator_listings')
+      .select('id,user_id')
+      .eq('user_id', creator.id)
+      .eq('review_status', 'approved')
+      .limit(1)
+      .maybeSingle();
+    if (listingError || !listing) throw listingError || new Error('Approved creator QA listing is required');
 
-  const marker = `CB-E2E-${Date.now()}`;
-  const rows = [1, 2].map(number => ({
-    client_id: client.id,
-    title: `${marker} Project ${number}`,
-    service_id: 'photography',
-    description: `Dedicated CreatorBridge project completion browser test ${number}. This disposable brief verifies that separate projects between the same parties never share delivery or review state.`,
-    budget_min: 500,
-    budget_max: 1000,
-    location: 'Phoenix, AZ',
-    timeline: 'Within 30 days',
-    status: 'in_progress',
-    accepted_creator_id: listing.id,
-    applications: 1,
-  }));
-  const { data: projects, error: projectError } = await admin.from('projects').insert(rows).select('*');
-  if (projectError || projects?.length !== 2) throw projectError || new Error('Two QA projects were not created');
+    const marker = `CB-E2E-${Date.now()}`;
+    const rows = [1, 2].map(number => ({
+      client_id: client.id,
+      title: `${marker} Project ${number}`,
+      service_id: 'photography',
+      description: `Dedicated CreatorBridge project completion browser test ${number}. This disposable brief verifies that separate projects between the same parties never share delivery or review state.`,
+      budget_min: 500,
+      budget_max: 1000,
+      location: 'Phoenix, AZ',
+      timeline: 'Within 30 days',
+      status: 'in_progress',
+      accepted_creator_id: listing.id,
+      applications: 1,
+    }));
+    const { data: insertedProjects, error: projectError } = await admin.from('projects').insert(rows).select('*');
+    projects = insertedProjects || [];
+    if (projectError || projects?.length !== 2) throw projectError || new Error('Two QA projects were not created');
 
-  const signedAt = new Date().toISOString();
-  const contracts = projects.map(project => ({
-    project_id: project.id,
-    client_id: client.id,
-    creator_id: listing.id,
-    creator_user_id: creator.id,
-    template_version: 'qa-project-completion-v1',
-    terms: {
-      document: { number: `${marker}-${project.id}` },
-      project: { id: project.id, title: project.title },
-      revisions: 2,
-    },
-    content_hash: 'a'.repeat(64),
-    status: 'countersigned',
-    client_signed_at: signedAt,
-    creator_signed_at: signedAt,
-    countersigned_at: signedAt,
-  }));
-  const { error: contractError } = await admin.from('contracts').insert(contracts);
-  if (contractError) {
+    const signedAt = new Date().toISOString();
+    const contracts = projects.map(project => ({
+      project_id: project.id,
+      client_id: client.id,
+      creator_id: listing.id,
+      creator_user_id: creator.id,
+      template_version: 'qa-project-completion-v1',
+      terms: {
+        document: { number: `${marker}-${project.id}` },
+        project: { id: project.id, title: project.title },
+        revisions: 2,
+      },
+      content_hash: 'a'.repeat(64),
+      status: 'countersigned',
+      client_signed_at: signedAt,
+      creator_signed_at: signedAt,
+      countersigned_at: signedAt,
+    }));
+    const { error: contractError } = await admin.from('contracts').insert(contracts);
+    if (contractError) {
+      throw contractError;
+    }
+
+    const transactions = projects.map(project => ({
+      project_id: project.id,
+      creator_id: listing.id,
+      client_id: client.id,
+      project_amount: 100000,
+      retainer_amount: 50000,
+      final_amount: 50000,
+      creator_fee_pct: 10,
+      client_fee_pct: 5,
+      creator_fee_amount: 10000,
+      client_fee_amount: 5000,
+      platform_revenue: 15000,
+      retainer_status: 'paid',
+      final_status: 'pending',
+    }));
+    const { error: transactionError } = await admin.from('transactions').insert(transactions);
+    if (transactionError) {
+      throw transactionError;
+    }
+    return { admin, projects, projectIds: projects.map(project => project.id), marker, phoneTrustState };
+  } catch (error) {
     await cleanupQaProjects(admin, projects.map(project => project.id), phoneTrustState);
-    throw contractError;
+    throw error;
   }
-
-  const transactions = projects.map(project => ({
-    project_id: project.id,
-    creator_id: listing.id,
-    client_id: client.id,
-    project_amount: 100000,
-    retainer_amount: 50000,
-    final_amount: 50000,
-    creator_fee_pct: 10,
-    client_fee_pct: 5,
-    creator_fee_amount: 10000,
-    client_fee_amount: 5000,
-    platform_revenue: 15000,
-    retainer_status: 'paid',
-    final_status: 'pending',
-  }));
-  const { error: transactionError } = await admin.from('transactions').insert(transactions);
-  if (transactionError) {
-    await cleanupQaProjects(admin, projects.map(project => project.id), phoneTrustState);
-    throw transactionError;
-  }
-  return { admin, projects, projectIds: projects.map(project => project.id), marker, phoneTrustState };
 }

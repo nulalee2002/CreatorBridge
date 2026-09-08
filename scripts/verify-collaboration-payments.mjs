@@ -1,3 +1,4 @@
+import { provisionQaListing } from './lib/qaListing.mjs';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -42,12 +43,15 @@ ok('plain collaboration fee example in policy/chatbot copy',['$500','$504','$450
 ok('policy surfaces disclose zero buyer platform fee',(policyCopy.match(/buyer platform fee/g)||[]).length>=4);
 const failed=tests.filter(([,p])=>!p); if(failed.length){console.error('Collaboration payments incomplete:');failed.forEach(([n])=>console.error(`- ${n}`));process.exit(1)}
 const cfg={url:process.env.VITE_SUPABASE_URL,anon:process.env.VITE_SUPABASE_ANON_KEY,service:process.env.SUPABASE_SERVICE_ROLE_KEY,email:process.env.CREATORBRIDGE_QA_CREATOR_EMAIL,password:process.env.CREATORBRIDGE_QA_CREATOR_PASSWORD,stripe:process.env.STRIPE_SECRET_KEY};
+let sourceFixture;
 let live=null;
 if(Object.values(cfg).every(Boolean)){
+ if(!cfg.stripe.startsWith('sk_test_')) throw new Error('Collaboration payment QA requires Stripe test mode');
  const opts={auth:{persistSession:false,autoRefreshToken:false}};const prime=createClient(cfg.url,cfg.anon,opts);const admin=createClient(cfg.url,cfg.service,opts);const stripe=new Stripe(cfg.stripe);
  const {data:auth,error:ae}=await prime.auth.signInWithPassword({email:cfg.email,password:cfg.password});if(ae)throw ae;
  let uid,lid,pid,cid,paymentId,intentId,restorePrimeTrust,restoreTargetTrust,sourceBefore;
  try{
+    sourceFixture = await provisionQaListing(admin, auth.user, { stripe });
   restorePrimeTrust=await provisionQaTrust(admin,auth.user.id);
   const {data:existingSource,error:se}=await admin.from('creator_listings').select('*').eq('user_id',auth.user.id).limit(1).single();if(se)throw se;
   sourceBefore={id:existingSource.id,review_status:existingSource.review_status,verified:existingSource.verified,verification_status:existingSource.verification_status};
@@ -77,6 +81,7 @@ if(Object.values(cfg).every(Boolean)){
   if(pid)await cleanup.check('delete project',admin.from('projects').delete().eq('id',pid));
   if(lid)await cleanup.check('delete target listing',admin.from('creator_listings').delete().eq('id',lid));
   if(sourceBefore)await cleanup.check('restore source listing',admin.from('creator_listings').update({review_status:sourceBefore.review_status,verified:sourceBefore.verified,verification_status:sourceBefore.verification_status}).eq('id',sourceBefore.id));
+    if (sourceFixture) await cleanup.check('remove disposable source listing', sourceFixture.cleanup);
   if(restoreTargetTrust)await cleanup.check('restore target trust',restoreTargetTrust);
   if(restorePrimeTrust)await cleanup.check('restore prime trust',restorePrimeTrust);
   if(uid)await cleanup.check('delete target auth user',admin.auth.admin.deleteUser(uid));

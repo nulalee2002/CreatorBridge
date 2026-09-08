@@ -1,3 +1,4 @@
+import { provisionQaListing } from './lib/qaListing.mjs';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -56,6 +57,7 @@ const config = {
   clientEmail: process.env.CREATORBRIDGE_QA_CLIENT_EMAIL,
   clientPassword: process.env.CREATORBRIDGE_QA_CLIENT_PASSWORD,
 };
+let sourceFixture;
 let live = null;
 if (Object.values(config).every(Boolean)) {
   const opts = { auth: { persistSession: false, autoRefreshToken: false } };
@@ -70,6 +72,7 @@ if (Object.values(config).every(Boolean)) {
   let targetUserId; let targetListingId; let collaborationId; let projectId;
   let restorePrimeTrust; let restoreTargetTrust; let primeListingBefore;
   try {
+    sourceFixture = await provisionQaListing(service, primeAuth.user);
     restorePrimeTrust = await provisionQaTrust(service, primeAuth.user.id);
     const { data: existingPrimeListing, error: primeListingError } = await service.from('creator_listings').select('*').eq('user_id', primeAuth.user.id).limit(1).single();
     if (primeListingError) throw primeListingError;
@@ -133,6 +136,7 @@ if (Object.values(config).every(Boolean)) {
         verification_status: primeListingBefore.verification_status,
       }).eq('id', primeListingBefore.id));
     }
+    if (sourceFixture) await cleanup.check('remove disposable source listing', sourceFixture.cleanup);
     if (restoreTargetTrust) await cleanup.check('restore target trust', restoreTargetTrust);
     if (restorePrimeTrust) await cleanup.check('restore prime trust', restorePrimeTrust);
     if (targetUserId) await cleanup.check('delete target auth user', service.auth.admin.deleteUser(targetUserId));

@@ -24,6 +24,7 @@
     "verify:distributed-rate-limits": "node scripts/verify-distributed-rate-limits.mjs",
     "test:e2e": "playwright test",
     "test:e2e:public": "playwright test --project=public-desktop --project=public-mobile",
+    "verify:qa-delivery-cleanup": "node --env-file=.env scripts/verify-qa-delivery-cleanup.mjs",
     "verify:project-completion-live": "playwright test --project=authenticated-desktop --project=authenticated-mobile",
     "verify:admin-support-search": "node --env-file=.env scripts/verify-admin-support-search.mjs",
     "verify:chatbot-guide": "node scripts/verify-chatbot-guide.mjs",

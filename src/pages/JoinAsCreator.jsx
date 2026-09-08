@@ -1,3 +1,4 @@
+import { SEO } from '../components/SEO';
 import { useNavigate } from 'react-router';
 import { Video, Mic, Calendar, Film, Smartphone, Camera, CheckCircle, ShieldCheck, Award, ArrowRight, MapPin } from 'lucide-react';
 
@@ -12,6 +13,11 @@ export function JoinAsCreator({ dark }) {
   return (
     <div className={`min-h-screen pb-20 ${dark ? 'bg-charcoal-950 bg-[radial-gradient(circle_at_50%_0%,rgba(156,74,51,0.08),transparent_34%)]' : 'bg-gray-50'}`}>
       
+      <SEO
+        title="Join CreatorBridge"
+        description="Join CreatorBridge free as a video production, photography, or post-production creator. Apply for human review and work with protected 50/50 project payments."
+        url="https://www.creatorbridge.studio/join-as-creator"
+      />
       {/* Hero Section */}
       <section className="relative max-w-5xl mx-auto px-4 pt-16 pb-12 text-center">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-gold-500/30 bg-gold-500/10 text-[10px] font-bold uppercase tracking-widest text-gold-400 mb-6">
